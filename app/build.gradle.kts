@@ -101,7 +101,7 @@ dependencies {
     implementation(libs.androidx.graphics.core)
     // 0.5.49: the release build's lint (InvalidFragmentVersionForActivityResult): a library brings an old Fragment, under
     // which registerForActivityResult's permission results can be lost; this one is new enough.
-    implementation("androidx.fragment:fragment:1.8.5")
+    implementation("androidx.fragment:fragment:1.9.1")
 
     testImplementation(libs.junit)
 }
