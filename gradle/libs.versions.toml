@@ -7,7 +7,7 @@ activityCompose = "1.12.4"
 lifecycle = "2.10.0"
 junit = "4.13.2"
 shizuku = "13.1.5"
-mediapipe = "1.1.1"
+mediapipe = "1.2.0"
 graphicsCore = "1.0.4"
 
 [libraries]
