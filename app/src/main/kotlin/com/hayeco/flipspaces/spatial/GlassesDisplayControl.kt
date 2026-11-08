@@ -118,6 +118,17 @@ object GlassesDisplayControl {
         ensureLoop()
     }
 
+    /**
+     * 1.2.3 (issue 58): the user turned on something that needs 3D (Side by side 3D), so the next [requestStereo] asks the
+     * glasses again even though 3D was asked for on this plug-in already. One ask, from the user's own action.
+     */
+    fun userWantsStereo() {
+        stereoAsked = false
+        stereoRefused = null
+        stereoWant = null
+        Log.i(TAG, "3D is asked for again: the user turned on Side by side 3D")
+    }
+
     @Volatile private var link: GlassesNetwork.Duplex? = null
     @Volatile private var opening = false
     @Volatile private var loop: Thread? = null
