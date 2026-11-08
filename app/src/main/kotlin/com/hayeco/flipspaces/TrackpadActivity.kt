@@ -767,6 +767,7 @@ class TrackpadActivity : Activity(), PadHost {
             SpaceSession.padHands = gestureState() == 2
             SpaceSession.padCursorSpeed = settings.cursorSpeed
             if (touching) send(pad.tick(now))
+            SpaceSession.padHold = if (touching) pad.holdProgress(now) else 0f
             send(home.tick(now))
             // 0.5.17 cover screen: Further or Closer held repeats, faster the longer it is held.
             repeatAction?.let { a -> repeat.tick(now).forEach { submit(PadSignal.Window(a, it)) } }
@@ -1128,6 +1129,19 @@ class TrackpadActivity : Activity(), PadHost {
         val now = SystemClock.uptimeMillis()
         val downAt = if (change.down) now.also { gameKeyDownAt[change.keyCode] = it } else gameKeyDownAt.remove(change.keyCode) ?: now
         SpaceSession.send(SpaceCommand.PanelKey(if (change.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, change.keyCode, 0, 0, downAt))
+    }
+
+    override fun openControlPanel() {
+        submit(PadSignal.Swipe(com.hayeco.flipspaces.core.pointer.SwipeDirection.DOWN))
+    }
+
+    override fun focusedTextSize(): Pair<String, Int>? = if (SpaceSession.active) SpaceSession.focusedTextSize else null
+
+    override fun textSizeStep(steps: Int) {
+        if (!SpaceSession.active) return
+        SpaceSession.send(SpaceCommand.TextSize(steps))
+        // The Space takes it on its next frame; the Menu shows the new size a moment later.
+        window.decorView.postDelayed({ screen.refreshDrawer() }, TEXT_SIZE_REFRESH_MS)
     }
 
     override fun returnHome() {
@@ -1694,7 +1708,31 @@ class TrackpadActivity : Activity(), PadHost {
 
     private fun unlocked() {
         buzz(PadHaptic.UNLOCK)
+        val wasPocket = screen.pocket
         screen.showLock(false)
+        if (wasPocket) pocketBrightness(false)
+    }
+
+    /**
+     * 1.2.3 (issue 52): Pocket mode: the lock overlay at once, black ([com.hayeco.flipspaces.core.pointer.PocketMode]), the
+     * screen at its lowest brightness and kept on, so the glasses keep their picture and stray touches do nothing.
+     */
+    override fun pocketMode() {
+        if (!SpaceSession.active) {
+            screen.showToast("Open the Space on the glasses first.")
+            return
+        }
+        screen.showLock(true, pocket = true)
+        pocketBrightness(true)
+        Log.i(TAG, "Pocket mode on: the screen black at its lowest brightness and kept on; hold the lock to leave")
+    }
+
+    private fun pocketBrightness(on: Boolean) {
+        window.attributes = window.attributes.apply {
+            screenBrightness = if (on) com.hayeco.flipspaces.core.pointer.PocketMode.BRIGHTNESS else com.hayeco.flipspaces.core.pointer.PocketMode.NO_OVERRIDE
+        }
+        if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else applyKeepScreenOn()
+        if (!on) Log.i(TAG, "Pocket mode off: the phone's own brightness again")
     }
 
     // ---- Spatial Mouse: the phone's rotation vector aims the ray ----
@@ -1746,6 +1784,9 @@ class TrackpadActivity : Activity(), PadHost {
 
     companion object {
         private const val TAG = "FlipSpaces/Trackpad"
+
+        /** 1.2.3 (issue 57): the Menu reads the new text size back this long after a step. */
+        private const val TEXT_SIZE_REFRESH_MS = 200L
 
         /** 0.5.19: a touch or tick that keeps the UI thread this long is logged. */
         private const val SLOW_UI_MS = 8L

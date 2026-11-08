@@ -77,7 +77,7 @@ import javax.microedition.khronos.opengles.GL10
  * One app panel's GL side: the frames its virtual display renders ([PanelSource], an ImageReader
  * drained by the [PanelDrain] thread since 0.5.3). GL thread only.
  */
-private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, broad: Boolean = false, videoSmallestDp: Float? = null) {
+private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, broad: Boolean = false, videoSmallestDp: Float? = null, textPercent: Int = 100) {
     var src: PanelSource
         private set
     val surface: Surface get() = src.surface
@@ -232,7 +232,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
 
     init {
         // 0.5.21: the app's own size, the window's shape, and Wide view's density ([PanelDisplaySize]).
-        val s = com.hayeco.flipspaces.core.spatial.PanelDisplaySize.of(panel, broad, videoSmallestDp = videoSmallestDp)
+        val s = com.hayeco.flipspaces.core.spatial.PanelDisplaySize.of(panel, broad, videoSmallestDp = videoSmallestDp, textPercent = textPercent)
         width = s.widthPx
         height = s.heightPx
         dpi = s.dpi
@@ -410,6 +410,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     /** 0.5.24: each app's own density setting (Fit video, [com.hayeco.flipspaces.core.spatial.AppDensityStore]), saved in the Space's settings. */
     private val appDensity = com.hayeco.flipspaces.core.spatial.AppDensityStore(store.appDensity)
+
+    /** 1.2.3 (issue 57): each app's own text size ([com.hayeco.flipspaces.core.spatial.AppTextSize]), saved in the Space's settings. */
+    private val appTextSize = com.hayeco.flipspaces.core.spatial.AppTextSizeStore(store.appTextSize)
 
     /** 0.5.24: the saved windows were capped once this run ([capReopened]). */
     private var reopenCapped = false
@@ -701,7 +704,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         edgeHintLabel = LabelTexture(1024, 96)
         homeTexture = LabelTexture(192, 192)
         capReopened()
-        layout.panels.forEach { panels[it.id] = PanelGl(it, frames!!, wideView.isOn(it.packageName), appDensity.smallestDp(it.packageName)) }
+        layout.panels.forEach { panels[it.id] = PanelGl(it, frames!!, wideView.isOn(it.packageName), appDensity.smallestDp(it.packageName), appTextSize.percent(it.packageName)) }
         GLES30.glDisable(GLES30.GL_DEPTH_TEST)
         GLES30.glEnable(GLES30.GL_BLEND)
         // 0.5.68: premultiplied everywhere ([GlKit.BLEND_SRC]).
@@ -1041,6 +1044,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
         // 0.5.32: the open windows, for the Menu's Arrange layouts by count.
         SpaceSession.windowCount = layout.panels.size
+        // 1.2.3 (issue 57): the focused window's app and text size, for the trackpad's Menu.
+        SpaceSession.focusedTextSize = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to appTextSize.percent(it.packageName) }
         // 0.5.37: Immersive's motion this frame, the others' presses held off while they are gone.
         stepImmersive()
         // 0.5.34 (vc54: Sharper turns on, nothing sent; 0.5.32 read these switches in the head cursor's draw, which a hand
@@ -2990,6 +2995,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             panel, broad, lockedPortrait = !broad && shape?.letterboxed == true && shape.asksPortrait,
             // 0.5.24: the app's own density setting (Fit video) wins.
             videoSmallestDp = appDensity.smallestDp(panel.packageName),
+            // 1.2.3 (issue 57): the app's own text size, from the trackpad's Menu.
+            textPercent = appTextSize.percent(panel.packageName),
         )
 
     /**
@@ -3053,6 +3060,26 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         showNotice(p, if (on) "Fit video: 16:9, phone layout" else "Fit video off", now)
         setLayout(layout.replace(next), commit = true)
         shapeSoon(p, SHAPE_AFTER_TOGGLE_MS)
+    }
+
+    /**
+     * 1.2.3 (issue 57): the trackpad Menu's text size for the focused window's app, [steps] steps up or down (0 puts it back
+     * to 100 %). Remembered for the app; every window of that app takes the new density, as after a Fit video press.
+     */
+    private fun textSizeStep(steps: Int) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        val pkg = p.panel.packageName
+        if (pkg.isEmpty()) return
+        val before = appTextSize.percent(pkg)
+        val after = if (steps == 0) com.hayeco.flipspaces.core.spatial.AppTextSize.DEFAULT else com.hayeco.flipspaces.core.spatial.AppTextSize.step(before, steps)
+        if (after == before) return
+        appTextSize.set(pkg, after)
+        store.appTextSize = appTextSize.encode()
+        val now = SystemClock.uptimeMillis()
+        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: text size $before % to $after % (remembered for $pkg), its display now ${displaySpec(p.panel, wideView.isOn(pkg), p.appShape).line()}")
+        showNotice(p, com.hayeco.flipspaces.core.spatial.AppTextSize.label(after), now)
+        // Every window's display is asked for again ([setLayout]); only this app's density changes.
+        setLayout(layout, commit = true)
     }
 
     private fun sendBack(p: PanelGl, display: Int) {
@@ -3667,6 +3694,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 SpaceCommand.ClearLayout -> layout.panels.map { it.id }.forEach(::removePanel)
                 SpaceCommand.CalibrateHands -> toggleCalibration()
                 is SpaceCommand.Arrange -> apply(pointer.arrange(c.kind, layout, focusedPanelId))
+                is SpaceCommand.TextSize -> textSizeStep(c.steps)
                 is SpaceCommand.OpenPreset -> openPreset(c.preset)
                 SpaceCommand.WrapChanged -> syncWrap()
                 is SpaceCommand.GlassesWarpChanged -> warpNotice(c.on, c.from)
@@ -3719,7 +3747,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         setLayout(added.first, commit = true)
         windowOpenMs.remove(-1)?.let { windowOpenMs[added.second.id] = it }
-        panels[added.second.id] = PanelGl(added.second, frames ?: return, wideView.isOn(app.packageName), appDensity.smallestDp(app.packageName))
+        panels[added.second.id] = PanelGl(added.second, frames ?: return, wideView.isOn(app.packageName), appDensity.smallestDp(app.packageName), appTextSize.percent(app.packageName))
         store.recents = launcher.noteOpened(app)
         // An app opened: the search is done with, wherever the app was opened from.
         launcher.clearSearch()
@@ -3742,7 +3770,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             )
             setLayout(added.first.replace(placed), commit = true)
             windowOpenMs[placed.id] = SystemClock.uptimeMillis()
-            panels[placed.id] = PanelGl(placed, f, wideView.isOn(sp.packageName), appDensity.smallestDp(sp.packageName))
+            panels[placed.id] = PanelGl(placed, f, wideView.isOn(sp.packageName), appDensity.smallestDp(sp.packageName), appTextSize.percent(sp.packageName))
             opened++
         }
         spaceNotice = "${preset.name}: $opened windows"
@@ -4730,6 +4758,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val onFrame = hover?.frame == true
             if (look.ringAlpha > 0.01f) drawDisc(vp, at, CURSOR_RING * look.ringScale * (if (onFrame) 1.35f else 1f), Look.rgba(if (onFrame) Look.ACCENT else colour, 0.9f * a * look.ringAlpha), GlKit.CIRCLE_RING, CURSOR_RING_INNER)
             drawRipple(vp, at, pointer.pressing, a)
+            // 1.2.3 (issue 53): over a resize handle or a grab band, the accent fills the ring while the trackpad's finger
+            // is held, so the hold that starts a resize or a move shows before it fires.
+            if (!pointer.pressing) {
+                val fill = com.hayeco.flipspaces.core.spatial.HoldFill.of(SpaceSession.padHold, hover?.zone, onFrame)
+                if (fill > 0f) drawDisc(vp, at, CURSOR_RING * look.ringScale * fill, Look.rgba(Look.ACCENT, 0.85f * a), GlKit.CIRCLE_DOT)
+            }
             drawDisc(vp, at, CURSOR_DOT * look.dotScale, Look.rgba(colour, a), GlKit.CIRCLE_DOT, CURSOR_DOT_CORE)
             return
         }

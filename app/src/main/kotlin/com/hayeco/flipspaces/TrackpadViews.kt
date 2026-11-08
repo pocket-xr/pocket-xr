@@ -763,6 +763,18 @@ interface PadHost {
     /** 1.2.3 (issue 59): a game key went down or up. */
     fun gameKey(change: com.hayeco.flipspaces.core.pointer.GameKeyChange)
 
+    /** 1.2.3 (issue 52): the lock overlay now, black, at the lowest brightness, the screen kept on. */
+    fun pocketMode()
+
+    /** 1.2.3 (issue 50): the Menu's Control panel row: opens it in the glasses as three fingers down do. */
+    fun openControlPanel()
+
+    /** 1.2.3 (issue 57): the focused window's label and its app's text size in percent, or null with no window focused. */
+    fun focusedTextSize(): Pair<String, Int>?
+
+    /** 1.2.3 (issue 57): the focused window's app's text size [steps] steps up or down; 0 puts it back to 100 %. */
+    fun textSizeStep(steps: Int)
+
     /** 1.1.10: Exit Pocket XR ([AppExit]): the Space, the services and every screen closed. */
     fun exitApp()
 
@@ -1992,11 +2004,23 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             }.apply { tag = MENU_UPDATE })
             functions.addView(c.divider(20f))
         }
+        // 1.2.3 (issue 50: three finger gestures "don't work" on phones that keep them for screenshots): the Control panel
+        // without a swipe. Your apps are Home, and Back is its own button.
+        functions.addView(row(R.drawable.ic_control_panel, com.hayeco.flipspaces.core.pointer.IntroPages.CONTROL_PANEL_ROW) {
+            closeDrawer()
+            host.openControlPanel()
+        })
+        functions.addView(c.divider(20f))
         functions.addView(row(R.drawable.ic_back_home, "Go to the phone's home screen") { host.returnHome() })
         // 0.5.87: the app's settings home (MainActivity), which the app's icon skips for the trackpad (0.5.37). 0.5.103
         // (Mike: "put Pocket XR Settings back where it was, i dont like it as its own tile"): back in this card.
         functions.addView(c.divider(20f))
         functions.addView(row(R.drawable.ic_settings_sliders, "Pocket XR Settings") { host.openSettings() })
+        // 1.2.3 (issue 57): the focused window's text size, remembered for its app.
+        host.focusedTextSize()?.let { (label, percent) ->
+            functions.addView(c.divider(20f))
+            functions.addView(textSizeRow(label, percent))
+        }
         // 1.1.9 (issue 31): the glasses' own settings the Space needs. 1.1.16 (issue 12): with the head turn check, for
         // any glasses known (plugged in or last used), at any time.
         if (host.glassesCheckAvailable()) {
@@ -2028,6 +2052,12 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         functions.addView(row(R.drawable.ic_unlock_icon, "Unlock phone") {
             closeDrawer()
             host.unlockPhone()
+        })
+        // 1.2.3 (issue 52): the phone in a pocket while the glasses keep running.
+        functions.addView(c.divider(20f))
+        functions.addView(row(R.drawable.ic_cover_lock, com.hayeco.flipspaces.core.pointer.PocketMode.MENU_ROW, subtitle = com.hayeco.flipspaces.core.pointer.PocketMode.MENU_SUBTITLE) {
+            closeDrawer()
+            host.pocketMode()
         })
         drawerBody.addView(functions, cardParams(if (koFi) 12f else 25f))
 
@@ -2543,6 +2573,46 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         v.foreground = android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x1FFFFFFF), null, mask)
     }
 
+    /**
+     * 1.2.3 (issue 57: "a density slider for each window ... remembered per app"): the focused window's text size, with
+     * smaller and larger steps and a reset to 100 %. Smaller fits more on the window (a browser's desktop layout), larger
+     * makes text easier to read; the window keeps its size and place.
+     */
+    private fun textSizeRow(label: String, percent: Int): View {
+        val c = context
+        return LinearLayout(c).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(c.dp(20f), c.dp(14f), c.dp(20f), c.dp(14f))
+            addView(c.padText("Text size in $label", 14f, WHITE))
+            addView(c.padText("Smaller fits more on the window. Remembered for this app.", 12f, TEXT_99), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(2f) })
+            val buttons = LinearLayout(c).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                fun key(text: String, enabled: Boolean, steps: Int) = c.padText(text, 16f, if (enabled) WHITE else 0xFF666666.toInt(), bold = true).apply {
+                    gravity = Gravity.CENTER
+                    setBackgroundResource(R.drawable.bg_drawer_tile)
+                    isEnabled = enabled
+                    if (enabled) pressLight(this, 14f)
+                    contentDescription = when {
+                        steps < 0 -> "Smaller text"
+                        steps > 0 -> "Larger text"
+                        else -> "Text size back to 100 %"
+                    }
+                    setOnClickListener {
+                        tick(this)
+                        host.textSizeStep(steps)
+                    }
+                }
+                val minus = com.hayeco.flipspaces.core.spatial.AppTextSize.MIN
+                val plus = com.hayeco.flipspaces.core.spatial.AppTextSize.MAX
+                addView(key("A-", percent > minus, -1), LinearLayout.LayoutParams(0, c.dp(44f), 1f))
+                addView(key("$percent %", percent != com.hayeco.flipspaces.core.spatial.AppTextSize.DEFAULT, 0), LinearLayout.LayoutParams(0, c.dp(44f), 1.2f).apply { marginStart = c.dp(8f); marginEnd = c.dp(8f) })
+                addView(key("A+", percent < plus, 1), LinearLayout.LayoutParams(0, c.dp(44f), 1f))
+            }
+            addView(buttons, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(12f) })
+        }
+    }
+
     /** 0.5.73: the trackpad's light tick on a Menu press, as its other keys have. */
     private fun tick(v: View) {
         v.performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK)
@@ -2798,18 +2868,27 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     // ---- the screen-lock overlay ----
 
-    fun showLock(show: Boolean) {
+    /** 1.2.3 (issue 52): the lock is up as Pocket mode ([com.hayeco.flipspaces.core.pointer.PocketMode]). */
+    var pocket = false
+        private set
+
+    fun showLock(show: Boolean, pocket: Boolean = false) {
+        this.pocket = show && pocket
         lock.visibility = if (show) View.VISIBLE else View.GONE
+        lockText.text = com.hayeco.flipspaces.core.pointer.PocketMode.hint(this.pocket)
         lockProgress(0f, false)
         requestLayout()
     }
 
     val locked: Boolean get() = lock.visibility == View.VISIBLE
 
-    /** The hold's progress: the gradient brightens while pressed, the icon fills in. */
+    /** The hold's progress: the gradient brightens while pressed, the icon fills in. 1.2.3: in Pocket mode all black until held. */
     fun lockProgress(progress: Float, pressed: Boolean) {
+        val hint = com.hayeco.flipspaces.core.pointer.PocketMode.showsHint(pocket, pressed)
+        lockGlow.visibility = if (hint) View.VISIBLE else View.INVISIBLE
+        lockText.visibility = if (hint) View.VISIBLE else View.INVISIBLE
         lockGradient.colors = intArrayOf(0x00FFFFFF, if (pressed) 0x40FFFFFF else 0x33FFFFFF)
-        lockIcon.alpha = 0.6f + 0.4f * progress
+        lockIcon.alpha = com.hayeco.flipspaces.core.pointer.PocketMode.iconAlpha(pocket, progress, pressed)
         lockIcon.scaleX = 1f + 0.1f * progress
         lockIcon.scaleY = 1f + 0.1f * progress
     }

@@ -1583,8 +1583,9 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                     if (s.phase == Phase.END) main.grab = null
                 }
                 is PadTurning -> {
-                    out += SpaceAction.TurnView((s.dx - g.lastDx) * PadWindowMath.ORBIT_DEG_PER_UNIT)
-                    g.lastDx = s.dx
+                    val along = OffWindowScroll.padAlong(s.dx, s.dy)
+                    out += SpaceAction.TurnView((along - g.lastDx) * PadWindowMath.ORBIT_DEG_PER_UNIT)
+                    g.lastDx = along
                     if (s.phase == Phase.END) main.grab = null
                 }
                 // 0.5.25: one page width a pad unit, y down as on the panel.
@@ -2372,8 +2373,9 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                         if (s.phase == Phase.END) main.grab = null
                     }
                     is Turning -> {
-                        out += SpaceAction.TurnView((s.dx - g.lastDx) * settings.turnDegPerPx)
-                        g.lastDx = s.dx
+                        val along = OffWindowScroll.along(s.dx, s.dy)
+                        out += SpaceAction.TurnView((along - g.lastDx) * settings.turnDegPerPx)
+                        g.lastDx = along
                         if (s.phase == Phase.END) main.grab = null
                     }
                     LauncherScroll -> {
