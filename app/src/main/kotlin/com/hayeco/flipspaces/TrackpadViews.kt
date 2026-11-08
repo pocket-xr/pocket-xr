@@ -754,6 +754,12 @@ interface PadHost {
     /** Unlock the phone (a keyguard dismiss, its PIN on the cover where it is secure). */
     fun unlockPhone()
 
+    /** 1.2.3 (issue 57): the focused window's label and its app's text size in percent, or null with no window focused. */
+    fun focusedTextSize(): Pair<String, Int>?
+
+    /** 1.2.3 (issue 57): the focused window's app's text size [steps] steps up or down; 0 puts it back to 100 %. */
+    fun textSizeStep(steps: Int)
+
     /** 1.1.10: Exit Pocket XR ([AppExit]): the Space, the services and every screen closed. */
     fun exitApp()
 
@@ -1938,6 +1944,11 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         // (Mike: "put Pocket XR Settings back where it was, i dont like it as its own tile"): back in this card.
         functions.addView(c.divider(20f))
         functions.addView(row(R.drawable.ic_settings_sliders, "Pocket XR Settings") { host.openSettings() })
+        // 1.2.3 (issue 57): the focused window's text size, remembered for its app.
+        host.focusedTextSize()?.let { (label, percent) ->
+            functions.addView(c.divider(20f))
+            functions.addView(textSizeRow(label, percent))
+        }
         // 1.1.9 (issue 31): the glasses' own settings the Space needs. 1.1.16 (issue 12): with the head turn check, for
         // any glasses known (plugged in or last used), at any time.
         if (host.glassesCheckAvailable()) {
@@ -2473,6 +2484,46 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             cornerRadius = context.dpf(radiusDp)
         }
         v.foreground = android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(0x1FFFFFFF), null, mask)
+    }
+
+    /**
+     * 1.2.3 (issue 57: "a density slider for each window ... remembered per app"): the focused window's text size, with
+     * smaller and larger steps and a reset to 100 %. Smaller fits more on the window (a browser's desktop layout), larger
+     * makes text easier to read; the window keeps its size and place.
+     */
+    private fun textSizeRow(label: String, percent: Int): View {
+        val c = context
+        return LinearLayout(c).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(c.dp(20f), c.dp(14f), c.dp(20f), c.dp(14f))
+            addView(c.padText("Text size in $label", 14f, WHITE))
+            addView(c.padText("Smaller fits more on the window. Remembered for this app.", 12f, TEXT_99), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(2f) })
+            val buttons = LinearLayout(c).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                fun key(text: String, enabled: Boolean, steps: Int) = c.padText(text, 16f, if (enabled) WHITE else 0xFF666666.toInt(), bold = true).apply {
+                    gravity = Gravity.CENTER
+                    setBackgroundResource(R.drawable.bg_drawer_tile)
+                    isEnabled = enabled
+                    if (enabled) pressLight(this, 14f)
+                    contentDescription = when {
+                        steps < 0 -> "Smaller text"
+                        steps > 0 -> "Larger text"
+                        else -> "Text size back to 100 %"
+                    }
+                    setOnClickListener {
+                        tick(this)
+                        host.textSizeStep(steps)
+                    }
+                }
+                val minus = com.hayeco.flipspaces.core.spatial.AppTextSize.MIN
+                val plus = com.hayeco.flipspaces.core.spatial.AppTextSize.MAX
+                addView(key("A-", percent > minus, -1), LinearLayout.LayoutParams(0, c.dp(44f), 1f))
+                addView(key("$percent %", percent != com.hayeco.flipspaces.core.spatial.AppTextSize.DEFAULT, 0), LinearLayout.LayoutParams(0, c.dp(44f), 1.2f).apply { marginStart = c.dp(8f); marginEnd = c.dp(8f) })
+                addView(key("A+", percent < plus, 1), LinearLayout.LayoutParams(0, c.dp(44f), 1f))
+            }
+            addView(buttons, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(12f) })
+        }
     }
 
     /** 0.5.73: the trackpad's light tick on a Menu press, as its other keys have. */
