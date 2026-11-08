@@ -136,14 +136,19 @@ class JoyConPose(@Suppress("unused") private val right: Boolean) {
         }
     }
 
-    /** Points the Joy-Con's forward at the head's forward, leaving its pitch and roll alone. */
-    fun recentre(head: Quat) {
+    /**
+     * Points the Joy-Con's forward at the head's forward, leaving its pitch and roll alone. Returns how far it was out,
+     * radians (0 when it is held too steeply to tell).
+     */
+    fun recentre(head: Quat): Float {
         val f = attitude.rotate(FORWARD)
-        if (horizontal(f) < MIN_LEVEL) return
+        if (horizontal(f) < MIN_LEVEL) return 0f
+        val was = orientation.rotate(FORWARD)
         val turn = yawOf(head.rotate(FORWARD)) - yawOf(f)
         yawFix = Quat.axisAngle(Vec3.UP, turn)
         aligned = true
         yawErrorAvg = 0f
+        return wrap(yawOf(head.rotate(FORWARD)) - yawOf(was))
     }
 
     /**

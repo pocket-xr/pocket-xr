@@ -33,6 +33,8 @@ object OpenXrPads {
         var started = false
         var recentreHeld = false
         var restored = false
+        var wasAtRest = false
+        var lastRecentreNs = 0L
         var lastLogNs = 0L
         var lagSumNs = 0L
         var lagCount = 0
@@ -40,12 +42,31 @@ object OpenXrPads {
     }
 
     @Volatile private var pads = arrayOf(Pad(false), Pad(true))
+
+    /**
+     * One Joy-Con's state, ready for a runtime: [hand] 0 left, 1 right, at [sampleNs]; position (metres) and orientation
+     * from the arm, angular velocity and velocity in the world; buttons and touches as [PocketFeed.nativeController]
+     * takes them; trigger and squeeze 0 to 1; the stick shaped.
+     */
+    fun interface Sink {
+        fun state(hand: Int, sampleNs: Long, p: Vec3, q: Quat, w: Vec3, v: Vec3, buttons: Int, trigger: Float, squeeze: Float, stickX: Float, stickY: Float)
+    }
+
+    /** Where the state goes instead of Monado: PC VR's own ALVR client ([com.hayeco.flipspaces.pcvr.AlvrBridge]). */
+    @Volatile var sink: Sink? = null
     @Volatile private var app: Context? = null
 
     /** A game is starting: fresh Joy-Cons, with the drift each learned last time. */
     fun start(context: Context) {
         app = context.applicationContext
         pads = arrayOf(Pad(false), Pad(true))
+    }
+
+    private fun keep(pad: Pad) {
+        val context = app ?: return
+        val b = pad.pose.biasRadS
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("bias_${pad.name}", "${b.x},${b.y},${b.z}").apply()
+        Log.i(TAG, "Joy-Con ${pad.name}: rested, drift %.2f degrees a second measured and kept".format(java.util.Locale.ROOT, Math.toDegrees(b.length.toDouble())))
     }
 
     /** The game ended: keep what each Joy-Con learned about its drift. */
@@ -112,7 +133,19 @@ object OpenXrPads {
 
             val head = HeadTracker.gamePose(stamp.sampleNs) ?: Quat.IDENTITY
             val recentre = buttons and JoyConReader.RECENTRE != 0
-            if (recentre && !pad.recentreHeld) pad.pose.recentre(head) else pad.pose.align(head, dt)
+            if (recentre && !pad.recentreHeld) {
+                val out = Math.toDegrees(pad.pose.recentre(head).toDouble())
+                val since = if (pad.lastRecentreNs == 0L) 0.0 else (arrivedNs - pad.lastRecentreNs) / 1e9
+                pad.lastRecentreNs = arrivedNs
+                Log.i(TAG, "Joy-Con ${pad.name} recentred: was %.1f degrees out, %.0f s after the last recentre, drift %s learned".format(
+                    java.util.Locale.ROOT, out, since, if (pad.pose.biasLearned) "" else "not yet"))
+            } else {
+                pad.pose.align(head, dt)
+            }
+            // A rest just ended with the drift measured: keep it now, so the next session starts true too.
+            val atRest = pad.pose.atRest
+            if (pad.wasAtRest && !atRest && pad.pose.biasLearned) keep(pad)
+            pad.wasAtRest = atRest
             pad.recentreHeld = recentre
 
             val q = pad.pose.orientation
@@ -134,17 +167,23 @@ object OpenXrPads {
             if (stickTouched) touches = touches or 0x80
             if (!primary && !secondary && !stickTouched) touches = touches or 0x100
 
-            PocketFeed.nativeController(
-                hand, stamp.sampleNs,
-                p.x, p.y, p.z,
-                q.x, q.y, q.z, q.w,
-                w.x, w.y, w.z,
-                v.x, v.y, v.z,
-                (buttons and 0x0F) or touches,
-                if (trigger) 1f else 0f,
-                if (buttons and JoyConReader.SQUEEZE != 0) 1f else 0f,
-                sx, sy,
-            )
+            val out = sink
+            if (out != null) {
+                out.state(hand, stamp.sampleNs, p, q, w, v, (buttons and 0x0F) or touches, if (trigger) 1f else 0f,
+                    if (buttons and JoyConReader.SQUEEZE != 0) 1f else 0f, sx, sy)
+            } else {
+                PocketFeed.nativeController(
+                    hand, stamp.sampleNs,
+                    p.x, p.y, p.z,
+                    q.x, q.y, q.z, q.w,
+                    w.x, w.y, w.z,
+                    v.x, v.y, v.z,
+                    (buttons and 0x0F) or touches,
+                    if (trigger) 1f else 0f,
+                    if (buttons and JoyConReader.SQUEEZE != 0) 1f else 0f,
+                    sx, sy,
+                )
+            }
 
             pad.lagSumNs += arrivedNs - readNs
             pad.lagCount++

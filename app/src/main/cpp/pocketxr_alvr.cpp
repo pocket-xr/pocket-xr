@@ -15,6 +15,7 @@
 #include <android/log.h>
 #include <android/hardware_buffer.h>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <mutex>
 #include <vector>
@@ -351,6 +352,149 @@ JNIEXPORT jlong JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativePredict
 JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeSubmitFrame(
     JNIEnv *, jclass, jlong timestamp_ns, jlong vsync_queue_ns) {
     alvr_report_submit(static_cast<uint64_t>(timestamp_ns), static_cast<uint64_t>(vsync_queue_ns));
+}
+
+namespace {
+// Quest Touch inputs, the profile ALVR presents to SteamVR. Index 0 left, 1 right.
+struct HandIds {
+    uint64_t device, primary_click, primary_touch, secondary_click, secondary_touch, menu_click, squeeze_value,
+        trigger_value, trigger_touch, stick_x, stick_y, stick_click, stick_touch, thumbrest_touch;
+};
+HandIds g_hand[2];
+bool g_hand_ids_ready = false;
+float g_last[2][14];
+bool g_last_valid[2] = {false, false};
+
+void make_hand_ids() {
+    if (g_hand_ids_ready) return;
+    const char *side[2] = {"/user/hand/left", "/user/hand/right"};
+    const char *primary[2] = {"x", "a"};
+    const char *secondary[2] = {"y", "b"};
+    const char *menu[2] = {"menu", "system"};
+    char path[96];
+    for (int h = 0; h < 2; ++h) {
+        auto id = [&](const char *fmt, const char *part) {
+            snprintf(path, sizeof(path), fmt, side[h], part);
+            return alvr_path_string_to_id(path);
+        };
+        g_hand[h].device = alvr_path_string_to_id(side[h]);
+        g_hand[h].primary_click = id("%s/input/%s/click", primary[h]);
+        g_hand[h].primary_touch = id("%s/input/%s/touch", primary[h]);
+        g_hand[h].secondary_click = id("%s/input/%s/click", secondary[h]);
+        g_hand[h].secondary_touch = id("%s/input/%s/touch", secondary[h]);
+        g_hand[h].menu_click = id("%s/input/%s/click", menu[h]);
+        g_hand[h].squeeze_value = id("%s/input/%s", "squeeze/value");
+        g_hand[h].trigger_value = id("%s/input/%s", "trigger/value");
+        g_hand[h].trigger_touch = id("%s/input/%s", "trigger/touch");
+        g_hand[h].stick_x = id("%s/input/%s", "thumbstick/x");
+        g_hand[h].stick_y = id("%s/input/%s", "thumbstick/y");
+        g_hand[h].stick_click = id("%s/input/%s", "thumbstick/click");
+        g_hand[h].stick_touch = id("%s/input/%s", "thumbstick/touch");
+        g_hand[h].thumbrest_touch = id("%s/input/%s", "thumbrest/touch");
+    }
+    g_hand_ids_ready = true;
+}
+
+void send_binary(uint64_t id, bool on) {
+    AlvrButtonValue v{};
+    v.tag = ALVR_BUTTON_VALUE_BINARY;
+    v.binary = on;
+    alvr_send_button(id, v);
+}
+
+void send_scalar(uint64_t id, float value) {
+    AlvrButtonValue v{};
+    v.tag = ALVR_BUTTON_VALUE_SCALAR;
+    v.scalar = value;
+    alvr_send_button(id, v);
+}
+}  // namespace
+
+/** After StreamingStarted: both hands are Quest Touch controllers, with the inputs a Joy-Con can give. */
+JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeSendControllerProfile(JNIEnv *, jclass) {
+    make_hand_ids();
+    const uint64_t profile = alvr_path_string_to_id("/interaction_profiles/oculus/touch_controller");
+    // One message with both hands' inputs: the PC builds its button mapping from the latest message alone, so a
+    // message per hand left the first hand's buttons unmapped (8 November 2026).
+    uint64_t inputs[26];
+    int n = 0;
+    for (int h = 0; h < 2; ++h) {
+        const HandIds &i = g_hand[h];
+        const uint64_t one[] = {i.primary_click, i.primary_touch, i.secondary_click, i.secondary_touch, i.menu_click,
+                                i.squeeze_value, i.trigger_value, i.trigger_touch, i.stick_x, i.stick_y,
+                                i.stick_click, i.stick_touch, i.thumbrest_touch};
+        for (uint64_t id : one) inputs[n++] = id;
+        g_last_valid[h] = false;
+    }
+    alvr_send_active_interaction_profile(g_hand[0].device, profile, inputs, static_cast<uint64_t>(n));
+}
+
+/**
+ * One Joy-Con's buttons, as Pocket XR's pads give them: [buttons] 1 primary, 2 secondary, 4 menu, 8 stick click, touches
+ * 0x10 primary, 0x20 secondary, 0x40 trigger, 0x80 stick, 0x100 thumb rest; [trigger] and [squeeze] 0 to 1; the stick
+ * -1 to 1. Only changes are sent.
+ */
+JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeSendButtons(
+    JNIEnv *, jclass, jint hand, jint buttons, jfloat trigger, jfloat squeeze, jfloat stick_x, jfloat stick_y) {
+    if (hand < 0 || hand > 1) return;
+    make_hand_ids();
+    const HandIds &i = g_hand[hand];
+    const float now[14] = {
+        (buttons & 1) ? 1.f : 0.f, (buttons & 0x10) ? 1.f : 0.f, (buttons & 2) ? 1.f : 0.f, (buttons & 0x20) ? 1.f : 0.f,
+        (buttons & 4) ? 1.f : 0.f, squeeze, trigger, (buttons & 0x40) ? 1.f : 0.f, stick_x, stick_y,
+        (buttons & 8) ? 1.f : 0.f, (buttons & 0x80) ? 1.f : 0.f, (buttons & 0x100) ? 1.f : 0.f, 0.f};
+    const uint64_t ids[13] = {i.primary_click, i.primary_touch, i.secondary_click, i.secondary_touch, i.menu_click,
+                              i.squeeze_value, i.trigger_value, i.trigger_touch, i.stick_x, i.stick_y, i.stick_click,
+                              i.stick_touch, i.thumbrest_touch};
+    const bool scalar[13] = {false, false, false, false, false, true, true, false, true, true, false, false, false};
+    for (int k = 0; k < 13; ++k) {
+        if (g_last_valid[hand] && g_last[hand][k] == now[k]) continue;
+        if (scalar[k]) send_scalar(ids[k], now[k]); else send_binary(ids[k], now[k] > 0.5f);
+        g_last[hand][k] = now[k];
+    }
+    g_last_valid[hand] = true;
+}
+
+/**
+ * The head and both hands at [target_ns], one tracking packet. [head] as for nativeSendHead (10 floats). [hands] per hand
+ * (left first): valid (1 or 0), orientation x, y, z, w, position x, y, z, angular velocity x, y, z, velocity x, y, z
+ * (14 floats each, 28 in all), in the play space.
+ */
+JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeSendTracking(
+    JNIEnv *env, jclass, jlong target_ns, jfloatArray head, jfloatArray hands) {
+    make_hand_ids();
+    float h[10];
+    float d[28];
+    env->GetFloatArrayRegion(head, 0, 10, h);
+    env->GetFloatArrayRegion(hands, 0, 28, d);
+    AlvrDeviceMotion m[3]{};
+    uint64_t n = 0;
+    m[n].device_id = g_head_id;
+    m[n].pose.orientation = quat_of(h);
+    m[n].pose.position[0] = h[4];
+    m[n].pose.position[1] = h[5];
+    m[n].pose.position[2] = h[6];
+    m[n].angular_velocity[0] = h[7];
+    m[n].angular_velocity[1] = h[8];
+    m[n].angular_velocity[2] = h[9];
+    ++n;
+    for (int k = 0; k < 2; ++k) {
+        const float *p = d + 14 * k;
+        if (p[0] < 0.5f) continue;
+        m[n].device_id = g_hand[k].device;
+        m[n].pose.orientation = AlvrQuat{p[1], p[2], p[3], p[4]};
+        m[n].pose.position[0] = p[5];
+        m[n].pose.position[1] = p[6];
+        m[n].pose.position[2] = p[7];
+        m[n].angular_velocity[0] = p[8];
+        m[n].angular_velocity[1] = p[9];
+        m[n].angular_velocity[2] = p[10];
+        m[n].linear_velocity[0] = p[11];
+        m[n].linear_velocity[1] = p[12];
+        m[n].linear_velocity[2] = p[13];
+        ++n;
+    }
+    alvr_send_tracking(static_cast<uint64_t>(target_ns), m, n, nullptr, nullptr);
 }
 
 }  // extern "C"

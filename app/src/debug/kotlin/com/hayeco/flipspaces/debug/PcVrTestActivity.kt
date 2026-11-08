@@ -11,7 +11,11 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
 import android.view.WindowManager
+import com.hayeco.flipspaces.core.spatial.Quat
+import com.hayeco.flipspaces.core.spatial.Vec3
+import com.hayeco.flipspaces.openxr.OpenXrPads
 import com.hayeco.flipspaces.pcvr.AlvrBridge
+import com.hayeco.flipspaces.spatial.PanelHost
 import com.hayeco.flipspaces.spatial.HeadTracker
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -49,6 +53,16 @@ class PcVrTestActivity : Activity() {
             acquire()
         }
         HeadTracker.acquire(this)
+        // Joy-Cons: the same pose, arm and buttons as for games, sent to this ALVR client instead of Monado.
+        OpenXrPads.start(this)
+        OpenXrPads.sink = OpenXrPads.Sink { hand, sampleNs, p, q, w, v, buttons, trigger, squeeze, sx, sy ->
+            pads.store(hand, sampleNs, p, q, w, v)
+            if (pads.streaming) AlvrBridge.sendButtons(hand, buttons, trigger, squeeze, sx, sy)
+        }
+        // The Joy-Con reader lives in Pocket XR's panel service, which the Space normally connects.
+        PanelHost.onReady += joyConsOn
+        PanelHost.connect(this)
+        PanelHost.joyCons(true)
         val (vw, vh) = AlvrBridge.viewSize(MARGIN)
         AlvrBridge.init(this, vw, vh, 60f)
         view = GLSurfaceView(this).apply {
@@ -76,7 +90,65 @@ class PcVrTestActivity : Activity() {
 
     private var presentation: Presentation? = null
 
+    /** The latest state of each Joy-Con, from the panel service's thread, read on the GL thread. */
+    private class Pads {
+        @Volatile var streaming = false
+        private val lock = Any()
+        private val sampleNs = LongArray(2)
+        private val state = Array(2) { FloatArray(13) }
+
+        fun store(hand: Int, ns: Long, p: Vec3, q: Quat, w: Vec3, v: Vec3) {
+            if (hand !in 0..1) return
+            synchronized(lock) {
+                sampleNs[hand] = ns
+                val s = state[hand]
+                s[0] = q.x; s[1] = q.y; s[2] = q.z; s[3] = q.w
+                s[4] = p.x; s[5] = p.y; s[6] = p.z
+                s[7] = w.x; s[8] = w.y; s[9] = w.z
+                s[10] = v.x; s[11] = v.y; s[12] = v.z
+            }
+        }
+
+        /**
+         * Both hands at [targetNs] into [out] (14 floats each, as AlvrBridge.sendTracking takes): carried forward by
+         * their turn and speed, at most [MAX_HAND_AHEAD_NS] past the newest sample (a guess beyond that does more harm),
+         * in the play space with the eyes at [eyeHeight]. A hand silent for [HAND_STALE_NS] is not sent.
+         */
+        fun at(targetNs: Long, nowNs: Long, eyeHeight: Float, out: FloatArray) {
+            synchronized(lock) {
+                for (h in 0..1) {
+                    val o = 14 * h
+                    val ns = sampleNs[h]
+                    if (ns == 0L || nowNs - ns > HAND_STALE_NS) {
+                        out[o] = 0f
+                        continue
+                    }
+                    val s = state[h]
+                    val dt = (minOf(targetNs - ns, MAX_HAND_AHEAD_NS).coerceAtLeast(0L)) / 1e9f
+                    val q = Quat(s[3], s[0], s[1], s[2])
+                    val turn = Quat.fromGyro(Vec3(s[7], s[8], s[9]), dt)
+                    val r = (turn * q).normalized()
+                    out[o] = 1f
+                    out[o + 1] = r.x; out[o + 2] = r.y; out[o + 3] = r.z; out[o + 4] = r.w
+                    out[o + 5] = s[4] + s[10] * dt
+                    out[o + 6] = s[5] + s[11] * dt + eyeHeight
+                    out[o + 7] = s[6] + s[12] * dt
+                    for (k in 0..5) out[o + 8 + k] = s[7 + k]
+                }
+            }
+        }
+    }
+
+    private val pads = Pads()
+    private val joyConsOn: () -> Unit = { PanelHost.joyCons(true) }
+
     override fun onDestroy() {
+        if (AlvrBridge.available) {
+            PanelHost.onReady -= joyConsOn
+            PanelHost.joyCons(false)
+            OpenXrPads.sink = null
+            OpenXrPads.stop()
+        }
         presentation?.dismiss()
         if (AlvrBridge.available) AlvrBridge.destroy()
         multicast?.release()
@@ -103,6 +175,7 @@ class PcVrTestActivity : Activity() {
         private var decoderMade = false
         private val event = FloatArray(4)
         private val head = FloatArray(10)
+        private val hands = FloatArray(28)
         private val sentOrientation = floatArrayOf(0f, 0f, 0f, 1f)
         private val nowOrientation = floatArrayOf(0f, 0f, 0f, 1f)
         private val framePose = FloatArray(12).also { it[3] = 1f }
@@ -113,11 +186,22 @@ class PcVrTestActivity : Activity() {
         private var newFrames = 0
         private var drawn = 0
         private var lastLogMs = 0L
-        /** The glasses' own views (what each eye's half shows) and the wider views the PC is asked to draw. */
-        private val views by lazy { AlvrBridge.views(this@PcVrTestActivity) }
-        private val wideViews by lazy { AlvrBridge.views(this@PcVrTestActivity, MARGIN) }
-        /** The glasses' views as tangents: left, right, up, down (left and down negative), left eye first. */
-        private val tans by lazy { FloatArray(8) { tan(views.fovs[it].toDouble()).toFloat() } }
+        /** The views each eye's half shows (zoomed out by [PcVrTuning.zoom]) and the wider views the PC is asked to draw. */
+        private var zoom = 0f
+        private lateinit var views: AlvrBridge.Views
+        private lateinit var wideViews: AlvrBridge.Views
+        /** The shown views as tangents: left, right, up, down (left and down negative), left eye first. */
+        private val tans = FloatArray(8)
+
+        /** On a new zoom: new views, sent to the PC on the next frame. Frames already drawn carry their own view. */
+        private fun applyZoom() {
+            zoom = PcVrTuning.zoom
+            views = AlvrBridge.views(this@PcVrTestActivity, 0f, zoom)
+            wideViews = AlvrBridge.views(this@PcVrTestActivity, MARGIN, zoom)
+            for (i in 0 until 8) tans[i] = tan(views.fovs[i].toDouble()).toFloat()
+            viewsSent = false
+            Log.i(TAG, "PC VR zoom ${"%.2f".format(java.util.Locale.ROOT, zoom)}: ${views.line()}")
+        }
 
         override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
             val t = IntArray(1)
@@ -135,6 +219,7 @@ class PcVrTestActivity : Activity() {
             quad = ids[0]
             GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, quad)
             GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, verts.size * 4, buf, GLES30.GL_STATIC_DRAW)
+            applyZoom()
             Log.i(TAG, "PC VR proof: each frame copied once, then turned to the head every refresh; glasses ${views.line()}; the PC draws ${(MARGIN * 100).toInt()} % wider: ${wideViews.line()}")
         }
 
@@ -156,7 +241,9 @@ class PcVrTestActivity : Activity() {
                 head[0] = sentOrientation[0]; head[1] = sentOrientation[1]; head[2] = sentOrientation[2]; head[3] = sentOrientation[3]
                 head[4] = 0f; head[5] = EYE_HEIGHT_M; head[6] = 0f
                 if (q0 != null && q1 != null) turnRate(q0.x, q0.y, q0.z, q0.w, q1.x, q1.y, q1.z, q1.w, head) else { head[7] = 0f; head[8] = 0f; head[9] = 0f }
-                AlvrBridge.sendHead(target, head)
+                pads.at(target, now, EYE_HEIGHT_M, hands)
+                AlvrBridge.sendTracking(target, head, hands)
+                if (zoom != PcVrTuning.zoom) applyZoom()
                 if (!viewsSent) {
                     AlvrBridge.sendViewParams(wideViews)
                     viewsSent = true
@@ -199,11 +286,14 @@ class PcVrTestActivity : Activity() {
                         streamH = event[1].toInt()
                         Log.i(TAG, "streaming started: ${streamW}x$streamH per eye, refresh hint ${event[2]} Hz, foveation ${event[3] > 0f}")
                         streaming = true
+                        pads.streaming = true
                         viewsSent = false
+                        AlvrBridge.sendControllerProfile()
                     }
                     AlvrBridge.EVENT_STREAMING_STOPPED -> {
                         Log.i(TAG, "streaming stopped")
                         streaming = false
+                        pads.streaming = false
                         hasFrame = false
                         AlvrBridge.destroyDecoder()
                         decoderMade = false
@@ -322,6 +412,10 @@ class PcVrTestActivity : Activity() {
         /** Until ALVR has measured its delay. */
         const val DEFAULT_PREDICT_NS = 60_000_000L
         const val MAX_PREDICT_NS = 150_000_000L
+        /** A Joy-Con is carried forward at most this far past its newest sample. */
+        const val MAX_HAND_AHEAD_NS = 40_000_000L
+        /** A Joy-Con silent this long is not sent (ALVR then shows it as lost). */
+        const val HAND_STALE_NS = 150_000_000L
         /** Two predicted poses this far apart give the head's turn rate. */
         const val RATE_STEP_NS = 8_000_000L
         /** From drawing to light on the glasses: about a frame and a half at 60 Hz. */
@@ -398,4 +492,10 @@ class PcVrTestActivity : Activity() {
             }
         """
     }
+}
+
+/** Live settings for the PC VR test, from DebugReceiver's "pcvr" command. */
+object PcVrTuning {
+    /** View tangents scaled by this: 1 is the glasses' true view, 1.3 shows 30 % more around you. */
+    @Volatile var zoom = 1.3f
 }

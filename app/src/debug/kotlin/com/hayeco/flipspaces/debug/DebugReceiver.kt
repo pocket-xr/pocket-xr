@@ -187,6 +187,10 @@ class DebugReceiver : BroadcastReceiver() {
                 com.hayeco.flipspaces.openxr.OpenXrHeadFeed.smooth = intent.getBooleanExtra("on", true)
                 Log.i(TAG, "game head smoothing ${if (com.hayeco.flipspaces.openxr.OpenXrHeadFeed.smooth) "on" else "off"}")
             }
+            "pcvr" -> {
+                PcVrTuning.zoom = intent.getFloatExtra("zoom", PcVrTuning.zoom).coerceIn(1f, 2f)
+                Log.i(TAG, "PC VR zoom asked: ${PcVrTuning.zoom}")
+            }
             "gameclock" -> {
                 com.hayeco.flipspaces.spatial.SpaceRenderer.feedGameClock = intent.getBooleanExtra("on", true)
                 Log.i(TAG, "game clock to Monado ${if (com.hayeco.flipspaces.spatial.SpaceRenderer.feedGameClock) "on" else "off"}")

@@ -46,13 +46,19 @@ object AlvrBridge {
      * The views widened by [margin] of each eye's width and height on every side, at the same sharpness: what Pocket XR
      * asks the PC to draw, so a head turned since the PC's pose still has picture to turn into ([viewSize]).
      */
-    fun views(context: Context, margin: Float): Views {
+    fun views(context: Context, margin: Float): Views = views(context, margin, 1f)
+
+    /**
+     * As [views], zoomed out by [zoom]: every view tangent scaled by it, so the PC draws a wider view that the glasses
+     * show in the same space. Like a higher field of view in a game: more around you, everything a little smaller.
+     */
+    fun views(context: Context, margin: Float, zoom: Float): Views {
         val store = SpaceStore(context)
         val frustum = store.optics(true).pictureFrustum(1920, 1080)
-        val tanX = tan(Math.toRadians(frustum.horizontalFovDeg / 2.0)).toFloat()
-        val tanY = tan(Math.toRadians(frustum.verticalFovDeg / 2.0)).toFloat()
+        val tanX = zoom * tan(Math.toRadians(frustum.horizontalFovDeg / 2.0)).toFloat()
+        val tanY = zoom * tan(Math.toRadians(frustum.verticalFovDeg / 2.0)).toFloat()
         val ipdM = store.ipdMm / 1000f
-        val shift = (ipdM / 2f) / SpaceRenderer.screenDistanceM
+        val shift = zoom * (ipdM / 2f) / SpaceRenderer.screenDistanceM
         val mx = margin * tanX
         val my = margin * tanY
         fun eye(out: Float) = floatArrayOf(-atan(tanX - out + mx), atan(tanX + out + mx), atan(tanY + my), -atan(tanY + my))
@@ -68,6 +74,16 @@ object AlvrBridge {
         fun round16(v: Float) = ((v / 16f).toInt() + 1) * 16
         return round16(1920f * (1f + 2f * margin)) to round16(1080f * (1f + 2f * margin))
     }
+
+    /** After StreamingStarted: both hands are Quest Touch controllers to SteamVR. */
+    fun sendControllerProfile() = nativeSendControllerProfile()
+
+    /** One Joy-Con's buttons (bits as [com.hayeco.flipspaces.openxr.OpenXrPads.Sink] gives them); only changes go. */
+    fun sendButtons(hand: Int, buttons: Int, trigger: Float, squeeze: Float, stickX: Float, stickY: Float) =
+        nativeSendButtons(hand, buttons, trigger, squeeze, stickX, stickY)
+
+    /** The head (10 floats, as [sendHead]) and both hands (14 floats each, valid first) at [targetNs], one packet. */
+    fun sendTracking(targetNs: Long, head: FloatArray, hands: FloatArray) = nativeSendTracking(targetNs, head, hands)
 
     /** ALVR's measured delay, ns: how far ahead the head sent to the PC is predicted. 0 before a stream. */
     fun predictionOffsetNs(): Long = nativePredictionOffsetNs()
@@ -112,6 +128,9 @@ object AlvrBridge {
     @JvmStatic private external fun nativeSendHead(targetNs: Long, head: FloatArray)
     @JvmStatic private external fun nativeRenderLobby(orientation: FloatArray, ipdM: Float, fovs: FloatArray)
     @JvmStatic private external fun nativePredictionOffsetNs(): Long
+    @JvmStatic private external fun nativeSendControllerProfile()
+    @JvmStatic private external fun nativeSendButtons(hand: Int, buttons: Int, trigger: Float, squeeze: Float, stickX: Float, stickY: Float)
+    @JvmStatic private external fun nativeSendTracking(targetNs: Long, head: FloatArray, hands: FloatArray)
     @JvmStatic private external fun nativeAcquireFrame(oesTexture: Int, outPose: FloatArray): Long
     @JvmStatic private external fun nativeSubmitFrame(timestampNs: Long, vsyncQueueNs: Long)
     @JvmStatic private external fun nativeRenderFrame(nowOrientation: FloatArray, vsyncQueueNs: Long, outPose: FloatArray): Long
