@@ -1098,6 +1098,15 @@ class TrackpadActivity : Activity(), PadHost {
         submit(PadSignal.Swipe(com.hayeco.flipspaces.core.pointer.SwipeDirection.DOWN))
     }
 
+    override fun focusedTextSize(): Pair<String, Int>? = if (SpaceSession.active) SpaceSession.focusedTextSize else null
+
+    override fun textSizeStep(steps: Int) {
+        if (!SpaceSession.active) return
+        SpaceSession.send(SpaceCommand.TextSize(steps))
+        // The Space takes it on its next frame; the Menu shows the new size a moment later.
+        window.decorView.postDelayed({ screen.refreshDrawer() }, TEXT_SIZE_REFRESH_MS)
+    }
+
     override fun returnHome() {
         screen.closeDrawer()
         // 0.5.96 (open source audit): in our own words (the earlier line was another product's).
@@ -1714,6 +1723,9 @@ class TrackpadActivity : Activity(), PadHost {
 
     companion object {
         private const val TAG = "FlipSpaces/Trackpad"
+
+        /** 1.2.3 (issue 57): the Menu reads the new text size back this long after a step. */
+        private const val TEXT_SIZE_REFRESH_MS = 200L
 
         /** 0.5.19: a touch or tick that keeps the UI thread this long is logged. */
         private const val SLOW_UI_MS = 8L

@@ -375,6 +375,11 @@ class SpaceStore(context: Context) {
         get() = prefs.getString(KEY_APP_DENSITY, null)
         set(value) = prefs.edit().putString(KEY_APP_DENSITY, value).apply()
 
+    /** 1.2.3 (issue 57): each app's own text size, as [com.hayeco.flipspaces.core.spatial.AppTextSizeStore] text. */
+    var appTextSize: String?
+        get() = prefs.getString(KEY_APP_TEXT_SIZE, null)
+        set(value) = prefs.edit().putString(KEY_APP_TEXT_SIZE, value).apply()
+
     /** 0.5.21: the "Glasses warp (beta)" switch, off until Mike turns it on; remembered. */
     var glassesWarp: Boolean
         get() = prefs.getBoolean(KEY_GLASSES_WARP, false)
@@ -638,6 +643,7 @@ class SpaceStore(context: Context) {
         private const val KEY_WIDE_VIEW = "broad_view_apps"
         private const val KEY_WIDE_VIEW_OVERRIDE = "broad_view_override_pending"
         private const val KEY_APP_DENSITY = "app_density"
+        private const val KEY_APP_TEXT_SIZE = "app_text_size_123"
         private const val KEY_FASTEST_REFRESH = "fastest_refresh"
         private const val KEY_FAVOURITES = "launcher_favourites"
         private const val KEY_PINS_SEEDED = "launcher_pins_seeded"
