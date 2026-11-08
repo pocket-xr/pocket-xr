@@ -174,4 +174,22 @@ interface IPanelHost {
      * the power button brings the panel back. Returns null on success, or why it could not.
      */
     String setPhonePanel(boolean on) = 42;
+
+    /**
+     * 1.2.3 (issue 59): a virtual gamepad through /dev/uhid (core UhidGamepad), which the shell may open: Android lists a
+     * new game controller until gamepadClose(). Returns null when it is up, else why not.
+     */
+    String gamepadOpen() = 30;
+
+    /** 1.2.3: one input report of the virtual gamepad (core UhidGamepad.report). */
+    String gamepadInput(in byte[] report) = 31;
+
+    /** 1.2.3: the virtual gamepad goes (its device closed). */
+    void gamepadClose() = 32;
+
+    /**
+     * 1.2.3 (issue 59): touches with their own pointer ids (a game's on-screen controls held at once), at display pixels.
+     * [action] carries the pointer index for pointer down and up.
+     */
+    String injectTouches(int displayId, int action, in int[] ids, in float[] xs, in float[] ys, long downTime) = 33;
 }

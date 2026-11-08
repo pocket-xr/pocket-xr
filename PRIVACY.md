@@ -70,6 +70,9 @@ Uninstalling an app removes its private storage. Recordings in `Movies/Pocket XR
   Pocket XR asks GitHub's public API for the latest release. It sends nothing about you; GitHub sees your IP address, as
   with any web request. You can turn it off with "Check for updates". See
   [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+- **The add-on install** (only when you tap Install add-on, and never in a copy from Google Play): Pocket XR asks GitHub's
+  public API for the list of releases and downloads the newest add-on APK from GitHub. It sends nothing about you; GitHub
+  sees your IP address, as with any web request.
 
 - **MediaPipe usage statistics**: hand tracking runs on Google's MediaPipe library, which itself sends Google usage
   statistics while hand tracking runs: the app's package name and version, the MediaPipe and Android versions, which

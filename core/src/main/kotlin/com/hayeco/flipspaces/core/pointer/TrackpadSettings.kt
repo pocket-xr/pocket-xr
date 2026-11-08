@@ -139,6 +139,13 @@ data class TrackpadSettings(
             else -> 1
         }
 
+        /**
+         * 1.2.3 (issue 56: "The Default / Inverted choice in the Menu shows no effect"): whether the Menu's Sideways trackpad
+         * direction does anything for [mode]. Only the Horizontal Trackpad's page takes the direction ([screenOrientation]),
+         * so the Menu shows the choice there and nowhere else.
+         */
+        fun directionApplies(mode: PadMode): Boolean = mode == PadMode.HORIZONTAL
+
         fun storedOf(mode: PadMode): Int = mode.pageType
 
         /** Scrollbar side stored -1 / 0 / 1: 0 is left, anything else (unset included) right. */

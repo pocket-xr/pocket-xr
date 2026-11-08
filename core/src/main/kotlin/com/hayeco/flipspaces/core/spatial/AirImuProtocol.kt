@@ -21,7 +21,7 @@ import java.util.zip.CRC32
  * | 0x02 | temperature, i16 |
  * | 0x04 | timestamp, u64 (ns; [AirTimestamp] checks) |
  * | 0x0C | gyro multiplier u16, divisor i32, then x, y, z as i24 (deg/s once multiplied and divided) |
- * | 0x1B | accelerometer multiplier u16, divisor i32, then x, y, z as i24 (g) |
+ * | 0x1B | accelerometer multiplier u16, divisor i32, then x, y, z as i24 (g; [parse] gives m/s2, as the fusion expects) |
  * | 0x2A | magnetometer (not used) |
  */
 object AirImuProtocol {
@@ -84,7 +84,11 @@ object AirImuProtocol {
         val aDiv = i32(packet, 0x1D)
         if (gDiv == 0 || aDiv == 0) return null
         val gScale = gMul.toFloat() / gDiv.toFloat() * DEG
-        val aScale = aMul.toFloat() / aDiv.toFloat()
+        // 1.2.3 (issue 49, an Air 2 user: "the horizon was somewhere in the floor", Recentre "didn't level it"): the
+        // report is in g, about 1 at rest, but the fusion works in m/s2. Its start gate wants 9.81 within 2, so an Air
+        // never passed it: gravity was never used, the view kept only the first sample's tilt, and the gyro's error
+        // built up as tilt with nothing to pull it back. Recentre and Save level wait for the gate, so they did nothing.
+        val aScale = aMul.toFloat() / aDiv.toFloat() * G
         val gx = i24(packet, 0x12) * gScale
         val gy = i24(packet, 0x15) * gScale
         val gz = i24(packet, 0x18) * gScale
@@ -106,6 +110,9 @@ object AirImuProtocol {
     fun toHead(v: Vec3): Vec3 = Vec3(-v.x, v.z, v.y)
 
     private const val XREAL_VENDOR = 0x3318
+
+    /** m/s2 in one g: the report's accelerometer unit to the fusion's. */
+    const val G = 9.81f
 
     private fun u8(p: ByteArray, i: Int): Int = p[i].toInt() and 0xFF
     private fun u16(p: ByteArray, i: Int): Int = u8(p, i) or (u8(p, i + 1) shl 8)

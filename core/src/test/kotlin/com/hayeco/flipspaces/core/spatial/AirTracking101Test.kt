@@ -69,7 +69,7 @@ class AirTracking101Test {
     }
 
     @Test
-    fun aReportIsReadInHeadAxesRadiansAndG() {
+    fun aReportIsReadInHeadAxesRadiansAndMetresPerSecondSquared() {
         val p = AirImuEncoder.report(123_456_789L, gyroDegS = Vec3(10f, -20f, 30f), accelG = Vec3(0.1f, -0.2f, 0.97f))
         val r = AirImuProtocol.parse(p)!!
         assertEquals(123_456_789L, r.timestampNs)
@@ -78,9 +78,39 @@ class AirTracking101Test {
         assertEquals(-10f * DEG, r.gyro.x, 1e-4f)
         assertEquals(30f * DEG, r.gyro.y, 1e-4f)
         assertEquals(-20f * DEG, r.gyro.z, 1e-4f)
-        assertEquals(-0.1f, r.accel.x, 1e-3f)
-        assertEquals(0.97f, r.accel.y, 1e-3f)
-        assertEquals(-0.2f, r.accel.z, 1e-3f)
+        // The report is in g; the fusion works in m/s2 (issue 49).
+        assertEquals(-0.1f * 9.81f, r.accel.x, 1e-2f)
+        assertEquals(0.97f * 9.81f, r.accel.y, 1e-2f)
+        assertEquals(-0.2f * 9.81f, r.accel.z, 1e-2f)
+    }
+
+    /**
+     * Issue 49 (an Air 2 user: "the horizon was somewhere in the floor", and Recentre "didn't level it"): the accelerometer
+     * reached the fusion in g, so its start gate (9.81 within 2 m/s2) never passed on an Air and gravity was never used.
+     * At rest an Air's reports must pass the gate, after which gravity levels the view, and Save level gets a reading.
+     */
+    @Test
+    fun airReportsAtRestPassTheStartGateAndGravityLevelsTheView() {
+        val framer = AirImuFramer()
+        val model = GlassesModel.detect(GlassesId("XREAL Air 2", ""), AirImuProtocol.PID_AIR_2)
+        val fusion = HeadFusion(FusionSettings(axes = model.defaultAxes))
+        var t = feed(framer, fusion, 2f, Vec3.ZERO, Quat.IDENTITY, 0L, 1_000_000L).second
+        assertTrue("the start gate passes on Air reports at rest", fusion.startAligned)
+        assertEquals(9.81f, fusion.lastRawAccel.length, 0.05f)
+        assertTrue("Save level gets a reading", fusion.levelReading() != null)
+        assertEquals(0f, fusion.pose().orientation.angleTo(Quat.IDENTITY), 1f)
+        // The glasses now sit pitched down 10 degrees with no turn on the gyro, as after a gyro error built up: gravity
+        // alone must bring the view toward the true tilt. Before the fix it stayed level forever.
+        val tilted = Quat.fromGyro(Vec3(-1f, 0f, 0f), (10f * DEG))
+        val out = ArrayList<ImuReport>()
+        repeat(30_000) {
+            val packet = AirImuEncoder.report(t, Vec3.ZERO, toSensor(tilted.conjugate().rotate(Vec3.UP)))
+            out.clear()
+            framer.append(packet, packet.size, out)
+            out.forEach { fusion.update(it) }
+            t += 1_000_000L
+        }
+        assertTrue("gravity pulled the view toward the true tilt", fusion.pose().orientation.angleTo(tilted) < 5f)
     }
 
     @Test

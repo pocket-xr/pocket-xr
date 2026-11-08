@@ -17,8 +17,8 @@ android {
         applicationId = if (findProperty("pocketxr.dev") == "true") "com.hayeco.flipspaces.dev" else "com.hayeco.flipspaces"
         minSdk = 30
         targetSdk = 36
-        versionCode = 152
-        versionName = "1.2.0-openxr"
+        versionCode = 156
+        versionName = "1.2.4-openxr"
         // The Flip 7 is arm64; MediaPipe's native code for other ABIs only adds size.
         ndk { abiFilters += "arm64-v8a" }
         // 1.0.1: the Google Play build (-Ppocketxr.play=true) hides the Ko-fi row (1.1.15: atop the trackpad's Menu), as Play's payments
@@ -134,6 +134,9 @@ android {
                 assets.directories.add("src/npu/assets")
             }
         }
+        // 1.2.1: REQUEST_INSTALL_PACKAGES for the add-on's one-tap install, in every release but Google Play's (debug
+        // builds declare it in src/debug).
+        if (!play) getByName("release").manifest.srcFile("src/selfinstall/AndroidManifest.xml")
     }
 }
 

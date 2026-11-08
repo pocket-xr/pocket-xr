@@ -94,7 +94,8 @@ class SpaceStore(context: Context) {
             e.remove(screenKey(sbs)).remove(screenKey(sbs) + "_from")
         }
         e.remove(KEY_VIEW).remove(KEY_IPD).remove(KEY_HANDS_STEER).remove(KEY_PLAIN_DISPLAY)
-            .remove(KEY_SEE_THROUGH).remove(KEY_DEX_FULL_SCREEN).apply()
+            .remove(KEY_SEE_THROUGH).remove(KEY_DEX_FULL_SCREEN).remove(KEY_WINDOW_GLOW)
+            .remove(KEY_WINDOW_GLOW_COLOR).apply()
     }
 
     // 0.5.36 (Mike: Further/Closer and Curve should act on the selected window only): the wraparound is retired, so a
@@ -180,6 +181,16 @@ class SpaceStore(context: Context) {
     var ipdMm: Float
         get() = prefs.getFloat(KEY_IPD, com.hayeco.flipspaces.core.spatial.StereoLayout.DEFAULT_IPD_MM)
         set(value) = prefs.edit().putFloat(KEY_IPD, value.coerceIn(com.hayeco.flipspaces.core.spatial.StereoLayout.MIN_IPD_MM, com.hayeco.flipspaces.core.spatial.StereoLayout.MAX_IPD_MM)).apply()
+
+    /** 1.2.2: the focused window's glow, 0 (off) to 100 % (the look it always had) ([com.hayeco.flipspaces.core.spatial.WindowGlow]). */
+    var windowGlowPercent: Int
+        get() = com.hayeco.flipspaces.core.spatial.WindowGlow.clamp(prefs.getInt(KEY_WINDOW_GLOW, com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_PERCENT))
+        set(value) = prefs.edit().putInt(KEY_WINDOW_GLOW, com.hayeco.flipspaces.core.spatial.WindowGlow.clamp(value)).apply()
+
+    /** 1.2.2: the focused window's glow colour, opaque ARGB, the accent blue unless changed ([com.hayeco.flipspaces.core.spatial.WindowGlow.PRESETS]). */
+    var windowGlowColor: Int
+        get() = com.hayeco.flipspaces.core.spatial.WindowGlow.color(prefs.getInt(KEY_WINDOW_GLOW_COLOR, com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_COLOR))
+        set(value) = prefs.edit().putInt(KEY_WINDOW_GLOW_COLOR, com.hayeco.flipspaces.core.spatial.WindowGlow.color(value)).apply()
 
     /**
      * 0.5.9: press DeX's own full screen button on the Space's window, hiding the taskbar and the title bar. 0.5.101 (Mike's
@@ -364,6 +375,11 @@ class SpaceStore(context: Context) {
         get() = prefs.getString(KEY_APP_DENSITY, null)
         set(value) = prefs.edit().putString(KEY_APP_DENSITY, value).apply()
 
+    /** 1.2.3 (issue 57): each app's own text size, as [com.hayeco.flipspaces.core.spatial.AppTextSizeStore] text. */
+    var appTextSize: String?
+        get() = prefs.getString(KEY_APP_TEXT_SIZE, null)
+        set(value) = prefs.edit().putString(KEY_APP_TEXT_SIZE, value).apply()
+
     /** 0.5.21: the "Glasses warp (beta)" switch, off until Mike turns it on; remembered. */
     var glassesWarp: Boolean
         get() = prefs.getBoolean(KEY_GLASSES_WARP, false)
@@ -436,10 +452,30 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(KEY_DRAW_SMOOTHING, true)
         set(value) = prefs.edit().putBoolean(KEY_DRAW_SMOOTHING, value).apply()
 
+    /** 1.2.3 (issue 58): the apps with Side by side 3D on, as [com.hayeco.flipspaces.core.spatial.SideBySideStore] text. */
+    var sideBySide: String?
+        get() = prefs.getString(KEY_SIDE_BY_SIDE, null)
+        set(value) = prefs.edit().putString(KEY_SIDE_BY_SIDE, value).apply()
+
+    /** 1.2.3 (issue 59): each game's touch spots, as [com.hayeco.flipspaces.core.pointer.TouchSpotStore] text. */
+    var touchSpots: String?
+        get() = prefs.getString(KEY_TOUCH_SPOTS, null)
+        set(value) = prefs.edit().putString(KEY_TOUCH_SPOTS, value).apply()
+
+    /** 1.2.3 (issue 58): 2D while moving for side by side windows; off by default. */
+    var sideBySideFlat: Boolean
+        get() = prefs.getBoolean(KEY_SIDE_BY_SIDE_FLAT, false)
+        set(value) = prefs.edit().putBoolean(KEY_SIDE_BY_SIDE_FLAT, value).apply()
+
     /** 1.1.14: Settings' Head tracking switch ([HeadTracker.setEnabled]); on by default. Off, the Space is head locked. */
     var headTracking: Boolean
         get() = prefs.getBoolean(KEY_HEAD_TRACKING, true)
         set(value) = prefs.edit().putBoolean(KEY_HEAD_TRACKING, value).apply()
+
+    /** 1.2.3 (issue 54): the Menu's "Air display mode (untested)" switch; off by default. */
+    var airDisplayMode: Boolean
+        get() = prefs.getBoolean(KEY_AIR_DISPLAY_MODE, false)
+        set(value) = prefs.edit().putBoolean(KEY_AIR_DISPLAY_MODE, value).apply()
 
     /** 0.5.32: the glasses warp without LSR, keeping scene mode 1 (Developer); on by default. */
     var warpNoLsr: Boolean
@@ -596,6 +632,10 @@ class SpaceStore(context: Context) {
         private const val KEY_STILL_LOCK = "still_lock_0532"
         private const val KEY_DRAW_SMOOTHING = "draw_smoothing_0564"
         private const val KEY_HEAD_TRACKING = "head_tracking_1114"
+        private const val KEY_TOUCH_SPOTS = "touch_spots_123"
+        private const val KEY_AIR_DISPLAY_MODE = "air_display_mode_123"
+        private const val KEY_SIDE_BY_SIDE = "side_by_side_123"
+        private const val KEY_SIDE_BY_SIDE_FLAT = "side_by_side_flat_123"
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
         // 0.5.96: the key keeps its saved name, so the setting carries over.
@@ -627,6 +667,7 @@ class SpaceStore(context: Context) {
         private const val KEY_WIDE_VIEW = "broad_view_apps"
         private const val KEY_WIDE_VIEW_OVERRIDE = "broad_view_override_pending"
         private const val KEY_APP_DENSITY = "app_density"
+        private const val KEY_APP_TEXT_SIZE = "app_text_size_123"
         private const val KEY_FASTEST_REFRESH = "fastest_refresh"
         private const val KEY_FAVOURITES = "launcher_favourites"
         private const val KEY_PINS_SEEDED = "launcher_pins_seeded"
@@ -645,5 +686,7 @@ class SpaceStore(context: Context) {
         private const val KEY_IPD = "ipd_mm"
         private const val KEY_DEX_FULL_SCREEN = "dex_full_screen"
         private const val KEY_PLAIN_DISPLAY = "plain_display"
+        private const val KEY_WINDOW_GLOW = "window_glow_122"
+        private const val KEY_WINDOW_GLOW_COLOR = "window_glow_color_122"
     }
 }

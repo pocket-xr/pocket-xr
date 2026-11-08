@@ -1,14 +1,22 @@
 package com.hayeco.flipspaces.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -32,6 +40,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.hayeco.flipspaces.core.ShizukuStatus
@@ -39,6 +54,7 @@ import com.hayeco.flipspaces.core.spatial.ModeChoice
 import com.hayeco.flipspaces.core.spatial.SpatialMode
 import com.hayeco.flipspaces.spatial.PanelHost
 import com.hayeco.flipspaces.spatial.SpaceSnapshot
+import kotlin.math.roundToInt
 
 data class SpaceSettings(
     /** 0.5.26: the glasses' screen size in 2D and in their 3D mode (their Display size, 0.8 to 1.3), the projection's. */
@@ -50,6 +66,10 @@ data class SpaceSettings(
     val ipdMm: Float = 63f,
     /** 0.5.9, experimental: the glasses as a plain display with DeX off while the Space runs. */
     val plainDisplay: Boolean = false,
+    /** 1.2.2: the focused window's glow, 0 (off) to 100 % (the look it always had). */
+    val windowGlow: Int = com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_PERCENT,
+    /** 1.2.2: the focused window's glow colour, opaque ARGB, the accent blue unless changed. */
+    val windowGlowColor: Int = com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_COLOR,
 )
 
 const val SECURE_NOTE =
@@ -120,7 +140,7 @@ fun SpatialScreen(
             // 0.5.101 (Mike's settings audit): the app list is gone from here (the launcher on the glasses and Advanced on
             // the main screen open apps); the plain display test is under Developer; and a reset to the defaults.
             item { DeveloperCard(settings, onSettings) }
-            item { ResetButton("Spatial windows", "The glasses' screen sizes, 3D (on for the Aura and the One), eye distance and the hand pointer go back to Pocket XR's defaults. Your windows, presets and the glasses' calibration stay.", onReset) }
+            item { ResetButton("Spatial windows", "The glasses' screen sizes, 3D (on for the Aura and the One), eye distance, window glow and its colour, and the hand pointer go back to Pocket XR's defaults. Your windows, presets and the glasses' calibration stay.", onReset) }
         }
     }
 }
@@ -228,6 +248,19 @@ private fun SettingsCard(settings: SpaceSettings, onChange: (SpaceSettings) -> U
                 onValueChange = { onChange(settings.copy(ipdMm = it)) },
                 valueRange = com.hayeco.flipspaces.core.spatial.StereoLayout.MIN_IPD_MM..com.hayeco.flipspaces.core.spatial.StereoLayout.MAX_IPD_MM,
             )
+            // 1.2.2 (a user: "reduce opacity or intensity of the blue drop shadow around the windows").
+            Text(windowGlowLabel(settings.windowGlow), style = MaterialTheme.typography.bodyMedium)
+            Slider(
+                value = settings.windowGlow.toFloat(),
+                onValueChange = { onChange(settings.copy(windowGlow = windowGlowStep(it))) },
+                valueRange = com.hayeco.flipspaces.core.spatial.WindowGlow.MIN_PERCENT.toFloat()..com.hayeco.flipspaces.core.spatial.WindowGlow.MAX_PERCENT.toFloat(),
+                steps = WINDOW_GLOW_STEPS,
+            )
+            Text(
+                "The glow round the window you are using. Lower it to soften the glow, or slide it to Off to hide it.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            GlowColorChoice(settings.windowGlowColor) { onChange(settings.copy(windowGlowColor = it)) }
             Text("Hand pointer", style = MaterialTheme.typography.bodyMedium)
             Choice("Hand ray: the hand aims, pinch clicks", settings.handsSteer) { onChange(settings.copy(handsSteer = true)) }
             Choice("Look and pinch: head gaze aims, pinch anywhere clicks", !settings.handsSteer) { onChange(settings.copy(handsSteer = false)) }
@@ -237,6 +270,85 @@ private fun SettingsCard(settings: SpaceSettings, onChange: (SpaceSettings) -> U
             )
         }
     }
+}
+
+/** 1.2.2: Window glow's slider stops between off and full, every 10 %. */
+internal const val WINDOW_GLOW_STEPS = 9
+
+/** 1.2.2: the slider's position [value] as a Window glow percent, on its 10 % stops. */
+internal fun windowGlowStep(value: Float): Int =
+    com.hayeco.flipspaces.core.spatial.WindowGlow.clamp((value / 10f).roundToInt() * 10)
+
+/** 1.2.2: Window glow's title at [percent]. */
+internal fun windowGlowLabel(percent: Int): String =
+    if (com.hayeco.flipspaces.core.spatial.WindowGlow.shown(percent)) "Window glow: $percent %" else "Window glow: Off"
+
+/** 1.2.2: Window glow colour's title for [argb]. */
+internal fun windowGlowColorLabel(argb: Int): String =
+    "Glow colour: " + com.hayeco.flipspaces.core.spatial.WindowGlow.name(argb)
+
+/**
+ * 1.2.2 (Mike: users should be able to change the glow's colour): the preset swatches, the default blue first, and a
+ * Custom swatch that opens hue and colour sliders. Each change reaches a running Space at once, like the intensity.
+ */
+@Composable
+private fun GlowColorChoice(argb: Int, onChange: (Int) -> Unit) {
+    val glow = com.hayeco.flipspaces.core.spatial.WindowGlow
+    var customOpen by rememberSaveable { mutableStateOf(glow.preset(argb) == null) }
+    // The hue is kept here too, so taking the colour down to white and back up does not lose it.
+    var hue by rememberSaveable { mutableStateOf(glow.hueSaturation(argb).first) }
+    var saturation by rememberSaveable { mutableStateOf(glow.hueSaturation(argb).second) }
+    Text(windowGlowColorLabel(argb), style = MaterialTheme.typography.bodyMedium)
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        glow.PRESETS.forEach { s ->
+            GlowSwatch(s.name, SolidColor(Color(s.argb)), glow.preset(argb) == s) {
+                customOpen = false
+                onChange(s.argb)
+            }
+        }
+        GlowSwatch("Custom", Brush.sweepGradient(RAINBOW), glow.preset(argb) == null) {
+            customOpen = true
+            val (h, sat) = glow.hueSaturation(argb)
+            if (sat > 0f) hue = h
+            saturation = sat
+        }
+    }
+    if (customOpen || glow.preset(argb) == null) {
+        Text("Hue", style = MaterialTheme.typography.bodySmall)
+        Slider(
+            value = hue,
+            onValueChange = { hue = it; onChange(glow.custom(hue, saturation)) },
+            valueRange = 0f..360f,
+        )
+        Text("Colour: from white to the full hue", style = MaterialTheme.typography.bodySmall)
+        Slider(
+            value = saturation,
+            onValueChange = { saturation = it; onChange(glow.custom(hue, saturation)) },
+            valueRange = 0f..1f,
+        )
+    }
+}
+
+private val RAINBOW = listOf(Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red)
+
+@Composable
+private fun GlowSwatch(name: String, fill: Brush, selected: Boolean, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(32.dp)
+            .clip(CircleShape)
+            .background(fill)
+            .border(
+                if (selected) 3.dp else 1.dp,
+                if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+                CircleShape,
+            )
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .semantics { contentDescription = name },
+    )
 }
 
 /** 0.5.101: tests for developers, closed until opened. */

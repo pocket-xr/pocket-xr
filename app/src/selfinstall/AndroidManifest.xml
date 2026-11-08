@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.2.1: release builds other than Google Play's (app/build.gradle.kts). The add-on's one-tap install
+     (AddonInstaller) opens Android's install prompt on the add-on's APK, which needs "Install unknown apps".
+     The Google Play build never declares it: there the add-on comes from Google Play. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+</manifest>

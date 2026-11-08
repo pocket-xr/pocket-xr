@@ -11,6 +11,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import com.hayeco.flipspaces.core.AddonSetup
 import com.hayeco.flipspaces.core.Look
 import com.hayeco.flipspaces.core.spatial.FollowMode
 import com.hayeco.flipspaces.core.spatial.GlassesCheck
@@ -174,10 +175,22 @@ internal class GlassesCheckCard(
                     accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
                 }, params(12f))
                 if (!r.passed) button("Check again", primary = true) { startTurning() }
-                button("Done", primary = r.passed) { finish(r) }
+                // 1.2.1: once the glasses are set, the optional add-on (the phone's notifications and the pointer), until
+                // it is installed with notification access on. Done skips it.
+                if (r.passed && addonShown()) {
+                    body.addView(c.padText(AddonSetup.TITLE, 16f, Look.INK, bold = true), params(18f))
+                    body.addView(c.padText(AddonSetup.WHAT, 13f, Look.INK_2), params(6f))
+                    body.addView(AddonPanel(c), params(8f))
+                }
+                button("Done", primary = r.passed && !addonShown()) { finish(r) }
             }
         }
         announceForAccessibility((body.getChildAt(0) as? TextView)?.text)
+    }
+
+    private fun addonShown(): Boolean {
+        val installed = com.hayeco.flipspaces.platform.AddonLink.isInstalled(context)
+        return AddonSetup.showAfterCheck(installed, installed && com.hayeco.flipspaces.phone.PhoneNotifications.hasAccess(context))
     }
 
     private fun startTurning() {

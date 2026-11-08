@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 1.1.5: only the Glasses reports are shared as files (GlassesReportFile), nothing else of the app's.
-     1.1.14: and the zip Send logs to Mike makes (SendLogs), also under reports/. -->
+     1.1.14: and the zip Send logs to Mike makes (SendLogs), also under reports/.
+     1.2.1: and the add-on's downloaded APK, for Android's install prompt (AddonInstaller). -->
 <paths>
     <external-files-path name="reports" path="reports/" />
     <files-path name="reports_internal" path="reports/" />
+    <cache-path name="addon" path="addon/" />
 </paths>

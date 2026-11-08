@@ -411,6 +411,12 @@ class TrackpadActivity : Activity(), PadHost {
         }
     }
 
+    /** 1.2.3 (issue 55): a keyboard the text field asked for before this window had focus opens now. */
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && ::screen.isInitialized) screen.windowFocused()
+    }
+
     override fun onResume() {
         super.onResume()
         resumed = true
@@ -482,6 +488,9 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun onPause() {
         resumed = false
+        // 1.2.3 (issue 59): the Game controller lets go too (touches lifted, the gamepad centred), via releaseGameKeys.
+        // 1.2.3 (issue 59): a game key held as the trackpad goes is let go, so the game is not left holding it.
+        screen.releaseGameKeys()
         main.removeCallbacks(ticker)
         main.removeCallbacks(coaster)
         if (touching || pad.coasting) send(pad.cancel())
@@ -759,6 +768,7 @@ class TrackpadActivity : Activity(), PadHost {
             SpaceSession.padHands = gestureState() == 2
             SpaceSession.padCursorSpeed = settings.cursorSpeed
             if (touching) send(pad.tick(now))
+            SpaceSession.padHold = if (touching) pad.holdProgress(now) else 0f
             send(home.tick(now))
             // 0.5.17 cover screen: Further or Closer held repeats, faster the longer it is held.
             repeatAction?.let { a -> repeat.tick(now).forEach { submit(PadSignal.Window(a, it)) } }
@@ -867,6 +877,102 @@ class TrackpadActivity : Activity(), PadHost {
     override fun speedChanged(speed: Int) {
         settings = prefs.update { it.copy(cursorSpeed = speed) }
         pad.cursorSpeed = settings.cursorSpeed
+    }
+
+    // ---- 1.2.3 (issue 54): the Air's display mode, untested, behind a switch that is off by default ----
+
+    /** The mode the Air last reported, or null before a reading. */
+    @Volatile private var airMode: Int? = null
+
+    /** What the mode row says while there is no mode: reading, or the last problem. */
+    @Volatile private var airNote: String? = null
+
+    @Volatile private var airBusy = false
+
+    override fun airDisplayOffered(): Boolean = com.hayeco.flipspaces.spatial.AirImuLink.find(this) != null
+
+    override fun airDisplayOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).airDisplayMode
+
+    override fun airDisplayChosen(on: Boolean) {
+        com.hayeco.flipspaces.spatial.SpaceStore(this).airDisplayMode = on
+        Log.i(TAG, "Air display mode switch ${if (on) "on (untested on Air glasses)" else "off"}")
+        airMode = null
+        airNote = null
+        if (on) airRead(0L)
+    }
+
+    override fun airDisplayLine(): String {
+        if (airMode == null && airNote == null && !airBusy) airRead(0L)
+        return airMode?.let { com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(it) } ?: airNote ?: "reading"
+    }
+
+    override fun airDisplayAction(): String = when (val m = airMode) {
+        null -> "Tap to read it again"
+        else -> if (com.hayeco.flipspaces.core.spatial.AirDisplayMode.isSideBySide(m)) "Tap to switch to 2D" else "Tap to switch to 3D side by side"
+    }
+
+    override fun airDisplaySwitch() {
+        if (airBusy) return
+        val from = airMode
+        if (from == null) {
+            airRead(0L)
+            return
+        }
+        val to = com.hayeco.flipspaces.core.spatial.AirDisplayMode.toggled(from)
+        airBusy = true
+        Thread({
+            val result = runCatching { com.hayeco.flipspaces.spatial.AirDisplayLink.set(this, to) }
+            runOnUiThread {
+                airBusy = false
+                result.onSuccess {
+                    Log.i(TAG, "Air display mode: asked for $to (${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(to)}), the glasses took it")
+                    screen.showToast("The glasses switch to ${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(to)}. Their screen reconnects, so give it a few seconds.")
+                    airMode = null
+                    airNote = "switching"
+                    // The display reconnects after a switch; the mode is read again once it has had time.
+                    airRead(AIR_REREAD_MS)
+                }.onFailure {
+                    Log.w(TAG, "Air display mode: asking for $to failed: ${it.message}")
+                    screen.showToast("The glasses did not switch: ${it.message}")
+                }
+            }
+        }, "air-display").start()
+    }
+
+    private fun airRead(delayMs: Long) {
+        if (airBusy) return
+        airBusy = true
+        airNote = "reading"
+        Thread({
+            if (delayMs > 0) SystemClock.sleep(delayMs)
+            val result = runCatching { com.hayeco.flipspaces.spatial.AirDisplayLink.mode(this) }
+            runOnUiThread {
+                airBusy = false
+                result.onSuccess {
+                    airMode = it
+                    airNote = null
+                    Log.i(TAG, "Air display mode: the glasses report $it (${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(it)})")
+                }.onFailure {
+                    airMode = null
+                    airNote = "could not read (${it.message})"
+                    Log.w(TAG, "Air display mode: reading failed: ${it.message}")
+                }
+                screen.refreshDrawer()
+            }
+        }, "air-display").start()
+    }
+
+    override fun focusedSideBySide(): Pair<String, Boolean>? = if (SpaceSession.active) SpaceSession.focusedSideBySide else null
+
+    override fun sideBySideChosen(on: Boolean) {
+        if (SpaceSession.active) SpaceSession.send(SpaceCommand.SideBySide(on))
+    }
+
+    override fun sideBySideFlatOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).sideBySideFlat
+
+    override fun sideBySideFlatChosen(on: Boolean) {
+        com.hayeco.flipspaces.spatial.SpaceStore(this).sideBySideFlat = on
+        if (SpaceSession.active) SpaceSession.send(SpaceCommand.SideBySideFlat(on))
     }
 
     override fun stripChosen(side: StripSide) {
@@ -1085,6 +1191,173 @@ class TrackpadActivity : Activity(), PadHost {
         }
         com.hayeco.flipspaces.spatial.SpaceSession.recordWanted = on
         screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped: saved to Movies/Pocket XR.")
+    }
+
+    /** 1.2.3 (issue 59): Game keys on; for this run of the trackpad, off again when it closes. */
+    private var gameKeys = false
+
+    /** When each game key went down, for its key up (Android pairs them by the down time). */
+    private val gameKeyDownAt = HashMap<Int, Long>()
+
+    override fun gameKeysOn(): Boolean = gameKeys
+
+    override fun gameKeysChosen(on: Boolean) {
+        if (on && !SpaceSession.active) {
+            screen.showToast("Open the Space on the glasses first.")
+            return
+        }
+        if (gameKeys == on) return
+        // 1.2.3: Game keys and the Game controller share their place; one at a time.
+        if (on && controllerMode != com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF) controllerModeChosen(com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF)
+        gameKeys = on
+        Log.i(TAG, "Game keys ${if (on) "on: held keys go to the focused window" else "off"}")
+        screen.configure(settings, cover, coverLayout)
+        if (on) screen.showToast("Click a game's window first, then hold the keys.")
+    }
+
+    /**
+     * 1.2.3 (issue 59): a game key's down or up to the focused window, as a real key event (the window's display, the
+     * same path as a hardware keyboard's keys), so a held key stays held in the game. Done turns Game keys off.
+     */
+    override fun gameKey(change: com.hayeco.flipspaces.core.pointer.GameKeyChange) {
+        if (change.keyCode == com.hayeco.flipspaces.core.pointer.GameKeyLayout.EXIT) {
+            if (!change.down) return
+            gameKeysChosen(false)
+            return
+        }
+        val now = SystemClock.uptimeMillis()
+        val downAt = if (change.down) now.also { gameKeyDownAt[change.keyCode] = it } else gameKeyDownAt.remove(change.keyCode) ?: now
+        SpaceSession.send(SpaceCommand.PanelKey(if (change.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, change.keyCode, 0, 0, downAt))
+    }
+
+    // ---- 1.2.3 (issue 59): the Game controller, as a virtual gamepad or on a game's on-screen controls ----
+
+    private var controllerMode = com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF
+    private var spotSetting = false
+    private val touchPointers = com.hayeco.flipspaces.core.pointer.TouchPointers()
+    private val touchSpots by lazy { com.hayeco.flipspaces.core.pointer.TouchSpotStore(com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots) }
+
+    /** While setting spots: the control each held control began at, for the hold that sets it. */
+    private val spotHeldSince = HashMap<com.hayeco.flipspaces.core.pointer.PadControl, Long>()
+
+    override fun controllerMode(): com.hayeco.flipspaces.core.pointer.GameControllerMode = controllerMode
+
+    override fun controllerModeChosen(mode: com.hayeco.flipspaces.core.pointer.GameControllerMode) {
+        val off = com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF
+        if (mode != off && !SpaceSession.active) {
+            screen.showToast("Open the Space on the glasses first.")
+            return
+        }
+        if (mode == controllerMode) return
+        val before = controllerMode
+        // Leaving a mode lets go of what it held: the gamepad centred and closed, the touches lifted.
+        if (before == com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD) {
+            com.hayeco.flipspaces.spatial.PanelHost.gamepadInput(com.hayeco.flipspaces.core.pointer.UhidGamepad.report(com.hayeco.flipspaces.core.pointer.ControllerState()))
+            com.hayeco.flipspaces.spatial.PanelHost.gamepadClose()
+        }
+        if (before == com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH) sendTouches(touchPointers.cancel())
+        spotSetting = false
+        spotHeldSince.clear()
+        if (mode != off && gameKeys) {
+            gameKeys = false
+            gameKeyDownAt.clear()
+        }
+        controllerMode = mode
+        Log.i(TAG, "Game controller: ${mode.label}")
+        screen.configure(settings, cover, coverLayout)
+        when (mode) {
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD -> com.hayeco.flipspaces.spatial.PanelHost.gamepadOpen { err ->
+                if (err != null) {
+                    Log.w(TAG, "the virtual gamepad could not start: $err")
+                    screen.showToast("The gamepad could not start: $err")
+                    if (controllerMode == com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD) controllerModeChosen(off)
+                } else {
+                    // Gamepad input goes to the focused display: the game's window is put on top.
+                    SpaceSession.send(SpaceCommand.FocusWindow)
+                    screen.showToast("Gamepad on. Click the game's window first if it does not answer.")
+                }
+            }
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> {
+                val pkg = SpaceSession.focusedApp?.first
+                if (pkg == null || touchSpots.of(pkg).isEmpty()) {
+                    spotSetting = true
+                    screen.showToast("Set the spots: aim the dot at the game's button, then hold the matching control.")
+                } else {
+                    screen.showToast("Touch on: the controls press the game's own buttons.")
+                }
+            }
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> Unit
+        }
+    }
+
+    override fun controllerChanged() {
+        val state = screen.controllerState()
+        when (controllerMode) {
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD ->
+                com.hayeco.flipspaces.spatial.PanelHost.gamepadInput(com.hayeco.flipspaces.core.pointer.UhidGamepad.report(state))
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> if (spotSetting) spotHolds(state) else {
+                val (pkg, aspect) = SpaceSession.focusedApp ?: return
+                sendTouches(touchPointers.next(com.hayeco.flipspaces.core.pointer.TouchSpots.touches(state, touchSpots.of(pkg), aspect)))
+            }
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> Unit
+        }
+    }
+
+    private fun sendTouches(events: List<com.hayeco.flipspaces.core.pointer.TouchPointers.Event>) {
+        if (events.isNotEmpty()) SpaceSession.send(SpaceCommand.PadTouches(events))
+    }
+
+    /** Setting spots: a control held [com.hayeco.flipspaces.core.pointer.TouchSpots.SET_HOLD_MS] takes the dot's spot. */
+    private fun spotHolds(state: com.hayeco.flipspaces.core.pointer.ControllerState) {
+        val held = state.buttons + state.sticksHeld
+        spotHeldSince.keys.retainAll(held)
+        val now = SystemClock.uptimeMillis()
+        for (c in held) if (c !in spotHeldSince) {
+            spotHeldSince[c] = now
+            main.postDelayed({ spotHeld(c, now) }, com.hayeco.flipspaces.core.pointer.TouchSpots.SET_HOLD_MS)
+        }
+    }
+
+    private fun spotHeld(c: com.hayeco.flipspaces.core.pointer.PadControl, since: Long) {
+        if (!spotSetting || spotHeldSince[c] != since) return
+        val (pkg, u, v) = SpaceSession.pointerSpot ?: run {
+            screen.showToast("Put the dot on the game's window first.")
+            return
+        }
+        touchSpots.set(pkg, c, com.hayeco.flipspaces.core.pointer.TouchSpot(u, v))
+        com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots = touchSpots.encode()
+        buzz(PadHaptic.MODE)
+        Log.i(TAG, "touch spot for ${c.label} set at %.3f, %.3f in $pkg".format(java.util.Locale.ROOT, u, v))
+        screen.showToast("${c.label} set. Set the others, then turn Set touch spots off.")
+    }
+
+    override fun touchSpotSetting(): Boolean = spotSetting
+
+    override fun touchSpotSettingChosen(on: Boolean) {
+        spotSetting = on
+        spotHeldSince.clear()
+        if (on) sendTouches(touchPointers.cancel())
+        screen.showToast(if (on) "Aim the dot at the game's button, then hold the matching control for a second." else "Spots saved for this game.")
+    }
+
+    override fun clearTouchSpots() {
+        val pkg = SpaceSession.focusedApp?.first ?: return screen.showToast("Click the game's window first.")
+        touchSpots.clear(pkg)
+        com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots = touchSpots.encode()
+        screen.showToast("Touch spots cleared for this game.")
+    }
+
+    override fun openControlPanel() {
+        submit(PadSignal.Swipe(com.hayeco.flipspaces.core.pointer.SwipeDirection.DOWN))
+    }
+
+    override fun focusedTextSize(): Pair<String, Int>? = if (SpaceSession.active) SpaceSession.focusedTextSize else null
+
+    override fun textSizeStep(steps: Int) {
+        if (!SpaceSession.active) return
+        SpaceSession.send(SpaceCommand.TextSize(steps))
+        // The Space takes it on its next frame; the Menu shows the new size a moment later.
+        window.decorView.postDelayed({ screen.refreshDrawer() }, TEXT_SIZE_REFRESH_MS)
     }
 
     override fun returnHome() {
@@ -1651,7 +1924,31 @@ class TrackpadActivity : Activity(), PadHost {
 
     private fun unlocked() {
         buzz(PadHaptic.UNLOCK)
+        val wasPocket = screen.pocket
         screen.showLock(false)
+        if (wasPocket) pocketBrightness(false)
+    }
+
+    /**
+     * 1.2.3 (issue 52): Pocket mode: the lock overlay at once, black ([com.hayeco.flipspaces.core.pointer.PocketMode]), the
+     * screen at its lowest brightness and kept on, so the glasses keep their picture and stray touches do nothing.
+     */
+    override fun pocketMode() {
+        if (!SpaceSession.active) {
+            screen.showToast("Open the Space on the glasses first.")
+            return
+        }
+        screen.showLock(true, pocket = true)
+        pocketBrightness(true)
+        Log.i(TAG, "Pocket mode on: the screen black at its lowest brightness and kept on; hold the lock to leave")
+    }
+
+    private fun pocketBrightness(on: Boolean) {
+        window.attributes = window.attributes.apply {
+            screenBrightness = if (on) com.hayeco.flipspaces.core.pointer.PocketMode.BRIGHTNESS else com.hayeco.flipspaces.core.pointer.PocketMode.NO_OVERRIDE
+        }
+        if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else applyKeepScreenOn()
+        if (!on) Log.i(TAG, "Pocket mode off: the phone's own brightness again")
     }
 
     // ---- Spatial Mouse: the phone's rotation vector aims the ray ----
@@ -1703,6 +2000,12 @@ class TrackpadActivity : Activity(), PadHost {
 
     companion object {
         private const val TAG = "FlipSpaces/Trackpad"
+
+        /** 1.2.3 (issue 54): after a switch the Air's mode is read again this long later, once its screen is back. */
+        private const val AIR_REREAD_MS = 4000L
+
+        /** 1.2.3 (issue 57): the Menu reads the new text size back this long after a step. */
+        private const val TEXT_SIZE_REFRESH_MS = 200L
 
         /** 0.5.19: a touch or tick that keeps the UI thread this long is logged. */
         private const val SLOW_UI_MS = 8L

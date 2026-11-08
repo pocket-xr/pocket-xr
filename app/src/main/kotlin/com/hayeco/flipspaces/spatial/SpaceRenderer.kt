@@ -77,7 +77,7 @@ import javax.microedition.khronos.opengles.GL10
  * One app panel's GL side: the frames its virtual display renders ([PanelSource], an ImageReader
  * drained by the [PanelDrain] thread since 0.5.3). GL thread only.
  */
-private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, broad: Boolean = false, videoSmallestDp: Float? = null) {
+private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, broad: Boolean = false, videoSmallestDp: Float? = null, textPercent: Int = 100) {
     var src: PanelSource
         private set
     val surface: Surface get() = src.surface
@@ -232,7 +232,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
 
     init {
         // 0.5.21: the app's own size, the window's shape, and Wide view's density ([PanelDisplaySize]).
-        val s = com.hayeco.flipspaces.core.spatial.PanelDisplaySize.of(panel, broad, videoSmallestDp = videoSmallestDp)
+        val s = com.hayeco.flipspaces.core.spatial.PanelDisplaySize.of(panel, broad, videoSmallestDp = videoSmallestDp, textPercent = textPercent)
         width = s.widthPx
         height = s.heightPx
         dpi = s.dpi
@@ -392,6 +392,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 0.5.9: mono, or side by side 3D when the surface is 32:9 ([StereoLayout]); the eyes to draw. GL thread. */
     private var stereo = StereoMode.MONO
     private var eyes = StereoLayout.eyes(StereoMode.MONO, 1920, 1080)
+
+    /** 1.2.3 (issue 58): the apps whose windows split a side by side picture between the eyes ([com.hayeco.flipspaces.core.spatial.SideBySide]). */
+    private val sideBySide = com.hayeco.flipspaces.core.spatial.SideBySideStore(store.sideBySide)
     private val pointer = SpatialPointer(frustum, PointerSettings(handsSteer = store.handsSteer))
 
     /** The viewport the projection and pointer were last built for. GL thread only. */
@@ -411,9 +414,16 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 0.5.24: each app's own density setting (Fit video, [com.hayeco.flipspaces.core.spatial.AppDensityStore]), saved in the Space's settings. */
     private val appDensity = com.hayeco.flipspaces.core.spatial.AppDensityStore(store.appDensity)
 
+    /** 1.2.3 (issue 57): each app's own text size ([com.hayeco.flipspaces.core.spatial.AppTextSize]), saved in the Space's settings. */
+    private val appTextSize = com.hayeco.flipspaces.core.spatial.AppTextSizeStore(store.appTextSize)
+
     /** 0.5.24: the saved windows were capped once this run ([capReopened]). */
     private var reopenCapped = false
     private var seeThrough = store.seeThrough
+
+    /** 1.2.2: Settings' Window glow ([com.hayeco.flipspaces.core.spatial.WindowGlow]), read again on [SpaceCommand.SettingsChanged]. */
+    private var windowGlowPercent = store.windowGlowPercent
+    private var windowGlowColor = store.windowGlowColor
     private var manualYaw = 0f
     private var mode: ModeChoice? = null
     private var shizuku = ShizukuStatus.NOT_INSTALLED
@@ -697,7 +707,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         edgeHintLabel = LabelTexture(1024, 96)
         homeTexture = LabelTexture(192, 192)
         capReopened()
-        layout.panels.forEach { panels[it.id] = PanelGl(it, frames!!, wideView.isOn(it.packageName), appDensity.smallestDp(it.packageName)) }
+        layout.panels.forEach { panels[it.id] = PanelGl(it, frames!!, wideView.isOn(it.packageName), appDensity.smallestDp(it.packageName), appTextSize.percent(it.packageName)) }
         GLES30.glDisable(GLES30.GL_DEPTH_TEST)
         GLES30.glEnable(GLES30.GL_BLEND)
         // 0.5.68: premultiplied everywhere ([GlKit.BLEND_SRC]).
@@ -1083,10 +1093,19 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.2: with the frame's clock, so hand cursors move on every display frame.
         apply(pointer.frame(head, layout, nowMs))
         SpaceSession.heldPanelId = pointer.heldPanelId
+        // 1.2.3 (issue 59): the focused app and the dot's spot on a window, for the Game controller.
+        SpaceSession.focusedApp = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.packageName to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
+        SpaceSession.pointerSpot = pointer.hover?.takeIf { it.zone == PanelZone.BODY && it.panel.packageName.isNotEmpty() && it.u in 0f..1f && it.v in 0f..1f }?.let { Triple(it.panel.packageName, it.u, it.v) }
+        // 1.2.3 (issue 58): whether the focused window's app shows Side by side 3D, for the trackpad's Menu.
+        // 1.2.3 (issue 58): 2D while moving, from the head's turn and the cursor shown in the last frame.
+        sideBySideFlat = sideBySideFlatOn && sideBySideMotion.update(HeadTracker.turnSpeedDegS, headCursorAlpha > 0.02f, SystemClock.uptimeMillis())
+        SpaceSession.focusedSideBySide = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to sideBySide.isOn(it.packageName) }
         // 0.5.32: the head's turn speed to the glasses' duty on turns (it sends nothing unless its switch is on).
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
         // 0.5.32: the open windows, for the Menu's Arrange layouts by count.
         SpaceSession.windowCount = layout.panels.size
+        // 1.2.3 (issue 57): the focused window's app and text size, for the trackpad's Menu.
+        SpaceSession.focusedTextSize = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to appTextSize.percent(it.packageName) }
         // 0.5.37: Immersive's motion this frame, the others' presses held off while they are gone.
         stepImmersive()
         // 0.5.34 (vc54: Sharper turns on, nothing sent; 0.5.32 read these switches in the head cursor's draw, which a hand
@@ -3067,6 +3086,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             panel, broad, lockedPortrait = !broad && shape?.letterboxed == true && shape.asksPortrait,
             // 0.5.24: the app's own density setting (Fit video) wins.
             videoSmallestDp = appDensity.smallestDp(panel.packageName),
+            // 1.2.3 (issue 57): the app's own text size, from the trackpad's Menu.
+            textPercent = appTextSize.percent(panel.packageName),
         )
 
     /**
@@ -3130,6 +3151,91 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         showNotice(p, if (on) "Fit video: 16:9, phone layout" else "Fit video off", now)
         setLayout(layout.replace(next), commit = true)
         shapeSoon(p, SHAPE_AFTER_TOGGLE_MS)
+    }
+
+    /**
+     * 1.2.3 (issue 58): the trackpad Menu's Side by side 3D for the focused window's app, remembered for it. The picture
+     * itself is untouched; only the eyes' halves change ([com.hayeco.flipspaces.core.spatial.SideBySide]).
+     */
+    private fun sideBySideChosen(on: Boolean) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        val pkg = p.panel.packageName
+        if (pkg.isEmpty() || sideBySide.isOn(pkg) == on) return
+        sideBySide.set(pkg, on)
+        store.sideBySide = sideBySide.encode()
+        val stereo = eyes.size > 1
+        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: Side by side 3D ${if (on) "on" else "off"} (remembered for $pkg)${if (on && !stereo) "; the glasses show 2D, so the left half shows alone" else ""}")
+        // 1.2.3 (issue 58): turned on with the glasses in 2D, the Space switches to 3D, once, as the user's own choice.
+        // Not in Steady mode: its Ultrawide canvas has no eyes, and leaving it is the user's call.
+        val switching = on && !stereo && !ultrawide
+        if (switching) {
+            SpaceActivity.alive()?.let { a -> a.runOnUiThread { a.want3d("Side by side 3D turned on for $pkg") } }
+            airTo3d()
+        }
+        val notice = when {
+            !on -> com.hayeco.flipspaces.core.spatial.SideBySide.OFF_NOTICE
+            stereo -> com.hayeco.flipspaces.core.spatial.SideBySide.ON_NOTICE
+            switching -> com.hayeco.flipspaces.core.spatial.SideBySide.SWITCHING_NOTICE
+            else -> com.hayeco.flipspaces.core.spatial.SideBySide.MONO_NOTICE
+        }
+        showNotice(p, notice, SystemClock.uptimeMillis())
+    }
+
+    /**
+     * 1.2.3 (issue 58): on Air glasses, 3D side by side through the Menu's Air display mode switch, only while the user has
+     * that untested switch on ([com.hayeco.flipspaces.core.spatial.AirDisplayMode]); otherwise the glasses' own button.
+     */
+    private fun airTo3d() {
+        if (!store.airDisplayMode || AirImuLink.find(context) == null) return
+        Thread({
+            val r = runCatching { AirDisplayLink.set(context, com.hayeco.flipspaces.core.spatial.AirDisplayMode.MODE_3D_SBS) }
+            Log.i(PANEL_TAG, "Side by side 3D: the Air asked for 3D side by side: ${r.exceptionOrNull()?.message ?: "taken"}")
+        }, "air-display").start()
+    }
+
+    /** 1.2.3 (issue 58): the Menu's 2D while moving ([com.hayeco.flipspaces.core.spatial.SideBySideMotion]), off by default. */
+    private var sideBySideFlatOn = store.sideBySideFlat
+    private val sideBySideMotion = com.hayeco.flipspaces.core.spatial.SideBySideMotion()
+
+    /** This frame's side by side windows draw flat (2D while moving, the head or the cursor moving). */
+    private var sideBySideFlat = false
+
+    /**
+     * 1.2.3 (issue 57): the trackpad Menu's text size for the focused window's app, [steps] steps up or down (0 puts it back
+     * to 100 %). Remembered for the app; every window of that app takes the new density, as after a Fit video press.
+     */
+    private fun textSizeStep(steps: Int) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        val pkg = p.panel.packageName
+        if (pkg.isEmpty()) return
+        val before = appTextSize.percent(pkg)
+        val after = if (steps == 0) com.hayeco.flipspaces.core.spatial.AppTextSize.DEFAULT else com.hayeco.flipspaces.core.spatial.AppTextSize.step(before, steps)
+        if (after == before) return
+        appTextSize.set(pkg, after)
+        store.appTextSize = appTextSize.encode()
+        val now = SystemClock.uptimeMillis()
+        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: text size $before % to $after % (remembered for $pkg), its display now ${displaySpec(p.panel, wideView.isOn(pkg), p.appShape).line()}")
+        showNotice(p, com.hayeco.flipspaces.core.spatial.AppTextSize.label(after), now)
+        // Every window's display is asked for again ([setLayout]); only this app's density changes.
+        setLayout(layout, commit = true)
+    }
+
+    /** 1.2.3 (issue 59): when the Game controller's touches went down, for every event of that gesture. */
+    private var padTouchDownMs = 0L
+
+    /**
+     * 1.2.3 (issue 59): the Game controller's touches on the focused window's display, each pointer keeping its id, at the
+     * window's spots (0 to 1) in display pixels.
+     */
+    private fun padTouches(events: List<com.hayeco.flipspaces.core.pointer.TouchPointers.Event>) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        val display = p.displayId ?: return
+        for (e in events) {
+            if (e.action == com.hayeco.flipspaces.core.pointer.TouchPointers.ACTION_DOWN) padTouchDownMs = SystemClock.uptimeMillis()
+            val xs = FloatArray(e.us.size) { e.us[it] * p.width }
+            val ys = FloatArray(e.vs.size) { e.vs[it] * p.height }
+            PanelHost.touches(display, e.action, e.ids, xs, ys, padTouchDownMs) { problem = "Game controller on ${p.panel.label}: $it" }
+        }
     }
 
     private fun sendBack(p: PanelGl, display: Int) {
@@ -3743,7 +3849,16 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 SpaceCommand.Recentre -> recentre()
                 SpaceCommand.ClearLayout -> layout.panels.map { it.id }.forEach(::removePanel)
                 SpaceCommand.CalibrateHands -> toggleCalibration()
+                is SpaceCommand.PadTouches -> padTouches(c.events)
+                SpaceCommand.FocusWindow -> focusedPanelId?.let { panels[it] }?.displayId?.let { PanelHost.focus(it, "the Game controller's gamepad") }
+                is SpaceCommand.SideBySide -> sideBySideChosen(c.on)
+                is SpaceCommand.SideBySideFlat -> {
+                    sideBySideFlatOn = c.on
+                    store.sideBySideFlat = c.on
+                    Log.i(PANEL_TAG, "Side by side 3D: 2D while moving ${if (c.on) "on" else "off"}")
+                }
                 is SpaceCommand.Arrange -> apply(pointer.arrange(c.kind, layout, focusedPanelId))
+                is SpaceCommand.TextSize -> textSizeStep(c.steps)
                 is SpaceCommand.OpenPreset -> openPreset(c.preset)
                 SpaceCommand.WrapChanged -> syncWrap()
                 is SpaceCommand.GlassesWarpChanged -> warpNotice(c.on, c.from)
@@ -3752,6 +3867,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     applyViewport(viewport, force = true)
                     pointer.settings = pointer.settings.copy(handsSteer = store.handsSteer)
                     seeThrough = store.seeThrough
+                    windowGlowPercent = store.windowGlowPercent
+                    windowGlowColor = store.windowGlowColor
                     HeadTracker.applySettings(context)
                 }
             }
@@ -3794,7 +3911,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         setLayout(added.first, commit = true)
         windowOpenMs.remove(-1)?.let { windowOpenMs[added.second.id] = it }
-        panels[added.second.id] = PanelGl(added.second, frames ?: return, wideView.isOn(app.packageName), appDensity.smallestDp(app.packageName))
+        panels[added.second.id] = PanelGl(added.second, frames ?: return, wideView.isOn(app.packageName), appDensity.smallestDp(app.packageName), appTextSize.percent(app.packageName))
         store.recents = launcher.noteOpened(app)
         // An app opened: the search is done with, wherever the app was opened from.
         launcher.clearSearch()
@@ -3817,7 +3934,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             )
             setLayout(added.first.replace(placed), commit = true)
             windowOpenMs[placed.id] = SystemClock.uptimeMillis()
-            panels[placed.id] = PanelGl(placed, f, wideView.isOn(sp.packageName), appDensity.smallestDp(sp.packageName))
+            panels[placed.id] = PanelGl(placed, f, wideView.isOn(sp.packageName), appDensity.smallestDp(sp.packageName), appTextSize.percent(sp.packageName))
             opened++
         }
         spaceNotice = "${preset.name}: $opened windows"
@@ -4128,8 +4245,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             // 0.5.20: the app's picture edge to edge, with rounded corners; no bar over it.
             // 0.5.23: the texture is the display's size, so its UVs are the whole of it; a picture from before a resize
             // (another shape) is cropped about its centre to the window's, never stretched ([com.hayeco.flipspaces.core.spatial.PanelUv]).
+            // 1.2.3 (issue 58): Side by side 3D: each eye's pass samples its own half of the picture.
+            val sbs = sideBySide.isOn(panel.packageName)
             fun matrixFor(t: PanelSource): FloatArray {
-                val uv = com.hayeco.flipspaces.core.spatial.PanelUv.cover(t.texture.width, t.texture.height, com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(panel))
+                val crop = com.hayeco.flipspaces.core.spatial.PanelUv.cover(t.texture.width, t.texture.height, com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(panel))
+                // 1.2.3: while 2D while moving holds it flat, both eyes take the left half.
+                val uv = if (sbs) com.hayeco.flipspaces.core.spatial.SideBySide.eyeUv(crop, if (sideBySideFlat) 0 else eyePass, eyes.size) else crop
                 return if (uv[0] == 0f && uv[1] == 0f && uv[2] == 1f && uv[3] == 1f) GlKit.IDENTITY else com.hayeco.flipspaces.core.spatial.PanelUv.matrix(uv)
             }
             // 0.5.45: after a resize the picture from before stays under the new one while that fades in ([PanelGl.dropPrevious]).
@@ -4334,6 +4455,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // glow brightens and the rim turns the accent ([bodyRounding]): the window's frame lights to say it can be taken.
         val frame = if (firstEye) p.frameLook.at(onFrame, frameClockMs) else p.frameLook.value
         if (focus < 0.01f && frame < 0.01f) return
+        // 1.2.2: Settings' Window glow scales its opacity; off draws nothing (the rim still lights on the grab band).
+        if (!com.hayeco.flipspaces.core.spatial.WindowGlow.shown(windowGlowPercent)) return
         val bodyW = PanelCurve.arcWidthM(panel)
         val haloM = HALO_PER_M * panel.distanceM
         val gu = haloM / bodyW
@@ -4346,7 +4469,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         GlKit.applyHalo(prog, bodyW + 2f * haloM, panel.heightM + 2f * haloM, haloM)
         GLES30.glUniformMatrix4fv(prog.mvp, 1, false, (viewProj * r.model).m, 0)
         GLES30.glUniformMatrix4fv(prog.tex, 1, false, GlKit.IDENTITY, 0)
-        val c = look(Look.ACCENT, (HALO_ALPHA * focus + FRAME_HALO_ALPHA * frame).coerceAtMost(1f) * windowAlpha)
+        // 1.2.2: and its colour is Settings' Window glow colour, the accent blue unless changed.
+        val c = com.hayeco.flipspaces.core.spatial.WindowGlow.rgba(windowGlowColor, (HALO_ALPHA * focus + FRAME_HALO_ALPHA * frame).coerceAtMost(1f) * windowAlpha, windowGlowPercent)
         GLES30.glUniform4f(prog.color, c[0], c[1], c[2], c[3])
         GLES30.glUniform1f(prog.circle, 2f)
         GlKit.drawShape(prog, r)
@@ -4802,6 +4926,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val onFrame = hover?.frame == true
             if (look.ringAlpha > 0.01f) drawDisc(vp, at, CURSOR_RING * look.ringScale * (if (onFrame) 1.35f else 1f), Look.rgba(if (onFrame) Look.ACCENT else colour, 0.9f * a * look.ringAlpha), GlKit.CIRCLE_RING, CURSOR_RING_INNER)
             drawRipple(vp, at, pointer.pressing, a)
+            // 1.2.3 (issue 53): over a resize handle or a grab band, the accent fills the ring while the trackpad's finger
+            // is held, so the hold that starts a resize or a move shows before it fires.
+            if (!pointer.pressing) {
+                val fill = com.hayeco.flipspaces.core.spatial.HoldFill.of(SpaceSession.padHold, hover?.zone, onFrame)
+                if (fill > 0f) drawDisc(vp, at, CURSOR_RING * look.ringScale * fill, Look.rgba(Look.ACCENT, 0.85f * a), GlKit.CIRCLE_DOT)
+            }
             drawDisc(vp, at, CURSOR_DOT * look.dotScale, Look.rgba(colour, a), GlKit.CIRCLE_DOT, CURSOR_DOT_CORE)
             return
         }

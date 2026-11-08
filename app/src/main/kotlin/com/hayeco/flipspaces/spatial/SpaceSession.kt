@@ -58,8 +58,23 @@ sealed interface SpaceCommand {
     /** 0.5.0: start the "pinch on the dots" hand calibration in the Space, or stop it if it runs. */
     data object CalibrateHands : SpaceCommand
 
+    /** 1.2.3 (issue 59): the Game controller's touches on the focused window, in order. */
+    data class PadTouches(val events: List<com.hayeco.flipspaces.core.pointer.TouchPointers.Event>) : SpaceCommand
+
+    /** 1.2.3 (issue 59): the focused window's display on top, so a gamepad's input reaches its app. */
+    data object FocusWindow : SpaceCommand
+
+    /** 1.2.3 (issue 58): Side by side 3D on or off for the focused window's app. */
+    data class SideBySide(val on: Boolean) : SpaceCommand
+
+    /** 1.2.3 (issue 58): 2D while moving for side by side windows, on or off. */
+    data class SideBySideFlat(val on: Boolean) : SpaceCommand
+
     /** 0.5.17: the arrange actions from the trackpad's drawer ([com.hayeco.flipspaces.core.spatial.Arrange]). */
     data class Arrange(val kind: com.hayeco.flipspaces.core.spatial.ArrangeKind) : SpaceCommand
+
+    /** 1.2.3 (issue 57): the focused window's app's text size, [steps] steps up or down; 0 puts it back to 100 %. */
+    data class TextSize(val steps: Int) : SpaceCommand
 
     /** 0.5.19: the wraparound turned on or off ([SpaceSession.wrap]): the Space wraps or unwraps its windows. */
     data object WrapChanged : SpaceCommand
@@ -156,6 +171,15 @@ object SpaceSession {
     /** 0.5.19: the whole Space wrapped round Mike as one cylinder, from the trackpad's menu ([com.hayeco.flipspaces.core.spatial.SpaceWrap]). */
     @Volatile var wrap: Boolean = false
 
+    /** 1.2.3 (issue 59): the focused window's app and its shape (width over height), for the Game controller's touches. */
+    @Volatile var focusedApp: Pair<String, Float>? = null
+
+    /** 1.2.3 (issue 59): the app and the spot (0 to 1 across and down) the dot is on, when it is on a window's picture. */
+    @Volatile var pointerSpot: Triple<String, Float, Float>? = null
+
+    /** 1.2.3 (issue 58): the focused window's label and whether its app shows Side by side 3D, for the trackpad's Menu. */
+    @Volatile var focusedSideBySide: Pair<String, Boolean>? = null
+
     /**
      * 0.5.37: the trackpad's state as the Control Center shows it (the trackpad publishes it every tick): Spatial Mouse in
      * use (and available), hand tracking running, cursor speed 0 to 100.
@@ -164,6 +188,9 @@ object SpaceSession {
     @Volatile var padSpatialMouseAvailable: Boolean = true
     @Volatile var padHands: Boolean = false
     @Volatile var padCursorSpeed: Int = 50
+
+    /** 1.2.3 (issue 53): the trackpad's still finger toward its long press, 0 to 1, for the cursor's fill ([com.hayeco.flipspaces.core.spatial.HoldFill]). */
+    @Volatile var padHold: Float = 0f
 
     /**
      * 0.5.99 (Mike: record what the glasses show, as the Aura's puck does): the Control Center's or the Menu's Record
@@ -185,6 +212,9 @@ object SpaceSession {
 
     /** 0.5.32: how many windows the Space has open, for the Menu's Arrange layouts ([com.hayeco.flipspaces.core.spatial.ArrangeLayouts.forCount]). */
     @Volatile var windowCount: Int = 0
+
+    /** 1.2.3 (issue 57): the focused window's label and its app's text size in percent, for the trackpad's Menu; null with none. */
+    @Volatile var focusedTextSize: Pair<String, Int>? = null
 
     /** 0.5.19: packages that crashed on a panel, and when (uptime), across Space starts. */
     val crashedApps = java.util.concurrent.ConcurrentHashMap<String, Long>()

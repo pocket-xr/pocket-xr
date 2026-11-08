@@ -8,6 +8,9 @@
          is in the background (granted with adb shell appops, never asked for). -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
+    <!-- 1.2.1: the add-on's one-tap install (AddonInstaller), as in a GitHub release (src/selfinstall). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application>
         <!-- Only senders holding DUMP may use it: adb shell has it, apps do not. -->
         <receiver

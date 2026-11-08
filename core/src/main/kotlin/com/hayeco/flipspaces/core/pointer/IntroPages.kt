@@ -4,7 +4,8 @@ import com.hayeco.flipspaces.core.spatial.GlassesModel
 import com.hayeco.flipspaces.core.spatial.GlassesSetup
 
 /** The picture over an intro page (the trackpad draws each one). */
-enum class IntroArt { POINT, SCROLL, THREE_FINGERS, AIM_PHONE, AIM_HANDHELD, GLASSES_MENU }
+/** 1.2.1: [ADDON] is the add-on's page, which the trackpad draws with the add-on's Install button under its lines. */
+enum class IntroArt { POINT, SCROLL, THREE_FINGERS, AIM_PHONE, AIM_HANDHELD, GLASSES_MENU, ADDON }
 
 /** One page of the trackpad's tutorial: a title, numbered steps, and a quieter [note] under them. */
 data class IntroPage(val title: String, val items: List<String>, val art: IntroArt, val note: String? = null)
@@ -24,16 +25,35 @@ object IntroPages {
      * pages were another product's text).
      */
     val GESTURES: List<IntroPage> = listOf(
-        IntroPage("Point and click", listOf("Move one finger to move the dot", "Tap to click", "Tap with two fingers for a long press"), IntroArt.POINT),
+        // 1.2.3 (issue 53): the resize handle needs a held finger, which nothing said.
+        IntroPage(
+            "Point and click",
+            listOf("Move one finger to move the dot", "Tap to click", "Tap with two fingers for a long press"),
+            IntroArt.POINT,
+            note = RESIZE_LINE,
+        ),
         IntroPage(
             "Scroll and zoom",
             listOf("Run a finger along the strip at the edge to scroll", "Move two fingers to scroll", "Pinch with two fingers to zoom"),
             IntroArt.SCROLL,
         ),
-        IntroPage("Three fingers", listOf("Swipe up: your apps", "Swipe down: Control Center", "Swipe sideways: Back"), IntroArt.THREE_FINGERS),
+        // 1.2.3 (issue 50): some phones keep three finger swipes for themselves; say what does the same without them.
+        IntroPage("Three fingers", listOf("Swipe up: your apps", "Swipe down: Control Center", "Swipe sideways: Back"), IntroArt.THREE_FINGERS, note = NO_THREE_FINGERS_LINE),
     )
 
     const val SPATIAL_MOUSE_TITLE = "Spatial Mouse (aim with your phone)"
+
+    /** 1.2.3 (issue 53): how to resize, under the first page's steps. */
+    const val RESIZE_LINE = "To resize a window, put the dot on its corner handle. Hold a finger still until the dot fills, then drag."
+
+    /** 1.2.3 (issue 50): the Menu's row that opens the Control panel without a swipe. */
+    const val CONTROL_PANEL_ROW = "Open Control Center"
+
+    /**
+     * 1.2.3 (issue 50): under the three finger page, for phones that take the swipes for themselves. No full stop: as the
+     * last page its note gets the exit line after it ([trackpad]).
+     */
+    const val NO_THREE_FINGERS_LINE = "If three fingers don't work: Home opens your apps, and the Menu has $CONTROL_PANEL_ROW"
 
     /**
      * Spatial Mouse, held the way the device is: a phone upright, a landscape handheld ([TrackpadSettings.landscapeHandheld])
@@ -93,9 +113,23 @@ object IntroPages {
     }
 
     /**
-     * First run: [trackpad]. 1.1.9 put the plugged-in glasses' setup page first; 1.1.16 (issue 12) moved it to the glasses
-     * setup check, which opens by itself once these pages close, with a head turn check after the steps.
+     * 1.2.1 (Mike: tell new users about the optional add-on during setup): what the add-on gives, with its Install button
+     * under the lines ([com.hayeco.flipspaces.core.AddonSetup]). Next skips it.
      */
-    fun firstRun(landscapeHandheld: Boolean, spatialMouse: Boolean, oneFingerScroll: Boolean = true): List<IntroPage> =
-        trackpad(landscapeHandheld, spatialMouse, oneFingerScroll)
+    val ADDON: IntroPage = IntroPage(
+        com.hayeco.flipspaces.core.AddonSetup.TITLE,
+        com.hayeco.flipspaces.core.AddonSetup.ITEMS,
+        IntroArt.ADDON,
+        note = com.hayeco.flipspaces.core.AddonSetup.NOTE,
+    )
+
+    /**
+     * First run: [trackpad]. 1.1.9 put the plugged-in glasses' setup page first; 1.1.16 (issue 12) moved it to the glasses
+     * setup check, which opens by itself once these pages close, with a head turn check after the steps. 1.2.1: the
+     * add-on's page ([ADDON]) before the last page, so the tutorial still ends on where Exit is.
+     */
+    fun firstRun(landscapeHandheld: Boolean, spatialMouse: Boolean, oneFingerScroll: Boolean = true): List<IntroPage> {
+        val pages = trackpad(landscapeHandheld, spatialMouse, oneFingerScroll)
+        return pages.dropLast(1) + ADDON + pages.last()
+    }
 }

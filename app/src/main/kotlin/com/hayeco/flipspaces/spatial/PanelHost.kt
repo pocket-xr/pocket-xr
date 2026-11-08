@@ -74,7 +74,8 @@ object PanelHost {
      */
     // 0.5.37: 14, launchNew (a new instance of a running app); a new version restarts the user service with this code.
     // 1.1.15: 16, rootTaskLines and moveTaskToDisplay (an app's new screen that landed on the phone, back to its window).
-    private const val SERVICE_VERSION = 16
+    // 1.2.3: 17, the virtual gamepad (gamepadOpen, gamepadInput, gamepadClose) and injectTouches (issue 59).
+    private const val SERVICE_VERSION = 17
 
     /**
      * 0.5.52: window displays on the shell's virtual device (Developer: "Windows stay awake when the phone sleeps (test)"),
@@ -516,6 +517,37 @@ object PanelHost {
         calls.execute {
             val h = host ?: return@execute
             val err = runCatching { h.injectKey(displayId, action, keyCode, metaState, repeat, downTime) }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
+            if (err != null) main.post { problem(err) }
+        }
+    }
+
+    /** 1.2.3 (issue 59): the virtual gamepad up; [done] gets null or why not, on the main thread. */
+    fun gamepadOpen(done: (String?) -> Unit) {
+        calls.execute {
+            val h = host
+            if (h == null) {
+                main.post { done("The panel service is not connected (Shizuku)") }
+                return@execute
+            }
+            val err = runCatching { h.gamepadOpen() }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
+            main.post { done(err) }
+        }
+    }
+
+    /** 1.2.3: one report of the virtual gamepad, in order with the others. */
+    fun gamepadInput(report: ByteArray) {
+        calls.execute { runCatching { host?.gamepadInput(report) } }
+    }
+
+    fun gamepadClose() {
+        calls.execute { runCatching { host?.gamepadClose() } }
+    }
+
+    /** 1.2.3 (issue 59): touches with their own pointer ids on [displayId]. */
+    fun touches(displayId: Int, action: Int, ids: IntArray, xs: FloatArray, ys: FloatArray, downTime: Long, problem: (String) -> Unit) {
+        calls.execute {
+            val h = host ?: return@execute
+            val err = runCatching { h.injectTouches(displayId, action, ids, xs, ys, downTime) }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
             if (err != null) main.post { problem(err) }
         }
     }

@@ -169,7 +169,7 @@ fun PhoneScreen(
                     // 0.5.101 (Mike: each settings screen only what is needed, each with a reset): Track two hands and
                     // Calibrate hand aim are on the Hands screen only; Trackpad opens the trackpad's own Menu, where its
                     // settings are, instead of repeating the Open trackpad button.
-                    NavRow("Spatial windows", "Screen size, 3D, eye distance, hand pointer; Shizuku setup", onOpenSpatial)
+                    NavRow("Spatial windows", "Screen size, 3D, eye distance, window glow and colour, hand pointer; Shizuku setup", onOpenSpatial)
                     RowDivider()
                     ToggleRow(
                         "Head tracking",

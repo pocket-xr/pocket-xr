@@ -102,7 +102,11 @@ developed on a **Samsung Galaxy Z Flip 7** with One UI. Other phones with video 
 2. **Install and start [Shizuku](https://shizuku.rikka.app/)**, and allow Pocket XR in it. Pocket XR uses it to
    create a window for each app and to start the Space on the glasses. Without Shizuku, apps open as ordinary desktop
    windows instead.
-3. **Optional: install [the add-on](#the-add-on)** for the cursor outside the Space and the Notifications page.
+3. **Optional: install [the add-on](#the-add-on)** for your phone's notifications in the glasses and the cursor outside
+   the Space. The trackpad's first tutorial and the glasses setup check have an **Install add-on** button: it downloads
+   the newest add-on and opens Android's install prompt. The first time, Android asks you to allow Pocket XR to install
+   apps; tap **Allow installs**, switch it on, and come back. Once it is installed, the same place has a button for the
+   add-on's notification access. You can skip it and install it later.
 4. **Plug in the glasses.** The Space opens on them, and the phone shows the trackpad.
 5. **On Samsung phones**, if touches at the screen's edges go missing (the scroll strip), turn on Good Lock's Edge Touch
    for the trackpad.
@@ -158,8 +162,9 @@ The add-on gives you:
 
 What both read and what never leaves the phone is in the [privacy policy](PRIVACY.md).
 
-Get it from the [add-on releases](https://github.com/pocket-xr/pocket-xr/releases?q=addon&expanded=true)
-(`pocketxr-addon-x.y.apk`). It is signed with the same key as Pocket XR, and Pocket XR only talks to an add-on signed
+Tap **Install add-on** in the trackpad's tutorial or at the end of the glasses setup check, or get it yourself from the
+[add-on releases](https://github.com/pocket-xr/pocket-xr/releases?q=addon&expanded=true)
+(`pocketxr-addon-x.y.apk`). If the one-tap install does not work, it says why and offers that page. It is signed with the same key as Pocket XR, and Pocket XR only talks to an add-on signed
 with that key. If Play Protect blocks the add-on, install it from a computer with `adb install pocketxr-addon-x.y.apk`,
 which the block does not cover, or turn off "Scan apps with Play Protect" in the Play Store for the install.
 
