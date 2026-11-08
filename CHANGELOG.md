@@ -2,6 +2,32 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.2.3: pocket mode, game keys and text size
+
+- **Pocket mode.** The trackpad's Menu has Pocket mode for walking around with the phone in your pocket. The phone's
+  screen goes black at its lowest brightness and blocks touches, while the glasses keep running. Hold the lock to leave.
+- **Game keys.** Turn on Game keys in the Menu for two sets of keys next to the trackpad: Q W E, A S D, Shift, Ctrl and
+  Tab on the left, and 1 to 4, R, F, Esc and Space on the right. They send real key presses, so a key you hold stays held
+  in a game. Tap Done to put the window keys back.
+- **Text size for each app.** Focus a window and use Text size in the Menu to make its text smaller or larger, from
+  40 % to 130 %. Smaller fits more on the window, such as a browser's desktop layout. It's remembered for each app.
+- **Side by side 3D.** For a video split into two halves, turn on Side by side 3D in the Menu. Each eye sees its half,
+  so the video looks 3D with the glasses in 3D. It's remembered for each app.
+- **Open Control Center from the Menu.** On phones that keep three finger swipes for themselves, such as OnePlus, the
+  Menu now opens the Control Center. The tutorial says what to use instead of the swipes.
+- **Resizing is easier to find.** Rest the dot on a window's corner handle and hold a finger still: the dot fills up,
+  then you can drag. The tutorial now says how.
+- **Scroll the windows with a mouse.** With the cursor off the windows, the mouse wheel and a two finger swipe up or down
+  now slide the row of windows round, as a sideways swipe already did.
+- **Air glasses: level horizon.** On the Air, Air 2, Air 2 Pro and Air 2 Ultra, gravity was never used, so the horizon
+  could sit in the floor and drift, and Recentre couldn't level it. This is fixed. We don't have Air glasses to test
+  on, so please tell us how it works for you.
+- **Air glasses: display mode (untested).** With Air glasses plugged in, the Menu has an Air display mode switch, off by
+  default. Turned on, it shows the glasses' mode and switches between 2D and 3D side by side. It has never been tried
+  on Air glasses, so please open an issue if it doesn't work.
+- **Fixes.** The launcher's Search apps opens the keyboard without a tap. The Menu shows Sideways trackpad direction only
+  on the sideways trackpad, the one it changes.
+
 ## 1.2.2: the window glow
 
 - **Turn down the window glow.** Spatial windows in Settings has a new Window glow slider for the blue glow round the
