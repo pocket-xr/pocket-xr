@@ -3082,6 +3082,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         showNotice(p, if (!on) com.hayeco.flipspaces.core.spatial.SideBySide.OFF_NOTICE else if (stereo) com.hayeco.flipspaces.core.spatial.SideBySide.ON_NOTICE else com.hayeco.flipspaces.core.spatial.SideBySide.MONO_NOTICE, SystemClock.uptimeMillis())
     }
 
+    /**
      * 1.2.3 (issue 57): the trackpad Menu's text size for the focused window's app, [steps] steps up or down (0 puts it back
      * to 100 %). Remembered for the app; every window of that app takes the new density, as after a Fit video press.
      */
