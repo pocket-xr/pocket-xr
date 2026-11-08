@@ -61,6 +61,9 @@ sealed interface SpaceCommand {
     /** 0.5.17: the arrange actions from the trackpad's drawer ([com.hayeco.flipspaces.core.spatial.Arrange]). */
     data class Arrange(val kind: com.hayeco.flipspaces.core.spatial.ArrangeKind) : SpaceCommand
 
+    /** 1.2.3 (issue 57): the focused window's app's text size, [steps] steps up or down; 0 puts it back to 100 %. */
+    data class TextSize(val steps: Int) : SpaceCommand
+
     /** 0.5.19: the wraparound turned on or off ([SpaceSession.wrap]): the Space wraps or unwraps its windows. */
     data object WrapChanged : SpaceCommand
 
@@ -165,6 +168,9 @@ object SpaceSession {
     @Volatile var padHands: Boolean = false
     @Volatile var padCursorSpeed: Int = 50
 
+    /** 1.2.3 (issue 53): the trackpad's still finger toward its long press, 0 to 1, for the cursor's fill ([com.hayeco.flipspaces.core.spatial.HoldFill]). */
+    @Volatile var padHold: Float = 0f
+
     /**
      * 0.5.99 (Mike: record what the glasses show, as the Aura's puck does): the Control Center's or the Menu's Record
      * ([recordWanted]); whether the Space is recording ([recording], for the buttons and the trackpad); and the last
@@ -185,6 +191,9 @@ object SpaceSession {
 
     /** 0.5.32: how many windows the Space has open, for the Menu's Arrange layouts ([com.hayeco.flipspaces.core.spatial.ArrangeLayouts.forCount]). */
     @Volatile var windowCount: Int = 0
+
+    /** 1.2.3 (issue 57): the focused window's label and its app's text size in percent, for the trackpad's Menu; null with none. */
+    @Volatile var focusedTextSize: Pair<String, Int>? = null
 
     /** 0.5.19: packages that crashed on a panel, and when (uptime), across Space starts. */
     val crashedApps = java.util.concurrent.ConcurrentHashMap<String, Long>()

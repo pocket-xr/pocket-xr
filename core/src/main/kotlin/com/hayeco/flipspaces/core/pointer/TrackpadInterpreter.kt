@@ -424,6 +424,18 @@ class TrackpadInterpreter(
         return listOf(PointerSignal.Down(pad = true))
     }
 
+    /**
+     * 1.2.3 (issue 53: the resize handle "seems to do nothing" when pressed, it has to be held): how far a still finger is
+     * toward the long press ([tick]), 0 to 1, so the cursor can fill as the hold builds. 0 when no long press is coming:
+     * no finger, more than one, a swipe, the strip, or already held.
+     */
+    fun holdProgress(nowMs: Long): Float {
+        if (done || held || touches.size != 1 || fingers != 1 || one != One.CURSOR || swiped) return 0f
+        val id = touches.keys.first()
+        if ((travel[id] ?: 0f) > moveLimit) return 0f
+        return ((nowMs - startMs).toFloat() / LONG_PRESS_MS).coerceIn(0f, 1f)
+    }
+
     /** The phone's Back button was clicked: Back, with a 10 ms buzz. */
     fun back(): List<PointerSignal> {
         haptics += PadHaptic.BACK

@@ -765,6 +765,7 @@ class TrackpadActivity : Activity(), PadHost {
             SpaceSession.padHands = gestureState() == 2
             SpaceSession.padCursorSpeed = settings.cursorSpeed
             if (touching) send(pad.tick(now))
+            SpaceSession.padHold = if (touching) pad.holdProgress(now) else 0f
             send(home.tick(now))
             // 0.5.17 cover screen: Further or Closer held repeats, faster the longer it is held.
             repeatAction?.let { a -> repeat.tick(now).forEach { submit(PadSignal.Window(a, it)) } }
@@ -1091,6 +1092,19 @@ class TrackpadActivity : Activity(), PadHost {
         }
         com.hayeco.flipspaces.spatial.SpaceSession.recordWanted = on
         screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped: saved to Movies/Pocket XR.")
+    }
+
+    override fun openControlPanel() {
+        submit(PadSignal.Swipe(com.hayeco.flipspaces.core.pointer.SwipeDirection.DOWN))
+    }
+
+    override fun focusedTextSize(): Pair<String, Int>? = if (SpaceSession.active) SpaceSession.focusedTextSize else null
+
+    override fun textSizeStep(steps: Int) {
+        if (!SpaceSession.active) return
+        SpaceSession.send(SpaceCommand.TextSize(steps))
+        // The Space takes it on its next frame; the Menu shows the new size a moment later.
+        window.decorView.postDelayed({ screen.refreshDrawer() }, TEXT_SIZE_REFRESH_MS)
     }
 
     override fun returnHome() {
@@ -1733,6 +1747,9 @@ class TrackpadActivity : Activity(), PadHost {
 
     companion object {
         private const val TAG = "FlipSpaces/Trackpad"
+
+        /** 1.2.3 (issue 57): the Menu reads the new text size back this long after a step. */
+        private const val TEXT_SIZE_REFRESH_MS = 200L
 
         /** 0.5.19: a touch or tick that keeps the UI thread this long is logged. */
         private const val SLOW_UI_MS = 8L

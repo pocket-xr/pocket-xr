@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.2.3 (issue 50): the Menu's Control panel row: two switches, drawn for Pocket XR. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="56"
+        android:pathData="M260,200L700,200A100,100 0,0 1,700,400L260,400A100,100 0,0 1,260,200Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M640,300A60,60 0,1 1,760,300A60,60 0,1 1,640,300Z" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="56"
+        android:pathData="M260,560L700,560A100,100 0,0 1,700,760L260,760A100,100 0,0 1,260,560Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M200,660A60,60 0,1 1,320,660A60,60 0,1 1,200,660Z" />
+</vector>
