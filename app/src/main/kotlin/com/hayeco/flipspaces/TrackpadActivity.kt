@@ -488,6 +488,8 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun onPause() {
         resumed = false
+        // 1.2.3 (issue 59): a game key held as the trackpad goes is let go, so the game is not left holding it.
+        screen.releaseGameKeys()
         main.removeCallbacks(ticker)
         main.removeCallbacks(coaster)
         if (touching || pad.coasting) send(pad.cancel())
@@ -1092,6 +1094,41 @@ class TrackpadActivity : Activity(), PadHost {
         }
         com.hayeco.flipspaces.spatial.SpaceSession.recordWanted = on
         screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped: saved to Movies/Pocket XR.")
+    }
+
+    /** 1.2.3 (issue 59): Game keys on; for this run of the trackpad, off again when it closes. */
+    private var gameKeys = false
+
+    /** When each game key went down, for its key up (Android pairs them by the down time). */
+    private val gameKeyDownAt = HashMap<Int, Long>()
+
+    override fun gameKeysOn(): Boolean = gameKeys
+
+    override fun gameKeysChosen(on: Boolean) {
+        if (on && !SpaceSession.active) {
+            screen.showToast("Open the Space on the glasses first.")
+            return
+        }
+        if (gameKeys == on) return
+        gameKeys = on
+        Log.i(TAG, "Game keys ${if (on) "on: held keys go to the focused window" else "off"}")
+        screen.configure(settings, cover, coverLayout)
+        if (on) screen.showToast("Click a game's window first, then hold the keys.")
+    }
+
+    /**
+     * 1.2.3 (issue 59): a game key's down or up to the focused window, as a real key event (the window's display, the
+     * same path as a hardware keyboard's keys), so a held key stays held in the game. Done turns Game keys off.
+     */
+    override fun gameKey(change: com.hayeco.flipspaces.core.pointer.GameKeyChange) {
+        if (change.keyCode == com.hayeco.flipspaces.core.pointer.GameKeyLayout.EXIT) {
+            if (!change.down) return
+            gameKeysChosen(false)
+            return
+        }
+        val now = SystemClock.uptimeMillis()
+        val downAt = if (change.down) now.also { gameKeyDownAt[change.keyCode] = it } else gameKeyDownAt.remove(change.keyCode) ?: now
+        SpaceSession.send(SpaceCommand.PanelKey(if (change.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, change.keyCode, 0, 0, downAt))
     }
 
     override fun openControlPanel() {

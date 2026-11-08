@@ -754,6 +754,15 @@ interface PadHost {
     /** Unlock the phone (a keyguard dismiss, its PIN on the cover where it is secure). */
     fun unlockPhone()
 
+    /** 1.2.3 (issue 59): Game keys are on (the open phone shows them). */
+    fun gameKeysOn(): Boolean
+
+    /** 1.2.3 (issue 59): the Menu's Game keys row, or the cluster's Done. */
+    fun gameKeysChosen(on: Boolean)
+
+    /** 1.2.3 (issue 59): a game key went down or up. */
+    fun gameKey(change: com.hayeco.flipspaces.core.pointer.GameKeyChange)
+
     /** 1.2.3 (issue 52): the lock overlay now, black, at the lowest brightness, the screen kept on. */
     fun pocketMode()
 
@@ -1410,12 +1419,21 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     val textOpen: Boolean get() = textBar.visibility == View.VISIBLE
 
+    /** 1.2.3 (issue 59): Game keys, a cluster for each thumb ([GameKeysView]), on the open phone while on. */
+    private val gameLeft = GameKeysView(context, com.hayeco.flipspaces.core.pointer.GameKeyLayout.LEFT) { host.gameKey(it) }.apply { visibility = View.GONE }
+    private val gameRight = GameKeysView(context, com.hayeco.flipspaces.core.pointer.GameKeyLayout.RIGHT) { host.gameKey(it) }.apply { visibility = View.GONE }
+
+    /** Game keys are shown: the window keys and the bar make room for them. */
+    private val gameKeysShown: Boolean get() = !cover && host.gameKeysOn()
+
     init {
         setBackgroundColor(BACKGROUND)
         listOf(pad, drawerButton, selector, hint, laserTip, bar, sideBack, sideHome, curveKey, coverMouseChip, updateBanner).forEach { addView(it) }
         mainKeys.values.forEach { addView(it) }
         coverKeys.values.forEach { addView(it) }
         addView(lockKey)
+        addView(gameLeft)
+        addView(gameRight)
         listOf(textBar, mask, popup, intro, dialog, drawerScrim, drawer, toast, lock).forEach { addView(it) }
         pressable(barBack, barBackIcon, R.drawable.ic_back, R.drawable.ic_back_pressed, R.drawable.left_black_gradient_bg_pressed, isHome = false)
         pressable(barHome, barHomeIcon, R.drawable.ic_home_new, R.drawable.ic_home_new_pressed, R.drawable.right_black_gradient_bg_pressed, isHome = true)
@@ -1504,6 +1522,18 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         for ((b, k) in coverKeys) k.visibility = if (cover && !textOpen && coverShown(b)) View.VISIBLE else View.GONE
         // 1.1.15: Lock screens' toggle on the open phone; the cover reaches it from its Menu.
         lockKey.visibility = if (cover) View.GONE else View.VISIBLE
+        // 1.2.3 (issue 59): Game keys take the bottom of the screen; Keyboard and the pad stay. Done on the right cluster,
+        // or the Menu, gives the window keys back.
+        val game = gameKeysShown
+        gameLeft.visibility = if (game) View.VISIBLE else View.GONE
+        gameRight.visibility = if (game) View.VISIBLE else View.GONE
+        if (!game) {
+            gameLeft.releaseAll()
+            gameRight.releaseAll()
+        } else {
+            for (v in listOf(bar, sideBack, sideHome, curveKey, lockKey, laserTip)) v.visibility = View.GONE
+            for ((b, k) in mainKeys) if (b != CoverButton.KEYBOARD) k.visibility = View.GONE
+        }
         if (!cover && textOpen) showText(false)
         refreshCover()
         // 0.5.74 (Mike: the cover's Spatial Mouse pill "gets left over on the flipped open trackpad at the very top of the
@@ -1741,8 +1771,37 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         // Toast: 120 above the bottom, centred.
         val (tw, th) = wrap(toast, dp(200f))
         put(toast, (w - tw) / 2, h - dp(120f) - th, tw, th)
+        if (gameKeysShown) placeGameKeys(w, h, landscape)
         placeLock(landscape)
         put(lock, 0, 0, w, h)
+    }
+
+    /**
+     * 1.2.3 (issue 59): portrait: the two clusters side by side across the bottom, the pad between the selector and them.
+     * Landscape: one in each lower corner, under the thumbs of a phone held sideways, over the pad's edges.
+     */
+    /** 1.2.3 (issue 59): lets go of every held game key (the trackpad paused). */
+    fun releaseGameKeys() {
+        gameLeft.releaseAll()
+        gameRight.releaseAll()
+    }
+
+    private fun placeGameKeys(w: Int, h: Int, landscape: Boolean) {
+        val m = dp(12f)
+        if (landscape) {
+            val cw = minOf(dp(300f), (w * 0.34f).toInt())
+            val ch = minOf(dp(230f), (h * 0.62f).toInt())
+            put(gameLeft, m, h - m - ch, cw, ch)
+            put(gameRight, w - m - cw, h - m - ch, cw, ch)
+        } else {
+            val ch = minOf(dp(240f), (h * 0.36f).toInt())
+            val top = h - dp(20f) - ch
+            val cw = (w - 2 * m - dp(8f)) / 2
+            put(gameLeft, m, top, cw, ch)
+            put(gameRight, m + cw + dp(8f), top, cw, ch)
+            val padRect = rects[pad] ?: return
+            put(pad, padRect[0], padRect[1], padRect[2], (top - dp(10f) - padRect[1]).coerceAtLeast(dp(100f)))
+        }
     }
 
     private var lockPlacedLandscape: Boolean? = null
@@ -1979,6 +2038,15 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             closeDrawer()
             host.recordGlasses(!recordingNow)
         })
+        // 1.2.3 (issue 59): Game keys on the open phone.
+        if (!cover) {
+            val game = host.gameKeysOn()
+            functions.addView(c.divider(20f))
+            functions.addView(row(R.drawable.ic_cover_keyboard, "${com.hayeco.flipspaces.core.pointer.GameKeyLayout.MENU_ROW}: ${if (game) "ON" else "OFF"}", tick = game, subtitle = com.hayeco.flipspaces.core.pointer.GameKeyLayout.MENU_SUBTITLE) {
+                closeDrawer()
+                host.gameKeysChosen(!game)
+            })
+        }
         // 0.5.17 cover screen: the trackpad runs over the lock screen; this asks for the phone to unlock.
         functions.addView(c.divider(20f))
         functions.addView(row(R.drawable.ic_unlock_icon, "Unlock phone") {
