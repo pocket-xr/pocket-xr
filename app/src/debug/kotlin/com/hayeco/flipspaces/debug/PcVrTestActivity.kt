@@ -49,7 +49,8 @@ class PcVrTestActivity : Activity() {
             acquire()
         }
         HeadTracker.acquire(this)
-        AlvrBridge.init(this, VIEW_WIDTH, VIEW_HEIGHT, 60f)
+        val (vw, vh) = AlvrBridge.viewSize(MARGIN)
+        AlvrBridge.init(this, vw, vh, 60f)
         view = GLSurfaceView(this).apply {
             setEGLContextClientVersion(3)
             setRenderer(Renderer())
@@ -96,22 +97,26 @@ class PcVrTestActivity : Activity() {
         private var surfaceW = 1
         private var surfaceH = 1
         private var streaming = false
-        private var streamW = VIEW_WIDTH
-        private var streamH = VIEW_HEIGHT
+        private var streamW = 0
+        private var streamH = 0
         private var viewsSent = false
         private var decoderMade = false
         private val event = FloatArray(4)
         private val head = FloatArray(10)
         private val sentOrientation = floatArrayOf(0f, 0f, 0f, 1f)
         private val nowOrientation = floatArrayOf(0f, 0f, 0f, 1f)
-        private val framePose = floatArrayOf(0f, 0f, 0f, 1f)
-        private val copyPose = floatArrayOf(0f, 0f, 0f, 1f)
+        private val framePose = FloatArray(12).also { it[3] = 1f }
+        private val copyPose = FloatArray(12).also { it[3] = 1f }
+        private val frameTans = FloatArray(8)
+        private var predictNs = DEFAULT_PREDICT_NS
         private val warp = FloatArray(9)
         private var newFrames = 0
         private var drawn = 0
         private var lastLogMs = 0L
+        /** The glasses' own views (what each eye's half shows) and the wider views the PC is asked to draw. */
         private val views by lazy { AlvrBridge.views(this@PcVrTestActivity) }
-        /** Each eye's view as tangents: left, right, up, down (left and down negative). */
+        private val wideViews by lazy { AlvrBridge.views(this@PcVrTestActivity, MARGIN) }
+        /** The glasses' views as tangents: left, right, up, down (left and down negative), left eye first. */
         private val tans by lazy { FloatArray(8) { tan(views.fovs[it].toDouble()).toFloat() } }
 
         override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -130,7 +135,7 @@ class PcVrTestActivity : Activity() {
             quad = ids[0]
             GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, quad)
             GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, verts.size * 4, buf, GLES30.GL_STATIC_DRAW)
-            Log.i(TAG, "PC VR proof: each frame copied once, then turned to the head every refresh; ${views.line()}")
+            Log.i(TAG, "PC VR proof: each frame copied once, then turned to the head every refresh; glasses ${views.line()}; the PC draws ${(MARGIN * 100).toInt()} % wider: ${wideViews.line()}")
         }
 
         override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -142,20 +147,25 @@ class PcVrTestActivity : Activity() {
             pollEvents()
             val now = System.nanoTime()
             if (streaming) {
-                // The head as the glasses see it at the time the PC's frame will be shown (a fixed guess for now).
-                HeadTracker.gamePose(now + PREDICT_NS)?.let { q -> set(sentOrientation, q.x, q.y, q.z, q.w) }
+                // The head at the time the PC's frame will be shown: ALVR's own measured delay, as its client does.
+                predictNs = AlvrBridge.predictionOffsetNs().takeIf { it in 1..MAX_PREDICT_NS } ?: DEFAULT_PREDICT_NS
+                val target = now + predictNs
+                val q0 = HeadTracker.gamePose(target)
+                val q1 = HeadTracker.gamePose(target + RATE_STEP_NS)
+                if (q0 != null) set(sentOrientation, q0.x, q0.y, q0.z, q0.w)
                 head[0] = sentOrientation[0]; head[1] = sentOrientation[1]; head[2] = sentOrientation[2]; head[3] = sentOrientation[3]
                 head[4] = 0f; head[5] = EYE_HEIGHT_M; head[6] = 0f
-                head[7] = 0f; head[8] = 0f; head[9] = 0f
-                AlvrBridge.sendHead(now + PREDICT_NS, head)
+                if (q0 != null && q1 != null) turnRate(q0.x, q0.y, q0.z, q0.w, q1.x, q1.y, q1.z, q1.w, head) else { head[7] = 0f; head[8] = 0f; head[9] = 0f }
+                AlvrBridge.sendHead(target, head)
                 if (!viewsSent) {
-                    AlvrBridge.sendViewParams(views)
+                    AlvrBridge.sendViewParams(wideViews)
                     viewsSent = true
                 }
                 val ts = AlvrBridge.acquireFrame(oes, framePose)
                 if (ts != 0L) {
                     copyFrame()
                     copyPose.indices.forEach { copyPose[it] = framePose[it] }
+                    for (i in 0 until 8) frameTans[i] = tan(copyPose[4 + i].toDouble()).toFloat()
                     hasFrame = true
                     newFrames++
                 }
@@ -169,7 +179,7 @@ class PcVrTestActivity : Activity() {
             drawn++
             val nowMs = SystemClock.uptimeMillis()
             if (nowMs - lastLogMs >= 2_000L) {
-                Log.i(TAG, "PC VR proof: ${if (streaming) "streaming ${streamW}x$streamH" else "waiting"}, ${newFrames / 2f} new frames a second, ${drawn / 2f} drawn; HUD \"${AlvrBridge.hudMessage().replace('\n', ' ')}\"")
+                Log.i(TAG, "PC VR proof: ${if (streaming) "streaming ${streamW}x$streamH" else "waiting"}, ${newFrames / 2f} new frames a second, ${drawn / 2f} drawn, head predicted ${predictNs / 1_000_000} ms ahead")
                 lastLogMs = nowMs
                 newFrames = 0
                 drawn = 0
@@ -273,8 +283,9 @@ class PcVrTestActivity : Activity() {
             for (eye in 0..1) {
                 GLES30.glViewport(eye * half, 0, half, surfaceH)
                 val o = eye * 4
-                // Left, right, up, down tangents; the PC drew with the same views, so now and the frame share them.
+                // Left, right, up, down tangents: the glasses' view for this eye's half, and the wider one the PC drew.
                 GLES30.glUniform4f(GLES30.glGetUniformLocation(warpProgram, "tans"), tans[o], tans[o + 1], tans[o + 2], tans[o + 3])
+                GLES30.glUniform4f(GLES30.glGetUniformLocation(warpProgram, "frameTans"), frameTans[o], frameTans[o + 1], frameTans[o + 2], frameTans[o + 3])
                 GLES30.glUniform1f(GLES30.glGetUniformLocation(warpProgram, "eyeOffset"), eye * 0.5f)
                 GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
             }
@@ -306,14 +317,31 @@ class PcVrTestActivity : Activity() {
 
     private companion object {
         const val TAG = "PocketXrAlvr"
-        const val VIEW_WIDTH = 1920
-        const val VIEW_HEIGHT = 1088
-        /** A fixed guess at the whole delay, PC and network included, until ALVR's own average is read. */
-        const val PREDICT_NS = 60_000_000L
+        /** The PC draws this share of each eye's width and height more on every side, so the late warp has room. */
+        const val MARGIN = 0.06f
+        /** Until ALVR has measured its delay. */
+        const val DEFAULT_PREDICT_NS = 60_000_000L
+        const val MAX_PREDICT_NS = 150_000_000L
+        /** Two predicted poses this far apart give the head's turn rate. */
+        const val RATE_STEP_NS = 8_000_000L
         /** From drawing to light on the glasses: about a frame and a half at 60 Hz. */
         const val PHOTON_NS = 25_000_000L
         /** A standing head in the play space: the glasses track turns, not position. */
         const val EYE_HEIGHT_M = 1.6f
+
+        /** The world angular velocity (rad/s) turning a into b over [RATE_STEP_NS], into out[7..9]. */
+        fun turnRate(ax: Float, ay: Float, az: Float, aw: Float, bx: Float, by: Float, bz: Float, bw: Float, out: FloatArray) {
+            // d = b * conj(a)
+            var x = bw * -ax + bx * aw + (by * -az - bz * -ay)
+            var y = bw * -ay + by * aw + (bz * -ax - bx * -az)
+            var z = bw * -az + bz * aw + (bx * -ay - by * -ax)
+            var w = bw * aw - (bx * -ax + by * -ay + bz * -az)
+            if (w < 0f) { x = -x; y = -y; z = -z; w = -w }
+            val s = kotlin.math.sqrt(x * x + y * y + z * z)
+            if (s < 1e-7f) { out[7] = 0f; out[8] = 0f; out[9] = 0f; return }
+            val k = 2f * kotlin.math.atan2(s, w) / (RATE_STEP_NS / 1e9f) / s
+            out[7] = x * k; out[8] = y * k; out[9] = z * k
+        }
 
         /** Column-major 3x3 of the rotation inverse(a) * b, both quaternions x, y, z, w. */
         fun relative(a: FloatArray, b: FloatArray, out: FloatArray) {
@@ -356,6 +384,7 @@ class PcVrTestActivity : Activity() {
             uniform sampler2D tex;
             uniform mat3 warp;
             uniform vec4 tans;
+            uniform vec4 frameTans;
             uniform float eyeOffset;
             out vec4 color;
             void main() {
@@ -363,7 +392,7 @@ class PcVrTestActivity : Activity() {
                 vec3 d = warp * dir;
                 if (d.z >= -1e-4) { color = vec4(0.0, 0.0, 0.0, 1.0); return; }
                 vec2 t = d.xy / -d.z;
-                vec2 f = vec2((t.x - tans.x) / (tans.y - tans.x), (t.y - tans.w) / (tans.z - tans.w));
+                vec2 f = vec2((t.x - frameTans.x) / (frameTans.y - frameTans.x), (t.y - frameTans.w) / (frameTans.z - frameTans.w));
                 if (any(lessThan(f, vec2(0.0))) || any(greaterThan(f, vec2(1.0)))) { color = vec4(0.0, 0.0, 0.0, 1.0); return; }
                 color = texture(tex, vec2(eyeOffset + f.x * 0.5, f.y));
             }

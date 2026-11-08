@@ -309,7 +309,7 @@ EGLImageKHR g_image = EGL_NO_IMAGE_KHR;
 /**
  * GL thread: the newest decoded frame bound to the external texture [oes_texture] (both eyes side by side), or nothing
  * new. Returns its timestamp (the pose time it was rendered for), or 0 with none. [out_pose] gets the head orientation
- * the PC rendered it with (4 floats). The previous frame's buffer goes back to the decoder when a new one comes.
+ * the PC rendered it with and each eye's view (12 floats). The previous frame's buffer goes back to the decoder when a new one comes.
  */
 JNIEXPORT jlong JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeAcquireFrame(
     JNIEnv *env, jclass, jint oes_texture, jfloatArray out_pose) {
@@ -332,11 +332,19 @@ JNIEXPORT jlong JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeAcquire
     glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, static_cast<GLeglImageOES>(g_image));
     AlvrVideoFrameMetadata meta{};
     if (alvr_report_compositor_start(ts, &meta)) {
+        // The head orientation the PC drew with, then each eye's view (left, right, up, down angles), left eye first.
         const AlvrQuat &r = meta.view_params[0].pose.orientation;
-        const float p[4] = {r.x, r.y, r.z, r.w};
-        env->SetFloatArrayRegion(out_pose, 0, 4, p);
+        const AlvrFov &l = meta.view_params[0].fov;
+        const AlvrFov &g = meta.view_params[1].fov;
+        const float p[12] = {r.x, r.y, r.z, r.w, l.left, l.right, l.up, l.down, g.left, g.right, g.up, g.down};
+        env->SetFloatArrayRegion(out_pose, 0, 12, p);
     }
     return static_cast<jlong>(ts);
+}
+
+/** How far ahead to predict the head sent with nativeSendHead: ALVR's measured delay (0 before a stream). */
+JNIEXPORT jlong JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativePredictionOffsetNs(JNIEnv *, jclass) {
+    return static_cast<jlong>(alvr_get_total_prediction_offset_ns());
 }
 
 /** After the frame [timestamp_ns] was drawn: [vsync_queue_ns] until it is shown, for ALVR's statistics. */

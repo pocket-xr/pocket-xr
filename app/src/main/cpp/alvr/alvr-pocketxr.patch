@@ -1,0 +1,22 @@
+diff --git a/alvr/client_core/src/c_api.rs b/alvr/client_core/src/c_api.rs
+index 8acadca..1bad920 100644
+--- a/alvr/client_core/src/c_api.rs
++++ b/alvr/client_core/src/c_api.rs
+@@ -371,6 +371,17 @@ pub extern "C" fn alvr_get_decoder_config(out_buffer: *mut c_char) -> u64 {
+     size as u64
+ }
+ 
++/// Pocket XR: how far ahead to predict poses sent with alvr_send_tracking: ALVR's average total pipeline latency, at
++/// most the session's max prediction (what ALVR's own OpenXR client adds to "now"). 0 before a stream.
++#[unsafe(no_mangle)]
++pub extern "C" fn alvr_get_total_prediction_offset_ns() -> u64 {
++    if let Some(context) = &*CLIENT_CORE_CONTEXT.lock() {
++        context.get_total_prediction_offset().as_nanos() as u64
++    } else {
++        0
++    }
++}
++
+ #[unsafe(no_mangle)]
+ pub extern "C" fn alvr_send_battery(device_id: u64, gauge_value: f32, is_plugged: bool) {
+     if let Some(context) = &*CLIENT_CORE_CONTEXT.lock() {

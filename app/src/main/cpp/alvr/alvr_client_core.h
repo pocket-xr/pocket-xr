@@ -330,6 +330,10 @@ uint64_t alvr_get_server_version(char *out_buffer);
 // Returns the number of bytes of the decoder_buffer
 uint64_t alvr_get_decoder_config(char *out_buffer);
 
+// Pocket XR: how far ahead to predict poses sent with alvr_send_tracking: ALVR's average total pipeline latency, at
+// most the session's max prediction (what ALVR's own OpenXR client adds to "now"). 0 before a stream.
+uint64_t alvr_get_total_prediction_offset_ns(void);
+
 void alvr_send_battery(uint64_t device_id, float gauge_value, bool is_plugged);
 
 void alvr_send_playspace(float width, float height);

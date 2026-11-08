@@ -91,3 +91,8 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
 - Next in step 3: ask the PC for a slightly larger view, so the warp has picture to turn into (a black band showed at
   the top when looking down); predict with ALVR's own average delay instead of a fixed 60 ms (add a call to the C API);
   send the head's angular velocity. Then the Space draws it instead of a test screen.
+- Step 3 polish done (8 November): ALVR's C interface gained `alvr_get_total_prediction_offset_ns` (patch in
+  `app/src/main/cpp/alvr/alvr-pocketxr.patch`); the head goes to the PC predicted by ALVR's measured delay (about 90 ms)
+  with its turn rate. The PC draws a view 6 % wider on every side at the glasses' sharpness (2144 x 1216 per eye), and
+  the warp reads each frame's own view. The PC's ALVR now follows the phone's size (transcoding and emulated headset
+  resolution set to Scale 1.0; a SteamVR restart applies it). Mike: "No edges, smooth". 59.5 new frames a second, 89 ms.
