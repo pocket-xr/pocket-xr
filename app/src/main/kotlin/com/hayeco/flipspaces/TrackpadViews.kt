@@ -754,6 +754,9 @@ interface PadHost {
     /** Unlock the phone (a keyguard dismiss, its PIN on the cover where it is secure). */
     fun unlockPhone()
 
+    /** 1.2.3 (issue 50): the Menu's Control panel row: opens it in the glasses as three fingers down do. */
+    fun openControlPanel()
+
     /** 1.2.3 (issue 57): the focused window's label and its app's text size in percent, or null with no window focused. */
     fun focusedTextSize(): Pair<String, Int>?
 
@@ -1939,6 +1942,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             }.apply { tag = MENU_UPDATE })
             functions.addView(c.divider(20f))
         }
+        // 1.2.3 (issue 50: three finger gestures "don't work" on phones that keep them for screenshots): the Control panel
+        // without a swipe. Your apps are Home, and Back is its own button.
+        functions.addView(row(R.drawable.ic_control_panel, com.hayeco.flipspaces.core.pointer.IntroPages.CONTROL_PANEL_ROW) {
+            closeDrawer()
+            host.openControlPanel()
+        })
+        functions.addView(c.divider(20f))
         functions.addView(row(R.drawable.ic_back_home, "Go to the phone's home screen") { host.returnHome() })
         // 0.5.87: the app's settings home (MainActivity), which the app's icon skips for the trackpad (0.5.37). 0.5.103
         // (Mike: "put Pocket XR Settings back where it was, i dont like it as its own tile"): back in this card.

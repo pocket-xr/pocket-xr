@@ -1094,6 +1094,10 @@ class TrackpadActivity : Activity(), PadHost {
         screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped: saved to Movies/Pocket XR.")
     }
 
+    override fun openControlPanel() {
+        submit(PadSignal.Swipe(com.hayeco.flipspaces.core.pointer.SwipeDirection.DOWN))
+    }
+
     override fun focusedTextSize(): Pair<String, Int>? = if (SpaceSession.active) SpaceSession.focusedTextSize else null
 
     override fun textSizeStep(steps: Int) {
