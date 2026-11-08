@@ -83,3 +83,11 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   ask for the microphone permission, and every DecoderConfig after the first must be ignored.
 - Known gap: when no new frame comes, the previous buffer has already gone back to the decoder. Copy it once, or only
   release it when the next frame arrives.
+- Step 3, first part, done on the glasses (8 November): each new frame is copied once into Pocket XR's own texture,
+  then every refresh draws it turned from the pose the PC drew it for to the head now (rotational late warp).
+  Shown as a Presentation, because the glasses' desktop mode makes an activity a floating window. Mike: one picture in
+  both eyes, "looks right". ALVR's figures: 58.9 new frames a second, about 100 ms total. The old path gave 37 to 46 on
+  the same glasses.
+- Next in step 3: ask the PC for a slightly larger view, so the warp has picture to turn into (a black band showed at
+  the top when looking down); predict with ALVR's own average delay instead of a fixed 60 ms (add a call to the C API);
+  send the head's angular velocity. Then the Space draws it instead of a test screen.
