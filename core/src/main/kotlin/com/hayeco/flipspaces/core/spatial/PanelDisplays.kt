@@ -27,6 +27,15 @@ object PanelDisplays {
     fun displayName(label: String): String = NAME_PREFIX + label
 
     /**
+     * The test rig's stand-in glasses (debug builds). Named like a window display so that releases before this one,
+     * installed beside the test copy, leave it alone; this code alone takes it for glasses.
+     */
+    val RIG_NAME = displayName("rig")
+
+    /** One of Pocket XR's own window displays, by name. */
+    fun isPanelName(name: String?): Boolean = name != null && name.startsWith(NAME_PREFIX) && name != RIG_NAME
+
+    /**
      * Density of every panel display: 1280 px wide is 853 dp, a small tablet. 0.5.11: 330 (was 240)
      * with the panels' 1.375 times more pixels a degree, so apps lay out the same 853 dp across
      * (1760 px) and draw every glyph with 1.375 times the pixels ([PanelSharpness]).
@@ -53,7 +62,9 @@ object PanelDisplays {
             "am", "start", "--user", "current", "--display", displayId.toString(),
             "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER",
             // NEW_TASK | RESET_TASK_IF_NEEDED; 0.5.37: with MULTIPLE_TASK (0x08000000) for a new instance of a running app.
-            "-f", if (newInstance) "0x18200000" else "0x10200000",
+            // EXCLUDE_FROM_RECENTS (0x00800000): a window lives on the glasses, not in the phone's recent apps. Each
+            // Space start used to leave a card per window there, so every plug-in added another set.
+            "-f", if (newInstance) "0x18A00000" else "0x10A00000",
             "-n", "$packageName/$activityName",
         )
     }
@@ -68,7 +79,7 @@ object PanelDisplays {
         return listOf(
             "am", "start", "--user", "current", "--display", displayId.toString(),
             "-a", "android.intent.action.MAIN", "-c", "android.intent.category.LAUNCHER",
-            "-f", "0x10008000", // NEW_TASK | CLEAR_TASK
+            "-f", "0x10808000", // NEW_TASK | CLEAR_TASK | EXCLUDE_FROM_RECENTS
             "-n", "$packageName/$activityName",
         )
     }

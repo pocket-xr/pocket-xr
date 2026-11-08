@@ -51,6 +51,13 @@ object GlassesNetwork {
 
         /** Bytes read into [buf]; 0 when none came within the read timeout; -1 at the end. */
         fun read(buf: ByteArray): Int
+
+        /**
+         * 1.2.3: a read wakes only once more than [bytes] are waiting (the socket's receive low-water mark), or at the
+         * read timeout as before; a description of what was set, or null where this link can't. The kernel holds the
+         * read until then, with no sleep timer, so a hot phone can't oversleep it (0.5.49's rests did).
+         */
+        fun wakeAfter(bytes: Int): String? = null
     }
 
     /** 0.5.21: a link that also writes (the control channel). */
@@ -238,6 +245,15 @@ object GlassesNetwork {
             input.read(buf)
         } catch (_: SocketTimeoutException) {
             0
+        }
+
+        override fun wakeAfter(bytes: Int): String? = try {
+            android.os.ParcelFileDescriptor.fromSocket(socket).use { pfd ->
+                Os.setsockoptInt(pfd.fileDescriptor, OsConstants.SOL_SOCKET, OsConstants.SO_RCVLOWAT, bytes + 1)
+                "wakes after more than $bytes bytes"
+            }
+        } catch (e: Exception) {
+            null.also { Log.w("FlipSpaces/Head", "receive low-water mark not set: ${e.javaClass.simpleName}: ${e.message}") }
         }
 
         @Synchronized

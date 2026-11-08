@@ -13,4 +13,11 @@ oneway interface IPanelEvents {
      * once a second (core.spatial.PanelLogRelay), for the app's log under FlipSpaces/Panels.
      */
     void onLogLines(in String[] lines);
+
+    /**
+     * One Joy-Con motion sample with its latest buttons and stick (JoyConReader). [hand] is 0 left, 1 right; gyro in
+     * radians per second and accelerometer in g, in the sensors' own axes. [readNs] is System.nanoTime when the read
+     * that brought the sample returned, the same clock in both processes.
+     */
+    void onJoyCon(int hand, long readNs, int buttons, float stickX, float stickY, float gx, float gy, float gz, float ax, float ay, float az);
 }

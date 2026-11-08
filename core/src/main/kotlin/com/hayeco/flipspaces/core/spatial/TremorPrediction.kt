@@ -50,6 +50,14 @@ class TremorPredictor(
     val exactOrder: Int = 2,
     /** 0.5.22: the learned weights used only as far as they beat the prior on the turns just made ([blendStep]). False is 0.5.21. */
     val blend: Boolean = false,
+    /**
+     * 1.2.3 (Mike's short lags and audio pops came with heat; the head thread was half a core, a quarter of it this
+     * fit's per sample update at 1000 samples a second): the fit's statistics take every [learnEvery]th sample,
+     * weighted [learnEvery] times. The taps are 2 ms means, so neighbouring samples carry nearly the same features;
+     * the regularisation scales with the same weights, so the fit is the same in expectation. The band filters
+     * still see every sample. 1 is every sample, as before.
+     */
+    val learnEvery: Int = 1,
 ) {
     private val nh = horizonsMs.size
     private val cap = 256
@@ -247,8 +255,36 @@ class TremorPredictor(
         featOk[i] = false
         if (!ready) return
         features(i)
-        if (!learn || !learnNow) return
-        learnStep(i, dt)
+        if (!learn || !learnNow) {
+            pendingDt = 0.0
+            pendingSamples = 0
+            return
+        }
+        trackBand(dt)
+        checkStep(i, dt)
+        pendingDt += dt
+        pendingSamples++
+        if (pendingSamples >= learnEvery) {
+            learnStep(i, pendingDt, pendingSamples.toDouble())
+            pendingDt = 0.0
+            pendingSamples = 0
+        }
+    }
+
+    private var pendingDt = 0.0
+    private var pendingSamples = 0
+
+    /** Every sample: how the current weights did at [checkIndex], for [bandMiss] (its filters need every sample). */
+    private fun checkStep(i: Int, dt: Double) {
+        if (bandWeight <= 0.0) return
+        val h = checkIndex
+        if (h < 0 || h >= nh) return
+        val back = (horizonsMs[h] / stepMs).roundToInt()
+        if (back >= filled - 1) return
+        val j = slot(n - 1 - back)
+        if (!featOk[j]) return
+        val c = weights[h]
+        checkBand(doubleArrayOf(ix[i] - ix[j], iy[i] - iy[j], iz[i] - iz[j]), doubleArrayOf(dot(c, feat[0][j]), dot(c, feat[1][j]), dot(c, feat[2][j])), dt)
     }
 
     /** Tap means ending at slot [i] into feat[*][i]. */
@@ -267,8 +303,8 @@ class TremorPredictor(
         featOk[i] = true
     }
 
-    private fun learnStep(i: Int, dt: Double) {
-        trackBand(dt)
+    /** The fit's statistics: [w] samples' worth, [dt] seconds since the last step. */
+    private fun learnStep(i: Int, dt: Double, w: Double) {
         val a = exp(-dt / memoryS)
         // R: the features' second moments (the three axes share one predictor).
         for (p in 0 until taps) {
@@ -276,9 +312,16 @@ class TremorPredictor(
             val x0 = feat[0][i][p]
             val x1 = feat[1][i][p]
             val x2 = feat[2][i][p]
-            for (q in 0..p) rp[q] = rp[q] * a + x0 * feat[0][i][q] + x1 * feat[1][i][q] + x2 * feat[2][i][q]
+            val f0 = feat[0][i]
+            val f1 = feat[1][i]
+            val f2 = feat[2][i]
+            if (w == 1.0) {
+                for (q in 0..p) rp[q] = rp[q] * a + x0 * f0[q] + x1 * f1[q] + x2 * f2[q]
+            } else {
+                for (q in 0..p) rp[q] = rp[q] * a + w * (x0 * f0[q] + x1 * f1[q] + x2 * f2[q])
+            }
         }
-        learned = learned * a + 1.0
+        learned = learned * a + w
         val newest = n - 1
         for (h in 0 until nh) {
             for (q in 0 until taps) rh[h][q] *= a
@@ -294,12 +337,12 @@ class TremorPredictor(
             val fy = feat[1][j]
             val fz = feat[2][j]
             val row = rh[h]
-            for (q in 0 until taps) row[q] += fx[q] * tx + fy[q] * ty + fz[q] * tz
-            if (blend) blendStep(h, a, fx, fy, fz, tx, ty, tz)
-            if (h == checkIndex && bandWeight > 0.0) {
-                val c = weights[h]
-                checkBand(doubleArrayOf(tx, ty, tz), doubleArrayOf(dot(c, fx), dot(c, fy), dot(c, fz)), dt)
+            if (w == 1.0) {
+                for (q in 0 until taps) row[q] += fx[q] * tx + fy[q] * ty + fz[q] * tz
+            } else {
+                for (q in 0 until taps) row[q] += w * (fx[q] * tx + fy[q] * ty + fz[q] * tz)
             }
+            if (blend) blendStep(h, a, w, fx, fy, fz, tx, ty, tz)
         }
         sinceSolveMs += dt * 1000
         if (sinceSolveMs >= solveEveryMs && learned > 200) {
@@ -318,7 +361,7 @@ class TremorPredictor(
      * Both are lag free and exact for a steady and a speeding turn, so a turn's start and stop are carried in
      * full whatever s is; nothing smooths, holds or damps the pose.
      */
-    private fun blendStep(h: Int, a: Double, fx: DoubleArray, fy: DoubleArray, fz: DoubleArray, tx: Double, ty: Double, tz: Double) {
+    private fun blendStep(h: Int, a: Double, w: Double, fx: DoubleArray, fy: DoubleArray, fz: DoubleArray, tx: Double, ty: Double, tz: Double) {
         if (solves == 0) return
         val c = weights[h]
         val p = priors[h]
@@ -329,9 +372,9 @@ class TremorPredictor(
             px += p[k] * fx[k]; py += p[k] * fy[k]; pz += p[k] * fz[k]
         }
         val dx = lx - px; val dy = ly - py; val dz = lz - pz
-        blendNum[h] = blendNum[h] * a + (tx - px) * dx + (ty - py) * dy + (tz - pz) * dz
-        blendDen[h] = blendDen[h] * a + dx * dx + dy * dy + dz * dz
-        blendN[h] = blendN[h] * a + 1.0
+        blendNum[h] = blendNum[h] * a + w * ((tx - px) * dx + (ty - py) * dy + (tz - pz) * dz)
+        blendDen[h] = blendDen[h] * a + w * (dx * dx + dy * dy + dz * dz)
+        blendN[h] = blendN[h] * a + w
     }
 
     /** 0.5.22: the fitted share of the learned weights at each horizon ([blendStep]); 1 until measured. */
@@ -725,7 +768,10 @@ class TremorPredictor(
         const val BLEND_MIN_SAMPLES = 300.0
 
         /** The worn head's predictor: 0.5.21's, with the learned share fitted per head ([blend]). */
-        fun worn() = TremorPredictor(blend = true)
+        fun worn() = TremorPredictor(blend = true, learnEvery = WORN_LEARN_EVERY)
+
+        /** 1.2.3: the worn predictor's fit learns from every 4th sample ([learnEvery]). */
+        const val WORN_LEARN_EVERY = 4
     }
 
     /** The horizon nearest [BAND_CHECK_MS]. */

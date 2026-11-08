@@ -331,6 +331,20 @@ class SpaceActivity : Activity() {
         reportDisplaySize()
     }
 
+    /** The window an OpenXR game's sub-window attaches to: wherever the Space is drawn now. */
+    fun gameHostWindow(): android.view.Window? = presentation?.window ?: window
+
+    /** An OpenXR game owns the glasses: the Space stops drawing under its window, and picks up again after it. */
+    fun pauseForGame(paused: Boolean) {
+        // The Space keeps a frame a refresh while a game runs, one pixel, to give Monado the glasses' real refresh
+        // ([SpaceRenderer.panelsForGame]); its own drawing stops.
+        view.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+        // Nothing reads the vsyncs while the Space draws nothing: 3.5 % of a core on the glasses (7 November 2026).
+        if (paused) vsync?.stop() else vsync?.start()
+        // The GL thread still takes queued events while it draws nothing.
+        view.queueEvent { renderer.panelsForGame(paused) }
+    }
+
     /** The launcher's app list, read off the main thread and handed to the GL thread. */
     private fun loadApps() {
         val installed = InstalledApps(this)
@@ -1321,6 +1335,9 @@ class SpaceActivity : Activity() {
 
         /** The Space if it is alive on any display (0.4.3: after an unplug, Android may have moved it to the phone). */
         fun alive(): SpaceActivity? = current?.get()?.takeIf { !it.isFinishing && !it.isDestroyed }
+
+        /** The Space an OpenXR game can draw over: one that is open on the glasses, not on the phone. */
+        fun forGame(): SpaceActivity? = alive()?.takeIf { (it.display?.displayId ?: Display.DEFAULT_DISPLAY) != Display.DEFAULT_DISPLAY }
     }
 }
 

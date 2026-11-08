@@ -163,4 +163,15 @@ interface IPanelHost {
      * Returns null when Android took it, else why not.
      */
     String moveTaskToDisplay(int taskId, int displayId) = 29;
+    /** Starts reading Joy-Cons for onJoyCon. Returns what was found. */
+    String startJoyCons() = 40;
+
+    /** Stops reading Joy-Cons. */
+    void stopJoyCons() = 41;
+
+    /**
+     * Turns the phone's own panel off or back on without putting the phone to sleep, so a game keeps running. Pressing
+     * the power button brings the panel back. Returns null on success, or why it could not.
+     */
+    String setPhonePanel(boolean on) = 42;
 }

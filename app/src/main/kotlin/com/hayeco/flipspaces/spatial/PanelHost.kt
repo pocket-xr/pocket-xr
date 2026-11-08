@@ -126,6 +126,10 @@ object PanelHost {
             displayEvents += displayId to e
         }
 
+        override fun onJoyCon(hand: Int, readNs: Long, buttons: Int, stickX: Float, stickY: Float, gx: Float, gy: Float, gz: Float, ax: Float, ay: Float, az: Float) {
+            com.hayeco.flipspaces.openxr.OpenXrPads.onSample(hand, readNs, buttons, stickX, stickY, gx, gy, gz, ax, ay, az)
+        }
+
         /** 0.5.25: the service's own lines, into the app's log (and so the recorder's). Binder thread. */
         override fun onLogLines(lines: Array<out String>?) {
             lines?.forEach { Log.i(com.hayeco.flipspaces.core.spatial.PanelLogRelay.TAG, com.hayeco.flipspaces.core.spatial.PanelLogRelay.appLine(it)) }
@@ -440,6 +444,32 @@ object PanelHost {
     }
 
     /** 0.5.3: points the display at [surface] (after a resize); [done] gets null or the error. */
+    /** Joy-Cons on or off for an OpenXR game. */
+    fun joyCons(on: Boolean) {
+        calls.execute {
+            val h = host ?: return@execute
+            runCatching { if (on) Log.i(PANEL_TAG, "Joy-Cons: ${h.startJoyCons()}") else h.stopJoyCons() }
+                .onFailure { Log.w(PANEL_TAG, "Joy-Cons: ${it.message}") }
+        }
+    }
+
+    /** The phone's own panel off while a game owns the glasses, and back on after. */
+    fun phonePanel(on: Boolean) {
+        calls.execute {
+            val h = host ?: return@execute
+            val err = runCatching { h.setPhonePanel(on) }.getOrElse { it.message }
+            Log.i(PANEL_TAG, "phone panel ${if (on) "on" else "off"}: ${err ?: "done"}")
+        }
+    }
+
+    /** A panel display with no surface: Android turns it off and its app stops, until [setSurface] gives it one again. */
+    fun clearSurface(displayId: Int, done: (String?) -> Unit = {}) {
+        calls.execute {
+            val h = host ?: return@execute done("The panel service is not connected")
+            done(runCatching { h.setDisplaySurface(displayId, null) }.getOrElse { it.message })
+        }
+    }
+
     fun setSurface(displayId: Int, surface: Surface, done: (String?) -> Unit = {}) {
         calls.execute {
             val h = host ?: return@execute done("The panel service is not connected")

@@ -100,9 +100,76 @@ class PanelHostService : IPanelHost.Stub() {
 
     override fun lastError(): String? = error
 
+    private val joyCons = JoyConReader { hand, readNs, buttons, stickX, stickY, gx, gy, gz, ax, ay, az ->
+        runCatching { events?.onJoyCon(hand, readNs, buttons, stickX, stickY, gx, gy, gz, ax, ay, az) }
+    }
+
+    override fun startJoyCons(): String = joyCons.start().also { logI("Joy-Cons: $it") }
+
+    override fun stopJoyCons() = joyCons.stop()
+
     override fun setEvents(events: IPanelEvents?) {
         this.events = events
         if (events != null) startRelay()
+    }
+
+    /**
+     * The phone's panels by SurfaceControl's power mode, the same way screen mirroring tools turn a phone's screen off.
+     * Only the phone's own panels: the glasses are a physical display too, so every external display is left out.
+     * Android 14 moved the display tokens into services.jar's DisplayControl, so that is tried when the old way is gone.
+     */
+    override fun setPhonePanel(on: Boolean): String? = guardText {
+        val mode = if (on) 2 else 0
+        val surfaceControl = Class.forName("android.view.SurfaceControl")
+        val setMode = surfaceControl.getMethod("setDisplayPowerMode", android.os.IBinder::class.java, Int::class.javaPrimitiveType)
+        val tokens = runCatching {
+            listOf(surfaceControl.getMethod("getInternalDisplayToken").invoke(null) as android.os.IBinder)
+        }.getOrElse { phoneDisplayTokens() }
+        if (tokens.isEmpty()) error("no phone panels found")
+        tokens.forEach { setMode.invoke(null, it, mode) }
+        logI("phone panel ${if (on) "on" else "off"} (${tokens.size} displays)")
+        null
+    }
+
+    /** DisplayControl, loaded once: a second class loader cannot load android_servers again. */
+    private var displayControl: Class<*>? = null
+
+    // This runs as the shell user, like the rest of this service. If Android refuses, the phone's panel just stays on.
+    @android.annotation.SuppressLint("BlockedPrivateApi")
+    private fun loadDisplayControl(): Class<*> {
+        displayControl?.let { return it }
+        val factory = Class.forName("com.android.internal.os.ClassLoaderFactory")
+        val create = factory.getDeclaredMethod(
+            "createClassLoader", String::class.java, String::class.java, String::class.java, ClassLoader::class.java,
+            Int::class.javaPrimitiveType, Boolean::class.javaPrimitiveType, String::class.java,
+        )
+        val loader = create.invoke(null, "/system/framework/services.jar", null, null, ClassLoader.getSystemClassLoader(), 0, true, null) as ClassLoader
+        val control = loader.loadClass("com.android.server.display.DisplayControl")
+        val load = Runtime::class.java.getDeclaredMethod("loadLibrary0", Class::class.java, String::class.java)
+        load.isAccessible = true
+        load.invoke(Runtime.getRuntime(), control, "android_servers")
+        displayControl = control
+        return control
+    }
+
+    private fun phoneDisplayTokens(): List<android.os.IBinder> {
+        val control = loadDisplayControl()
+        val external = externalDisplayIds()
+        val ids = control.getMethod("getPhysicalDisplayIds").invoke(null) as LongArray
+        val token = control.getMethod("getPhysicalDisplayToken", Long::class.javaPrimitiveType)
+        return ids.filter { it !in external }.map { token.invoke(null, it) as android.os.IBinder }
+    }
+
+    /** The physical ids of external displays, from `cmd display get-displays`. Fails rather than guess. */
+    private fun externalDisplayIds(): Set<Long> {
+        val process = ProcessBuilder("cmd", "display", "get-displays").redirectErrorStream(true).start()
+        val lines = process.inputStream.bufferedReader().readLines()
+        process.waitFor()
+        val shown = lines.filter { it.contains("DisplayInfo{") }
+        if (shown.isEmpty()) error("no display list")
+        return shown.filter { it.contains("type EXTERNAL") }.map {
+            Regex("uniqueId \"local:(\\d+)\"").find(it)?.groupValues?.get(1)?.toLong() ?: error("an external display has no id")
+        }.toSet()
     }
 
     /**

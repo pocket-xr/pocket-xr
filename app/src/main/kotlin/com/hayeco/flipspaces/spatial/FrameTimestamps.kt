@@ -72,6 +72,21 @@ class FrameTimestamps(private val tag: String) {
         }
     }
 
+    /** As [poll], for a game's clock: each shown time to [shown], oldest first. */
+    fun pollShown(shown: (Long) -> Unit) {
+        if (!enabled) return
+        while (true) {
+            val p = pending.firstOrNull() ?: return
+            val t = nativePresentTime(p.frameId)
+            when {
+                t == PENDING -> return
+                t == INVALID -> { neverShown++; pending.removeFirst() }
+                t > 0L -> { read++; shown(t); pending.removeFirst() }
+                else -> { lost++; pending.removeFirst() }
+            }
+        }
+    }
+
     fun line(): String = off?.let { "each frame's present not read ($it)" }
         ?: "each frame's present: %d read, %d never shown, %d lost".format(java.util.Locale.ROOT, read, neverShown, lost)
 

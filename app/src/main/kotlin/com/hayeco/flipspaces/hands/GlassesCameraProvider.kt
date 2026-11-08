@@ -468,6 +468,7 @@ object GlassesCameraProvider {
         val square = ViewCanvas()
         var lastPreview = 0L
         var pausedForStall = false
+        var pausedForGame = false
         // 0.5.24: the palm search is on the runner's CPU landmarker now (no hand up, the Space drawing).
         var searchingOnCpu = false
         Log.i(TAG, "MediaPipe thresholds: ${runner.thresholds.describe()}; views ${cycle.views.joinToString { it.label }}, hand crop ${cycle.roi != null}, input up to $MAX_INPUT_SIDE px, ${runner.numHands} hand${if (runner.numHands == 1) "" else "s"}")
@@ -496,6 +497,21 @@ object GlassesCameraProvider {
             if (pausedForStall) {
                 pausedForStall = false
                 Log.i(TAG, "Hand tracking resumed: the Space draws again")
+            }
+            // A game has the glasses: no hand is drawn or pressed there, so the model rests and the heat goes to the game.
+            if (SpaceSession.gameOwnsGlasses) {
+                if (!pausedForGame) {
+                    pausedForGame = true
+                    Log.i(TAG, "Hand model paused: a game has the glasses")
+                }
+                item.recycle()
+                tracking.dropped()
+                continue
+            }
+            if (pausedForGame) {
+                pausedForGame = false
+                HandFeed.reset()
+                Log.i(TAG, "Hand model running again: the game closed")
             }
             // 0.5.18: from severe heat an empty picture is searched 10 times a second.
             val nowHeat = SystemClock.uptimeMillis()

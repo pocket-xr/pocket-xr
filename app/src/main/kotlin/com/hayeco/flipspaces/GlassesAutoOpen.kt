@@ -290,6 +290,12 @@ object GlassesAutoOpen {
     }
 
     private fun open(branch: PlugInBranch, context: Context, inFront: Activity?, display: DisplayCandidate, surface: GlassesSurface, choice: ModeChoice) {
+        // The private test copy sits beside the real app. Both opening on one plug-in left neither on the glasses
+        // (7 November 2026), so the test copy only opens when asked (`am start --display`).
+        if (context.packageName.endsWith(".dev")) {
+            Log.i(TAG, "plug-in, display ${display.id}: the test copy leaves the glasses to Pocket XR; open it by hand")
+            return
+        }
         when (branch) {
             PlugInBranch.OPEN_FROM_FRONT_SCREEN -> {
                 val where = "plug-in from ${inFront!!.javaClass.simpleName}"

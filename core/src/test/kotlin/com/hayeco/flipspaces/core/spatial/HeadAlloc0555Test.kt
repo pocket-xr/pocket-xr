@@ -147,7 +147,8 @@ class HeadAlloc0555Test {
     @Test
     fun tremorPredictorIsUnchangedOnMikesGyro() {
         val (t, g) = replay("vc42-still-160726.txt")
-        val now = TremorPredictor.worn()
+        // 1.2.3: worn() learns from every 4th sample; this pins the every-sample path to 0.5.54 to the bit.
+        val now = TremorPredictor(blend = true, learnEvery = 1)
         val old = RefTremor()
         assertEquals(0.0, now.bandWeight, 0.0)
         val out = FloatArray(3)
@@ -183,7 +184,7 @@ class HeadAlloc0555Test {
     fun headPredictorIsUnchangedOnMikesGyro() {
         for (name in listOf("vc42-still-160901.txt", "vc55-still-1793062639605.txt")) {
             val (t, g) = replay(name)
-            val now = HeadPredictor()
+            val now = HeadPredictor(tremor = TremorPredictor(blend = true, learnEvery = 1))
             val old = RefPredictor()
             var q = Quat.IDENTITY
             for (i in t.indices) {

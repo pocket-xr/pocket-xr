@@ -146,7 +146,7 @@ object DisplaySelector {
      * could outscore or replace the glasses (0.4.0 guard).
      */
     fun isOwnPanel(display: DisplayCandidate): Boolean =
-        display.isOwnPanel || display.name.startsWith(com.hayeco.flipspaces.core.spatial.PanelDisplays.NAME_PREFIX)
+        display.isOwnPanel || com.hayeco.flipspaces.core.spatial.PanelDisplays.isPanelName(display.name)
 
     fun isEligible(display: DisplayCandidate): Boolean =
         !isOwnPanel(display) &&

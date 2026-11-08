@@ -84,6 +84,9 @@ object HeadTracker {
      */
     private const val READ_BATCH_NS = 0L
 
+    /** 1.2.3: the glasses' reports a read waits for in the kernel ([GlassesNetwork.Link.wakeAfter]); 1 is each as it comes. */
+    private const val WAKE_REPORTS = 2
+
     /** 0.5.53: the app's own socket is tried this many more times before the shell helper, this far apart ([openRoute]). */
     private const val DIRECT_RETRIES = 3
     private const val DIRECT_RETRY_MS = 1000L
@@ -442,6 +445,23 @@ object HeadTracker {
             }
             return if (record) restLock.update(smoothed, presentNs) else restLock.apply(smoothed)
         }
+    }
+
+    /**
+     * The pose at [presentNs] for an OpenXR game: predicted as for [renderPose], without the smoothing and the still
+     * lock that keep windows steady. A game needs the head as it is, and those would add lag.
+     */
+    fun gamePose(presentNs: Long): Quat? {
+        val sampleNs = lastSampleHostNs
+        val since = if (sampleNs == 0L) Long.MAX_VALUE else (System.nanoTime() - sampleNs) / 1_000_000L
+        val q = synchronized(predictor) {
+            when (HeadHold.use(since, predictor.orientation != null)) {
+                HeadHold.Use.PREDICT -> predictor.predict(presentNs)
+                HeadHold.Use.HOLD -> predictor.orientation
+                HeadHold.Use.NONE -> null
+            }
+        }
+        return HeadView.usable(q)
     }
 
     /** 0.5.64: the drawn orientation's One Euro filter ([com.hayeco.flipspaces.core.spatial.DrawSmoothing]). */
@@ -1003,6 +1023,15 @@ object HeadTracker {
     /** 1.1.12: the One family's TCP stream as a report source. */
     private class NetworkSource(private val link: GlassesNetwork.Link) : ImuReportSource {
         private val framer = OneImuFramer()
+
+        init {
+            // 1.2.3 (Mike's short lags and audio pops came with heat; simpleperf, worn: 37 % of this thread was the
+            // socket, its cost the 1000 wake-ups a second, not the poll): a read wakes once [WAKE_REPORTS] reports
+            // are waiting, so half the wake-ups. The newest pose is then up to one report (1 ms) older, which the
+            // prediction to the frame's time covers; the reports keep their own times ([ImuClock]).
+            val frame = OneImuProtocol.HEADER_BYTES + OneImuProtocol.REPORT_BYTES
+            link.wakeAfter((WAKE_REPORTS - 1) * frame)?.let { Log.i(TAG, "head reads: $it ($WAKE_REPORTS reports of $frame bytes)") }
+        }
         private val buf = ByteArray(16 * 1024)
         override val counts: FramerCounts get() = framer.counts
         override val noReportsHint: String = HeadTrackingStatus.ONE_FAMILY_HINT
@@ -1071,6 +1100,11 @@ object HeadTracker {
                     // 0.5.10: every report on the phone's clock from the glasses' own timestamps
                     // ([ImuClock]), not from when its read arrived, so bursts do not shake the pose.
                     val arrivedNs = System.nanoTime()
+                    val learn = !SpaceSession.gameOwnsGlasses
+                    if (predictor.learning != learn) {
+                        predictor.learning = learn
+                        Log.i(TAG, if (learn) "head predictor: learning again" else "head predictor: learning paused while a game has the glasses")
+                    }
                     for (pi in 0 until fused.size) {
                         val p = fused[pi]
                         if (!HeadView.isUsable(p.orientation)) continue

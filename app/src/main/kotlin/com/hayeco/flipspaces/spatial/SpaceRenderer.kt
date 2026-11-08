@@ -911,7 +911,54 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** The head pose when a hand frame was taken, for hand rays in world space; null without head tracking. */
     private val headAt: (Long) -> Quat? = { t -> HeadTracker.poseAt(t)?.let { HeadView.pose(follow.relative(it), manualYaw) } }
 
+    /**
+     * While a game has the glasses: the glasses' real refresh for Monado's pacer ([com.hayeco.flipspaces.core.spatial.VblankLock]).
+     * The Space draws one pixel a refresh under the game, only to learn when each was shown.
+     */
+    @Volatile private var gameClock: com.hayeco.flipspaces.core.spatial.VblankLock? = null
+    private var gameClockLoggedMs = 0L
+    private var gameClockFed = 0L
+
+    private var gameClockLastNs = 0L
+
+    private fun drawGameClockFrame(lock: com.hayeco.flipspaces.core.spatial.VblankLock) {
+        // The hidden Space's swaps don't wait for the refresh (it ran about 170 a second): one frame a refresh is enough.
+        val period = if (lock.periodNs > 0L) lock.periodNs else if (displayPeriodNs > 0L) displayPeriodNs else 16_666_667L
+        val waitNs = gameClockLastNs + period - 1_000_000L - System.nanoTime()
+        if (waitNs > 0L) Thread.sleep(waitNs / 1_000_000L, (waitNs % 1_000_000L).toInt())
+        gameClockLastNs = System.nanoTime()
+        frameTimes.pollShown { lock.add(it) }
+        if (!feedGameClock) {
+            if (gameClockFed != 0L) org.freedesktop.monado.ipc.PocketFeed.nativeVblank(0L, 0L)
+            gameClockFed = 0L
+        } else if (lock.periodNs > 0L) {
+            org.freedesktop.monado.ipc.PocketFeed.nativeVblank(lock.lastNs, lock.periodNs)
+            gameClockFed++
+        }
+        GLES30.glEnable(GLES30.GL_SCISSOR_TEST)
+        GLES30.glScissor(0, 0, 1, 1)
+        GLES30.glClearColor(0f, 0f, 0f, 1f)
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+        GLES30.glDisable(GLES30.GL_SCISSOR_TEST)
+        frameTimes.beforeSwap(null)
+        val nowMs = SystemClock.uptimeMillis()
+        if (nowMs - gameClockLoggedMs >= 10_000L) {
+            gameClockLoggedMs = nowMs
+            Log.i(tag, "game clock: the glasses' refresh %.4f ms, fed to Monado %d times; %d shown times off a refresh; %s".format(
+                java.util.Locale.ROOT, lock.periodNs / 1e6, gameClockFed, lock.rejected, frameTimes.line()))
+        }
+    }
+
+    companion object GameClockSwitch {
+        /** Debug: the game clock's feed to Monado on or off, for an A/B with the pacer's own clock. */
+        @Volatile var feedGameClock = true
+    }
+
     override fun onDrawFrame(gl: GL10?) {
+        gameClock?.let {
+            drawGameClockFrame(it)
+            return
+        }
         val start = System.nanoTime()
         val nowMs = SystemClock.uptimeMillis()
         // 0.5.25: the glasses' delay for this mode, the 60 Hz scan's half added in side by side.
@@ -2360,6 +2407,36 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * panel per 150 ms while the size keeps changing, each after the app drew at the size before.
      * The binder calls run on PanelHost's own thread, never this one.
      */
+    /**
+     * GL thread. A game has the glasses: each window's display is left with no surface, so Android turns it off and its
+     * app stops as it would with the phone's screen off (video pauses, nothing draws), and the heat and GPU go to the
+     * game. After the game each display gets its surface back and the app carries on where it was. Before, every
+     * window kept drawing behind the game, to readers nobody read.
+     */
+    fun panelsForGame(paused: Boolean) {
+        if (paused) {
+            val nominal = if (displayPeriodNs > 0L) displayPeriodNs else 16_666_667L
+            gameClock = com.hayeco.flipspaces.core.spatial.VblankLock(nominal)
+            gameClockFed = 0L
+            gameClockLoggedMs = 0L
+        } else if (gameClock != null) {
+            gameClock = null
+            // Monado's pacer goes back to its own clock.
+            runCatching { org.freedesktop.monado.ipc.PocketFeed.nativeVblank(0L, 0L) }
+        }
+        var n = 0
+        for (p in panels.values) {
+            val display = p.displayId ?: continue
+            n++
+            if (paused) {
+                PanelHost.clearSurface(display) { err -> if (err != null) Log.w(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: not paused for the game: $err") }
+            } else {
+                PanelHost.setSurface(display, p.surface) { err -> if (err != null) problem = "Back from the game ${p.panel.label}: $err" }
+            }
+        }
+        Log.i(PANEL_TAG, if (paused) "$n windows paused for the game (their displays off)" else "$n windows back from the game")
+    }
+
     private fun resizeDisplays(nowMs: Long) {
         for ((id, size) in resizeGate.due(nowMs) { panels[it]?.drewAtSize ?: true }) {
             val p = panels[id] ?: continue
