@@ -58,6 +58,12 @@ sealed interface SpaceCommand {
     /** 0.5.0: start the "pinch on the dots" hand calibration in the Space, or stop it if it runs. */
     data object CalibrateHands : SpaceCommand
 
+    /** 1.2.3 (issue 59): the Game controller's touches on the focused window, in order. */
+    data class PadTouches(val events: List<com.hayeco.flipspaces.core.pointer.TouchPointers.Event>) : SpaceCommand
+
+    /** 1.2.3 (issue 59): the focused window's display on top, so a gamepad's input reaches its app. */
+    data object FocusWindow : SpaceCommand
+
     /** 1.2.3 (issue 58): Side by side 3D on or off for the focused window's app. */
     data class SideBySide(val on: Boolean) : SpaceCommand
 
@@ -161,6 +167,12 @@ object SpaceSession {
 
     /** 0.5.19: the whole Space wrapped round Mike as one cylinder, from the trackpad's menu ([com.hayeco.flipspaces.core.spatial.SpaceWrap]). */
     @Volatile var wrap: Boolean = false
+
+    /** 1.2.3 (issue 59): the focused window's app and its shape (width over height), for the Game controller's touches. */
+    @Volatile var focusedApp: Pair<String, Float>? = null
+
+    /** 1.2.3 (issue 59): the app and the spot (0 to 1 across and down) the dot is on, when it is on a window's picture. */
+    @Volatile var pointerSpot: Triple<String, Float, Float>? = null
 
     /** 1.2.3 (issue 58): the focused window's label and whether its app shows Side by side 3D, for the trackpad's Menu. */
     @Volatile var focusedSideBySide: Pair<String, Boolean>? = null

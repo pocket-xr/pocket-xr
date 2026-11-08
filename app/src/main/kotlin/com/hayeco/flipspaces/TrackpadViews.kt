@@ -783,6 +783,22 @@ interface PadHost {
     /** 1.2.3 (issue 59): the Menu's Game keys row, or the cluster's Done. */
     fun gameKeysChosen(on: Boolean)
 
+    /** 1.2.3 (issue 59): the Game controller's mode (Off, Gamepad, Touch). */
+    fun controllerMode(): com.hayeco.flipspaces.core.pointer.GameControllerMode
+
+    fun controllerModeChosen(mode: com.hayeco.flipspaces.core.pointer.GameControllerMode)
+
+    /** 1.2.3 (issue 59): a Game controller control moved; the screen's [PadScreen.controllerState] says to what. */
+    fun controllerChanged()
+
+    /** 1.2.3 (issue 59): Touch mode is setting spots (a held control takes the dot's spot). */
+    fun touchSpotSetting(): Boolean
+
+    fun touchSpotSettingChosen(on: Boolean)
+
+    /** 1.2.3 (issue 59): forget the focused game's touch spots. */
+    fun clearTouchSpots()
+
     /** 1.2.3 (issue 59): a game key went down or up. */
     fun gameKey(change: com.hayeco.flipspaces.core.pointer.GameKeyChange)
 
@@ -1449,6 +1465,14 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     /** Game keys are shown: the window keys and the bar make room for them. */
     private val gameKeysShown: Boolean get() = !cover && host.gameKeysOn()
 
+    /** 1.2.3 (issue 59): the Game controller, in the same place as Game keys, while its mode is not Off. */
+    private val padLeft = GameControllerView(context, com.hayeco.flipspaces.core.pointer.GameControllerLayout.LEFT) { host.controllerChanged() }.apply { visibility = View.GONE }
+    private val padRight = GameControllerView(context, com.hayeco.flipspaces.core.pointer.GameControllerLayout.RIGHT) { host.controllerChanged() }.apply { visibility = View.GONE }
+    private val controllerShown: Boolean get() = !cover && host.controllerMode() != com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF
+
+    /** What the Game controller's two clusters hold now, as one controller. */
+    fun controllerState(): com.hayeco.flipspaces.core.pointer.ControllerState = com.hayeco.flipspaces.core.pointer.GameControllerPresses.merge(padLeft.state(), padRight.state())
+
     init {
         setBackgroundColor(BACKGROUND)
         listOf(pad, drawerButton, selector, hint, laserTip, bar, sideBack, sideHome, curveKey, coverMouseChip, updateBanner).forEach { addView(it) }
@@ -1457,6 +1481,8 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         addView(lockKey)
         addView(gameLeft)
         addView(gameRight)
+        addView(padLeft)
+        addView(padRight)
         listOf(textBar, mask, popup, intro, dialog, drawerScrim, drawer, toast, lock).forEach { addView(it) }
         pressable(barBack, barBackIcon, R.drawable.ic_back, R.drawable.ic_back_pressed, R.drawable.left_black_gradient_bg_pressed, isHome = false)
         pressable(barHome, barHomeIcon, R.drawable.ic_home_new, R.drawable.ic_home_new_pressed, R.drawable.right_black_gradient_bg_pressed, isHome = true)
@@ -1547,13 +1573,22 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         lockKey.visibility = if (cover) View.GONE else View.VISIBLE
         // 1.2.3 (issue 59): Game keys take the bottom of the screen; Keyboard and the pad stay. Done on the right cluster,
         // or the Menu, gives the window keys back.
-        val game = gameKeysShown
-        gameLeft.visibility = if (game) View.VISIBLE else View.GONE
-        gameRight.visibility = if (game) View.VISIBLE else View.GONE
-        if (!game) {
+        val keys = gameKeysShown
+        val controller = controllerShown && !keys
+        val game = keys || controller
+        gameLeft.visibility = if (keys) View.VISIBLE else View.GONE
+        gameRight.visibility = if (keys) View.VISIBLE else View.GONE
+        padLeft.visibility = if (controller) View.VISIBLE else View.GONE
+        padRight.visibility = if (controller) View.VISIBLE else View.GONE
+        if (!keys) {
             gameLeft.releaseAll()
             gameRight.releaseAll()
-        } else {
+        }
+        if (!controller) {
+            padLeft.releaseAll()
+            padRight.releaseAll()
+        }
+        if (game) {
             for (v in listOf(bar, sideBack, sideHome, curveKey, lockKey, laserTip)) v.visibility = View.GONE
             for ((b, k) in mainKeys) if (b != CoverButton.KEYBOARD) k.visibility = View.GONE
         }
@@ -1794,21 +1829,24 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         // Toast: 120 above the bottom, centred.
         val (tw, th) = wrap(toast, dp(200f))
         put(toast, (w - tw) / 2, h - dp(120f) - th, tw, th)
-        if (gameKeysShown) placeGameKeys(w, h, landscape)
+        if (gameKeysShown || controllerShown) placeGameKeys(w, h, landscape)
         placeLock(landscape)
         put(lock, 0, 0, w, h)
     }
 
-    /**
-     * 1.2.3 (issue 59): portrait: the two clusters side by side across the bottom, the pad between the selector and them.
-     * Landscape: one in each lower corner, under the thumbs of a phone held sideways, over the pad's edges.
-     */
-    /** 1.2.3 (issue 59): lets go of every held game key (the trackpad paused). */
+    /** 1.2.3 (issue 59): lets go of every held game key and controller control (the trackpad paused). */
     fun releaseGameKeys() {
         gameLeft.releaseAll()
         gameRight.releaseAll()
+        padLeft.releaseAll()
+        padRight.releaseAll()
     }
 
+    /**
+     * 1.2.3 (issue 59): portrait: the two clusters side by side across the bottom, the pad between the selector and them.
+     * Landscape: one in each lower corner, under the thumbs of a phone held sideways, over the pad's edges. Game keys and
+     * the Game controller share the place; only one of them shows.
+     */
     private fun placeGameKeys(w: Int, h: Int, landscape: Boolean) {
         val m = dp(12f)
         if (landscape) {
@@ -1816,12 +1854,16 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             val ch = minOf(dp(230f), (h * 0.62f).toInt())
             put(gameLeft, m, h - m - ch, cw, ch)
             put(gameRight, w - m - cw, h - m - ch, cw, ch)
+            put(padLeft, m, h - m - ch, cw, ch)
+            put(padRight, w - m - cw, h - m - ch, cw, ch)
         } else {
             val ch = minOf(dp(240f), (h * 0.36f).toInt())
             val top = h - dp(20f) - ch
             val cw = (w - 2 * m - dp(8f)) / 2
             put(gameLeft, m, top, cw, ch)
             put(gameRight, m + cw + dp(8f), top, cw, ch)
+            put(padLeft, m, top, cw, ch)
+            put(padRight, m + cw + dp(8f), top, cw, ch)
             val padRect = rects[pad] ?: return
             put(pad, padRect[0], padRect[1], padRect[2], (top - dp(10f) - padRect[1]).coerceAtLeast(dp(100f)))
         }
@@ -2094,6 +2136,31 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 closeDrawer()
                 host.gameKeysChosen(!game)
             })
+            // 1.2.3 (issue 59): the Game controller, cycling Off, Gamepad and Touch; in Touch, its spots.
+            val mode = host.controllerMode()
+            functions.addView(c.divider(20f))
+            val sub = when (mode) {
+                com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF_SUBTITLE
+                com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD -> com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD_SUBTITLE
+                com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH_SUBTITLE
+            }
+            functions.addView(row(R.drawable.ic_cover_keyboard, "${com.hayeco.flipspaces.core.pointer.GameControllerMode.MENU_ROW}: ${mode.label}", tick = mode != com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF, subtitle = "$sub. Tap for ${mode.next().label}.") {
+                closeDrawer()
+                host.controllerModeChosen(mode.next())
+            })
+            if (mode == com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH) {
+                val setting = host.touchSpotSetting()
+                functions.addView(c.divider(20f))
+                functions.addView(row(R.drawable.ic_cover_keyboard, "Set touch spots: ${if (setting) "ON" else "OFF"}", tick = setting, subtitle = "Aim the dot at the game's own button, then hold the matching control for a second") {
+                    closeDrawer()
+                    host.touchSpotSettingChosen(!setting)
+                })
+                functions.addView(c.divider(20f))
+                functions.addView(row(R.drawable.ic_cover_keyboard, "Clear touch spots for this game") {
+                    closeDrawer()
+                    host.clearTouchSpots()
+                })
+            }
         }
         // 0.5.17 cover screen: the trackpad runs over the lock screen; this asks for the phone to unlock.
         functions.addView(c.divider(20f))
