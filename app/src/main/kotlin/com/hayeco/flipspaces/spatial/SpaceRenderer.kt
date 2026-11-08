@@ -1043,6 +1043,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.2: with the frame's clock, so hand cursors move on every display frame.
         apply(pointer.frame(head, layout, nowMs))
         SpaceSession.heldPanelId = pointer.heldPanelId
+        // 1.2.3 (issue 59): the focused app and the dot's spot on a window, for the Game controller.
+        SpaceSession.focusedApp = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.packageName to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
+        SpaceSession.pointerSpot = pointer.hover?.takeIf { it.zone == PanelZone.BODY && it.panel.packageName.isNotEmpty() && it.u in 0f..1f && it.v in 0f..1f }?.let { Triple(it.panel.packageName, it.u, it.v) }
         // 1.2.3 (issue 58): whether the focused window's app shows Side by side 3D, for the trackpad's Menu.
         // 1.2.3 (issue 58): 2D while moving, from the head's turn and the cursor shown in the last frame.
         sideBySideFlat = sideBySideFlatOn && sideBySideMotion.update(HeadTracker.turnSpeedDegS, headCursorAlpha > 0.02f, SystemClock.uptimeMillis())
@@ -3136,6 +3139,24 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         setLayout(layout, commit = true)
     }
 
+    /** 1.2.3 (issue 59): when the Game controller's touches went down, for every event of that gesture. */
+    private var padTouchDownMs = 0L
+
+    /**
+     * 1.2.3 (issue 59): the Game controller's touches on the focused window's display, each pointer keeping its id, at the
+     * window's spots (0 to 1) in display pixels.
+     */
+    private fun padTouches(events: List<com.hayeco.flipspaces.core.pointer.TouchPointers.Event>) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        val display = p.displayId ?: return
+        for (e in events) {
+            if (e.action == com.hayeco.flipspaces.core.pointer.TouchPointers.ACTION_DOWN) padTouchDownMs = SystemClock.uptimeMillis()
+            val xs = FloatArray(e.us.size) { e.us[it] * p.width }
+            val ys = FloatArray(e.vs.size) { e.vs[it] * p.height }
+            PanelHost.touches(display, e.action, e.ids, xs, ys, padTouchDownMs) { problem = "Game controller on ${p.panel.label}: $it" }
+        }
+    }
+
     private fun sendBack(p: PanelGl, display: Int) {
         Log.i(PANEL_TAG, "Back on panel ${p.panel.id} ${p.panel.label}")
         val down = SystemClock.uptimeMillis()
@@ -3747,6 +3768,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 SpaceCommand.Recentre -> recentre()
                 SpaceCommand.ClearLayout -> layout.panels.map { it.id }.forEach(::removePanel)
                 SpaceCommand.CalibrateHands -> toggleCalibration()
+                is SpaceCommand.PadTouches -> padTouches(c.events)
+                SpaceCommand.FocusWindow -> focusedPanelId?.let { panels[it] }?.displayId?.let { PanelHost.focus(it, "the Game controller's gamepad") }
                 is SpaceCommand.SideBySide -> sideBySideChosen(c.on)
                 is SpaceCommand.SideBySideFlat -> {
                     sideBySideFlatOn = c.on

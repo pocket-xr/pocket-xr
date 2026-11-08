@@ -457,6 +457,11 @@ class SpaceStore(context: Context) {
         get() = prefs.getString(KEY_SIDE_BY_SIDE, null)
         set(value) = prefs.edit().putString(KEY_SIDE_BY_SIDE, value).apply()
 
+    /** 1.2.3 (issue 59): each game's touch spots, as [com.hayeco.flipspaces.core.pointer.TouchSpotStore] text. */
+    var touchSpots: String?
+        get() = prefs.getString(KEY_TOUCH_SPOTS, null)
+        set(value) = prefs.edit().putString(KEY_TOUCH_SPOTS, value).apply()
+
     /** 1.2.3 (issue 58): 2D while moving for side by side windows; off by default. */
     var sideBySideFlat: Boolean
         get() = prefs.getBoolean(KEY_SIDE_BY_SIDE_FLAT, false)
@@ -627,6 +632,7 @@ class SpaceStore(context: Context) {
         private const val KEY_STILL_LOCK = "still_lock_0532"
         private const val KEY_DRAW_SMOOTHING = "draw_smoothing_0564"
         private const val KEY_HEAD_TRACKING = "head_tracking_1114"
+        private const val KEY_TOUCH_SPOTS = "touch_spots_123"
         private const val KEY_AIR_DISPLAY_MODE = "air_display_mode_123"
         private const val KEY_SIDE_BY_SIDE = "side_by_side_123"
         private const val KEY_SIDE_BY_SIDE_FLAT = "side_by_side_flat_123"

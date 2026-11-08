@@ -488,6 +488,7 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun onPause() {
         resumed = false
+        // 1.2.3 (issue 59): the Game controller lets go too (touches lifted, the gamepad centred), via releaseGameKeys.
         // 1.2.3 (issue 59): a game key held as the trackpad goes is let go, so the game is not left holding it.
         screen.releaseGameKeys()
         main.removeCallbacks(ticker)
@@ -1206,6 +1207,8 @@ class TrackpadActivity : Activity(), PadHost {
             return
         }
         if (gameKeys == on) return
+        // 1.2.3: Game keys and the Game controller share their place; one at a time.
+        if (on && controllerMode != com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF) controllerModeChosen(com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF)
         gameKeys = on
         Log.i(TAG, "Game keys ${if (on) "on: held keys go to the focused window" else "off"}")
         screen.configure(settings, cover, coverLayout)
@@ -1225,6 +1228,123 @@ class TrackpadActivity : Activity(), PadHost {
         val now = SystemClock.uptimeMillis()
         val downAt = if (change.down) now.also { gameKeyDownAt[change.keyCode] = it } else gameKeyDownAt.remove(change.keyCode) ?: now
         SpaceSession.send(SpaceCommand.PanelKey(if (change.down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, change.keyCode, 0, 0, downAt))
+    }
+
+    // ---- 1.2.3 (issue 59): the Game controller, as a virtual gamepad or on a game's on-screen controls ----
+
+    private var controllerMode = com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF
+    private var spotSetting = false
+    private val touchPointers = com.hayeco.flipspaces.core.pointer.TouchPointers()
+    private val touchSpots by lazy { com.hayeco.flipspaces.core.pointer.TouchSpotStore(com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots) }
+
+    /** While setting spots: the control each held control began at, for the hold that sets it. */
+    private val spotHeldSince = HashMap<com.hayeco.flipspaces.core.pointer.PadControl, Long>()
+
+    override fun controllerMode(): com.hayeco.flipspaces.core.pointer.GameControllerMode = controllerMode
+
+    override fun controllerModeChosen(mode: com.hayeco.flipspaces.core.pointer.GameControllerMode) {
+        val off = com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF
+        if (mode != off && !SpaceSession.active) {
+            screen.showToast("Open the Space on the glasses first.")
+            return
+        }
+        if (mode == controllerMode) return
+        val before = controllerMode
+        // Leaving a mode lets go of what it held: the gamepad centred and closed, the touches lifted.
+        if (before == com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD) {
+            com.hayeco.flipspaces.spatial.PanelHost.gamepadInput(com.hayeco.flipspaces.core.pointer.UhidGamepad.report(com.hayeco.flipspaces.core.pointer.ControllerState()))
+            com.hayeco.flipspaces.spatial.PanelHost.gamepadClose()
+        }
+        if (before == com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH) sendTouches(touchPointers.cancel())
+        spotSetting = false
+        spotHeldSince.clear()
+        if (mode != off && gameKeys) {
+            gameKeys = false
+            gameKeyDownAt.clear()
+        }
+        controllerMode = mode
+        Log.i(TAG, "Game controller: ${mode.label}")
+        screen.configure(settings, cover, coverLayout)
+        when (mode) {
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD -> com.hayeco.flipspaces.spatial.PanelHost.gamepadOpen { err ->
+                if (err != null) {
+                    Log.w(TAG, "the virtual gamepad could not start: $err")
+                    screen.showToast("The gamepad could not start: $err")
+                    if (controllerMode == com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD) controllerModeChosen(off)
+                } else {
+                    // Gamepad input goes to the focused display: the game's window is put on top.
+                    SpaceSession.send(SpaceCommand.FocusWindow)
+                    screen.showToast("Gamepad on. Click the game's window first if it does not answer.")
+                }
+            }
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> {
+                val pkg = SpaceSession.focusedApp?.first
+                if (pkg == null || touchSpots.of(pkg).isEmpty()) {
+                    spotSetting = true
+                    screen.showToast("Set the spots: aim the dot at the game's button, then hold the matching control.")
+                } else {
+                    screen.showToast("Touch on: the controls press the game's own buttons.")
+                }
+            }
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> Unit
+        }
+    }
+
+    override fun controllerChanged() {
+        val state = screen.controllerState()
+        when (controllerMode) {
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD ->
+                com.hayeco.flipspaces.spatial.PanelHost.gamepadInput(com.hayeco.flipspaces.core.pointer.UhidGamepad.report(state))
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> if (spotSetting) spotHolds(state) else {
+                val (pkg, aspect) = SpaceSession.focusedApp ?: return
+                sendTouches(touchPointers.next(com.hayeco.flipspaces.core.pointer.TouchSpots.touches(state, touchSpots.of(pkg), aspect)))
+            }
+            com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> Unit
+        }
+    }
+
+    private fun sendTouches(events: List<com.hayeco.flipspaces.core.pointer.TouchPointers.Event>) {
+        if (events.isNotEmpty()) SpaceSession.send(SpaceCommand.PadTouches(events))
+    }
+
+    /** Setting spots: a control held [com.hayeco.flipspaces.core.pointer.TouchSpots.SET_HOLD_MS] takes the dot's spot. */
+    private fun spotHolds(state: com.hayeco.flipspaces.core.pointer.ControllerState) {
+        val held = state.buttons + state.sticksHeld
+        spotHeldSince.keys.retainAll(held)
+        val now = SystemClock.uptimeMillis()
+        for (c in held) if (c !in spotHeldSince) {
+            spotHeldSince[c] = now
+            main.postDelayed({ spotHeld(c, now) }, com.hayeco.flipspaces.core.pointer.TouchSpots.SET_HOLD_MS)
+        }
+    }
+
+    private fun spotHeld(c: com.hayeco.flipspaces.core.pointer.PadControl, since: Long) {
+        if (!spotSetting || spotHeldSince[c] != since) return
+        val (pkg, u, v) = SpaceSession.pointerSpot ?: run {
+            screen.showToast("Put the dot on the game's window first.")
+            return
+        }
+        touchSpots.set(pkg, c, com.hayeco.flipspaces.core.pointer.TouchSpot(u, v))
+        com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots = touchSpots.encode()
+        buzz(PadHaptic.MODE)
+        Log.i(TAG, "touch spot for ${c.label} set at %.3f, %.3f in $pkg".format(java.util.Locale.ROOT, u, v))
+        screen.showToast("${c.label} set. Set the others, then turn Set touch spots off.")
+    }
+
+    override fun touchSpotSetting(): Boolean = spotSetting
+
+    override fun touchSpotSettingChosen(on: Boolean) {
+        spotSetting = on
+        spotHeldSince.clear()
+        if (on) sendTouches(touchPointers.cancel())
+        screen.showToast(if (on) "Aim the dot at the game's button, then hold the matching control for a second." else "Spots saved for this game.")
+    }
+
+    override fun clearTouchSpots() {
+        val pkg = SpaceSession.focusedApp?.first ?: return screen.showToast("Click the game's window first.")
+        touchSpots.clear(pkg)
+        com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots = touchSpots.encode()
+        screen.showToast("Touch spots cleared for this game.")
     }
 
     override fun openControlPanel() {

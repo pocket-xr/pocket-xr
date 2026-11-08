@@ -94,11 +94,58 @@ class PanelHostService : IPanelHost.Stub() {
     private val callbackClass: Class<*> by lazy { Class.forName("android.hardware.display.IVirtualDisplayCallback") }
 
     override fun destroy() {
+        gamepadClose()
         tokens.keys.toList().forEach { releaseDisplay(it) }
         System.exit(0)
     }
 
     override fun lastError(): String? = error
+
+    // ---- 1.2.3 (issue 59): the virtual gamepad, a /dev/uhid device the shell may make ----
+
+    @Volatile private var uhid: java.io.RandomAccessFile? = null
+
+    override fun gamepadOpen(): String? = guardText {
+        synchronized(this) {
+            if (uhid != null) return@guardText null
+            val f = java.io.RandomAccessFile("/dev/uhid", "rw")
+            f.write(com.hayeco.flipspaces.core.pointer.UhidGamepad.create())
+            uhid = f
+            // A first, centred report, so Android sees the sticks at rest.
+            f.write(com.hayeco.flipspaces.core.pointer.UhidGamepad.input(com.hayeco.flipspaces.core.pointer.UhidGamepad.report(com.hayeco.flipspaces.core.pointer.ControllerState())))
+            Log.i(tag, "virtual gamepad up: ${com.hayeco.flipspaces.core.pointer.UhidGamepad.NAME} on /dev/uhid")
+            null
+        }
+    }
+
+    override fun gamepadInput(report: ByteArray): String? = guardText {
+        val f = uhid ?: return@guardText "The virtual gamepad is not up"
+        synchronized(this) { f.write(com.hayeco.flipspaces.core.pointer.UhidGamepad.input(report)) }
+        null
+    }
+
+    override fun gamepadClose() {
+        synchronized(this) {
+            val f = uhid ?: return
+            uhid = null
+            runCatching { f.close() }
+            Log.i(tag, "virtual gamepad closed")
+        }
+    }
+
+    override fun injectTouches(displayId: Int, action: Int, ids: IntArray, xs: FloatArray, ys: FloatArray, downTime: Long): String? = guardText {
+        val n = minOf(ids.size, xs.size, ys.size)
+        if (n == 0) return@guardText "No pointers"
+        val now = SystemClock.uptimeMillis()
+        val props = Array(n) { i -> MotionEvent.PointerProperties().apply { id = ids[i]; toolType = MotionEvent.TOOL_TYPE_FINGER } }
+        val coords = Array(n) { i -> MotionEvent.PointerCoords().apply { x = xs[i]; y = ys[i]; pressure = 1f; size = 1f } }
+        val event = MotionEvent.obtain(if (downTime > 0) downTime else now, now, action, n, props, coords, 0, 0, 1f, 1f, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0)
+        try {
+            inject(event, displayId, "touches ${MotionEvent.actionToString(action)}")
+        } finally {
+            event.recycle()
+        }
+    }
 
     override fun setEvents(events: IPanelEvents?) {
         this.events = events
