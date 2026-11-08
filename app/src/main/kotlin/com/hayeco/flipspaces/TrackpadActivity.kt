@@ -765,6 +765,7 @@ class TrackpadActivity : Activity(), PadHost {
             SpaceSession.padHands = gestureState() == 2
             SpaceSession.padCursorSpeed = settings.cursorSpeed
             if (touching) send(pad.tick(now))
+            SpaceSession.padHold = if (touching) pad.holdProgress(now) else 0f
             send(home.tick(now))
             // 0.5.17 cover screen: Further or Closer held repeats, faster the longer it is held.
             repeatAction?.let { a -> repeat.tick(now).forEach { submit(PadSignal.Window(a, it)) } }

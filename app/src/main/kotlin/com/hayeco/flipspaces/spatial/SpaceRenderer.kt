@@ -4730,6 +4730,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val onFrame = hover?.frame == true
             if (look.ringAlpha > 0.01f) drawDisc(vp, at, CURSOR_RING * look.ringScale * (if (onFrame) 1.35f else 1f), Look.rgba(if (onFrame) Look.ACCENT else colour, 0.9f * a * look.ringAlpha), GlKit.CIRCLE_RING, CURSOR_RING_INNER)
             drawRipple(vp, at, pointer.pressing, a)
+            // 1.2.3 (issue 53): over a resize handle or a grab band, the accent fills the ring while the trackpad's finger
+            // is held, so the hold that starts a resize or a move shows before it fires.
+            if (!pointer.pressing) {
+                val fill = com.hayeco.flipspaces.core.spatial.HoldFill.of(SpaceSession.padHold, hover?.zone, onFrame)
+                if (fill > 0f) drawDisc(vp, at, CURSOR_RING * look.ringScale * fill, Look.rgba(Look.ACCENT, 0.85f * a), GlKit.CIRCLE_DOT)
+            }
             drawDisc(vp, at, CURSOR_DOT * look.dotScale, Look.rgba(colour, a), GlKit.CIRCLE_DOT, CURSOR_DOT_CORE)
             return
         }

@@ -165,6 +165,9 @@ object SpaceSession {
     @Volatile var padHands: Boolean = false
     @Volatile var padCursorSpeed: Int = 50
 
+    /** 1.2.3 (issue 53): the trackpad's still finger toward its long press, 0 to 1, for the cursor's fill ([com.hayeco.flipspaces.core.spatial.HoldFill]). */
+    @Volatile var padHold: Float = 0f
+
     /**
      * 0.5.99 (Mike: record what the glasses show, as the Aura's puck does): the Control Center's or the Menu's Record
      * ([recordWanted]); whether the Space is recording ([recording], for the buttons and the trackpad); and the last
