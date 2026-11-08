@@ -713,6 +713,11 @@ interface PadHost {
     /** 1.2.3 (issue 58): Side by side 3D on or off for the focused window's app. */
     fun sideBySideChosen(on: Boolean)
 
+    /** 1.2.3 (issue 58): 2D while moving for side by side windows (off by default). */
+    fun sideBySideFlatOn(): Boolean
+
+    fun sideBySideFlatChosen(on: Boolean)
+
     /** 0.5.101: the Menu's settings back to Pocket XR's defaults (the pad type, presets and windows stay). */
     fun resetSettings()
 
@@ -2102,6 +2107,15 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 closeDrawer()
                 host.sideBySideChosen(!on)
             })
+            // 1.2.3 (issue 58): 2D while moving, offered while the window shows Side by side 3D; off by default.
+            if (on) {
+                val flat = host.sideBySideFlatOn()
+                functions.addView(c.divider(20f))
+                functions.addView(row(R.drawable.ic_cover_view, "${com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_ROW}: ${if (flat) "ON" else "OFF"}", tick = flat, subtitle = com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_SUBTITLE) {
+                    host.sideBySideFlatChosen(!flat)
+                    buildDrawer()
+                })
+            }
         }
         // 0.5.102 (Mike): the Glasses report moved to Advanced on the settings home.
         functions.addView(c.divider(20f))

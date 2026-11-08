@@ -67,6 +67,9 @@ sealed interface SpaceCommand {
     /** 1.2.3 (issue 58): Side by side 3D on or off for the focused window's app. */
     data class SideBySide(val on: Boolean) : SpaceCommand
 
+    /** 1.2.3 (issue 58): 2D while moving for side by side windows, on or off. */
+    data class SideBySideFlat(val on: Boolean) : SpaceCommand
+
     /** 0.5.17: the arrange actions from the trackpad's drawer ([com.hayeco.flipspaces.core.spatial.Arrange]). */
     data class Arrange(val kind: com.hayeco.flipspaces.core.spatial.ArrangeKind) : SpaceCommand
 

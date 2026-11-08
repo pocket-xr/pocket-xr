@@ -1047,6 +1047,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         SpaceSession.focusedApp = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.packageName to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
         SpaceSession.pointerSpot = pointer.hover?.takeIf { it.zone == PanelZone.BODY && it.panel.packageName.isNotEmpty() && it.u in 0f..1f && it.v in 0f..1f }?.let { Triple(it.panel.packageName, it.u, it.v) }
         // 1.2.3 (issue 58): whether the focused window's app shows Side by side 3D, for the trackpad's Menu.
+        // 1.2.3 (issue 58): 2D while moving, from the head's turn and the cursor shown in the last frame.
+        sideBySideFlat = sideBySideFlatOn && sideBySideMotion.update(HeadTracker.turnSpeedDegS, headCursorAlpha > 0.02f, SystemClock.uptimeMillis())
         SpaceSession.focusedSideBySide = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to sideBySide.isOn(it.packageName) }
         // 0.5.32: the head's turn speed to the glasses' duty on turns (it sends nothing unless its switch is on).
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
@@ -3082,8 +3084,40 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         store.sideBySide = sideBySide.encode()
         val stereo = eyes.size > 1
         Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: Side by side 3D ${if (on) "on" else "off"} (remembered for $pkg)${if (on && !stereo) "; the glasses show 2D, so the left half shows alone" else ""}")
-        showNotice(p, if (!on) com.hayeco.flipspaces.core.spatial.SideBySide.OFF_NOTICE else if (stereo) com.hayeco.flipspaces.core.spatial.SideBySide.ON_NOTICE else com.hayeco.flipspaces.core.spatial.SideBySide.MONO_NOTICE, SystemClock.uptimeMillis())
+        // 1.2.3 (issue 58): turned on with the glasses in 2D, the Space switches to 3D, once, as the user's own choice.
+        // Not in Steady mode: its Ultrawide canvas has no eyes, and leaving it is the user's call.
+        val switching = on && !stereo && !ultrawide
+        if (switching) {
+            SpaceActivity.alive()?.let { a -> a.runOnUiThread { a.want3d("Side by side 3D turned on for $pkg") } }
+            airTo3d()
+        }
+        val notice = when {
+            !on -> com.hayeco.flipspaces.core.spatial.SideBySide.OFF_NOTICE
+            stereo -> com.hayeco.flipspaces.core.spatial.SideBySide.ON_NOTICE
+            switching -> com.hayeco.flipspaces.core.spatial.SideBySide.SWITCHING_NOTICE
+            else -> com.hayeco.flipspaces.core.spatial.SideBySide.MONO_NOTICE
+        }
+        showNotice(p, notice, SystemClock.uptimeMillis())
     }
+
+    /**
+     * 1.2.3 (issue 58): on Air glasses, 3D side by side through the Menu's Air display mode switch, only while the user has
+     * that untested switch on ([com.hayeco.flipspaces.core.spatial.AirDisplayMode]); otherwise the glasses' own button.
+     */
+    private fun airTo3d() {
+        if (!store.airDisplayMode || AirImuLink.find(context) == null) return
+        Thread({
+            val r = runCatching { AirDisplayLink.set(context, com.hayeco.flipspaces.core.spatial.AirDisplayMode.MODE_3D_SBS) }
+            Log.i(PANEL_TAG, "Side by side 3D: the Air asked for 3D side by side: ${r.exceptionOrNull()?.message ?: "taken"}")
+        }, "air-display").start()
+    }
+
+    /** 1.2.3 (issue 58): the Menu's 2D while moving ([com.hayeco.flipspaces.core.spatial.SideBySideMotion]), off by default. */
+    private var sideBySideFlatOn = store.sideBySideFlat
+    private val sideBySideMotion = com.hayeco.flipspaces.core.spatial.SideBySideMotion()
+
+    /** This frame's side by side windows draw flat (2D while moving, the head or the cursor moving). */
+    private var sideBySideFlat = false
 
     /**
      * 1.2.3 (issue 57): the trackpad Menu's text size for the focused window's app, [steps] steps up or down (0 puts it back
@@ -3737,6 +3771,11 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 is SpaceCommand.PadTouches -> padTouches(c.events)
                 SpaceCommand.FocusWindow -> focusedPanelId?.let { panels[it] }?.displayId?.let { PanelHost.focus(it, "the Game controller's gamepad") }
                 is SpaceCommand.SideBySide -> sideBySideChosen(c.on)
+                is SpaceCommand.SideBySideFlat -> {
+                    sideBySideFlatOn = c.on
+                    store.sideBySideFlat = c.on
+                    Log.i(PANEL_TAG, "Side by side 3D: 2D while moving ${if (c.on) "on" else "off"}")
+                }
                 is SpaceCommand.Arrange -> apply(pointer.arrange(c.kind, layout, focusedPanelId))
                 is SpaceCommand.TextSize -> textSizeStep(c.steps)
                 is SpaceCommand.OpenPreset -> openPreset(c.preset)
@@ -4129,7 +4168,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val sbs = sideBySide.isOn(panel.packageName)
             fun matrixFor(t: PanelSource): FloatArray {
                 val crop = com.hayeco.flipspaces.core.spatial.PanelUv.cover(t.texture.width, t.texture.height, com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(panel))
-                val uv = if (sbs) com.hayeco.flipspaces.core.spatial.SideBySide.eyeUv(crop, eyePass, eyes.size) else crop
+                // 1.2.3: while 2D while moving holds it flat, both eyes take the left half.
+                val uv = if (sbs) com.hayeco.flipspaces.core.spatial.SideBySide.eyeUv(crop, if (sideBySideFlat) 0 else eyePass, eyes.size) else crop
                 return if (uv[0] == 0f && uv[1] == 0f && uv[2] == 1f && uv[3] == 1f) GlKit.IDENTITY else com.hayeco.flipspaces.core.spatial.PanelUv.matrix(uv)
             }
             // 0.5.45: after a resize the picture from before stays under the new one while that fades in ([PanelGl.dropPrevious]).

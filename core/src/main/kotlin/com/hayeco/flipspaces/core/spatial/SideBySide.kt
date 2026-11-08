@@ -23,6 +23,7 @@ object SideBySide {
 
     const val ON_NOTICE = "Side by side 3D: each eye sees its half"
     const val MONO_NOTICE = "Side by side 3D: switch the glasses to 3D to see depth"
+    const val SWITCHING_NOTICE = "Side by side 3D: switching the glasses to 3D"
     const val OFF_NOTICE = "Side by side 3D off"
 }
 
