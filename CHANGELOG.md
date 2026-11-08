@@ -2,6 +2,21 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.2.4: the game controller
+
+- **Game controller.** The trackpad's Menu has a Game controller with a stick and buttons on the phone: L2, L1 and Select
+  over a left stick, and Start, R1 and R2 over a right stick and A, B, X and Y. Tap the row to go from Off to Gamepad to
+  Touch.
+- **Gamepad.** Games see the phone as a real game controller, so they use their own controller support. It needs
+  Shizuku. Click the game's window first if it doesn't answer.
+- **Touch.** For games that only have on-screen controls. Aim the dot at the game's own button and hold the matching
+  control on the phone for a second to set it, once for each game. Then the stick and buttons press the game's own
+  controls, several at once. The Menu can set the spots again or clear them.
+- **Side by side 3D switches to 3D for you.** Turning on Side by side 3D with the glasses in 2D now switches them to 3D,
+  once, when you turn it on.
+- **2D while moving.** A new option under Side by side 3D, off by default. Side by side videos show flat while your head
+  or the cursor moves, and go back to 3D when you're still.
+
 ## 1.2.3: pocket mode, game keys and text size
 
 - **Pocket mode.** The trackpad's Menu has Pocket mode for walking around with the phone in your pocket. The phone's
