@@ -2,6 +2,7 @@ package com.hayeco.flipspaces.core.spatial
 
 import com.hayeco.flipspaces.core.ShizukuStatus
 import com.hayeco.flipspaces.core.pointer.Phase
+import com.hayeco.flipspaces.core.pointer.PadSignal
 import com.hayeco.flipspaces.core.pointer.PointerSignal
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -126,6 +127,42 @@ class SpatialPointerTest {
         val turn = p.handle(PointerSignal.Scroll(100f, 0f, Phase.UPDATE), Quat.IDENTITY, SpaceLayout(), pixels)
             .filterIsInstance<SpaceAction.TurnView>().single()
         assertEquals(8f, turn.deltaYawDeg, 1e-3f)
+    }
+
+    /**
+     * 1.2.3 (John Davis: "scroll the screens using the mousewheel when focus / cursor is away from the screens"): a wheel
+     * (up and down only) over empty space turns the view as a sideways scroll does, a scroll back as a drag right.
+     */
+    @Test
+    fun aMouseWheelOverEmptySpaceTurnsTheView() {
+        val p = pointer()
+        p.handle(PointerSignal.MoveBy(0f, 1e6f), Quat.IDENTITY, SpaceLayout(), pixels)
+        p.handle(PointerSignal.Scroll(0f, 0f, Phase.BEGIN), Quat.IDENTITY, SpaceLayout(), pixels)
+        val away = p.handle(PointerSignal.Scroll(0f, 100f, Phase.UPDATE), Quat.IDENTITY, SpaceLayout(), pixels)
+            .filterIsInstance<SpaceAction.TurnView>().single()
+        assertEquals(8f, away.deltaYawDeg, 1e-3f)
+        val back = p.handle(PointerSignal.Scroll(0f, 50f, Phase.END), Quat.IDENTITY, SpaceLayout(), pixels)
+            .filterIsInstance<SpaceAction.TurnView>().single()
+        assertEquals(-4f, back.deltaYawDeg, 1e-3f)
+    }
+
+    /** 1.2.3 (John Davis: "2 finger trackpad to scroll the screens when cursor is underneath the screens"). */
+    @Test
+    fun anUpOrDownTwoFingerScrollOverEmptySpaceTurnsTheView() {
+        val p = pointer()
+        p.handle(PointerSignal.MoveBy(0f, 1e6f), Quat.IDENTITY, SpaceLayout(), pixels)
+        p.handle(PadSignal.Scroll(0f, 0f, 0f, 0f, Phase.BEGIN), Quat.IDENTITY, SpaceLayout(), pixels)
+        // Fingers going down (negative dy on the pad) move the row as fingers going right do.
+        val down = p.handle(PadSignal.Scroll(0f, 0f, 0f, -0.1f, Phase.UPDATE), Quat.IDENTITY, SpaceLayout(), pixels)
+            .filterIsInstance<SpaceAction.TurnView>().single()
+        val right = pointer().let { q ->
+            q.handle(PointerSignal.MoveBy(0f, 1e6f), Quat.IDENTITY, SpaceLayout(), pixels)
+            q.handle(PadSignal.Scroll(0f, 0f, 0f, 0f, Phase.BEGIN), Quat.IDENTITY, SpaceLayout(), pixels)
+            q.handle(PadSignal.Scroll(0f, 0f, 0.1f, 0f, Phase.UPDATE), Quat.IDENTITY, SpaceLayout(), pixels)
+                .filterIsInstance<SpaceAction.TurnView>().single()
+        }
+        assertTrue(down.deltaYawDeg > 0f)
+        assertEquals(right.deltaYawDeg, down.deltaYawDeg, 1e-4f)
     }
 
     @Test
