@@ -690,6 +690,23 @@ internal class IntroCover(context: Context, private val art: com.hayeco.flipspac
 
 /** What the screen asks the trackpad to do; the activity implements it. */
 interface PadHost {
+    /** 1.2.3 (issue 54): Air glasses are plugged in, so the Menu offers the display mode switch. */
+    fun airDisplayOffered(): Boolean
+
+    /** 1.2.3 (issue 54): the "Air display mode (untested)" switch, off by default. */
+    fun airDisplayOn(): Boolean
+
+    fun airDisplayChosen(on: Boolean)
+
+    /** 1.2.3 (issue 54): the mode the glasses last reported, or what is happening ("reading", an error). */
+    fun airDisplayLine(): String
+
+    /** 1.2.3 (issue 54): what a tap on the mode row does. */
+    fun airDisplayAction(): String
+
+    /** 1.2.3 (issue 54): switch the Air between 2D and 3D side by side. */
+    fun airDisplaySwitch()
+
     /** 1.2.3 (issue 58): the focused window's label and whether its app shows Side by side 3D, or null with none focused. */
     fun focusedSideBySide(): Pair<String, Boolean>?
 
@@ -2052,6 +2069,23 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             closeDrawer()
             host.recordGlasses(!recordingNow)
         })
+        // 1.2.3 (issue 54): an Air's display mode, behind a switch that is off by default (untested on Air glasses).
+        if (host.airDisplayOffered()) {
+            val on = host.airDisplayOn()
+            functions.addView(c.divider(20f))
+            functions.addView(row(R.drawable.ic_cover_view, "${com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_ROW}: ${if (on) "ON" else "OFF"}", tick = on, subtitle = com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_SUBTITLE) {
+                host.airDisplayChosen(!on)
+                buildDrawer()
+            })
+            if (on) {
+                val line = host.airDisplayLine()
+                functions.addView(c.divider(20f))
+                functions.addView(row(R.drawable.ic_cover_view, "Glasses display: $line", subtitle = host.airDisplayAction()) {
+                    closeDrawer()
+                    host.airDisplaySwitch()
+                })
+            }
+        }
         // 1.2.3 (issue 59): Game keys on the open phone.
         if (!cover) {
             val game = host.gameKeysOn()

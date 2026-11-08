@@ -462,6 +462,11 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(KEY_HEAD_TRACKING, true)
         set(value) = prefs.edit().putBoolean(KEY_HEAD_TRACKING, value).apply()
 
+    /** 1.2.3 (issue 54): the Menu's "Air display mode (untested)" switch; off by default. */
+    var airDisplayMode: Boolean
+        get() = prefs.getBoolean(KEY_AIR_DISPLAY_MODE, false)
+        set(value) = prefs.edit().putBoolean(KEY_AIR_DISPLAY_MODE, value).apply()
+
     /** 0.5.32: the glasses warp without LSR, keeping scene mode 1 (Developer); on by default. */
     var warpNoLsr: Boolean
         get() = prefs.getBoolean(KEY_WARP_NO_LSR, true)
@@ -617,6 +622,7 @@ class SpaceStore(context: Context) {
         private const val KEY_STILL_LOCK = "still_lock_0532"
         private const val KEY_DRAW_SMOOTHING = "draw_smoothing_0564"
         private const val KEY_HEAD_TRACKING = "head_tracking_1114"
+        private const val KEY_AIR_DISPLAY_MODE = "air_display_mode_123"
         private const val KEY_SIDE_BY_SIDE = "side_by_side_123"
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"

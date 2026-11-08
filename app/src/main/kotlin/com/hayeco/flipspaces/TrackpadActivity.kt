@@ -878,6 +878,89 @@ class TrackpadActivity : Activity(), PadHost {
         pad.cursorSpeed = settings.cursorSpeed
     }
 
+    // ---- 1.2.3 (issue 54): the Air's display mode, untested, behind a switch that is off by default ----
+
+    /** The mode the Air last reported, or null before a reading. */
+    @Volatile private var airMode: Int? = null
+
+    /** What the mode row says while there is no mode: reading, or the last problem. */
+    @Volatile private var airNote: String? = null
+
+    @Volatile private var airBusy = false
+
+    override fun airDisplayOffered(): Boolean = com.hayeco.flipspaces.spatial.AirImuLink.find(this) != null
+
+    override fun airDisplayOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).airDisplayMode
+
+    override fun airDisplayChosen(on: Boolean) {
+        com.hayeco.flipspaces.spatial.SpaceStore(this).airDisplayMode = on
+        Log.i(TAG, "Air display mode switch ${if (on) "on (untested on Air glasses)" else "off"}")
+        airMode = null
+        airNote = null
+        if (on) airRead(0L)
+    }
+
+    override fun airDisplayLine(): String {
+        if (airMode == null && airNote == null && !airBusy) airRead(0L)
+        return airMode?.let { com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(it) } ?: airNote ?: "reading"
+    }
+
+    override fun airDisplayAction(): String = when (val m = airMode) {
+        null -> "Tap to read it again"
+        else -> if (com.hayeco.flipspaces.core.spatial.AirDisplayMode.isSideBySide(m)) "Tap to switch to 2D" else "Tap to switch to 3D side by side"
+    }
+
+    override fun airDisplaySwitch() {
+        if (airBusy) return
+        val from = airMode
+        if (from == null) {
+            airRead(0L)
+            return
+        }
+        val to = com.hayeco.flipspaces.core.spatial.AirDisplayMode.toggled(from)
+        airBusy = true
+        Thread({
+            val result = runCatching { com.hayeco.flipspaces.spatial.AirDisplayLink.set(this, to) }
+            runOnUiThread {
+                airBusy = false
+                result.onSuccess {
+                    Log.i(TAG, "Air display mode: asked for $to (${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(to)}), the glasses took it")
+                    screen.showToast("The glasses switch to ${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(to)}. Their screen reconnects, so give it a few seconds.")
+                    airMode = null
+                    airNote = "switching"
+                    // The display reconnects after a switch; the mode is read again once it has had time.
+                    airRead(AIR_REREAD_MS)
+                }.onFailure {
+                    Log.w(TAG, "Air display mode: asking for $to failed: ${it.message}")
+                    screen.showToast("The glasses did not switch: ${it.message}")
+                }
+            }
+        }, "air-display").start()
+    }
+
+    private fun airRead(delayMs: Long) {
+        if (airBusy) return
+        airBusy = true
+        airNote = "reading"
+        Thread({
+            if (delayMs > 0) SystemClock.sleep(delayMs)
+            val result = runCatching { com.hayeco.flipspaces.spatial.AirDisplayLink.mode(this) }
+            runOnUiThread {
+                airBusy = false
+                result.onSuccess {
+                    airMode = it
+                    airNote = null
+                    Log.i(TAG, "Air display mode: the glasses report $it (${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(it)})")
+                }.onFailure {
+                    airMode = null
+                    airNote = "could not read (${it.message})"
+                    Log.w(TAG, "Air display mode: reading failed: ${it.message}")
+                }
+                screen.refreshDrawer()
+            }
+        }, "air-display").start()
+    }
+
     override fun focusedSideBySide(): Pair<String, Boolean>? = if (SpaceSession.active) SpaceSession.focusedSideBySide else null
 
     override fun sideBySideChosen(on: Boolean) {
@@ -1790,6 +1873,9 @@ class TrackpadActivity : Activity(), PadHost {
 
     companion object {
         private const val TAG = "FlipSpaces/Trackpad"
+
+        /** 1.2.3 (issue 54): after a switch the Air's mode is read again this long later, once its screen is back. */
+        private const val AIR_REREAD_MS = 4000L
 
         /** 1.2.3 (issue 57): the Menu reads the new text size back this long after a step. */
         private const val TEXT_SIZE_REFRESH_MS = 200L
