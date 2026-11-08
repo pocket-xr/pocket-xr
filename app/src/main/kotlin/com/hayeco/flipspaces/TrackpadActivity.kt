@@ -1671,7 +1671,31 @@ class TrackpadActivity : Activity(), PadHost {
 
     private fun unlocked() {
         buzz(PadHaptic.UNLOCK)
+        val wasPocket = screen.pocket
         screen.showLock(false)
+        if (wasPocket) pocketBrightness(false)
+    }
+
+    /**
+     * 1.2.3 (issue 52): Pocket mode: the lock overlay at once, black ([com.hayeco.flipspaces.core.pointer.PocketMode]), the
+     * screen at its lowest brightness and kept on, so the glasses keep their picture and stray touches do nothing.
+     */
+    override fun pocketMode() {
+        if (!SpaceSession.active) {
+            screen.showToast("Open the Space on the glasses first.")
+            return
+        }
+        screen.showLock(true, pocket = true)
+        pocketBrightness(true)
+        Log.i(TAG, "Pocket mode on: the screen black at its lowest brightness and kept on; hold the lock to leave")
+    }
+
+    private fun pocketBrightness(on: Boolean) {
+        window.attributes = window.attributes.apply {
+            screenBrightness = if (on) com.hayeco.flipspaces.core.pointer.PocketMode.BRIGHTNESS else com.hayeco.flipspaces.core.pointer.PocketMode.NO_OVERRIDE
+        }
+        if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else applyKeepScreenOn()
+        if (!on) Log.i(TAG, "Pocket mode off: the phone's own brightness again")
     }
 
     // ---- Spatial Mouse: the phone's rotation vector aims the ray ----

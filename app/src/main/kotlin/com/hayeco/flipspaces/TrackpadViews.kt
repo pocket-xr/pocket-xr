@@ -754,6 +754,9 @@ interface PadHost {
     /** Unlock the phone (a keyguard dismiss, its PIN on the cover where it is secure). */
     fun unlockPhone()
 
+    /** 1.2.3 (issue 52): the lock overlay now, black, at the lowest brightness, the screen kept on. */
+    fun pocketMode()
+
     /** 1.2.3 (issue 50): the Menu's Control panel row: opens it in the glasses as three fingers down do. */
     fun openControlPanel()
 
@@ -1982,6 +1985,12 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             closeDrawer()
             host.unlockPhone()
         })
+        // 1.2.3 (issue 52): the phone in a pocket while the glasses keep running.
+        functions.addView(c.divider(20f))
+        functions.addView(row(R.drawable.ic_cover_lock, com.hayeco.flipspaces.core.pointer.PocketMode.MENU_ROW, subtitle = com.hayeco.flipspaces.core.pointer.PocketMode.MENU_SUBTITLE) {
+            closeDrawer()
+            host.pocketMode()
+        })
         drawerBody.addView(functions, cardParams(if (koFi) 12f else 25f))
 
         trackpadHeading = c.padText("Trackpad", 14f, WHITE)
@@ -2791,18 +2800,27 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     // ---- the screen-lock overlay ----
 
-    fun showLock(show: Boolean) {
+    /** 1.2.3 (issue 52): the lock is up as Pocket mode ([com.hayeco.flipspaces.core.pointer.PocketMode]). */
+    var pocket = false
+        private set
+
+    fun showLock(show: Boolean, pocket: Boolean = false) {
+        this.pocket = show && pocket
         lock.visibility = if (show) View.VISIBLE else View.GONE
+        lockText.text = com.hayeco.flipspaces.core.pointer.PocketMode.hint(this.pocket)
         lockProgress(0f, false)
         requestLayout()
     }
 
     val locked: Boolean get() = lock.visibility == View.VISIBLE
 
-    /** The hold's progress: the gradient brightens while pressed, the icon fills in. */
+    /** The hold's progress: the gradient brightens while pressed, the icon fills in. 1.2.3: in Pocket mode all black until held. */
     fun lockProgress(progress: Float, pressed: Boolean) {
+        val hint = com.hayeco.flipspaces.core.pointer.PocketMode.showsHint(pocket, pressed)
+        lockGlow.visibility = if (hint) View.VISIBLE else View.INVISIBLE
+        lockText.visibility = if (hint) View.VISIBLE else View.INVISIBLE
         lockGradient.colors = intArrayOf(0x00FFFFFF, if (pressed) 0x40FFFFFF else 0x33FFFFFF)
-        lockIcon.alpha = 0.6f + 0.4f * progress
+        lockIcon.alpha = com.hayeco.flipspaces.core.pointer.PocketMode.iconAlpha(pocket, progress, pressed)
         lockIcon.scaleX = 1f + 0.1f * progress
         lockIcon.scaleY = 1f + 0.1f * progress
     }
