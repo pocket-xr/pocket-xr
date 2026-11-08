@@ -375,6 +375,11 @@ class SpaceStore(context: Context) {
         get() = prefs.getString(KEY_APP_DENSITY, null)
         set(value) = prefs.edit().putString(KEY_APP_DENSITY, value).apply()
 
+    /** 1.2.3 (issue 57): each app's own text size, as [com.hayeco.flipspaces.core.spatial.AppTextSizeStore] text. */
+    var appTextSize: String?
+        get() = prefs.getString(KEY_APP_TEXT_SIZE, null)
+        set(value) = prefs.edit().putString(KEY_APP_TEXT_SIZE, value).apply()
+
     /** 0.5.21: the "Glasses warp (beta)" switch, off until Mike turns it on; remembered. */
     var glassesWarp: Boolean
         get() = prefs.getBoolean(KEY_GLASSES_WARP, false)
@@ -446,6 +451,11 @@ class SpaceStore(context: Context) {
     var drawSmoothing: Boolean
         get() = prefs.getBoolean(KEY_DRAW_SMOOTHING, true)
         set(value) = prefs.edit().putBoolean(KEY_DRAW_SMOOTHING, value).apply()
+
+    /** 1.2.3 (issue 58): the apps with Side by side 3D on, as [com.hayeco.flipspaces.core.spatial.SideBySideStore] text. */
+    var sideBySide: String?
+        get() = prefs.getString(KEY_SIDE_BY_SIDE, null)
+        set(value) = prefs.edit().putString(KEY_SIDE_BY_SIDE, value).apply()
 
     /** 1.1.14: Settings' Head tracking switch ([HeadTracker.setEnabled]); on by default. Off, the Space is head locked. */
     var headTracking: Boolean
@@ -613,6 +623,8 @@ class SpaceStore(context: Context) {
         private const val KEY_DRAW_SMOOTHING = "draw_smoothing_0564"
         private const val KEY_HEAD_TRACKING = "head_tracking_1114"
         private const val KEY_AIR_DISPLAY_MODE = "air_display_mode_123"
+
+        private const val KEY_SIDE_BY_SIDE = "side_by_side_123"
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
         // 0.5.96: the key keeps its saved name, so the setting carries over.
@@ -644,6 +656,7 @@ class SpaceStore(context: Context) {
         private const val KEY_WIDE_VIEW = "broad_view_apps"
         private const val KEY_WIDE_VIEW_OVERRIDE = "broad_view_override_pending"
         private const val KEY_APP_DENSITY = "app_density"
+        private const val KEY_APP_TEXT_SIZE = "app_text_size_123"
         private const val KEY_FASTEST_REFRESH = "fastest_refresh"
         private const val KEY_FAVOURITES = "launcher_favourites"
         private const val KEY_PINS_SEEDED = "launcher_pins_seeded"
