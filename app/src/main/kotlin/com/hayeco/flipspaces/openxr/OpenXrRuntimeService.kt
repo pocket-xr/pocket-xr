@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import com.hayeco.flipspaces.spatial.SpaceActivity
+import com.hayeco.flipspaces.spatial.SpaceRenderer
 import com.hayeco.flipspaces.spatial.SpaceStore
 import kotlin.math.tan
 import org.freedesktop.monado.ipc.MonadoImpl
@@ -63,6 +64,22 @@ class OpenXrRuntimeService : Service() {
         val tanY = tan(Math.toRadians(frustum.verticalFovDeg / 2.0)).toFloat()
         Log.i(TAG, "the glasses: ${mode.physicalWidth}x${mode.physicalHeight} at ${mode.refreshRate} Hz, field of view tangents $tanX by $tanY")
         PocketFeed.nativeConfigure(mode.physicalWidth, mode.physicalHeight, mode.refreshRate, tanX, tanY)
+        // Mike, 7 November 2026, Beat Saber: "everything feels close", and the sabers only sat in his hands pulled
+        // 0.4 m back. The glasses angle both eyes in so a picture with no disparity sits at their 3D distance (4 m by
+        // default); games drew for parallel eyes, so infinity was seen at 4 m and a block at 2 m at about 1.3 m. Each
+        // eye's view centre now turns outward by the same angle the Space corrects ([ScreenDistance]), and games get
+        // the wearer's IPD from Pocket XR's setting, not a fixed 63 mm.
+        if (sideBySide) {
+            val store = SpaceStore(this)
+            val ipdMm = store.ipdMm
+            val distanceM = SpaceRenderer.screenDistanceM
+            val shift = (ipdMm / 2000f) / distanceM
+            Log.i(TAG, "the eyes: IPD %.1f mm, the glasses' 3D distance %.2f m, each view turned out by %.2f degrees".format(
+                java.util.Locale.ROOT, ipdMm, distanceM, Math.toDegrees(kotlin.math.atan(shift.toDouble()))))
+            PocketFeed.nativeConfigureEyes(ipdMm / 1000f, shift)
+        } else {
+            PocketFeed.nativeConfigureEyes(0f, 0f)
+        }
     }
 
     /**

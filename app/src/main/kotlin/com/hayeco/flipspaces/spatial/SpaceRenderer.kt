@@ -952,6 +952,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     companion object GameClockSwitch {
         /** Debug: the game clock's feed to Monado on or off, for an A/B with the pacer's own clock. */
         @Volatile var feedGameClock = true
+
+        /** The glasses' 3D distance the Space draws for, metres, for a game's eye views ([com.hayeco.flipspaces.openxr.OpenXrRuntimeService]). */
+        @Volatile var screenDistanceM: Float = com.hayeco.flipspaces.core.spatial.ScreenDistance.DEFAULT_M
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -1620,6 +1623,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.29: each eye centred for the glasses' 3D distance, in their 3D mode only.
         // 0.5.59 (fix 3): only a distance seen this session, else 4 m, and no screen centre offset.
         val distanceM = com.hayeco.flipspaces.core.spatial.ScreenDistance.inUse(distanceSeenM)
+        screenDistanceM = distanceM
         val fix = if (store.distanceFix && stereo == StereoMode.SIDE_BY_SIDE && eyes.size > 1) {
             com.hayeco.flipspaces.core.spatial.ScreenDistance.correction(store.ipdMm, distanceM, store.screen(true).sizeFactor, com.hayeco.flipspaces.core.spatial.ScreenDistance.inUseFrom(distanceSeenM), store.model.tanPerPx1to1)
         } else null
