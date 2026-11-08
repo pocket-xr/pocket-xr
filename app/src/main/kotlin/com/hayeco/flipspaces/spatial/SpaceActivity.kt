@@ -1025,6 +1025,20 @@ class SpaceActivity : Activity() {
         askForStereoMode()
     }
 
+    /**
+     * 1.2.3 (issue 58): Side by side 3D was turned on with the Space in 2D: the Space's view goes to 3D (as the launcher's
+     * 3D / 2D button does, remembered) and the glasses are asked for 3D once more. UI thread.
+     */
+    fun want3d(why: String) {
+        val store = SpaceStore(this)
+        if (store.view != com.hayeco.flipspaces.core.spatial.GlassesView.SBS_3D) {
+            store.view = com.hayeco.flipspaces.core.spatial.GlassesView.SBS_3D
+            Log.i(MODE_TAG, "view switched to 3D side by side ($why); remembered for the next plug-in")
+        }
+        GlassesDisplayControl.userWantsStereo()
+        askForStereoMode()
+    }
+
     private var loggedRefresh: String? = null
 
     /** 0.5.7: the display to start the Space on again once this one is destroyed ([ShowAction.RESTART]). */

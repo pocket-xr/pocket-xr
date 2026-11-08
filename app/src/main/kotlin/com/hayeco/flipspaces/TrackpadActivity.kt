@@ -967,6 +967,13 @@ class TrackpadActivity : Activity(), PadHost {
         if (SpaceSession.active) SpaceSession.send(SpaceCommand.SideBySide(on))
     }
 
+    override fun sideBySideFlatOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).sideBySideFlat
+
+    override fun sideBySideFlatChosen(on: Boolean) {
+        com.hayeco.flipspaces.spatial.SpaceStore(this).sideBySideFlat = on
+        if (SpaceSession.active) SpaceSession.send(SpaceCommand.SideBySideFlat(on))
+    }
+
     override fun stripChosen(side: StripSide) {
         settings = prefs.update { it.copy(stripSide = side) }
         pad.stripSide = side
