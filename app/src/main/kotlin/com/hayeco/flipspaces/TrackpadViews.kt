@@ -690,6 +690,12 @@ internal class IntroCover(context: Context, private val art: com.hayeco.flipspac
 
 /** What the screen asks the trackpad to do; the activity implements it. */
 interface PadHost {
+    /** 1.2.3 (issue 58): the focused window's label and whether its app shows Side by side 3D, or null with none focused. */
+    fun focusedSideBySide(): Pair<String, Boolean>?
+
+    /** 1.2.3 (issue 58): Side by side 3D on or off for the focused window's app. */
+    fun sideBySideChosen(on: Boolean)
+
     /** 0.5.101: the Menu's settings back to Pocket XR's defaults (the pad type, presets and windows stay). */
     fun resetSettings()
 
@@ -2029,6 +2035,14 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 closeDrawer()
                 host.openGlassesCheck()
             }.apply { tag = MENU_GLASSES_CHECK })
+        }
+        // 1.2.3 (issue 58): Side by side 3D for the focused window's app.
+        host.focusedSideBySide()?.let { (label, on) ->
+            functions.addView(c.divider(20f))
+            functions.addView(row(R.drawable.ic_cover_view, "Side by side 3D in $label: ${if (on) "ON" else "OFF"}", tick = on, subtitle = "For a video split into two halves. Each eye sees its half.") {
+                closeDrawer()
+                host.sideBySideChosen(!on)
+            })
         }
         // 0.5.102 (Mike): the Glasses report moved to Advanced on the settings home.
         functions.addView(c.divider(20f))

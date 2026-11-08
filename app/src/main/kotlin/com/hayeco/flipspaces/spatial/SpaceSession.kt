@@ -58,6 +58,9 @@ sealed interface SpaceCommand {
     /** 0.5.0: start the "pinch on the dots" hand calibration in the Space, or stop it if it runs. */
     data object CalibrateHands : SpaceCommand
 
+    /** 1.2.3 (issue 58): Side by side 3D on or off for the focused window's app. */
+    data class SideBySide(val on: Boolean) : SpaceCommand
+
     /** 0.5.17: the arrange actions from the trackpad's drawer ([com.hayeco.flipspaces.core.spatial.Arrange]). */
     data class Arrange(val kind: com.hayeco.flipspaces.core.spatial.ArrangeKind) : SpaceCommand
 
@@ -158,6 +161,9 @@ object SpaceSession {
 
     /** 0.5.19: the whole Space wrapped round Mike as one cylinder, from the trackpad's menu ([com.hayeco.flipspaces.core.spatial.SpaceWrap]). */
     @Volatile var wrap: Boolean = false
+
+    /** 1.2.3 (issue 58): the focused window's label and whether its app shows Side by side 3D, for the trackpad's Menu. */
+    @Volatile var focusedSideBySide: Pair<String, Boolean>? = null
 
     /**
      * 0.5.37: the trackpad's state as the Control Center shows it (the trackpad publishes it every tick): Spatial Mouse in

@@ -878,6 +878,12 @@ class TrackpadActivity : Activity(), PadHost {
         pad.cursorSpeed = settings.cursorSpeed
     }
 
+    override fun focusedSideBySide(): Pair<String, Boolean>? = if (SpaceSession.active) SpaceSession.focusedSideBySide else null
+
+    override fun sideBySideChosen(on: Boolean) {
+        if (SpaceSession.active) SpaceSession.send(SpaceCommand.SideBySide(on))
+    }
+
     override fun stripChosen(side: StripSide) {
         settings = prefs.update { it.copy(stripSide = side) }
         pad.stripSide = side

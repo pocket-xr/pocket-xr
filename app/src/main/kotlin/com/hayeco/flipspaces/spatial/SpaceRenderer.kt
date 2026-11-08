@@ -392,6 +392,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 0.5.9: mono, or side by side 3D when the surface is 32:9 ([StereoLayout]); the eyes to draw. GL thread. */
     private var stereo = StereoMode.MONO
     private var eyes = StereoLayout.eyes(StereoMode.MONO, 1920, 1080)
+
+    /** 1.2.3 (issue 58): the apps whose windows split a side by side picture between the eyes ([com.hayeco.flipspaces.core.spatial.SideBySide]). */
+    private val sideBySide = com.hayeco.flipspaces.core.spatial.SideBySideStore(store.sideBySide)
     private val pointer = SpatialPointer(frustum, PointerSettings(handsSteer = store.handsSteer))
 
     /** The viewport the projection and pointer were last built for. GL thread only. */
@@ -1040,6 +1043,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.2: with the frame's clock, so hand cursors move on every display frame.
         apply(pointer.frame(head, layout, nowMs))
         SpaceSession.heldPanelId = pointer.heldPanelId
+        // 1.2.3 (issue 58): whether the focused window's app shows Side by side 3D, for the trackpad's Menu.
+        SpaceSession.focusedSideBySide = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to sideBySide.isOn(it.packageName) }
         // 0.5.32: the head's turn speed to the glasses' duty on turns (it sends nothing unless its switch is on).
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
         // 0.5.32: the open windows, for the Menu's Arrange layouts by count.
@@ -3063,6 +3068,21 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     /**
+     * 1.2.3 (issue 58): the trackpad Menu's Side by side 3D for the focused window's app, remembered for it. The picture
+     * itself is untouched; only the eyes' halves change ([com.hayeco.flipspaces.core.spatial.SideBySide]).
+     */
+    private fun sideBySideChosen(on: Boolean) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        val pkg = p.panel.packageName
+        if (pkg.isEmpty() || sideBySide.isOn(pkg) == on) return
+        sideBySide.set(pkg, on)
+        store.sideBySide = sideBySide.encode()
+        val stereo = eyes.size > 1
+        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: Side by side 3D ${if (on) "on" else "off"} (remembered for $pkg)${if (on && !stereo) "; the glasses show 2D, so the left half shows alone" else ""}")
+        showNotice(p, if (!on) com.hayeco.flipspaces.core.spatial.SideBySide.OFF_NOTICE else if (stereo) com.hayeco.flipspaces.core.spatial.SideBySide.ON_NOTICE else com.hayeco.flipspaces.core.spatial.SideBySide.MONO_NOTICE, SystemClock.uptimeMillis())
+    }
+
+    /**
      * 1.2.3 (issue 57): the trackpad Menu's text size for the focused window's app, [steps] steps up or down (0 puts it back
      * to 100 %). Remembered for the app; every window of that app takes the new density, as after a Fit video press.
      */
@@ -3693,6 +3713,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 SpaceCommand.Recentre -> recentre()
                 SpaceCommand.ClearLayout -> layout.panels.map { it.id }.forEach(::removePanel)
                 SpaceCommand.CalibrateHands -> toggleCalibration()
+                is SpaceCommand.SideBySide -> sideBySideChosen(c.on)
                 is SpaceCommand.Arrange -> apply(pointer.arrange(c.kind, layout, focusedPanelId))
                 is SpaceCommand.TextSize -> textSizeStep(c.steps)
                 is SpaceCommand.OpenPreset -> openPreset(c.preset)
@@ -4081,8 +4102,11 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             // 0.5.20: the app's picture edge to edge, with rounded corners; no bar over it.
             // 0.5.23: the texture is the display's size, so its UVs are the whole of it; a picture from before a resize
             // (another shape) is cropped about its centre to the window's, never stretched ([com.hayeco.flipspaces.core.spatial.PanelUv]).
+            // 1.2.3 (issue 58): Side by side 3D: each eye's pass samples its own half of the picture.
+            val sbs = sideBySide.isOn(panel.packageName)
             fun matrixFor(t: PanelSource): FloatArray {
-                val uv = com.hayeco.flipspaces.core.spatial.PanelUv.cover(t.texture.width, t.texture.height, com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(panel))
+                val crop = com.hayeco.flipspaces.core.spatial.PanelUv.cover(t.texture.width, t.texture.height, com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(panel))
+                val uv = if (sbs) com.hayeco.flipspaces.core.spatial.SideBySide.eyeUv(crop, eyePass, eyes.size) else crop
                 return if (uv[0] == 0f && uv[1] == 0f && uv[2] == 1f && uv[3] == 1f) GlKit.IDENTITY else com.hayeco.flipspaces.core.spatial.PanelUv.matrix(uv)
             }
             // 0.5.45: after a resize the picture from before stays under the new one while that fades in ([PanelGl.dropPrevious]).

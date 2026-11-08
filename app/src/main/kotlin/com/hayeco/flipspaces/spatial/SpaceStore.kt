@@ -452,6 +452,11 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(KEY_DRAW_SMOOTHING, true)
         set(value) = prefs.edit().putBoolean(KEY_DRAW_SMOOTHING, value).apply()
 
+    /** 1.2.3 (issue 58): the apps with Side by side 3D on, as [com.hayeco.flipspaces.core.spatial.SideBySideStore] text. */
+    var sideBySide: String?
+        get() = prefs.getString(KEY_SIDE_BY_SIDE, null)
+        set(value) = prefs.edit().putString(KEY_SIDE_BY_SIDE, value).apply()
+
     /** 1.1.14: Settings' Head tracking switch ([HeadTracker.setEnabled]); on by default. Off, the Space is head locked. */
     var headTracking: Boolean
         get() = prefs.getBoolean(KEY_HEAD_TRACKING, true)
@@ -612,6 +617,7 @@ class SpaceStore(context: Context) {
         private const val KEY_STILL_LOCK = "still_lock_0532"
         private const val KEY_DRAW_SMOOTHING = "draw_smoothing_0564"
         private const val KEY_HEAD_TRACKING = "head_tracking_1114"
+        private const val KEY_SIDE_BY_SIDE = "side_by_side_123"
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
         // 0.5.96: the key keeps its saved name, so the setting carries over.
