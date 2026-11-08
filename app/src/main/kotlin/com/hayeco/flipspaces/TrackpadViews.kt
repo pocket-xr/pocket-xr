@@ -2086,7 +2086,6 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 })
             }
         }
-
         // 1.2.3 (issue 59): Game keys on the open phone.
         if (!cover) {
             val game = host.gameKeysOn()

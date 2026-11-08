@@ -623,7 +623,6 @@ class SpaceStore(context: Context) {
         private const val KEY_DRAW_SMOOTHING = "draw_smoothing_0564"
         private const val KEY_HEAD_TRACKING = "head_tracking_1114"
         private const val KEY_AIR_DISPLAY_MODE = "air_display_mode_123"
-
         private const val KEY_SIDE_BY_SIDE = "side_by_side_123"
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
