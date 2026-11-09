@@ -134,8 +134,6 @@ object HandFeed {
      */
     fun deliver(context: Context, frame: List<HandFrame>, capturedAtMs: Long, latencyMs: Float?): HandUpdate {
         val r = recognizer(context)
-        // PC VR: the hands go to SteamVR as well.
-        if (com.hayeco.flipspaces.pcvr.PcVrSession.isOpen && frame.isNotEmpty()) com.hayeco.flipspaces.pcvr.PcVrHands.store(frame, capturedAtMs)
         val update = synchronized(this) {
             val box = GlassesCameraProvider.airBox
             r.primary.airBox = box
@@ -187,6 +185,8 @@ object HandFeed {
             PointerHub.submit(it, HandProviderKind.GLASSES_CAMERA)
         }
         SpaceSession.hands = update.hands
+        // PC VR: the hands go to SteamVR as well, with the Space's own ray and pinch.
+        if (com.hayeco.flipspaces.pcvr.PcVrSession.isOpen) com.hayeco.flipspaces.pcvr.PcVrHands.store(frame, capturedAtMs, update.hands)
         // Only on a change: an unchanged "no hand" posted every frame redrew the pointer overlay
         // 25 times a second for nothing.
         if (update.status != lastStatus) {

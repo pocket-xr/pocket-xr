@@ -121,7 +121,8 @@ object PcVrSession {
             OpenXrPads.start(space)
             OpenXrPads.sink = OpenXrPads.Sink { hand, sampleNs, p, q, w, v, buttons, trigger, squeeze, sx, sy ->
                 pads.store(hand, sampleNs, p, q, w, v)
-                if (pads.streaming) AlvrBridge.sendButtons(hand, buttons, trigger, squeeze, sx, sy)
+                // A hand sent as a tracked hand has its pinch as the trigger; its Joy-Con (set down) stays out.
+                if (pads.streaming && !(hand in 0..1 && PcVrHands.active[hand])) AlvrBridge.sendButtons(hand, buttons, trigger, squeeze, sx, sy)
                 watchLeave(hand, buttons)
             }
             PanelHost.joyCons(true)

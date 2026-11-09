@@ -195,23 +195,35 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
 
     private val skeletons = FloatArray(2 * HandSkeleton.JOINTS * HandSkeleton.STRIDE)
     private val handJoints = FloatArray(HandSkeleton.JOINTS * HandSkeleton.STRIDE)
+    private val handAim = FloatArray(7)
+    private val handPinch = BooleanArray(2)
+    private val sentPinch = BooleanArray(2)
     private var handsLoggedMs = 0L
 
     /**
      * Free hands the glasses' camera sees, for SteamVR: a hand with no Joy-Con in it (silent, or set down) and seen in
-     * the last [HAND_FRESH_MS] is turned from the head frame into the room with the head pose of the moment the camera
-     * saw it, and sent as a hand skeleton, with its wrist as that hand's pose. Returns the mask of hands sent.
+     * the last [HAND_FRESH_MS]. Its controller is the Space's own hand ray (where it points, from the hand), its trigger
+     * the Space's pinch, and its fingers the smoothed skeleton; all turned into the room with the head pose of the moment
+     * the camera saw it. Returns the mask of hands sent.
      */
     private fun trackedHands(now: Long): Int {
         var mask = 0
         val nowMs = SystemClock.uptimeMillis()
         for (side in 0..1) {
-            // A Joy-Con in the hand wins; one set down (lying still) gives way to the hand the camera sees.
-            if (hands[14 * side] > 0.5f && !OpenXrPads.resting(side)) continue
-            val seenMs = PcVrHands.latest(side, handJoints)
-            if (seenMs == 0L || nowMs - seenMs > HAND_FRESH_MS) continue
+            val free = !(hands[14 * side] > 0.5f && !OpenXrPads.resting(side))
+            val seenMs = if (free) PcVrHands.latest(side, handJoints, handAim, handPinch) else 0L
+            val fresh = seenMs != 0L && nowMs - seenMs <= HAND_FRESH_MS
             // The uptime and nanoTime clocks share their base on Android.
-            val q = headAt(seenMs * 1_000_000L) ?: continue
+            val q = if (fresh) headAt(seenMs * 1_000_000L) else null
+            if (q == null) {
+                if (PcVrHands.active[side]) {
+                    PcVrHands.active[side] = false
+                    if (sentPinch[side]) AlvrBridge.sendButtons(side, 0, 0f, 0f, 0f, 0f)
+                    sentPinch[side] = false
+                }
+                continue
+            }
+            PcVrHands.active[side] = true
             val o = side * HandSkeleton.JOINTS * HandSkeleton.STRIDE
             for (j in 0 until HandSkeleton.JOINTS) {
                 val i = j * HandSkeleton.STRIDE
@@ -221,20 +233,40 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
                 skeletons[o + i] = wq.x; skeletons[o + i + 1] = wq.y; skeletons[o + i + 2] = wq.z; skeletons[o + i + 3] = wq.w
                 skeletons[o + i + 4] = wp.x; skeletons[o + i + 5] = wp.y + EYE_HEIGHT_M; skeletons[o + i + 6] = wp.z
             }
-            // The hand's own pose: its wrist (joint 1).
+            // The controller: at the hand on the Space's ray, pointing along it.
+            val origin = com.hayeco.flipspaces.core.spatial.Vec3(handAim[0], handAim[1], handAim[2])
+            val dir = com.hayeco.flipspaces.core.spatial.Vec3(handAim[3], handAim[4], handAim[5]).normalized()
+            val at = q.rotate(origin + dir * handAim[6])
+            val look = (q * lookAlong(dir)).normalized()
             val h = 14 * side
-            val w = o + HandSkeleton.STRIDE
             hands[h] = 1f
-            hands[h + 1] = skeletons[w]; hands[h + 2] = skeletons[w + 1]; hands[h + 3] = skeletons[w + 2]; hands[h + 4] = skeletons[w + 3]
-            hands[h + 5] = skeletons[w + 4]; hands[h + 6] = skeletons[w + 5]; hands[h + 7] = skeletons[w + 6]
+            hands[h + 1] = look.x; hands[h + 2] = look.y; hands[h + 3] = look.z; hands[h + 4] = look.w
+            hands[h + 5] = at.x; hands[h + 6] = at.y + EYE_HEIGHT_M; hands[h + 7] = at.z
             for (k in 8..13) hands[h + k] = 0f
+            // The Space's pinch is the trigger.
+            val pinch = handPinch[side]
+            if (pinch != sentPinch[side]) {
+                sentPinch[side] = pinch
+                AlvrBridge.sendButtons(side, if (pinch) com.hayeco.flipspaces.spatial.JoyConReader.TRIGGER else 0, if (pinch) 1f else 0f, 0f, 0f, 0f)
+                Log.i(TAG, "PC VR hands: ${if (side == 0) "left" else "right"} pinch ${if (pinch) "down" else "up"}")
+            }
             mask = mask or (1 shl side)
         }
         if (mask != 0 && nowMs - handsLoggedMs > 5_000L) {
             handsLoggedMs = nowMs
-            Log.i(TAG, "PC VR hands: ${if (mask and 1 != 0) "left " else ""}${if (mask and 2 != 0) "right " else ""}sent to SteamVR as tracked hands")
+            Log.i(TAG, "PC VR hands: ${if (mask and 1 != 0) "left " else ""}${if (mask and 2 != 0) "right " else ""}sent to SteamVR as tracked hands, aimed by the Space's hand ray")
         }
         return mask
+    }
+
+    /** The rotation whose -z is [dir], with +y as near up as it can be. */
+    private fun lookAlong(dir: com.hayeco.flipspaces.core.spatial.Vec3): com.hayeco.flipspaces.core.spatial.Quat {
+        val z = -dir
+        var x = com.hayeco.flipspaces.core.spatial.Vec3(0f, 1f, 0f) cross z
+        if (x.length < 1e-4f) x = com.hayeco.flipspaces.core.spatial.Vec3(1f, 0f, 0f)
+        x = x.normalized()
+        val y = z cross x
+        return HandSkeleton.fromBasis(x, y, z)
     }
 
     /** The glasses' head, or the debug "wearer" command's turning head in its place. */

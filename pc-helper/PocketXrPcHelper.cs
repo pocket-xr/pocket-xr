@@ -219,11 +219,11 @@ namespace PocketXr
                 var root = (Dictionary<string, object>)Json.DeserializeObject(session);
                 var settings = (Dictionary<string, object>)root["session_settings"];
                 var video = (Dictionary<string, object>)settings["video"];
-                if (!HandGesturesOn(settings))
+                if (HandGesturesOn(settings))
                 {
-                    Log.Line("ALVR: turning on hand gestures over its API");
+                    Log.Line("ALVR: turning its own hand gestures off over its API (Pocket XR sends the pinch)");
                     Api("POST", "/api/session/values", Json.Serialize(new object[] {
-                        PathValue(new object[] { "headset", "controllers", "content", "hand_tracking_interaction", "enabled" }, true),
+                        PathValue(new object[] { "headset", "controllers", "content", "hand_tracking_interaction", "enabled" }, false),
                     }));
                 }
                 if (VideoIsRight(video)) return false;
@@ -247,9 +247,9 @@ namespace PocketXr
                 bool changed = false;
                 var settings = (Dictionary<string, object>)root["session_settings"];
                 var video = (Dictionary<string, object>)settings["video"];
-                if (!HandGesturesOn(settings))
+                if (HandGesturesOn(settings))
                 {
-                    HandGestures(settings)["enabled"] = true;
+                    HandGestures(settings)["enabled"] = false;
                     changed = true;
                 }
                 if (!VideoIsRight(video))
@@ -291,7 +291,10 @@ namespace PocketXr
             return false;
         }
 
-        /** ALVR's hand gestures (a pinch is the trigger), for the glasses' tracked hands when no Joy-Con is held. */
+        /**
+         * ALVR's own hand gestures, off: Pocket XR sends the tracked hands' pinch as the trigger itself, the same pinch as
+         * in its Space; ALVR's guess from finger distances did nothing with the glasses' hands (8 November 2026).
+         */
         static Dictionary<string, object> HandGestures(Dictionary<string, object> settings)
         {
             var controllers = (Dictionary<string, object>)((Dictionary<string, object>)settings["headset"])["controllers"];
@@ -302,7 +305,7 @@ namespace PocketXr
         static bool HandGesturesOn(Dictionary<string, object> settings)
         {
             try { var h = HandGestures(settings); return h["enabled"] is bool && (bool)h["enabled"]; }
-            catch { return true; }
+            catch { return false; }
         }
 
         static bool VideoIsRight(Dictionary<string, object> video)
