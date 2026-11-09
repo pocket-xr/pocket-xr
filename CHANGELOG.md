@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+- **Help Pocket XR get on Google Play.** The trackpad's Menu has a card asking you to join the Play testers. Tap Join
+  for the testers group, then Open Play invite. Installing from Play means uninstalling this copy first, and that resets
+  your Pocket XR settings. Not now hides the card for 7 days. I already joined hides it for good. The Play version
+  doesn't show it.
+
 ## 1.2.6: a lighter Menu
 
 - **A tidier Menu.** The trackpad's Menu is about half as long. The things used every session are tiles at the top:

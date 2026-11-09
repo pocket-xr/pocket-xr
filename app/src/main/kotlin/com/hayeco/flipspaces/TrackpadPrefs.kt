@@ -128,6 +128,21 @@ class TrackpadPrefs(context: Context) {
 
     fun update(change: (TrackpadSettings) -> TrackpadSettings): TrackpadSettings = change(settings).also { settings = it }
 
+    /** Unreleased: the Menu's Google Play testers card ([com.hayeco.flipspaces.core.PlayTesters]), under its own keys. */
+    var playTesters: com.hayeco.flipspaces.core.PlayTesters.State
+        get() = com.hayeco.flipspaces.core.PlayTesters.State(
+            groupOpened = prefs.getBoolean(KEY_PLAY_TESTERS_GROUP, false),
+            snoozedUntil = prefs.getLong(KEY_PLAY_TESTERS_SNOOZE, 0L),
+            done = prefs.getBoolean(KEY_PLAY_TESTERS_DONE, false),
+        )
+        set(value) {
+            prefs.edit()
+                .putBoolean(KEY_PLAY_TESTERS_GROUP, value.groupOpened)
+                .putLong(KEY_PLAY_TESTERS_SNOOZE, value.snoozedUntil)
+                .putBoolean(KEY_PLAY_TESTERS_DONE, value.done)
+                .apply()
+        }
+
     companion object {
         private const val KEY_TYPE = "TrackpadType"
         private const val KEY_SPEED = "TrackpadSpeed"
@@ -151,5 +166,10 @@ class TrackpadPrefs(context: Context) {
 
         /** 1.1.10 (issue 35): one finger scrolls on Spatial Mouse. */
         private const val KEY_ONE_FINGER_SCROLL = "OneFingerScroll"
+
+        /** Unreleased: the Google Play testers card. */
+        private const val KEY_PLAY_TESTERS_GROUP = "PlayTestersGroupOpened"
+        private const val KEY_PLAY_TESTERS_SNOOZE = "PlayTestersSnoozedUntil"
+        private const val KEY_PLAY_TESTERS_DONE = "PlayTestersDone"
     }
 }

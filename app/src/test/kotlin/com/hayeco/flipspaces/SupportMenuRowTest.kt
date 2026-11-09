@@ -72,10 +72,23 @@ class SupportMenuRowTest {
         assertTrue("at least 48 dp tall", row.minimumHeight >= (48 * app.resources.displayMetrics.density).toInt())
     }
 
-    /** 1.1.16: the Menu's other tagged rows (Lock screens, the glasses check) come after these two. */
+    /**
+     * 1.1.16: the Menu's other tagged rows come after these two; 1.2.6: the quick tiles first. Unreleased: the Play
+     * testers card sits between them until it is done with.
+     */
     @Test
     fun theUpdateRowFollowsIt() {
         assumeFalse(BuildConfig.PLAY_BUILD)
+        val rows = menu(update = "99.0.0").menuRowTags().filterNot { it.startsWith(PadScreen.MENU_PLAY_TESTERS + ":") }
+        assertEquals(listOf(PadScreen.MENU_KO_FI, PadScreen.MENU_PLAY_TESTERS, PadScreen.MENU_UPDATE), rows.take(3))
+        assertTrue("the quick tiles after the header", rows[3].startsWith(PadScreen.MENU_TILE))
+    }
+
+    /** Unreleased: once the testers card is done with, the update row is right under the pill again. */
+    @Test
+    fun withTheTestersCardDoneTheUpdateRowIsSecond() {
+        assumeFalse(BuildConfig.PLAY_BUILD)
+        TrackpadPrefs(app).playTesters = com.hayeco.flipspaces.core.PlayTesters.State(done = true)
         assertEquals(listOf(PadScreen.MENU_KO_FI, PadScreen.MENU_UPDATE), menu(update = "99.0.0").menuRowTags().take(2))
     }
 

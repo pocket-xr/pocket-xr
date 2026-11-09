@@ -112,4 +112,23 @@ class TrackpadMenu126Test {
         assertEquals(Support.FILL, bg.color!!.defaultColor)
         assertEquals(PadScreen.MENU_KO_FI, menu(session).menuRowTags().first())
     }
+
+    /**
+     * Unreleased: the header is the Ko-fi pill, the Play testers card in the same soft blue, then the update row; the
+     * quick tiles follow.
+     */
+    @Test
+    fun theHeaderIsKoFiThenTheTestersCardThenTheUpdate() {
+        assumeFalse(BuildConfig.PLAY_BUILD)
+        val screen = menu(session).apply {
+            showUpdate("99.0.0", onUpdate = {}, onLater = {})
+            openDrawer()
+        }
+        val tags = screen.menuRowTags().filterNot { it.startsWith(PadScreen.MENU_PLAY_TESTERS + ":") }
+        assertEquals(listOf(PadScreen.MENU_KO_FI, PadScreen.MENU_PLAY_TESTERS, PadScreen.MENU_UPDATE), tags.take(3))
+        assertTrue("the tiles after the header", tags[3].startsWith(PadScreen.MENU_TILE))
+        val card = screen.menuRow(PadScreen.MENU_PLAY_TESTERS)!!.background as GradientDrawable
+        assertEquals(Support.FILL, card.color!!.defaultColor)
+        assertEquals(24f * app.resources.displayMetrics.density, card.cornerRadius, 0.5f)
+    }
 }

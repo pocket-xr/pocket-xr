@@ -2080,6 +2080,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         val koFi = com.hayeco.flipspaces.core.Support.MenuTop.KO_FI in top
         if (koFi) drawerBody.addView(supportPill(), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, c.dp(48f)).apply { topMargin = c.dp(20f) })
         var gap = if (koFi) 12f else 25f
+        // Unreleased (Mike: sideload users into the Play closed test): the testers card, under the Ko-fi pill and over the
+        // update row. Never in the Play build.
+        val testers = com.hayeco.flipspaces.core.PlayTesters.card(BuildConfig.PLAY_BUILD, padPrefs.playTesters, System.currentTimeMillis())
+        if (testers != com.hayeco.flipspaces.core.PlayTesters.Card.HIDDEN) {
+            drawerBody.addView(playTestersCard(testers), cardParams(gap))
+            gap = 12f
+        }
         // 1.1.15: a newer Pocket XR, in a card of its own until Later.
         updateVersion?.takeIf { com.hayeco.flipspaces.core.Support.MenuTop.UPDATE in top }?.let { v ->
             val update = card()
@@ -2827,6 +2834,63 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         }
     }
 
+    /** Unreleased: where the Play testers card's state is kept ([TrackpadPrefs.playTesters]). */
+    private val padPrefs by lazy { TrackpadPrefs(context) }
+
+    /**
+     * Unreleased (Mike: get the sideload users into the Play closed test): a soft blue card with the Ko-fi pill's round
+     * corners, fill and rim ([com.hayeco.flipspaces.core.Support.FILL], [com.hayeco.flipspaces.core.Support.RIM]). Join opens the Google Group, and the card then also offers Open Play invite; opening that finishes it. Not
+     * now hides it for 7 days, I already joined for good ([com.hayeco.flipspaces.core.PlayTesters]).
+     */
+    private fun playTestersCard(card: com.hayeco.flipspaces.core.PlayTesters.Card): View {
+        val c = context
+        val t = com.hayeco.flipspaces.core.PlayTesters
+        fun save(change: (com.hayeco.flipspaces.core.PlayTesters.State) -> com.hayeco.flipspaces.core.PlayTesters.State) {
+            padPrefs.playTesters = change(padPrefs.playTesters)
+            buildDrawer()
+        }
+        fun pill(label: String, primary: Boolean, tagged: String, onClick: () -> Unit) = c.padText(label, 14f, if (primary) DARK_TEXT else WHITE, bold = primary).apply {
+            gravity = Gravity.CENTER
+            minHeight = c.dp(40f)
+            setPadding(c.dp(14f), 0, c.dp(14f), 0)
+            if (primary) setBackgroundResource(R.drawable.bg_pad_button_light)
+            tag = tagged
+            setOnClickListener { tick(this); onClick() }
+        }
+        return LinearLayout(c).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(c.dp(18f), c.dp(14f), c.dp(12f), c.dp(8f))
+            background = GradientDrawable().apply {
+                cornerRadius = c.dpf(24f)
+                setColor(com.hayeco.flipspaces.core.Support.FILL)
+                setStroke(c.dp(1f), com.hayeco.flipspaces.core.Support.RIM)
+            }
+            tag = MENU_PLAY_TESTERS
+            addView(c.padText(t.TITLE, 14f, WHITE, bold = true))
+            addView(c.padText(t.BODY, 12f, TEXT_B3), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(4f); marginEnd = c.dp(6f) })
+            addView(LinearLayout(c).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(pill(t.JOIN, primary = card == com.hayeco.flipspaces.core.PlayTesters.Card.JOIN, tagged = MENU_PLAY_TESTERS_JOIN) {
+                    SupportLink.openUrl(c, t.GROUP_URL)
+                    save { t.joined(it) }
+                })
+                if (card == com.hayeco.flipspaces.core.PlayTesters.Card.PLAY_INVITE) {
+                    addView(pill(t.OPEN_PLAY, primary = true, tagged = MENU_PLAY_TESTERS_PLAY) {
+                        SupportLink.openUrl(c, t.PLAY_URL)
+                        save { t.playOpened(it) }
+                    }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = c.dp(8f) })
+                }
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(12f) })
+            addView(LinearLayout(c).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(pill(t.NOT_NOW, primary = false, tagged = MENU_PLAY_TESTERS_NOT_NOW) { save { t.notNow(it, System.currentTimeMillis()) } })
+                addView(pill(t.ALREADY_JOINED, primary = false, tagged = MENU_PLAY_TESTERS_ALREADY) { save { t.alreadyJoined(it) } })
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(4f) })
+        }
+    }
+
     /** 1.1.15: the tags of the Menu's tagged rows, top down (the tests). */
     internal fun menuRowTags(): List<String> {
         val out = ArrayList<String>()
@@ -3231,6 +3295,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         private const val SECTION_GAP = 24f
         private const val QUICK_TILE_DP = 76f
         private const val QUICK_REFRESH_MS = 200L
+
+        /** Unreleased: the Google Play testers card and its buttons. */
+        const val MENU_PLAY_TESTERS = "menu:play-testers"
+        const val MENU_PLAY_TESTERS_JOIN = "menu:play-testers:join"
+        const val MENU_PLAY_TESTERS_PLAY = "menu:play-testers:play"
+        const val MENU_PLAY_TESTERS_NOT_NOW = "menu:play-testers:not-now"
+        const val MENU_PLAY_TESTERS_ALREADY = "menu:play-testers:already"
 
         /** 0.5.28: a toast with a one-tap action stays this long. */
         const val ACTION_TOAST_MS = 5000L
