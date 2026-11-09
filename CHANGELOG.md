@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.9: The right testers group
 
 - **The testers card's Join button opens the right group.** It went to a Google Group that didn't exist. It now opens
   the Pocket XR testers group, so you can join and then take the Play invite.
