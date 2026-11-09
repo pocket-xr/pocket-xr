@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.10: VITURE tracking comes back
 
 Thanks to the tester in GitHub Discussion #24 for a second round of VITURE Beast logs, the motion recording and the
 steps that brought tracking back.
