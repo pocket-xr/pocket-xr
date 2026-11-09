@@ -159,7 +159,59 @@ What the app does now:
 - **The Depth button** on glasses Pocket XR can't switch says "Turn on 3D in your glasses menu first" on the glasses
   when they offer no 3D mode (or are in their ultrawide mode), instead of changing a setting that shows nothing.
 - **Icons** are cut with an anti-aliased circle a pixel inside a transparent edge, baked at their size in the glasses'
-  own pixels, and an older bitmap icon is read at the app's highest density.
+  own pixels, and an older bitmap icon is read at the app's highest density. 1.2.10: in the phone's own icon shape, not
+  a circle, and an older or icon pack bitmap is no longer put on a white disc (see the second report below).
+
+### The second report (Pocket XR 1.2.8)
+
+The same tester ran 1.2.8 with **Experimental VITURE head tracking** on and sent two log bundles, one when tracking
+would not come back and one when it worked, each with a motion recording. The Beast shows Android two devices on
+VITURE's vendor id: the glasses, USB 35CA:1211 "VITURE Beast XR Glasses", whose motion sensor is HID interface 5 (a 40
+byte vendor report descriptor, interrupt IN and OUT of 64 bytes, 119 reports a second), and "VITURE Microphone", USB
+35CA:1102, which has HID interfaces but no motion. A "USB 2.0 Camera", 0C45:6368, is on the glasses too. The control
+link never answered; it is XREAL's and is not expected to.
+
+- **The reader worked.** The protocol above is what the Beast speaks: the start command streamed raw samples from the
+  first try after each plug-in.
+- **It came back only after a replug.** Every start after the first, in the same plug-in, was "not accepted": after the
+  switch was turned off and on, after an axis switch (which restarted the reader) and after the Space restarted. The motion
+  recording made between two such failures shows why. It reads the interface for 5 seconds before it sends the start, and
+  its very first read was `10 00 01 23 01 00 00 00 00`: message 0x2301 with one byte, the glasses' answer to the
+  reader's stop, still unread. Its own start, sent after that read, was accepted and streamed at 120 a second. A second
+  recording, made while the reader held the interface, read nothing. So the Beast takes no new command while an answer
+  of its own is waiting, and the reader sent its start straight after claiming the interface.
+- **After a replug, the microphone.** Android sometimes listed the microphone first. The reader took the first VITURE
+  device, asked for USB access to the microphone (the prompt the tester then answered), opened its interface 2 and waited
+  for reports that never came, so tracking failed silently. When the glasses came first, the prompt was for them and it
+  worked.
+- **The prompt once.** USB access was asked for once per device name for the life of the app, so a replug that kept the
+  name, or a prompt that was dismissed, left the reader waiting with nothing on screen.
+- **Upside down.** With the axes as the sensor sends them, the tracking line's accelerometer at rest and upright read
+  0.04, -9.94, -0.74 m/s2: the reaction to gravity, which points up, lay along the sensor's -y. The Space took y as up,
+  so the view was rolled 180 degrees. Flip up and down turns the sensor about the up axis, so it could not help. What
+  worked was **Swap turn and tilt** on with the sensor axis layout **x right, y front, z up**. Together those two turns
+  take the sensor's (x, y, z) to (x, -y, -z), which is the layout **x right, y down, z front** with both switches off
+  (the XREAL One's layout too). That layout alone, without the swap, would put gravity on the back axis and tip the view
+  a quarter turn.
+
+What changed in the app:
+
+- Commands to the glasses read what the glasses hold first, then the answer after; a refused one is tried again, then on
+  the control pipe; and a start that is refused while samples are already arriving still counts. Closing sends the stop,
+  reads its answer, releases the interface and closes the connection, once. One link holds the glasses at a time.
+- The reader opens the VITURE device that carries the motion sensor, never the microphone.
+- USB access is checked before every open and asked for again on each plug-in, each time the switch is turned on, and
+  after access was lost. A plug-in, an unplug and the prompt's answer each make the reader look again at once.
+- **Flip up and down** and **Swap turn and tilt** apply to the open stream from the next sample; the reader is not
+  restarted.
+- On the VITURE Beast (35CA:1211) the sensor axis layout starts at **x right, y down, z front** with both switches off.
+  A layout or switch you have already picked is kept. Other VITURE models start as before, with the switches there to try.
+- **Icons.** The tester found them sharp, but in mixed shapes: adaptive icons were cut to circles while older and icon
+  pack bitmaps sat at 70 % on a white disc, so a square pack icon showed as a square on white. Now every icon is drawn in
+  the shape the phone gives adaptive icons (its own icon mask). An adaptive icon is cut by it. A bitmap that is already a
+  solid shape (it covers at least 75 % of its own, roughly square, box) is scaled to cover the mask, with its own edge
+  colour in any corner it leaves. A free-form glyph is fitted at two thirds of the mask on a dimmed plate in its own hue,
+  never white: on see-through glasses a dark plate vanishes and a white one glares.
 
 What a next log needs (Send logs with the glasses plugged in, after **Record motion for 20 seconds**): the
 `glasses-report.txt` (the Beast's USB ids, interfaces, endpoints and HID report descriptors), the `motion/` recording

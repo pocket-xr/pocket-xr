@@ -12,6 +12,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.opengl.EGL14
 import android.opengl.EGLContext
@@ -25,6 +26,7 @@ import com.hayeco.flipspaces.core.AppEntry
 import com.hayeco.flipspaces.core.spatial.DpRect
 import com.hayeco.flipspaces.core.spatial.LauncherButton
 import com.hayeco.flipspaces.core.spatial.LauncherGrid
+import com.hayeco.flipspaces.core.spatial.LauncherIconShape
 import com.hayeco.flipspaces.core.spatial.LauncherItem
 import com.hayeco.flipspaces.core.spatial.LauncherMenuItem
 import com.hayeco.flipspaces.core.spatial.LauncherMenuLook
@@ -40,8 +42,8 @@ import java.util.concurrent.Executors
  * 0.5.25 (Mike: "The app launcher must look exactly like, and work exactly like, the Android XR app
  * launcher, with a perfectly transparent background"): draws [XrLauncher] on its panel plane. Nothing
  * behind it: no backing, plate, blur, border or scrim; icons, labels and the clock float in the room.
- * Each app's own icon is drawn as a circle (adaptive
- * icons' layers clipped to the circle, older icons on a white disc); every glyph here (the indicator's
+ * Each app's own icon is drawn in the phone's icon shape (adaptive
+ * icons' layers cut by its mask, 1.2.10: older and icon pack icons fitted to it, never on white); every glyph here (the indicator's
  * pin, the menu's info and pin icons, the buttons, the magnifier) is drawn with Canvas strokes, no copied
  * artwork. Text and icons are baked into textures at [PX_PER_DP] and only uploaded (no framebuffer or
  * viewport changes, so it is safe inside the eye passes). GL thread only, except the icon loader.
@@ -484,7 +486,7 @@ internal class LauncherGl(private val context: Context) {
             iconsLoading.clear()
         }
 
-    /** The app's icon as a circle, once loaded off the GL thread; null until then. */
+    /** The app's icon in the phone's icon shape, once loaded off the GL thread; null until then. */
     private fun iconTexture(app: AppEntry): Int? {
         val size = iconPx
         val key = "icon:$size:${app.key}"
@@ -524,11 +526,14 @@ internal class LauncherGl(private val context: Context) {
     }
 
     /**
-     * Adaptive icons are drawn as circles. An adaptive icon's background and foreground
-     * (108 x 108 dp layers whose middle 72 dp is the visible icon) are drawn 1.5 times the circle and
-     * cut to it; an older icon sits on a white disc at 70 %, as Launcher3 treats legacy icons.
+     * 1.2.10 (Discussion #24, second report: "some square, some icon pack icons sitting in a white circle"): every icon in
+     * the phone's own icon shape ([iconShape]). An adaptive icon's background and foreground (108 x 108 dp layers whose
+     * middle 72 dp is the visible icon) are drawn 1.5 times the shape and cut to it. A legacy or icon pack bitmap is no
+     * longer put on a white disc: [LauncherIconShape] says whether it is already a solid shape, scaled to cover the shape
+     * with its own edge colour behind it, or a glyph, fitted on a dimmed plate in its own hue. Either way it is drawn
+     * straight from the drawable at its final size, not from a copy scaled again.
      *
-     * 1.2.8 (Discussion #24: edges "pixelated"): the circle is cut with an anti-aliased mask (DST_IN), not clipPath, whose
+     * 1.2.8 (Discussion #24: edges "pixelated"): the shape is cut with an anti-aliased mask (DST_IN), not clipPath, whose
      * edge is not anti-aliased; it stops a pixel short of the bitmap's edge so the texture's border is transparent and
      * filtering has nothing opaque to smear there; and the bitmap is [size] square, the icon's size on the glasses.
      */
@@ -536,7 +541,9 @@ internal class LauncherGl(private val context: Context) {
         val d: Drawable = sourceIcon(app, size)
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
-        val r = size / 2f - ICON_EDGE_PX
+        val shape = iconShape(size)
+        val box = ICON_EDGE_PX
+        val side = size - 2f * ICON_EDGE_PX
         if (d is AdaptiveIconDrawable) {
             val inset = size / 4
             for (layer in listOf(d.background, d.foreground)) {
@@ -545,15 +552,42 @@ internal class LauncherGl(private val context: Context) {
                 layer.draw(c)
             }
         } else {
-            c.drawCircle(size / 2f, size / 2f, r, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
-            val inset = (size * 0.15f).toInt()
-            d.setBounds(inset, inset, size - inset, size - inset)
             (d as? android.graphics.drawable.BitmapDrawable)?.setFilterBitmap(true)
+            // Measured at the icon's own size, then drawn again at its place, so nothing is scaled twice.
+            val probe = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+            d.setBounds(0, 0, size, size)
+            d.draw(Canvas(probe))
+            val px = IntArray(size * size)
+            probe.getPixels(px, 0, size, 0, 0, size, size)
+            probe.recycle()
+            val fit = LauncherIconShape.legacy(px, size, size) ?: return bmp
+            c.drawPath(shape, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = LauncherIconShape.backdrop(fit) })
+            val dst = LauncherIconShape.destination(fit, box, box, side)
+            val k = (dst[2] - dst[0]) / fit.width
+            d.setBounds(
+                Math.round(dst[0] - fit.left * k), Math.round(dst[1] - fit.top * k),
+                Math.round(dst[0] + (size - fit.left) * k), Math.round(dst[1] + (size - fit.top) * k),
+            )
             d.draw(c)
         }
         val mask = Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN) }
-        c.drawCircle(size / 2f, size / 2f, r, mask)
+        c.drawPath(shape, mask)
         return bmp
+    }
+
+    /**
+     * 1.2.10: the phone's adaptive icon shape (its icon mask, as its own launcher cuts icons) a pixel inside a [size]
+     * square; a circle if the phone gives none.
+     */
+    private fun iconShape(size: Int): Path {
+        val inner = (size - 2f * ICON_EDGE_PX).toInt().coerceAtLeast(1)
+        val p = runCatching {
+            val a = AdaptiveIconDrawable(ColorDrawable(Color.TRANSPARENT), ColorDrawable(Color.TRANSPARENT))
+            a.setBounds(0, 0, inner, inner)
+            Path(a.iconMask).takeUnless { it.isEmpty }
+        }.getOrNull() ?: Path().apply { addCircle(inner / 2f, inner / 2f, inner / 2f, Path.Direction.CW) }
+        p.offset(ICON_EDGE_PX, ICON_EDGE_PX)
+        return p
     }
 
     /** A round button, 94 dp: the dark surface at 0.75, a 2 dp gradient rim, a white glyph in 32 dp padding. */

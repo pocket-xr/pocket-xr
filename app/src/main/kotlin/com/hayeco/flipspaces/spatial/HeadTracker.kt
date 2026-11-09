@@ -37,6 +37,7 @@ import com.hayeco.flipspaces.core.spatial.OneImuProtocol
 import com.hayeco.flipspaces.core.spatial.Quat
 import com.hayeco.flipspaces.core.spatial.RateMeter
 import com.hayeco.flipspaces.core.spatial.Vec3
+import com.hayeco.flipspaces.core.spatial.VitureReconnect
 import com.hayeco.flipspaces.platform.ShizukuBridge
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -648,9 +649,11 @@ object HeadTracker {
             // glasses have no USB network. With the experimental reader on, their HID is read; otherwise the status says
             // plainly that they are not supported yet, and nothing is opened on them.
             val viture = VitureImuLink.find(context)
+            val vitureOn = SpaceStore(context).vitureHeadTracking
+            synchronized(vitureReconnect) { vitureReconnect.setEnabled(vitureOn) }
             if (viture != null) {
                 val store = SpaceStore(context)
-                if (store.vitureHeadTracking) {
+                if (vitureOn) {
                     if (!streamViture(viture, context, fusion, backoff, store.vitureAxes)) return
                 } else {
                     val st = HeadTrackingStatus.VitureNotYet(viture.productId)
@@ -774,6 +777,86 @@ object HeadTracker {
     /** 1.1.12: the Air glasses USB access was asked for (their device name), so Android's prompt shows once a plug-in. */
     private var askedUsbFor: String? = null
 
+    // ---- 1.2.10 (Discussion #24, second report): the experimental VITURE reader's USB life ----
+
+    /** When the VITURE reader asks for access, opens, keeps reading or lets go. Locked on itself. */
+    private val vitureReconnect = VitureReconnect()
+
+    /** The open VITURE link, for the axis switches; null with none open. */
+    @Volatile private var vitureLink: VitureImuLink? = null
+
+    /** Closes the open VITURE link (the stop, its answer, the interface released) and marks it closed. Reader thread. */
+    private fun closeViture() {
+        val link = synchronized(vitureReconnect) {
+            vitureReconnect.closed()
+            vitureLink.also { vitureLink = null }
+        }
+        runCatching { link?.close() }
+    }
+
+    /**
+     * The head tracking screen's Experimental VITURE head tracking switch, saved. On asks for USB access again if it is
+     * missing and tries now; off closes the open stream and releases the glasses.
+     */
+    fun setVitureEnabled(context: Context, on: Boolean) {
+        SpaceStore(context).vitureHeadTracking = on
+        Log.i(TAG, "experimental VITURE head tracking ${if (on) "on" else "off"} (the head tracking screen)")
+        synchronized(vitureReconnect) { vitureReconnect.setEnabled(on) }
+        if (on) kick("Experimental VITURE head tracking on") else restart(context, "Experimental VITURE head tracking off")
+    }
+
+    /**
+     * The VITURE axis switches, saved and applied to the open stream from its next sample: the reader is not stopped
+     * (1.2.8 started it again, and the glasses then refused the start). The fusion starts over in the new axes, as a
+     * new sensor axis layout does.
+     */
+    fun setVitureAxes(context: Context, axes: com.hayeco.flipspaces.core.spatial.VitureAxes) {
+        SpaceStore(context).vitureAxes = axes
+        val live = synchronized(vitureReconnect) {
+            vitureLink?.axes = axes
+            vitureReconnect.axesChanged(axes)
+        }
+        if (live) resetRequested.set(true)
+        Log.i(TAG, "${axes.line()} (the head tracking screen)" + if (live) "; applied to the open stream" else "; taken when the glasses open")
+    }
+
+    private val vitureUsbWatch = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: android.content.Intent) {
+            val device = androidx.core.content.IntentCompat.getParcelableExtra(intent, android.hardware.usb.UsbManager.EXTRA_DEVICE, android.hardware.usb.UsbDevice::class.java) ?: return
+            if (!com.hayeco.flipspaces.core.spatial.VitureImuProtocol.isViture(device.vendorId)) return
+            if (!com.hayeco.flipspaces.core.spatial.VitureDevices.carriesImu(device.productId, device.productName)) return
+            val name = VitureImuLink.glassesName(device)
+            when (intent.action) {
+                android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
+                    synchronized(vitureReconnect) { vitureReconnect.attached() }
+                    kick("$name plugged in on USB")
+                }
+                android.hardware.usb.UsbManager.ACTION_USB_DEVICE_DETACHED -> {
+                    synchronized(vitureReconnect) { vitureReconnect.detached() }
+                    Log.i(TAG, "head tracking: $name unplugged; the reader lets it go and waits for the plug-in")
+                    kick("$name unplugged")
+                }
+                com.hayeco.flipspaces.hands.GlassesUsbAccess.ACTION_PERMISSION -> {
+                    val granted = intent.getBooleanExtra(android.hardware.usb.UsbManager.EXTRA_PERMISSION_GRANTED, false)
+                    Log.i(TAG, "head tracking: USB access for $name ${if (granted) "given" else "not given"} in Android's prompt")
+                    if (granted) kick("USB access given for $name")
+                }
+            }
+        }
+    }
+
+    /** Hears VITURE glasses come and go, and the USB prompt's answer, while the process lives (FlipSpacesApp). */
+    fun registerUsbWatch(context: Context) {
+        val filter = android.content.IntentFilter().apply {
+            addAction(android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED)
+            addAction(android.hardware.usb.UsbManager.ACTION_USB_DEVICE_DETACHED)
+            addAction(com.hayeco.flipspaces.hands.GlassesUsbAccess.ACTION_PERMISSION)
+        }
+        runCatching {
+            androidx.core.content.ContextCompat.registerReceiver(context.applicationContext, vitureUsbWatch, filter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
+        }.onFailure { Log.w(TAG, "VITURE USB watch: ${it.message}") }
+    }
+
     /**
      * 1.1.12: one round on Air family glasses ([AirImuLink]): USB access, the IMU's HID interface, its stream until it
      * ends, then the backoff's wait. False when the tracker was stopped.
@@ -831,15 +914,29 @@ object HeadTracker {
     private fun streamViture(device: android.hardware.usb.UsbDevice, context: Context, fusion: HeadFusion, backoff: HeadRetryBackoff, axes: com.hayeco.flipspaces.core.spatial.VitureAxes): Boolean {
         val name = VitureImuLink.glassesName(device)
         val print = GlassesNetwork.scan(context).fingerprint
-        if (!VitureImuLink.manager(context).hasPermission(device)) {
-            report(HeadTrackingStatus.UsbPermission(name))
-            if (askedUsbFor != device.deviceName) {
-                askedUsbFor = device.deviceName
+        // 1.2.10 (Discussion #24, second report): USB access checked before every open, and asked for again after a
+        // plug-in, the switch turned on or access lost ([VitureReconnect]); 1.2.8 asked once per device name for good.
+        val permitted = VitureImuLink.manager(context).hasPermission(device)
+        val step = synchronized(vitureReconnect) { vitureReconnect.next(VitureReconnect.Device(device.deviceName, permitted)) }
+        when (step) {
+            VitureReconnect.Step.ASK -> {
+                report(HeadTrackingStatus.UsbPermission(name))
                 Log.i(TAG, "head tracking: $name found on USB without access to it; asking Android (its USB prompt) for the experimental VITURE reader")
                 runCatching { com.hayeco.flipspaces.hands.GlassesUsbAccess.requestPermission(context, device) }
                     .onFailure { Log.w(TAG, "head tracking: the USB prompt for $name failed: ${it.javaClass.simpleName}: ${it.message}") }
+                return waitFor(1000L, print, context)
             }
-            return waitFor(1000L, print, context)
+            VitureReconnect.Step.WAIT_FOR_ANSWER -> {
+                report(HeadTrackingStatus.UsbPermission(name))
+                return waitFor(1000L, print, context)
+            }
+            VitureReconnect.Step.IDLE -> return waitFor(1000L, print, context)
+            // A link left open from an earlier round (it should not be): closed, then the next round opens afresh.
+            VitureReconnect.Step.CLOSE, VitureReconnect.Step.READ -> {
+                closeViture()
+                return true
+            }
+            VitureReconnect.Step.OPEN -> Unit
         }
         val link = try {
             VitureImuLink.open(context, device, axes, READ_TIMEOUT_MS)
@@ -852,15 +949,21 @@ object HeadTracker {
             Log.w(TAG, "head tracking: $name over USB HID failed: $error; next try in ${delay / 1000} s")
             return waitFor(delay, print, context)
         }
+        synchronized(vitureReconnect) {
+            vitureReconnect.opened(device.deviceName)
+            vitureLink = link
+            // Switches changed while it opened are taken now.
+            link.axes = SpaceStore(context).vitureAxes
+        }
         _attempts.value = listOf("${link.label}: opened, the raw stream start sent")
         _route.value = link.label
         sourceLine = link.label
-        Log.i(TAG, "head tracking route: ${link.label}, the raw stream start sent; ${axes.line()}")
+        Log.i(TAG, "head tracking route: ${link.label}, the raw stream ${link.startLine}; ${link.axes.line()}")
         val opened = SystemClock.elapsedRealtime()
         val streamed = try {
             stream(link, link.label, fusion)
         } finally {
-            runCatching { link.close() }
+            closeViture()
             sourceLine = null
             _route.value = null
         }

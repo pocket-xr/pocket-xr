@@ -2,6 +2,25 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+Thanks to the tester in GitHub Discussion #24 for a second round of VITURE Beast logs, the motion recording and the
+steps that brought tracking back.
+
+- **VITURE head tracking comes back.** Turning Experimental VITURE head tracking off and on, unplugging and plugging the
+  glasses back in, and the Space restarting all bring tracking back without a force stop. The glasses kept an answer
+  waiting after each stop and took no new start until it was read; Pocket XR now reads it first. It also closes and
+  releases the glasses cleanly when tracking stops.
+- **The USB prompt asks again.** It shows for each plug-in and each time you turn the switch on, if Pocket XR doesn't
+  have access, and asks for the glasses, not the VITURE Microphone they also show as.
+- **The axis switches apply at once.** Flip up and down and Swap turn and tilt change the view straight away, without
+  restarting tracking.
+- **VITURE Beast starts the right way up.** Its sensor axis layout starts at x right, y down, z front with both switches
+  off. That is the same as the setup that worked for the tester (Swap turn and tilt on with x right, y front, z up). A
+  layout you already picked is kept.
+- **Launcher icons in one shape.** Every app icon is drawn in your phone's own icon shape. Icon pack and older icons fill
+  that shape too, instead of sitting in a white circle, and stay as sharp as before.
+
 ## 1.2.9: The right testers group
 
 - **The testers card's Join button opens the right group.** It went to a Google Group that didn't exist. It now opens

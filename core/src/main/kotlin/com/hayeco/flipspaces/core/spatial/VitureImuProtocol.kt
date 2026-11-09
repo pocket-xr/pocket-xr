@@ -186,8 +186,13 @@ class VitureClock(private val nominalHz: Float = 120f) {
     }
 }
 
-/** 1.2.8: VITURE frames into [ImuReport]s in head axes, with the totals the diagnostics show. */
-class VitureImuFramer(private val axes: VitureAxes = VitureAxes(), nominalHz: Float = 120f) {
+/**
+ * 1.2.8: VITURE frames into [ImuReport]s in head axes, with the totals the diagnostics show. 1.2.10: [axes] can change
+ * while it reads (the head tracking screen's switches), from the next sample on.
+ */
+class VitureImuFramer(axes: VitureAxes = VitureAxes(), nominalHz: Float = 120f) {
+    @Volatile var axes: VitureAxes = axes
+
     private val clock = VitureClock(nominalHz)
     private var nRaw = 0L
     private var nOther = 0L
@@ -216,12 +221,14 @@ class VitureImuFramer(private val axes: VitureAxes = VitureAxes(), nominalHz: Fl
             nBad++
             return false
         }
+        // One read of the switches for both, so the gyro and the accelerometer are always turned alike.
+        val a = axes
         out += ImuReport(
             deviceId = 0L,
             timestampNs = clock.toNs(s.counter, hostNs),
             type = ImuReportType.IMU,
-            gyro = axes.apply(s.gyro),
-            accel = axes.apply(s.accelG * AirImuProtocol.G),
+            gyro = a.apply(s.gyro),
+            accel = a.apply(s.accelG * AirImuProtocol.G),
             mag = Vec3.ZERO,
             temperatureC = 0f,
         )

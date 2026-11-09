@@ -85,18 +85,15 @@ class HeadTrackingActivity : ComponentActivity() {
                         recording = com.hayeco.flipspaces.spatial.HidMotionRecorder.busy || motionLine?.startsWith("Recording") == true || motionLine?.startsWith("Allow") == true,
                         motionLine = motionLine ?: com.hayeco.flipspaces.spatial.HidMotionRecorder.newestLine(this)?.let { "Last recording: $it" },
                         onViture = { on ->
-                            store.vitureHeadTracking = on
-                            Log.i("FlipSpaces/Head", "experimental VITURE head tracking ${if (on) "on" else "off"} (the head tracking screen)")
+                            // Off closes the open stream at once and releases the glasses; on asks for USB access if
+                            // it is missing and tries now.
+                            HeadTracker.setVitureEnabled(this, on)
                             settingsVersion++
-                            // Off closes the open stream at once; on tries now.
-                            if (on) HeadTracker.kick("Experimental VITURE head tracking on") else HeadTracker.restart(this, "Experimental VITURE head tracking off")
                         },
                         onVitureAxes = { a ->
-                            store.vitureAxes = a
-                            Log.i("FlipSpaces/Head", "${a.line()} (the head tracking screen)")
+                            // 1.2.10: applied to the open stream as it reads; the reader is not started again.
+                            HeadTracker.setVitureAxes(this, a)
                             settingsVersion++
-                            // The reader turns the axes as it reads, so it starts again with the new ones.
-                            if (store.vitureHeadTracking) HeadTracker.restart(this, "VITURE axes changed")
                         },
                         onRecord = {
                             if (com.hayeco.flipspaces.spatial.HidMotionRecorder.start(this)) settingsVersion++

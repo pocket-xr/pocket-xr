@@ -113,10 +113,14 @@ object GlassesVendors {
 
     /**
      * Which device a motion recording reads: a VITURE device first, then any other device that is not XREAL's (the
-     * XREAL ones have their own readers) and has a HID interface. Null when there is none.
+     * XREAL ones have their own readers) and has a HID interface. Null when there is none. 1.2.10: of VITURE's, one
+     * that can carry the motion sensor ([VitureDevices]) before the Beast's microphone.
      */
-    fun recordable(usb: List<GlassesReport.Usb>): GlassesReport.Usb? =
-        usb.firstOrNull { it.vendorId == VITURE } ?: usb.firstOrNull { it.vendorId != XREAL && HeadImuTransport.hasHid(it.infos) }
+    fun recordable(usb: List<GlassesReport.Usb>): GlassesReport.Usb? {
+        val viture = usb.filter { it.vendorId == VITURE }
+        return VitureDevices.pick(viture, { it.productId }, { it.name }) ?: viture.firstOrNull()
+            ?: usb.firstOrNull { it.vendorId != XREAL && HeadImuTransport.hasHid(it.infos) }
+    }
 
     /** One line for a USB device: ids, name, maker and every interface with its class, protocol and endpoints. */
     fun line(u: GlassesReport.Usb): String =

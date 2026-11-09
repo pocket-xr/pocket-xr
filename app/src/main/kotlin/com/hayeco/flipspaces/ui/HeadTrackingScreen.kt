@@ -324,8 +324,9 @@ private fun OtherGlasses(o: OtherGlassesCard) {
                     Text("Experimental VITURE head tracking", style = MaterialTheme.typography.bodyMedium)
                 }
                 Text(
-                    "Not tested on VITURE glasses yet. It follows a public description of VITURE's newer glasses; your model may not answer. " +
-                        "If turning your head moves the view the wrong way, try the switches below.",
+                    "Experimental. It follows a public description of VITURE's newer glasses; your model may not answer. " +
+                        "On the VITURE Beast the sensor axis layout starts at x right, y down, z front, with both switches off. " +
+                        "On other models, if turning your head moves the view the wrong way, try the switches below; they apply at once.",
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

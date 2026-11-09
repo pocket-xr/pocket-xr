@@ -7,6 +7,9 @@ import com.hayeco.flipspaces.core.spatial.SpaceLayout
 
 /** Saved Space layout and settings. */
 class SpaceStore(context: Context) {
+    /** 1.2.10: for the USB device list (VITURE defaults by product); the application, never a screen. */
+    private val appContext: Context = context.applicationContext
+
     /**
      * 0.5.9: the glasses' optics for the field of view setting.
      *
@@ -109,9 +112,16 @@ class SpaceStore(context: Context) {
     }
 
     // 0.5.91 (Mike's One: "everything is upside down"): per model, its default until one is picked; the Aura keeps its key.
+    // 1.2.10 (Discussion #24): VITURE glasses' default by the USB product plugged in, so the Beast starts the right way up.
     var axisMap: AxisMap
-        get() = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: model.defaultAxes
+        get() = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: defaultAxes()
         set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).apply()
+
+    private fun defaultAxes(): AxisMap {
+        val m = model
+        if (m != com.hayeco.flipspaces.core.spatial.GlassesModel.VITURE) return m.defaultAxes
+        return com.hayeco.flipspaces.core.spatial.VitureDevices.defaultAxes(VitureImuLink.find(appContext)?.productId)
+    }
 
     /** 0.5.95: how many sessions the model's setup hint ([com.hayeco.flipspaces.core.spatial.GlassesModel.setupHint]) was said in. */
     // 1.1.8 (issue 31): a new key, so the hint that now names Follow mode is said again on glasses that heard the old one.
@@ -450,9 +460,15 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean("viture_head_tracking", false)
         set(value) = prefs.edit().putBoolean("viture_head_tracking", value).apply()
 
-    /** 1.2.8: the VITURE reader's two axis switches ([com.hayeco.flipspaces.core.spatial.VitureAxes]). */
+    /**
+     * 1.2.8: the VITURE reader's two axis switches ([com.hayeco.flipspaces.core.spatial.VitureAxes]). 1.2.10: until set,
+     * the model's ([com.hayeco.flipspaces.core.spatial.VitureDevices.defaultSwitches]), both off.
+     */
     var vitureAxes: com.hayeco.flipspaces.core.spatial.VitureAxes
-        get() = com.hayeco.flipspaces.core.spatial.VitureAxes(prefs.getBoolean("viture_flip_up_down", false), prefs.getBoolean("viture_swap_turn_tilt", false))
+        get() {
+            val d = com.hayeco.flipspaces.core.spatial.VitureDevices.defaultSwitches(VitureImuLink.find(appContext)?.productId)
+            return com.hayeco.flipspaces.core.spatial.VitureAxes(prefs.getBoolean("viture_flip_up_down", d.flipUpDown), prefs.getBoolean("viture_swap_turn_tilt", d.swapTurnTilt))
+        }
         set(value) = prefs.edit().putBoolean("viture_flip_up_down", value.flipUpDown).putBoolean("viture_swap_turn_tilt", value.swapTurnTilt).apply()
 
     /** 0.5.65: the glasses' factory gyro matrix and display mount in the fusion (Developer); on by default. */
