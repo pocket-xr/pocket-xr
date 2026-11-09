@@ -84,6 +84,9 @@ object HeadTracker {
      */
     private const val READ_BATCH_NS = 0L
 
+    /** 1.2.3: the glasses' reports a read waits for in the kernel ([GlassesNetwork.Link.wakeAfter]); 1 is each as it comes. */
+    private const val WAKE_REPORTS = 2
+
     /** 0.5.53: the app's own socket is tried this many more times before the shell helper, this far apart ([openRoute]). */
     private const val DIRECT_RETRIES = 3
     private const val DIRECT_RETRY_MS = 1000L
@@ -1003,6 +1006,15 @@ object HeadTracker {
     /** 1.1.12: the One family's TCP stream as a report source. */
     private class NetworkSource(private val link: GlassesNetwork.Link) : ImuReportSource {
         private val framer = OneImuFramer()
+
+        init {
+            // 1.2.3 (Mike's short lags and audio pops came with heat; simpleperf, worn: 37 % of this thread was the
+            // socket, its cost the 1000 wake-ups a second, not the poll): a read wakes once [WAKE_REPORTS] reports
+            // are waiting, so half the wake-ups. The newest pose is then up to one report (1 ms) older, which the
+            // prediction to the frame's time covers; the reports keep their own times ([ImuClock]).
+            val frame = OneImuProtocol.HEADER_BYTES + OneImuProtocol.REPORT_BYTES
+            link.wakeAfter((WAKE_REPORTS - 1) * frame)?.let { Log.i(TAG, "head reads: $it ($WAKE_REPORTS reports of $frame bytes)") }
+        }
         private val buf = ByteArray(16 * 1024)
         override val counts: FramerCounts get() = framer.counts
         override val noReportsHint: String = HeadTrackingStatus.ONE_FAMILY_HINT
