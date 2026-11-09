@@ -658,6 +658,14 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
      * Call every frame with the latest head pose: the head moves the rays even without input, so
      * a grabbed panel follows and a held touch drags.
      */
+    /**
+     * Test, 8 November 2026: PC VR's hand cursor in SteamVR was much smoother than the Space's. There each hand's ray
+     * goes straight into the room with the head pose of the camera frame's moment, every frame, with none of the
+     * pointer's pixel round trip, zone, buffer or prediction. When set, it gives a hand's room aim that way (null: as
+     * usual), for an A/B on the glasses.
+     */
+    @Volatile var directAim: ((HandSide) -> Vec3?)? = null
+
     fun frame(head: Quat, layout: SpaceLayout, nowMs: Long = clockMs): List<SpaceAction> {
         lastHead = head
         clockMs = maxOf(clockMs, nowMs)
@@ -670,7 +678,9 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         if (handsSetAside) setHandsAside(layout, out)
         if (hoverSuspended && main.grab == null) hoverTo(main, null, out) else follow(main, ray(main, head), layout, out)
         for (a in hands.values.toList()) {
-            applyInterp(a)
+            // Test (the PC VR path): the hand's own ray straight into the room, in place of the eased aim.
+            val direct = a.hand?.let { directAim?.invoke(it) }
+            if (direct != null) a.worldAim = direct else applyInterp(a)
             follow(a, ray(a, head), layout, out)
         }
         padFrame(layout, out)

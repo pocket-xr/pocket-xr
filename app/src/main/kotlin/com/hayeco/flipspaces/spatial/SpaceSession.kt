@@ -228,6 +228,9 @@ object SpaceSession {
      */
     @Volatile var hands: Map<com.hayeco.flipspaces.core.pointer.HandSide, com.hayeco.flipspaces.core.hands.HandStatus> = emptyMap()
 
+    /** When the camera frame behind [hands] was taken, uptime ms. */
+    @Volatile var handsCapturedAtMs: Long = 0L
+
     /** The last drawn frame's aim helper, null while no Space is drawing. */
     @Volatile var aim: SpaceAim? = null
         internal set

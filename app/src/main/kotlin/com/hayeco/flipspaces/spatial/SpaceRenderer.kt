@@ -395,7 +395,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     /** 1.2.3 (issue 58): the apps whose windows split a side by side picture between the eyes ([com.hayeco.flipspaces.core.spatial.SideBySide]). */
     private val sideBySide = com.hayeco.flipspaces.core.spatial.SideBySideStore(store.sideBySide)
-    private val pointer = SpatialPointer(frustum, PointerSettings(handsSteer = store.handsSteer))
+    private val pointer = SpatialPointer(frustum, PointerSettings(handsSteer = store.handsSteer)).also { p ->
+        p.directAim = { side -> directHandAim(side) }
+    }
 
     /** The viewport the projection and pointer were last built for. GL thread only. */
     private var viewport = SpaceViewport(frustum.widthPx, frustum.heightPx)
@@ -918,8 +920,44 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         com.hayeco.flipspaces.hands.HandFeed.resize()
     }
 
+    /**
+     * Test: the PC VR path for the hand cursor ([SpatialPointer.directAim]). The hand's calibrated ray (the one SteamVR
+     * got) turned into the room with the head at the camera frame's capture time, from the same smooth head estimate
+     * games get ([HeadTracker.gamePose]), not the raw history 20 ms before.
+     */
+    private fun directHandAim(side: com.hayeco.flipspaces.core.pointer.HandSide): com.hayeco.flipspaces.core.spatial.Vec3? {
+        if (!directHands) return null
+        val status = SpaceSession.hands[side]?.takeIf { it.present }
+        val ray = status?.ray
+        val at = SpaceSession.handsCapturedAtMs
+        val nowMs = SystemClock.uptimeMillis()
+        val smooth = directSmooth.getOrPut(side) { DirectAimSmoother() }
+        if (status == null || ray == null || at == 0L || nowMs - at > 200L) {
+            smooth.reset()
+            return null
+        }
+        val head = drawnHeads.at(at * 1_000_000L)
+            ?: HeadTracker.gamePose(at * 1_000_000L)?.let { HeadView.pose(follow.relative(it), manualYaw) } ?: return null
+        val room = head.rotate(ray.dir).normalized()
+        // A new camera frame is filtered once; every display frame glides toward it.
+        return smooth.frame(room, at, nowMs, closing = status.pinched || status.locked)
+    }
+
+    private val directSmooth = HashMap<com.hayeco.flipspaces.core.pointer.HandSide, DirectAimSmoother>()
+
+    /**
+     * The head each frame was drawn with, by its present time: hand rays placed in the room with it move exactly as the
+     * windows do, so a still head (its drawn pose held by [com.hayeco.flipspaces.core.spatial.RestLock] and smoothed)
+     * adds no shake to the cursor. The raw history the rays used before wobbles a little against that held pose, and
+     * a still hand's cursor shook with it (8 November 2026, against PC VR, where both sides use one estimate).
+     */
+    private val drawnHeads = DrawnHeads()
+
     /** The head pose when a hand frame was taken, for hand rays in world space; null without head tracking. */
-    private val headAt: (Long) -> Quat? = { t -> HeadTracker.poseAt(t)?.let { HeadView.pose(follow.relative(it), manualYaw) } }
+    private val headAt: (Long) -> Quat? = { t ->
+        if (handsOnDrawnHead) drawnHeads.at(t * 1_000_000L) ?: HeadTracker.poseAt(t)?.let { HeadView.pose(follow.relative(it), manualYaw) }
+        else HeadTracker.poseAt(t)?.let { HeadView.pose(follow.relative(it), manualYaw) }
+    }
 
     /**
      * While a game has the glasses: the glasses' real refresh for Monado's pacer ([com.hayeco.flipspaces.core.spatial.VblankLock]).
@@ -960,6 +998,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     companion object GameClockSwitch {
+        /** Test: the hand cursor by PC VR's path ([directHandAim]); the debug "handaim" command switches it. */
+        @Volatile var directHands = true
+
+        /** Hand rays placed with the head the Space drew with ([drawnHeads]); the debug "handaim --ez drawn" switches it. */
+        @Volatile var handsOnDrawnHead = true
+
         /** Debug: the game clock's feed to Monado on or off, for an A/B with the pacer's own clock. */
         @Volatile var feedGameClock = true
 
@@ -1070,6 +1114,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         follow.update(tracked, nowMs)
         var head = HeadView.pose(follow.relative(tracked), manualYaw)
         this.head = head
+        drawnHeads.add(presentNs, head)
         launcher.followHead(Angles.of(head.forward).yawDeg)
         updateHome(nowMs)
         offerCalibration()
@@ -5548,3 +5593,98 @@ private const val RESIZE_SETTLE_COPIES = 3
 /** ... or this long after its first (ms), then fades in over the old one for [RESIZE_FADE_MS]. */
 private const val RESIZE_SETTLE_MS = 250L
 private const val RESIZE_FADE_MS = 180L
+
+/**
+ * The last frames' drawn head poses by present time (System.nanoTime), for hand rays: [at] gives the pose drawn at a
+ * moment, between two frames by slerp; null before any frame or for a moment older than the history. Any thread.
+ */
+internal class DrawnHeads(private val size: Int = 64) {
+    private val times = LongArray(size)
+    private val poses = arrayOfNulls<Quat>(size)
+    private var next = 0
+    private var count = 0
+
+    @Synchronized
+    fun add(presentNs: Long, head: Quat) {
+        times[next] = presentNs
+        poses[next] = head
+        next = (next + 1) % size
+        if (count < size) count++
+    }
+
+    @Synchronized
+    fun at(ns: Long): Quat? {
+        if (count == 0) return null
+        val newest = (next - 1 + size) % size
+        val oldest = (next - count + size) % size
+        if (ns >= times[newest]) return poses[newest]
+        if (ns < times[oldest]) return null
+        var i = newest
+        while (i != oldest) {
+            val before = (i - 1 + size) % size
+            if (times[before] <= ns) {
+                val span = (times[i] - times[before]).coerceAtLeast(1L)
+                return poses[before]!!.slerp(poses[i]!!, (ns - times[before]).toFloat() / span)
+            }
+            i = before
+        }
+        return poses[oldest]
+    }
+}
+
+/** Live settings for the PC VR style hand cursor ([DirectAimSmoother]); the debug "handaim" command sets them. */
+object DirectAimTuning {
+    /** One Euro on the aim's yaw and pitch (degrees): the cut-off of a slow hand, and how fast it opens with speed. */
+    @Volatile var minCutoffHz = 0.8f
+    @Volatile var beta = 0.05f
+    /** Below this speed (degrees a second) a hand counts as still for the filter. */
+    @Volatile var speedFloorDegS = 2f
+    /** Each display frame moves the cursor this share of a [glideMs] time constant toward the filtered aim. */
+    @Volatile var glideMs = 25f
+    /** While the fingers close for a pinch the filter's cut-off is scaled by this, so the click doesn't nudge the aim. */
+    @Volatile var pinchDamp = 0.3f
+}
+
+/**
+ * The PC VR style hand cursor's smoothing: a One Euro filter on the room aim's yaw and pitch, run once per camera frame
+ * (strong for small slow moves, light for fast ones, no dead zone, so no stick and hop), then a glide every display
+ * frame toward it, so 30 camera frames a second still move the cursor on every refresh.
+ */
+internal class DirectAimSmoother {
+    private var yaw = com.hayeco.flipspaces.core.hands.OneEuroFilter()
+    private var pitch = com.hayeco.flipspaces.core.hands.OneEuroFilter()
+    private var lastSampleMs = 0L
+    private var target: com.hayeco.flipspaces.core.spatial.Vec3? = null
+    private var shown: com.hayeco.flipspaces.core.spatial.Vec3? = null
+    private var lastFrameMs = 0L
+
+    fun reset() {
+        target = null
+        shown = null
+        lastSampleMs = 0L
+    }
+
+    fun frame(room: com.hayeco.flipspaces.core.spatial.Vec3, sampleMs: Long, nowMs: Long, closing: Boolean): com.hayeco.flipspaces.core.spatial.Vec3 {
+        val t = DirectAimTuning
+        if (yaw.minCutoffHz != t.minCutoffHz || yaw.beta != t.beta || yaw.speedFloor != t.speedFloorDegS) {
+            yaw = com.hayeco.flipspaces.core.hands.OneEuroFilter(t.minCutoffHz, t.beta, 1f, t.speedFloorDegS)
+            pitch = com.hayeco.flipspaces.core.hands.OneEuroFilter(t.minCutoffHz, t.beta, 1f, t.speedFloorDegS)
+        }
+        if (sampleMs != lastSampleMs) {
+            lastSampleMs = sampleMs
+            val a = com.hayeco.flipspaces.core.spatial.Angles.of(room)
+            val scale = if (closing) t.pinchDamp else 1f
+            val y = yaw.filter(a.yawDeg, sampleMs, scale)
+            val p = pitch.filter(a.pitchDeg, sampleMs, scale)
+            target = com.hayeco.flipspaces.core.spatial.Vec3.direction(y, p)
+        }
+        val goal = target ?: room
+        val dt = (nowMs - lastFrameMs).coerceIn(0L, 100L).toFloat()
+        lastFrameMs = nowMs
+        val prev = shown
+        val k = if (prev == null || t.glideMs <= 0f) 1f else 1f - kotlin.math.exp(-dt / t.glideMs)
+        val next = if (prev == null) goal else (prev + (goal - prev) * k).normalized()
+        shown = next
+        return next
+    }
+}
