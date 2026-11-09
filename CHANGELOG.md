@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.11: Record works on the Flip7
 
 - **Record works on the Galaxy Z Flip7.** Tapping Record in the Menu did nothing there: the recording stopped a tenth of
   a second after it started and nothing was saved. Pocket XR asked the phone's graphics for a video surface that didn't
