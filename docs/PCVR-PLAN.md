@@ -108,3 +108,6 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   a check once its drift is measured). After 1.5 s of steady frames it fades out over 0.8 s. Mike: "Looks great".
 - The 20 s freezes: not caught in 15 minutes of recording. Short dips then were the phone (the PC kept 60 a second) while
   it was hot.
+- Step 5, game sound (8 November): already working with nothing added. ALVR's client library plays the PC's game sound
+  itself (AAudio, out to the glasses as a USB headset), and the PC streamer sends it and mutes the PC's speakers.
+  Mike: "Clean sound". The microphone stays off: on Windows it needs VB-CABLE on the PC, only worth it for voice chat.
