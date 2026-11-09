@@ -12,7 +12,7 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.ZipInputStream
 
 /**
- * 1.2.6, Discussion #24: a Galaxy Z Flip 7 with VITURE Beast glasses. No head tracking, 3840 x 1080 drawn as two copies,
+ * 1.2.8, Discussion #24: a Galaxy Z Flip 7 with VITURE Beast glasses. No head tracking, 3840 x 1080 drawn as two copies,
  * 3D only after the glasses' own menu, and the logs said nothing of the glasses' USB device.
  */
 class Discussion24Test {
@@ -113,7 +113,7 @@ class Discussion24Test {
     @Test fun theGlassesReportListsEveryUsbDeviceWithItsEndpoints() {
         val hid = UsbInterfaceInfo(UsbInterfaceInfo.USB_CLASS_HID, 0, null, id = 3, protocol = 0, endpoints = listOf("IN interrupt 64 B", "OUT interrupt 64 B"))
         val r = GlassesReport(
-            appVersion = "1.2.6", phone = "samsung SM-F766U1", android = "17 (API 37)",
+            appVersion = "1.2.8", phone = "samsung SM-F766U1", android = "17 (API 37)",
             displays = listOf(GlassesReport.Display("VITURE Beast", "800", listOf("3840x1080@60"), "3840x1080@60")),
             usb = listOf(GlassesReport.Usb(0x35CA, 0x1201, "VITURE Beast", emptyList(), listOf(hid))),
             controlLink = "not open", serial = null, stereoState = null, edidIndex = null,
@@ -137,7 +137,7 @@ class Discussion24Test {
             HidRecording.Report(start + 9_250_000L, 3, byteArrayOf(0x10, 0x00, 0x09, 0x73)),
         )
         val text = HidRecording.text(
-            device = "35CA:1201 \"VITURE Beast\"", appVersion = "1.2.6", timeUtc = "2026-11-09 16:20",
+            device = "35CA:1201 \"VITURE Beast\"", appVersion = "1.2.8", timeUtc = "2026-11-09 16:20",
             descriptors = listOf(HidRecording.Descriptor(3, byteArrayOf(0x06, 0x00, 0xFF.toByte())), HidRecording.Descriptor(4, null, "claim refused")),
             sent = listOf(start + 5_000_000_000L to "VITURE raw IMU start"),
             reports = reports, startNs = start, endNs = start + 20_000_000_000L,
@@ -165,7 +165,7 @@ class Discussion24Test {
 
     @Test fun sendLogsCarriesTheExtraFilesScrubbed() {
         val out = ByteArrayOutputStream()
-        val info = LogBundle.Info("1.2.6", 158, "samsung SM-F766U1", "17", "VITURE glasses", "2026-11-09 16:15")
+        val info = LogBundle.Info("1.2.8", 158, "samsung SM-F766U1", "17", "VITURE glasses", "2026-11-09 16:15")
         LogBundle.write(out, info, "diag", emptyList(), extras = listOf("glasses-report.txt" to "mail me at someone@example.com", "motion/hid.txt" to "1.000 if3 4: 10 00"))
         val names = mutableMapOf<String, String>()
         ZipInputStream(out.toByteArray().inputStream()).use { z ->

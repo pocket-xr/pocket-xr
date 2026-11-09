@@ -470,7 +470,7 @@ internal class LauncherGl(private val context: Context) {
         }
 
     /**
-     * 1.2.6 (Discussion #24: icons "pixelated on the edges"): the size app icons are baked at, their size in the glasses' own
+     * 1.2.8 (Discussion #24: icons "pixelated on the edges"): the size app icons are baked at, their size in the glasses' own
      * pixels ([com.hayeco.flipspaces.core.spatial.LauncherIconRaster], set by the renderer for each view). A new size
      * drops the icons baked at the old one. GL thread.
      */
@@ -508,7 +508,7 @@ internal class LauncherGl(private val context: Context) {
     }
 
     /**
-     * 1.2.6: the activity's icon from the app's own resources at the highest density (xxxhdpi) when the phone's density
+     * 1.2.8: the activity's icon from the app's own resources at the highest density (xxxhdpi) when the phone's density
      * gives one smaller than [px], so a bitmap icon is not scaled up; else what Android gives (a theme's or icon pack's
      * replacement included).
      */
@@ -528,7 +528,7 @@ internal class LauncherGl(private val context: Context) {
      * (108 x 108 dp layers whose middle 72 dp is the visible icon) are drawn 1.5 times the circle and
      * cut to it; an older icon sits on a white disc at 70 %, as Launcher3 treats legacy icons.
      *
-     * 1.2.6 (Discussion #24: edges "pixelated"): the circle is cut with an anti-aliased mask (DST_IN), not clipPath, whose
+     * 1.2.8 (Discussion #24: edges "pixelated"): the circle is cut with an anti-aliased mask (DST_IN), not clipPath, whose
      * edge is not anti-aliased; it stops a pixel short of the bitmap's edge so the texture's border is transparent and
      * filtering has nothing opaque to smear there; and the bitmap is [size] square, the icon's size on the glasses.
      */
@@ -792,7 +792,7 @@ internal class LauncherGl(private val context: Context) {
         /** Texture pixels a dp: the glasses show about 1.5 px a dp at 1 m, so 2 with mipmaps stays sharp. */
         const val PX_PER_DP = 2f
 
-        /** 1.2.6: the transparent ring around a baked app icon, so its texture's border is clear. */
+        /** 1.2.8: the transparent ring around a baked app icon, so its texture's border is clear. */
         const val ICON_EDGE_PX = 1f
         const val MAX_TEXTURES = 160
 

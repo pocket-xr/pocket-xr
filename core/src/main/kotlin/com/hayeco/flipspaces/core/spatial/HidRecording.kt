@@ -3,7 +3,7 @@ package com.hayeco.flipspaces.core.spatial
 import java.util.Locale
 
 /**
- * 1.2.6 (Discussion #24, VITURE Beast glasses: Pocket XR had nothing to read their motion sensor with, and the logs had
+ * 1.2.8 (Discussion #24, VITURE Beast glasses: Pocket XR had nothing to read their motion sensor with, and the logs had
  * nothing about it): the head tracking screen's opt-in "Record motion for 20 seconds". For glasses that are not XREAL's it
  * keeps every HID input report the glasses send, with the phone's time it came at, plus each HID interface's report
  * descriptor, as one plain text file the next Send logs takes along. Nothing in it names the person: USB ids, interface
@@ -88,7 +88,7 @@ object HidRecording {
 }
 
 /**
- * 1.2.6: the USB makers of glasses Pocket XR knows by vendor id, for the Glasses report, Send logs and the head tracking
+ * 1.2.8: the USB makers of glasses Pocket XR knows by vendor id, for the Glasses report, Send logs and the head tracking
  * screen, which up to 1.2.5 listed only XREAL's devices.
  */
 object GlassesVendors {

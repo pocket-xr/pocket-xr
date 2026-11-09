@@ -278,7 +278,7 @@ object HeadTracker {
     }
 
     /**
-     * 1.2.6: the reader started again for its users, for a setting it reads only when it opens the glasses (the VITURE
+     * 1.2.8: the reader started again for its users, for a setting it reads only when it opens the glasses (the VITURE
      * reader's axis switches). Nothing happens while it is not running.
      */
     @Synchronized
@@ -644,7 +644,7 @@ object HeadTracker {
                 if (!streamAir(air, context, fusion, backoff)) return
                 continue
             }
-            // 1.2.6 (Discussion #24, a VITURE Beast: no head tracking, and the status blamed a missing USB network): VITURE
+            // 1.2.8 (Discussion #24, a VITURE Beast: no head tracking, and the status blamed a missing USB network): VITURE
             // glasses have no USB network. With the experimental reader on, their HID is read; otherwise the status says
             // plainly that they are not supported yet, and nothing is opened on them.
             val viture = VitureImuLink.find(context)
@@ -825,7 +825,7 @@ object HeadTracker {
     }
 
     /**
-     * 1.2.6: one round on VITURE glasses with the experimental reader on ([VitureImuLink]), as [streamAir] does for the Air
+     * 1.2.8: one round on VITURE glasses with the experimental reader on ([VitureImuLink]), as [streamAir] does for the Air
      * family. A round that gets no motion at all says plainly that these glasses are not supported yet.
      */
     private fun streamViture(device: android.hardware.usb.UsbDevice, context: Context, fusion: HeadFusion, backoff: HeadRetryBackoff, axes: com.hayeco.flipspaces.core.spatial.VitureAxes): Boolean {
@@ -918,7 +918,7 @@ object HeadTracker {
     /** The glasses' model from their display and every XREAL device on USB, with whether Pocket XR may use it. */
     private fun glassesSeen(c: Context): String {
         val manager = AirImuLink.manager(c)
-        // 1.2.6 (Discussion #24): VITURE's devices too; their line said "no XREAL device on USB" and nothing more.
+        // 1.2.8 (Discussion #24): VITURE's devices too; their line said "no XREAL device on USB" and nothing more.
         val usb = runCatching { manager.deviceList.values.filter { com.hayeco.flipspaces.core.spatial.GlassesVendors.name(it.vendorId) != null } }.getOrDefault(emptyList())
         val devices = if (usb.isEmpty()) "no XREAL or VITURE device on USB" else usb.joinToString(", ") { d ->
             val air = AirImuProtocol.isAir(d.vendorId, d.productId)

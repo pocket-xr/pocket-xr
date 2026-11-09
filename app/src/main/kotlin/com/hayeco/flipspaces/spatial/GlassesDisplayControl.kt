@@ -153,7 +153,7 @@ object GlassesDisplayControl {
     /** The glasses' own 2D / 3D state as last read (10273), to tell Ultrawide from 3D; null with no link. */
     val stereoState: Int? get() = if (link != null) commands.stereo else null
 
-    /** 1.2.6: the control link is open, so Pocket XR can switch the glasses' 2D / 3D itself (XREAL's only). */
+    /** 1.2.8: the control link is open, so Pocket XR can switch the glasses' 2D / 3D itself (XREAL's only). */
     val linkOpen: Boolean get() = link != null
 
     /** Whether the glasses said they are in Ultrawide (the Aura), null with no answer: 3D reads as 2D for a moment after a change. */

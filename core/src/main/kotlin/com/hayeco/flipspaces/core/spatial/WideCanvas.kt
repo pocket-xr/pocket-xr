@@ -3,7 +3,7 @@ package com.hayeco.flipspaces.core.spatial
 import kotlin.math.tan
 
 /**
- * 1.2.6 (Discussion #24, VITURE Beast in its 32:9 ultrawide mode: "two duplicate side by side views, each 1080p"): what a
+ * 1.2.8 (Discussion #24, VITURE Beast in its 32:9 ultrawide mode: "two duplicate side by side views, each 1080p"): what a
  * 3840 x 1080 mode means. On XREAL glasses it is their side by side 3D, or the Ultrawide their control link reports. Up to
  * 1.2.5 every other glasses' 3840 x 1080 was taken as side by side too, and the Space in 2D put the same picture in both
  * halves: on glasses showing that mode as one wide screen, two copies next to each other.
@@ -20,7 +20,7 @@ enum class WideKind(val label: String) {
 }
 
 /**
- * 1.2.6: VITURE glasses change their display's EDID product id with their mode. Seen in the Discussion #24 logs (a Beast):
+ * 1.2.8: VITURE glasses change their display's EDID product id with their mode. Seen in the Discussion #24 logs (a Beast):
  * 288 (0x0120) in 2D at 1920 x 1200 and 1920 x 1080; 800 (0x0320) at 3840 x 1080 in the sessions that showed the two
  * copies (the ultrawide mode, by the tester's report); 544 (0x0220) at 3840 x 1080 in the session where 3D then worked
  * (the glasses' own 3D, by the tester's report). Inferred from one tester's log, so anything else is [WideKind.BY_VIEW].
@@ -60,7 +60,7 @@ object WideCanvas {
 }
 
 /**
- * 1.2.6 (Discussion #24: 3D "works only after turning on 3D in the glasses' own menu first", and before that the Depth
+ * 1.2.8 (Discussion #24: 3D "works only after turning on 3D in the glasses' own menu first", and before that the Depth
  * button did nothing that could be seen): what the launcher's Depth button does. Pocket XR switches the glasses itself
  * only over XREAL's control link; on any other glasses, turning 3D on when they offer no side by side mode (or say they are
  * in their ultrawide mode) cannot work from the phone, so the button says what to do instead of changing a setting that
@@ -82,7 +82,7 @@ object DepthPress {
 }
 
 /**
- * 1.2.6 (Discussion #24: "launcher icons look pixelated on the edges"): the size an app icon is baked at, its size in the
+ * 1.2.8 (Discussion #24: "launcher icons look pixelated on the edges"): the size an app icon is baked at, its size in the
  * glasses' own pixels when it is drawn largest (hovered, at the launcher's distance). Baked at that size the texture's
  * first level is the one sampled, so its anti-aliased edge reaches the glasses as drawn; up to 1.2.5 it was a fixed 2 px a
  * dp, with an edge that was not anti-aliased at all.

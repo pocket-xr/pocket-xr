@@ -82,7 +82,7 @@ app has no HID IMU reader: for HID glasses `HeadTracker` opens nothing on them a
 family's 0x19 above is not confirmed for Helen, which may use its own IMU format), the checksum
 and the sample layout, checked on real glasses before anything is sent to them.
 
-**VITURE (HID, 1.2.6, experimental, off by default).** VITURE's glasses use their own vendor id, 0x35CA, and no USB
+**VITURE (HID, 1.2.8, experimental, off by default).** VITURE's glasses use their own vendor id, 0x35CA, and no USB
 network. The one public, MIT licensed description of their newer protocol
 ([elasticjava/viture-v2 PROTOCOL.md](https://github.com/elasticjava/viture-v2/blob/master/PROTOCOL.md), measured on a
 Pro 2, 35CA:1301): one HID interface with 64 byte interrupt IN and OUT endpoints; little endian frames of preamble

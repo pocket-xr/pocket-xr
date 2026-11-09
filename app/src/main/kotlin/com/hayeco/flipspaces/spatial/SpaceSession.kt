@@ -73,8 +73,11 @@ sealed interface SpaceCommand {
     /** 0.5.17: the arrange actions from the trackpad's drawer ([com.hayeco.flipspaces.core.spatial.Arrange]). */
     data class Arrange(val kind: com.hayeco.flipspaces.core.spatial.ArrangeKind) : SpaceCommand
 
-    /** 1.2.3 (issue 57): the focused window's app's text size, [steps] steps up or down; 0 puts it back to 100 %. */
-    data class TextSize(val steps: Int) : SpaceCommand
+    /**
+     * 1.2.3 (issue 57): the focused window's app's text size, [steps] steps up or down; 0 puts it back to 100 %.
+     * 1.2.7: [seq] numbers it, said back in [SpaceSession.textSizeSettledSeq] once the window laid out at the new size.
+     */
+    data class TextSize(val steps: Int, val seq: Long = 0L) : SpaceCommand
 
     /** 0.5.19: the wraparound turned on or off ([SpaceSession.wrap]): the Space wraps or unwraps its windows. */
     data object WrapChanged : SpaceCommand
@@ -215,6 +218,19 @@ object SpaceSession {
 
     /** 1.2.3 (issue 57): the focused window's label and its app's text size in percent, for the trackpad's Menu; null with none. */
     @Volatile var focusedTextSize: Pair<String, Int>? = null
+
+    /**
+     * 1.2.7: the highest [SpaceCommand.TextSize] number whose window has laid out again at its new size
+     * ([com.hayeco.flipspaces.core.spatial.TextSizeSettle]), for the Menu's Text size keys ([com.hayeco.flipspaces.core.spatial.TextSizeLock]).
+     */
+    @Volatile var textSizeSettledSeq: Long = 0L
+
+    /**
+     * Unreleased (John Davis: no Text size in the Menu after clicking a window): the focused window, kept across Space
+     * starts in this run ([com.hayeco.flipspaces.core.spatial.FocusedWindow.restored]), since the glasses' 2D / 3D
+     * re-plug starts a new Space whose renderer had nothing focused.
+     */
+    @Volatile var focusKept: com.hayeco.flipspaces.core.spatial.FocusedWindow.Kept? = null
 
     /** 0.5.19: packages that crashed on a panel, and when (uptime), across Space starts. */
     val crashedApps = java.util.concurrent.ConcurrentHashMap<String, Long>()

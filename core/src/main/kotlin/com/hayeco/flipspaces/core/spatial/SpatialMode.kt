@@ -47,7 +47,7 @@ sealed interface HeadTrackingStatus {
     }
 
     /**
-     * 1.2.6 (Discussion #24, VITURE Beast: "no head tracking", while the log blamed a missing USB network): VITURE glasses
+     * 1.2.8 (Discussion #24, VITURE Beast: "no head tracking", while the log blamed a missing USB network): VITURE glasses
      * have no USB network; their motion sensor is on USB HID in VITURE's own protocol. Said plainly, with what to try.
      */
     data class VitureNotYet(val productId: Int, val experimentalOn: Boolean = false) : HeadTrackingStatus {

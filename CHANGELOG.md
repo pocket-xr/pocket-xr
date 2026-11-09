@@ -20,6 +20,33 @@ Thanks to the tester in GitHub Discussion #24 for VITURE Beast logs and a clear 
   glasses menu first" on the glasses.
 - **Smoother launcher icons.** Icon edges are smooth with any icon pack, drawn at the glasses' own pixel size.
 
+## 1.2.7: Text size for the window you clicked
+
+- **Help Pocket XR get on Google Play.** The trackpad's Menu has a card asking you to join the Play testers. Tap Join
+  for the testers group, then Open Play invite. Installing from Play means uninstalling this copy first, and that resets
+  your Pocket XR settings. Not now hides the card for 7 days. I already joined hides it for good. The Play version
+  doesn't show it.
+- **Text size shows for the window you clicked.** The Menu's This window now keeps up with the window you focus, by
+  trackpad, mouse, pinch or gaze, even while the Menu is open. The window keeps its focus when the glasses switch
+  between 2D and 3D, and a window you just opened has it too. The same goes for Side by side 3D and the Game
+  controller. Thanks to John Davis for the report.
+- **Text size waits for the window.** After you tap smaller, larger or the reset, the three keys dim and say Resizing
+  until the window in the glasses has redrawn at the new size, 3 seconds at most. Taps while they're dimmed are ignored,
+  so quick taps no longer pile up and keep reloading the window long after you stop.
+
+## 1.2.6: a lighter Menu
+
+- **A tidier Menu.** The trackpad's Menu is about half as long. The things used every session are tiles at the top:
+  Steady mode, Pocket mode, Game keys, Open Control Center, Record, Phone home and Pocket XR Settings. Unlock phone
+  joins them while the phone is locked.
+- **This window.** Text size and Side by side 3D for the window you are using sit together under This window, right
+  under the tiles.
+- **Sections.** The Space (tracking, Lock screens, Arrange and presets) is open. Trackpad and controls, Windows and
+  glasses, and Help and more start closed: tap a heading to open it, and the Menu remembers. Exit Pocket XR stays last.
+- **Only what you can use.** Rows that need the Space, such as Pocket mode, Record and Arrange, show while it's open,
+  and greyed out rows are gone. Every setting keeps its value.
+- **Ko-fi in Pocket XR blue.** The Buy me a beer pill uses the same blue as the window glow, softly.
+
 ## 1.2.5: a smoother hand cursor
 
 - **Smoother hand cursor.** The dot follows your hand closely and glides on every refresh, with no sticking and hopping

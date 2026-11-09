@@ -12,7 +12,7 @@ import com.hayeco.flipspaces.core.spatial.UsbInterfaceInfo
  * permission and opens nothing on the glasses. Shared by the Glasses report, the head tracker's link choice
  * ([com.hayeco.flipspaces.core.spatial.HeadImuTransport]) and the head tracking diagnostics.
  *
- * 1.2.6 (Discussion #24): each interface's number, protocol and endpoints too, for glasses Pocket XR has no reader for.
+ * 1.2.8 (Discussion #24): each interface's number, protocol and endpoints too, for glasses Pocket XR has no reader for.
  */
 object GlassesUsbList {
     fun read(context: Context): List<GlassesReport.Usb> = runCatching {

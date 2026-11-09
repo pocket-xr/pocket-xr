@@ -239,7 +239,7 @@ object LogBundle {
         maxBytes: Long = MAX_ZIP_BYTES,
         btNames: Collection<String> = emptyList(),
         /**
-         * 1.2.6 (Discussion #24): more text files by name, scrubbed like the rest: the Glasses report (every USB device, its
+         * 1.2.8 (Discussion #24): more text files by name, scrubbed like the rest: the Glasses report (every USB device, its
          * interfaces and the display modes) and the newest motion recording.
          */
         extras: List<Pair<String, String>> = emptyList(),

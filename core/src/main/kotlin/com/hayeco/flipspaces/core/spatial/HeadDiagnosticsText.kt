@@ -29,11 +29,11 @@ data class HeadDiagnosticsText(
     val soc: String,
     val dynamicSensors: List<String>,
     /**
-     * The USB devices and their interfaces, one line each, with each device's head tracking link. 1.2.6: every device
+     * The USB devices and their interfaces, one line each, with each device's head tracking link. 1.2.8: every device
      * Android lists, not only XREAL's (Discussion #24's VITURE Beast showed "none").
      */
     val usb: List<String>,
-    /** 1.2.6: the newest motion recording ([HidRecording]) in one line; null when there is none. */
+    /** 1.2.8: the newest motion recording ([HidRecording]) in one line; null when there is none. */
     val motion: String? = null,
 ) {
     fun text(): String = buildString {

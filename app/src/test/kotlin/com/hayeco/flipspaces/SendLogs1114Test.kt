@@ -72,7 +72,7 @@ class SendLogs1114Test {
         assertFalse(provider.exported)
 
         val entries = unzip(file.readBytes())
-        // 1.2.6 (Discussion #24): the Glasses report goes along, with every USB device and the display modes.
+        // 1.2.8 (Discussion #24): the Glasses report goes along, with every USB device and the display modes.
         assertEquals(listOf("head-tracking.txt", "glasses-report.txt", "logs/flipspaces.log", "about.txt"), entries.keys.toList())
         assertTrue(entries["glasses-report.txt"]!!.contains("USB devices (every one Android lists):"))
         assertTrue(entries["logs/flipspaces.log"]!!.contains("a line"))

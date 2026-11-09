@@ -18,7 +18,7 @@ import java.io.Closeable
 import java.io.IOException
 
 /**
- * 1.2.6 (Discussion #24, experimental, off by default): VITURE glasses' motion sensor over Android's USB host API
+ * 1.2.8 (Discussion #24, experimental, off by default): VITURE glasses' motion sensor over Android's USB host API
  * ([VitureImuProtocol]): the HID interface with an interrupt IN endpoint claimed from the kernel, the documented raw stream
  * command written to it, and its 64 byte reports read. Needs the user's USB permission for the glasses.
  */

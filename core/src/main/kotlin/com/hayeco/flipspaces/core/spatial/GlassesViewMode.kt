@@ -37,7 +37,7 @@ data class ViewPlan(
     val sameForBothEyes: Boolean,
     val needsGlasses: String?,
     val line: String,
-    /** 1.2.6: the wide mode is drawn as one 32:9 canvas ([WideCanvas]), not two eyes. */
+    /** 1.2.8: the wide mode is drawn as one 32:9 canvas ([WideCanvas]), not two eyes. */
     val canvas: Boolean = false,
 ) {
     /** True when the glasses show what was wanted. */
@@ -61,7 +61,7 @@ object ViewModeChoice {
         wanted: GlassesView,
         modes: List<Triple<Int, Int, Float>>,
         fastestAllowed: Boolean = true,
-        // 1.2.6 (Discussion #24): what the wide mode is on these glasses ([WideCanvas.kind]), and whether only their own
+        // 1.2.8 (Discussion #24): what the wide mode is on these glasses ([WideCanvas.kind]), and whether only their own
         // menu can switch them to 3D (every glasses but XREAL's with the control link).
         wide: WideKind = WideKind.SIDE_BY_SIDE,
         glassesMenuOnly: Boolean = false,
@@ -95,7 +95,7 @@ object ViewModeChoice {
             GlassesView.FLAT_2D -> if (flat != null) {
                 ViewPlan(wanted, atSize(flat), StereoMode.MONO, false, null, "view: 2D at ${fmt(modes[atSize(flat)!!])}, one picture for both eyes (modes $all)")
             } else if (sbs != null && wide != WideKind.SIDE_BY_SIDE) {
-                // 1.2.6: glasses that are not XREAL's show their 3840 x 1080 as one 32:9 screen unless they said 3D.
+                // 1.2.8: glasses that are not XREAL's show their 3840 x 1080 as one 32:9 screen unless they said 3D.
                 ViewPlan(wanted, atSize(sbs), StereoMode.MONO, false, null, "view: 2D on the glasses' wide mode at ${fmt(modes[atSize(sbs)!!])}: one wide canvas (${wide.label}) (modes $all)", canvas = true)
             } else {
                 ViewPlan(
@@ -115,7 +115,7 @@ object ViewModeChoice {
      */
     fun eyes(plan: ViewPlan?, width: Int, height: Int, ipdMm: Float): List<EyeView> {
         val sbsSurface = StereoLayout.isSbsMode(width, height)
-        // 1.2.6: a plan that draws one picture on a wide surface is one wide canvas ([WideCanvas]), not two halves.
+        // 1.2.8: a plan that draws one picture on a wide surface is one wide canvas ([WideCanvas]), not two halves.
         if (!sbsSurface || plan?.canvas == true) {
             return StereoLayout.eyes(StereoMode.MONO, width, height, ipdMm)
         }

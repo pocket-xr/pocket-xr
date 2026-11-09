@@ -34,7 +34,7 @@ import com.hayeco.flipspaces.spatial.HeadLive
 data class HeadTrackingFacts(val soc: String, val dynamicSensors: List<String>)
 
 /**
- * 1.2.6 (Discussion #24, VITURE Beast glasses): the card for glasses that aren't XREAL's: the opt-in motion recording, and on
+ * 1.2.8 (Discussion #24, VITURE Beast glasses): the card for glasses that aren't XREAL's: the opt-in motion recording, and on
  * VITURE glasses the experimental reader with its two axis switches.
  */
 data class OtherGlassesCard(
@@ -98,7 +98,7 @@ fun HeadTrackingScreen(
     onShare: () -> Unit = {},
     /** 1.1.14: the logs and this screen's text in one zip on an email to Mike ([com.hayeco.flipspaces.SendLogs]). */
     onSendLogs: () -> Unit = {},
-    /** 1.2.6: glasses that aren't XREAL's ([OtherGlassesCard]); null hides the card. */
+    /** 1.2.8: glasses that aren't XREAL's ([OtherGlassesCard]); null hides the card. */
     other: OtherGlassesCard? = null,
 ) {
     Scaffold { padding ->

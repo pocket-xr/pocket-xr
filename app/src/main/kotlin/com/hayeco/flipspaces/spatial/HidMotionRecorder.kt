@@ -18,7 +18,7 @@ import java.util.Locale
 import java.util.TimeZone
 
 /**
- * 1.2.6 (Discussion #24): the head tracking screen's opt-in "Record motion for 20 seconds", for glasses that are not
+ * 1.2.8 (Discussion #24): the head tracking screen's opt-in "Record motion for 20 seconds", for glasses that are not
  * XREAL's ([GlassesVendors.recordable]). With the user's USB access it claims the glasses' HID interfaces, reads each one's
  * report descriptor, then keeps every input report for [HidRecording.SECONDS] with the phone's time it came at. On VITURE
  * glasses the documented raw stream start ([VitureImuProtocol.startRaw]) goes out [HidRecording.START_COMMAND_AT_MS] in,

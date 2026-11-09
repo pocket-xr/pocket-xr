@@ -16,13 +16,13 @@ package com.hayeco.flipspaces.core.spatial
 enum class ImuTransport(val label: String) {
     USB_NETWORK("USB network (NCM / ECM), the One family's link"),
     USB_HID("USB HID, like XREAL's Air family"),
-    /** 1.2.6: VITURE's glasses ([VitureImuProtocol]): read only with the experimental switch on. */
+    /** 1.2.8: VITURE's glasses ([VitureImuProtocol]): read only with the experimental switch on. */
     VITURE_HID("USB HID, VITURE's own protocol (experimental, off unless turned on)"),
     UNKNOWN("not known from the USB device"),
 }
 
 /**
- * One USB interface as Android lists it: class, subclass and its name string, when it has one. 1.2.6: [id], [protocol]
+ * One USB interface as Android lists it: class, subclass and its name string, when it has one. 1.2.8: [id], [protocol]
  * and [endpoints] too, for the motion recording and Send logs.
  */
 data class UsbInterfaceInfo(
@@ -116,7 +116,7 @@ object HeadImuTransport {
 
     private val NETWORK_NAME = Regex("\\b(NCM|ECM)\\b|Network Control Model|Ethernet", RegexOption.IGNORE_CASE)
 
-    /** The transport for an XREAL USB device ([vendorId] 0x3318) or a VITURE one (1.2.6); [UNKNOWN] for any other vendor. */
+    /** The transport for an XREAL USB device ([vendorId] 0x3318) or a VITURE one (1.2.8); [UNKNOWN] for any other vendor. */
     fun choose(vendorId: Int, productId: Int, interfaces: List<UsbInterfaceInfo>): ImuTransport = when {
         vendorId == VitureImuProtocol.VENDOR -> ImuTransport.VITURE_HID
         vendorId != GlassesReport.XREAL_VENDOR -> ImuTransport.UNKNOWN
@@ -131,7 +131,7 @@ object HeadImuTransport {
     fun hidGlasses(usb: List<GlassesReport.Usb>): GlassesReport.Usb? =
         usb.firstOrNull { it.vendorId == GlassesReport.XREAL_VENDOR && choose(it.vendorId, it.productId, it.infos) == ImuTransport.USB_HID }
 
-    /** 1.2.6: the first VITURE device of [usb], null when none is plugged in. */
+    /** 1.2.8: the first VITURE device of [usb], null when none is plugged in. */
     fun vitureGlasses(usb: List<GlassesReport.Usb>): GlassesReport.Usb? = usb.firstOrNull { it.vendorId == VitureImuProtocol.VENDOR }
 }
 

@@ -39,7 +39,7 @@ object SendLogs {
     /** The zips kept in reports/: the newest few, so a second try does not pile them up. */
     private const val KEEP = 2
 
-    /** 1.2.6: a motion recording older than this is not sent. */
+    /** 1.2.8: a motion recording older than this is not sent. */
     private const val MOTION_MAX_AGE_MS = 2L * 24 * 60 * 60 * 1000
 
     /** Builds the zip off the main thread, then opens the email from [context] (an activity). */
@@ -58,7 +58,7 @@ object SendLogs {
     private fun info(context: Context): LogBundle.Info {
         val pkg = runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
         val store = SpaceStore(context)
-        // 1.2.6 (Discussion #24: a VITURE Beast's zip said "Unknown glasses (the last used; none plugged in now)"): glasses
+        // 1.2.8 (Discussion #24: a VITURE Beast's zip said "Unknown glasses (the last used; none plugged in now)"): glasses
         // of every make Pocket XR knows, not only XREAL's.
         val plugged = GlassesUsbList.read(context).filter { GlassesVendors.name(it.vendorId) != null }
         val glasses = if (plugged.isEmpty()) {
@@ -88,7 +88,7 @@ object SendLogs {
         val secrets = (listOfNotNull(wifi.connected) + wifi.saved.map { it.ssid }).distinct()
         // The paired Bluetooth names, likewise, each the same <bt-device-N> in every file of the zip.
         val btNames = com.hayeco.flipspaces.phone.PhoneConnections.pairedNames(context)
-        // 1.2.6 (Discussion #24): the Glasses report (every USB device with its interfaces, endpoints and HID report
+        // 1.2.8 (Discussion #24): the Glasses report (every USB device with its interfaces, endpoints and HID report
         // descriptors, and the display modes Android reports) and the newest motion recording from the last two days.
         val extras = buildList {
             runCatching { GlassesReportFile.build(context).text() }.onSuccess { add("glasses-report.txt" to it) }

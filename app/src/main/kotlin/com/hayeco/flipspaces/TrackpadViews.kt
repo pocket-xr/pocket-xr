@@ -33,6 +33,8 @@ import com.hayeco.flipspaces.core.pointer.WindowAction
 import com.hayeco.flipspaces.core.pointer.PadDirection
 import com.hayeco.flipspaces.core.pointer.PadMode
 import com.hayeco.flipspaces.core.pointer.StripSide
+import com.hayeco.flipspaces.core.pointer.TrackpadMenu
+import com.hayeco.flipspaces.core.pointer.TrackpadMenu.Item as MenuItem
 import com.hayeco.flipspaces.core.pointer.TrackpadSettings
 import com.hayeco.flipspaces.core.spatial.ArrangeKind
 import com.hayeco.flipspaces.core.spatial.FollowMode
@@ -819,6 +821,12 @@ interface PadHost {
     /** 1.2.3 (issue 57): the focused window's app's text size [steps] steps up or down; 0 puts it back to 100 %. */
     fun textSizeStep(steps: Int)
 
+    /**
+     * 1.2.7: the Text size keys are off, a tap still being laid out in the glasses (at most 3 s,
+     * [com.hayeco.flipspaces.core.spatial.TextSizeLock]); a tap meanwhile is dropped.
+     */
+    fun textSizeBusy(): Boolean
+
     /** 1.1.10: Exit Pocket XR ([AppExit]): the Space, the services and every screen closed. */
     fun exitApp()
 
@@ -860,6 +868,12 @@ interface PadHost {
     /** 0.5.32: the head cursor's mode ([com.hayeco.flipspaces.core.spatial.HeadCursorMode]), auto hide by default. */
     fun headCursorMode(): com.hayeco.flipspaces.core.spatial.HeadCursorMode
     fun headCursorChosen(mode: com.hayeco.flipspaces.core.spatial.HeadCursorMode)
+
+    /** 1.2.6: the Space is open on the glasses; the Menu leaves out what only acts on it while it isn't. */
+    fun spaceActive(): Boolean = false
+
+    /** 1.2.6: the phone's lock screen is up, so the Menu offers Unlock phone. */
+    fun phoneLocked(): Boolean = false
 
     /** 0.5.43: hand tracking on the NPU (Developer). 1.1.15: applied to the running hands at once. */
     fun npuHandsOn(): Boolean = true
@@ -2017,6 +2031,8 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
      */
     fun openDrawer(atTrackpad: Boolean = false) {
         closePopup()
+        // 1.2.6: Trackpad and controls starts closed; from Settings' Trackpad row it opens.
+        if (atTrackpad) setSectionOpen(TrackpadMenu.Section.TRACKPAD, true)
         buildDrawer()
         drawer.visibility = View.VISIBLE
         drawerScrim.visibility = View.VISIBLE
@@ -2049,12 +2065,33 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         if (drawerOpen) buildDrawer()
     }
 
+    /**
+     * Unreleased (John Davis: no Text size in the Menu after clicking a window): the Menu was built once as it opened, so
+     * a window focused while it was open (a hand pinch, the gaze, a mouse, the Space starting again) never showed in This
+     * window. The trackpad asks every tick; the open Menu is built again when the focused window, its text size, its Side
+     * by side 3D or the window count changed since. 1.2.7: and when the Text size keys go off or come back on.
+     */
+    fun refreshDrawerForFocus() {
+        if (drawerOpen && focusInputs() != builtFor) buildDrawer()
+    }
+
+    /** What the open Menu's This window and Arrange were built from ([refreshDrawerForFocus]). */
+    private var builtFor: Any? = null
+
+    private fun focusInputs(): Any = listOf(host.focusedTextSize(), host.focusedSideBySide(), host.windowCount(), host.textSizeBusy())
+
+    /**
+     * 1.2.6 (Mike: the Menu "has become congested and feels like too much"): built from [TrackpadMenu], which picks the
+     * rows and their order; this only draws them. The wordmark, the Ko-fi pill and the update row, then the quick tiles,
+     * This window, the Space, three sections that start closed, and Exit. docs/design/menu-reorganization.md.
+     */
     private fun buildDrawer() {
         val c = context
+        builtFor = focusInputs()
         drawerBody.removeAllViews()
-        val landscape = landscapeLayout
+        trackpadHeading = null
         // The wordmark: the app's own name at the drawer's top (64 x 14).
-        // 1.1.6 (issue 26: "there's no Developer settings"): the Developer card has its own switch at the Menu's end; the
+        // 1.1.6 (issue 26: "there's no Developer settings"): the Developer card has its own switch in Help and more; the
         // wordmark's hidden long press (0.5.30) is gone.
         drawerBody.addView(c.padText("POCKET XR", 11f, WHITE, bold = true).apply {
             letterSpacing = 0.12f
@@ -2064,323 +2101,431 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         val top = com.hayeco.flipspaces.core.Support.menuTop(BuildConfig.PLAY_BUILD, updateVersion)
         val koFi = com.hayeco.flipspaces.core.Support.MenuTop.KO_FI in top
         if (koFi) drawerBody.addView(supportPill(), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, c.dp(48f)).apply { topMargin = c.dp(20f) })
-        // The function card: Capture, Record and Scan are left out (Pocket XR has none of them).
-        val functions = card()
-        // 1.1.15: a newer Pocket XR, first in the Menu's card until Later.
+        var gap = if (koFi) 12f else 25f
+        // Unreleased (Mike: sideload users into the Play closed test): the testers card, under the Ko-fi pill and over the
+        // update row. Never in the Play build.
+        val testers = com.hayeco.flipspaces.core.PlayTesters.card(BuildConfig.PLAY_BUILD, padPrefs.playTesters, System.currentTimeMillis())
+        if (testers != com.hayeco.flipspaces.core.PlayTesters.Card.HIDDEN) {
+            drawerBody.addView(playTestersCard(testers), cardParams(gap))
+            gap = 12f
+        }
+        // 1.1.15: a newer Pocket XR, in a card of its own until Later.
         updateVersion?.takeIf { com.hayeco.flipspaces.core.Support.MenuTop.UPDATE in top }?.let { v ->
-            functions.addView(row(R.drawable.ic_settings_sliders, com.hayeco.flipspaces.core.UpdateCheck.bannerLine(v), subtitle = "Tap to download it") {
+            val update = card()
+            update.addView(row(R.drawable.ic_settings_sliders, com.hayeco.flipspaces.core.UpdateCheck.bannerLine(v), subtitle = "Tap to download it") {
                 closeDrawer()
                 onUpdate?.invoke()
             }.apply { tag = MENU_UPDATE })
-            functions.addView(c.divider(20f))
+            drawerBody.addView(update, cardParams(gap))
+            gap = 12f
         }
-        // 1.2.3 (issue 50: three finger gestures "don't work" on phones that keep them for screenshots): the Control panel
-        // without a swipe. Your apps are Home, and Back is its own button.
-        functions.addView(row(R.drawable.ic_control_panel, com.hayeco.flipspaces.core.pointer.IntroPages.CONTROL_PANEL_ROW) {
-            closeDrawer()
-            host.openControlPanel()
-        })
-        functions.addView(c.divider(20f))
-        functions.addView(row(R.drawable.ic_back_home, "Go to the phone's home screen") { host.returnHome() })
-        // 0.5.87: the app's settings home (MainActivity), which the app's icon skips for the trackpad (0.5.37). 0.5.103
-        // (Mike: "put Pocket XR Settings back where it was, i dont like it as its own tile"): back in this card.
-        functions.addView(c.divider(20f))
-        functions.addView(row(R.drawable.ic_settings_sliders, "Pocket XR Settings") { host.openSettings() })
-        // 1.2.3 (issue 57): the focused window's text size, remembered for its app.
-        host.focusedTextSize()?.let { (label, percent) ->
-            functions.addView(c.divider(20f))
-            functions.addView(textSizeRow(label, percent))
+        val state = menuState()
+        for ((section, items) in TrackpadMenu.sections(state)) {
+            when (section) {
+                TrackpadMenu.Section.QUICK -> drawerBody.addView(quickTiles(items), cardParams(gap))
+                TrackpadMenu.Section.END -> {
+                    // 1.1.10 (a tester: "an exit app button would be nice, as it stays active in the notification bar"): the
+                    // Menu's last row quits Pocket XR. The tutorial's last page says it is here (IntroPages.EXIT_NOTE).
+                    val exit = card()
+                    exit.addView(row(R.drawable.ic_close, com.hayeco.flipspaces.core.pointer.IntroPages.EXIT_LABEL) {
+                        closeDrawer()
+                        host.exitApp()
+                    })
+                    drawerBody.addView(exit, cardParams(SECTION_GAP).apply { bottomMargin = c.dp(30f) })
+                }
+                else -> {
+                    val open = !section.collapsible || sectionOpen(section)
+                    val header = sectionHeader(section, open)
+                    if (section == TrackpadMenu.Section.TRACKPAD) trackpadHeading = header
+                    drawerBody.addView(header, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(SECTION_GAP - 6f) })
+                    if (open) addSection(items, state)
+                }
+            }
+            gap = SECTION_GAP
         }
-        // 1.1.9 (issue 31): the glasses' own settings the Space needs. 1.1.16 (issue 12): with the head turn check, for
-        // any glasses known (plugged in or last used), at any time.
-        if (host.glassesCheckAvailable()) {
-            functions.addView(c.divider(20f))
-            functions.addView(row(R.drawable.ic_usage_intro, GLASSES_CHECK_ROW, subtitle = "The settings your glasses need, and a 10 second check") {
-                closeDrawer()
-                host.openGlassesCheck()
-            }.apply { tag = MENU_GLASSES_CHECK })
+    }
+
+    /** 1.2.6: what [TrackpadMenu] needs to know, asked of the host each time the Menu is built. */
+    private fun menuState(): TrackpadMenu.State {
+        val sideBySide = host.focusedSideBySide()
+        val air = host.airDisplayOffered()
+        return TrackpadMenu.State(
+            cover = cover,
+            spaceActive = host.spaceActive(),
+            phoneLocked = host.phoneLocked(),
+            steadyOffered = host.steadyOffered(),
+            gameKeysOn = host.gameKeysOn(),
+            recording = host.recordingGlasses(),
+            controllerMode = host.controllerMode(),
+            textSizeShown = host.focusedTextSize() != null,
+            sideBySideShown = sideBySide != null,
+            sideBySideOn = sideBySide?.second == true,
+            windowCount = host.windowCount(),
+            glassesKnown = host.glassesCheckAvailable(),
+            airOffered = air,
+            airOn = air && host.airDisplayOn(),
+            directionApplies = com.hayeco.flipspaces.core.pointer.TrackpadSettings.directionApplies(settings.mode),
+            developerShown = developerShown,
+        )
+    }
+
+    /** 1.2.6: whether a collapsible section is open, kept with the trackpad's preferences under the section's own key. */
+    private fun sectionOpen(section: TrackpadMenu.Section): Boolean =
+        context.getSharedPreferences("trackpad", Context.MODE_PRIVATE).getBoolean(section.key, section.opensByDefault)
+
+    private fun setSectionOpen(section: TrackpadMenu.Section, open: Boolean) =
+        context.getSharedPreferences("trackpad", Context.MODE_PRIVATE).edit().putBoolean(section.key, open).apply()
+
+    /**
+     * 1.2.6: a section's heading, 48 tall at least: the 14 sp title, and while closed a quieter line of what is inside.
+     * A collapsible one has a chevron (down closed, up open) and opens or closes on a tap.
+     */
+    private fun sectionHeader(section: TrackpadMenu.Section, open: Boolean): View {
+        val c = context
+        return LinearLayout(c).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            minimumHeight = c.dp(48f)
+            setPadding(c.dp(4f), c.dp(6f), c.dp(8f), c.dp(6f))
+            val text = LinearLayout(c).apply {
+                orientation = LinearLayout.VERTICAL
+                addView(c.padText(section.title.orEmpty(), 14f, WHITE, bold = true))
+                if (section.collapsible && !open) {
+                    addView(c.padText(section.summary, 12f, TEXT_80), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(3f) })
+                }
+            }
+            addView(text, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            tag = "menu:section:${section.name.lowercase()}"
+            if (section.collapsible) {
+                addView(ImageView(c).apply {
+                    setImageResource(R.drawable.ic_right_arrow)
+                    rotation = if (open) -90f else 90f
+                    alpha = 0.7f
+                }, LinearLayout.LayoutParams(c.dp(8f), c.dp(14f)))
+                contentDescription = "${section.title}, ${if (open) "open" else "closed"}"
+                for (i in 0 until childCount) getChildAt(i).importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                accessibilityDelegate = object : View.AccessibilityDelegate() {
+                    override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                        super.onInitializeAccessibilityNodeInfo(host, info)
+                        info.className = android.widget.Button::class.java.name
+                    }
+                }
+                pressLight(this, 10f)
+                setOnClickListener {
+                    tick(this)
+                    setSectionOpen(section, !open)
+                    buildDrawer()
+                }
+            }
         }
-        // 1.2.3 (issue 58): Side by side 3D for the focused window's app.
-        host.focusedSideBySide()?.let { (label, on) ->
-            functions.addView(c.divider(20f))
-            functions.addView(row(R.drawable.ic_cover_view, "Side by side 3D in $label: ${if (on) "ON" else "OFF"}", tick = on, subtitle = "For a video split into two halves. Each eye sees its half.") {
-                closeDrawer()
-                host.sideBySideChosen(!on)
-            })
+    }
+
+    /**
+     * 1.2.6: a section's rows in cards, a hairline between rows. An item with a [subheading] (Arrange, Window presets,
+     * Game controller, Glasses, Developer) starts a card of its own under a quiet 12 sp line.
+     */
+    private fun addSection(items: List<TrackpadMenu.Item>, state: TrackpadMenu.State) {
+        val c = context
+        var card: LinearLayout? = null
+        for (item in items) {
+            val sub = subheading(item, state)
+            if (card == null || sub != null) {
+                if (sub != null) {
+                    drawerBody.addView(c.padText(sub, 12f, TEXT_99), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                        topMargin = c.dp(if (card == null) 4f else 16f)
+                        marginStart = c.dp(4f)
+                    })
+                }
+                card = card()
+                drawerBody.addView(card, cardParams(if (sub != null) 8f else 2f))
+            }
+            for (v in itemViews(item, state)) {
+                if (card.childCount > 0) card.addView(c.divider(20f))
+                card.addView(v)
+            }
+        }
+    }
+
+    /** 1.2.6: the small line over the items that start their own card, or null. */
+    private fun subheading(item: TrackpadMenu.Item, state: TrackpadMenu.State): String? = when (item) {
+        TrackpadMenu.Item.ARRANGE -> if (state.windowCount == 1) "Arrange 1 window" else "Arrange ${state.windowCount} windows"
+        TrackpadMenu.Item.PRESETS -> "Window presets"
+        TrackpadMenu.Item.GAME_CONTROLLER -> "Games"
+        TrackpadMenu.Item.GLASSES_CHECK -> "Glasses"
+        TrackpadMenu.Item.DEVELOPER_CARD -> "Developer"
+        else -> null
+    }
+
+    /** 1.2.6: the rows that draw [item] below the quick tiles, top down. Each keeps its label, stored key and action. */
+    private fun itemViews(item: TrackpadMenu.Item, state: TrackpadMenu.State): List<View> {
+        val c = context
+        return when (item) {
+            MenuItem.STEADY, MenuItem.POCKET_MODE, MenuItem.GAME_KEYS, MenuItem.CONTROL_CENTER, MenuItem.RECORD, MenuItem.UNLOCK, MenuItem.PHONE_HOME, MenuItem.SETTINGS, MenuItem.EXIT -> emptyList()
+            // 1.2.3 (issue 57): the focused window's text size, remembered for its app.
+            MenuItem.TEXT_SIZE -> host.focusedTextSize()?.let { (label, percent) -> listOf(textSizeRow(label, percent, host.textSizeBusy()).apply { tag = MENU_TEXT_SIZE }) }.orEmpty()
+            // 1.2.3 (issue 58): Side by side 3D for the focused window's app.
+            MenuItem.SIDE_BY_SIDE -> host.focusedSideBySide()?.let { (label, on) ->
+                listOf(row(R.drawable.ic_cover_view, "Side by side 3D in $label: ${if (on) "ON" else "OFF"}", tick = on, subtitle = "For a video split into two halves. Each eye sees its half.") {
+                    closeDrawer()
+                    host.sideBySideChosen(!on)
+                }.apply { tag = MENU_SIDE_BY_SIDE })
+            }.orEmpty()
             // 1.2.3 (issue 58): 2D while moving, offered while the window shows Side by side 3D; off by default.
-            if (on) {
+            MenuItem.SIDE_BY_SIDE_FLAT -> {
                 val flat = host.sideBySideFlatOn()
-                functions.addView(c.divider(20f))
-                functions.addView(row(R.drawable.ic_cover_view, "${com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_ROW}: ${if (flat) "ON" else "OFF"}", tick = flat, subtitle = com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_SUBTITLE) {
+                listOf(row(R.drawable.ic_cover_view, "${com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_ROW}: ${if (flat) "ON" else "OFF"}", tick = flat, subtitle = com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_SUBTITLE) {
                     host.sideBySideFlatChosen(!flat)
                     buildDrawer()
                 })
             }
-        }
-        // 0.5.102 (Mike): the Glasses report moved to Advanced on the settings home.
-        functions.addView(c.divider(20f))
-        // 0.5.99 (Mike: record the glasses as the Aura's puck does): the Space records what the left eye sees.
-        val recordingNow = host.recordingGlasses()
-        functions.addView(row(R.drawable.ic_record, if (recordingNow) "Stop recording the glasses" else "Record the glasses") {
-            closeDrawer()
-            host.recordGlasses(!recordingNow)
-        })
-        // 1.2.3 (issue 54): an Air's display mode, behind a switch that is off by default (untested on Air glasses).
-        if (host.airDisplayOffered()) {
-            val on = host.airDisplayOn()
-            functions.addView(c.divider(20f))
-            functions.addView(row(R.drawable.ic_cover_view, "${com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_ROW}: ${if (on) "ON" else "OFF"}", tick = on, subtitle = com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_SUBTITLE) {
-                host.airDisplayChosen(!on)
-                buildDrawer()
-            })
-            if (on) {
-                val line = host.airDisplayLine()
-                functions.addView(c.divider(20f))
-                functions.addView(row(R.drawable.ic_cover_view, "Glasses display: $line", subtitle = host.airDisplayAction()) {
-                    closeDrawer()
-                    host.airDisplaySwitch()
+            // The tracking mode is in the glasses' Control panel too. 1.2.6: the modes side by side; Space locked (6DoF),
+            // which no glasses have yet, is left out rather than greyed.
+            MenuItem.SPACE_TRACKING -> {
+                val modes = FollowMode.entries.filter { it.available }
+                val now = host.currentFollow()
+                listOf(segmented(R.drawable.ic_follow_mode, "Tracking", modes.map { it.label to it.dof }, modes.indexOf(now)) { i ->
+                    host.followChosen(modes[i])
+                    buildDrawer()
                 })
             }
-        }
-        // 1.2.3 (issue 59): Game keys on the open phone.
-        if (!cover) {
-            val game = host.gameKeysOn()
-            functions.addView(c.divider(20f))
-            functions.addView(row(R.drawable.ic_cover_keyboard, "${com.hayeco.flipspaces.core.pointer.GameKeyLayout.MENU_ROW}: ${if (game) "ON" else "OFF"}", tick = game, subtitle = com.hayeco.flipspaces.core.pointer.GameKeyLayout.MENU_SUBTITLE) {
+            // 1.1.15 (John Davis: a "lock screens" option): Lock screens, also the Lock button by the window keys.
+            MenuItem.LOCK_SCREENS -> {
+                val lockedOn = host.windowsLockedOn()
+                listOf(row(R.drawable.ic_cover_lock, com.hayeco.flipspaces.core.spatial.WindowLock.rowLabel(lockedOn), tick = lockedOn, subtitle = com.hayeco.flipspaces.core.spatial.WindowLock.SUBTITLE) {
+                    host.windowsLockedChosen(!lockedOn)
+                    refreshCover()
+                    buildDrawer()
+                }.apply { tag = LockKey.MENU_TAG })
+            }
+            // 0.5.32 (Mike: more premade Arrange Windows layouts, knowing how many windows are open): the layouts that fit.
+            MenuItem.ARRANGE -> com.hayeco.flipspaces.core.spatial.ArrangeLayouts.forCount(state.windowCount).map { choice ->
+                val icon = if (choice.kind == ArrangeKind.CIRCLE || choice.kind == ArrangeKind.WRAPAROUND) R.drawable.ic_circle_layout else R.drawable.ic_arrange
+                row(icon, choice.label) {
+                    closeDrawer()
+                    host.arrange(choice.kind)
+                }
+            }
+            // 0.5.88 (Mike: "a simple way to do this with trackpad and spatial mouse cursor dot"): every window held together.
+            MenuItem.ADJUST_ALL -> listOf(row(R.drawable.ic_arrange, "Adjust all windows together") {
                 closeDrawer()
-                host.gameKeysChosen(!game)
+                host.arrange(ArrangeKind.ADJUST_ALL)
             })
-            // 1.2.3 (issue 59): the Game controller, cycling Off, Gamepad and Touch; in Touch, its spots.
-            val mode = host.controllerMode()
-            functions.addView(c.divider(20f))
-            val sub = when (mode) {
-                com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF_SUBTITLE
-                com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD -> com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD_SUBTITLE
-                com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH_SUBTITLE
+            // 0.5.37 (Mike: save preset app windows, reopened exactly as they were). 1.2.6: Save shows while windows are open.
+            MenuItem.PRESETS -> {
+                val out = ArrayList<View>()
+                val presets = host.presets()
+                presets.forEach { p ->
+                    out += PresetRow(c, p, onOpen = {
+                        closeDrawer()
+                        host.openPreset(p)
+                    }, onDelete = {
+                        host.deletePreset(p)
+                        buildDrawer()
+                    }, onRename = {
+                        host.renamePreset(p) { buildDrawer() }
+                    })
+                }
+                if (presets.isEmpty()) {
+                    out += c.padText(
+                        if (state.windowCount > 0) "Save the windows you have open, then open them all again with one tap, each where it was."
+                        else "Open some windows, then save them here to open them all again with one tap, each where it was.",
+                        12f, TEXT_99,
+                    ).apply { setPadding(c.dp(20f), c.dp(14f), c.dp(20f), c.dp(14f)) }
+                }
+                if (state.windowCount > 0) out += row(R.drawable.ic_arrange, "Save current windows as a preset") {
+                    host.savePreset()
+                    buildDrawer()
+                }
+                out
             }
-            functions.addView(row(R.drawable.ic_cover_keyboard, "${com.hayeco.flipspaces.core.pointer.GameControllerMode.MENU_ROW}: ${mode.label}", tick = mode != com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF, subtitle = "$sub. Tap for ${mode.next().label}.") {
-                closeDrawer()
-                host.controllerModeChosen(mode.next())
-            })
-            if (mode == com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH) {
-                val setting = host.touchSpotSetting()
-                functions.addView(c.divider(20f))
-                functions.addView(row(R.drawable.ic_cover_keyboard, "Set touch spots: ${if (setting) "ON" else "OFF"}", tick = setting, subtitle = "Aim the dot at the game's own button, then hold the matching control for a second") {
-                    closeDrawer()
-                    host.touchSpotSettingChosen(!setting)
-                })
-                functions.addView(c.divider(20f))
-                functions.addView(row(R.drawable.ic_cover_keyboard, "Clear touch spots for this game") {
-                    closeDrawer()
-                    host.clearTouchSpots()
+            MenuItem.CURSOR_SPEED -> {
+                val speed = speedRow("Cursor Speed", settings.cursorSpeed) { host.speedChanged(it) }
+                speedSlider = (speed as ViewGroup).getChildAt(1) as SpeedSlider
+                listOf(speed)
+            }
+            // 0.5.83 (Mike: "two finger scroll and trackpad scroll speed should be adjustable in settings").
+            MenuItem.SCROLL_SPEED -> listOf(speedRow("Two-finger scroll speed", settings.scrollSpeed) { host.scrollSpeedChanged(it) })
+            MenuItem.STRIP_SPEED -> listOf(speedRow("Scroll strip speed", settings.stripSpeed) { host.stripSpeedChanged(it) })
+            // 1.1.10 (issue 35): one finger scrolls on Spatial Mouse, on by default.
+            MenuItem.ONE_FINGER_SCROLL -> {
+                val oneFinger = settings.oneFingerScroll
+                listOf(row(R.drawable.ic_scroll_right, "One-finger scroll on Spatial Mouse: ${if (oneFinger) "ON" else "OFF"}", tick = oneFinger) {
+                    host.oneFingerScrollChosen(!oneFinger)
+                    buildDrawer()
                 })
             }
-        }
-        // 0.5.17 cover screen: the trackpad runs over the lock screen; this asks for the phone to unlock.
-        functions.addView(c.divider(20f))
-        functions.addView(row(R.drawable.ic_unlock_icon, "Unlock phone") {
-            closeDrawer()
-            host.unlockPhone()
-        })
-        // 1.2.3 (issue 52): the phone in a pocket while the glasses keep running.
-        functions.addView(c.divider(20f))
-        functions.addView(row(R.drawable.ic_cover_lock, com.hayeco.flipspaces.core.pointer.PocketMode.MENU_ROW, subtitle = com.hayeco.flipspaces.core.pointer.PocketMode.MENU_SUBTITLE) {
-            closeDrawer()
-            host.pocketMode()
-        })
-        drawerBody.addView(functions, cardParams(if (koFi) 12f else 25f))
-
-        trackpadHeading = c.padText("Trackpad", 14f, WHITE)
-        drawerBody.addView(trackpadHeading, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(30f) })
-        val s = card()
-        // Cursor Speed.
-        val speed = LinearLayout(c).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, c.dp(20f), 0, c.dp(14f))
-        }
-        speed.addView(LinearLayout(c).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(c.dp(20f), 0, c.dp(20f), 0)
-            addView(c.icon(R.drawable.ic_cursor_speed, 20f))
-            addView(c.padText("Cursor Speed", 14f, TEXT_B3), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = c.dp(8f) })
-        })
-        val slider = SpeedSlider(c) { host.speedChanged(it) }.apply { progress = settings.cursorSpeed }
-        speedSlider = slider
-        speed.addView(slider, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, c.dp(40f)).apply { topMargin = c.dp(6f) })
-        speed.addView(LinearLayout(c).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setPadding(c.dp(20f), 0, c.dp(20f), 0)
-            addView(c.padText("Slow", 12f, TEXT_B3), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            addView(c.padText("Fast", 12f, TEXT_B3))
-        })
-        s.addView(speed)
-        // 0.5.83 (Mike: "two finger scroll and trackpad scroll speed should be adjustable in settings"): the same slider for each.
-        s.addView(c.divider(20f))
-        s.addView(speedRow("Two-finger scroll speed", settings.scrollSpeed) { host.scrollSpeedChanged(it) })
-        s.addView(c.divider(20f))
-        s.addView(speedRow("Scroll strip speed", settings.stripSpeed) { host.stripSpeedChanged(it) })
-        // 1.1.10 (issue 35): one finger scrolls on Spatial Mouse, on by default.
-        s.addView(c.divider(20f))
-        val oneFinger = settings.oneFingerScroll
-        s.addView(row(R.drawable.ic_scroll_right, "One-finger scroll on Spatial Mouse: ${if (oneFinger) "ON" else "OFF"}", tick = oneFinger) {
-            host.oneFingerScrollChosen(!oneFinger)
-            buildDrawer()
-        })
-        // 0.5.21: the thin scroll strip's side, on every main screen page (the old wide strip's side
-        // choice, now for the thin strip); the cover's strip goes opposite its window buttons.
-        if (!cover) {
-            s.addView(c.divider(20f))
-            s.addView(choice(
+            // 0.5.21: the thin scroll strip's side on the main screen.
+            MenuItem.STRIP_SIDE -> listOf(choice(
                 "Scroll strip",
                 listOf(Triple(R.drawable.ic_scroll_left, "Left side", settings.stripSide == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, "Right side", settings.stripSide == StripSide.RIGHT)),
                 24f, 41f,
             ) { i -> host.stripChosen(if (i == 0) StripSide.LEFT else StripSide.RIGHT) })
-        }
-        // 0.5.17 cover screen: which side the window buttons are on, for the thumb in use.
-        if (cover) {
-            s.addView(c.divider(20f))
-            s.addView(choice(
+            // 0.5.17 cover screen: which side the window buttons are on, for the thumb in use.
+            MenuItem.COVER_BUTTONS_SIDE -> listOf(choice(
                 "Window buttons on the cover screen",
                 listOf(Triple(R.drawable.ic_scroll_left, "Left side", settings.coverControls == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, "Right side", settings.coverControls == StripSide.RIGHT)),
                 24f, 41f,
             ) { i -> host.coverControlsChosen(if (i == 0) StripSide.LEFT else StripSide.RIGHT) })
-            // 0.5.41 (Mike: "the scroll bar on the trackpad should be able to be switched to the right side"): on the cover
-            // the strip is opposite the window buttons, so choosing its side moves the buttons to the other one.
-            val stripNow = com.hayeco.flipspaces.core.pointer.ScrollStrip.coverSide(settings.coverControls)
-            s.addView(c.divider(20f))
-            s.addView(choice(
-                "Scroll strip on the cover screen",
-                listOf(Triple(R.drawable.ic_scroll_left, "Left side", stripNow == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, "Right side", stripNow == StripSide.RIGHT)),
-                24f, 41f,
-            ) { i -> host.coverControlsChosen(if (i == 0) StripSide.RIGHT else StripSide.LEFT) })
-        }
-        // Horizontal Trackpad Direction (not on the cover screen, whose layout has no direction). 1.2.3 (issue 56): only on
-        // the Horizontal Trackpad, the one page it turns; elsewhere the choice did nothing.
-        if (!cover && com.hayeco.flipspaces.core.pointer.TrackpadSettings.directionApplies(settings.mode)) {
-            s.addView(c.divider(20f))
-            s.addView(choice(
+            // 0.5.41: on the cover the strip is opposite the window buttons, so choosing its side moves the buttons.
+            MenuItem.COVER_STRIP_SIDE -> {
+                val stripNow = com.hayeco.flipspaces.core.pointer.ScrollStrip.coverSide(settings.coverControls)
+                listOf(choice(
+                    "Scroll strip on the cover screen",
+                    listOf(Triple(R.drawable.ic_scroll_left, "Left side", stripNow == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, "Right side", stripNow == StripSide.RIGHT)),
+                    24f, 41f,
+                ) { i -> host.coverControlsChosen(if (i == 0) StripSide.RIGHT else StripSide.LEFT) })
+            }
+            // 1.2.3 (issue 56): only on the Horizontal Trackpad, the one page it turns.
+            MenuItem.SIDEWAYS_DIRECTION -> listOf(choice(
                 "Sideways trackpad direction",
                 listOf(Triple(R.drawable.svg_orientation_default, "Default", settings.direction == PadDirection.DEFAULT), Triple(R.drawable.svg_orientation_flip, "Inverted", settings.direction == PadDirection.INVERTED)),
                 60f, 60f,
             ) { i -> host.directionChosen(if (i == 0) PadDirection.DEFAULT else PadDirection.INVERTED) })
-        }
-        // 0.5.37 (Mike: the Cursor follows head toggle in the Menu, not on the trackpad).
-        s.addView(c.divider(20f))
-        val follows = host.cursorFollowsHeadOn()
-        s.addView(row(R.drawable.ic_cursor_speed, "Cursor follows head: ${if (follows) "ON" else "OFF"}", tick = follows) {
-            host.cursorFollowsHeadChosen(!follows)
-            buildDrawer()
-        })
-        // 0.5.51 (Mike: the cover screen never goes dark): off lets the phone's screen sleep while the glasses are used.
-        s.addView(c.divider(20f))
-        val keeps = host.keepsScreenOnOn()
-        s.addView(row(R.drawable.ic_usage_intro, "Trackpad keeps screen on: ${if (keeps) "ON" else "OFF"}", tick = keeps) {
-            host.keepsScreenOnChosen(!keeps)
-            buildDrawer()
-        })
-        // 0.5.58: "Glasses set the frame clock (test)" is on the Developer card only now, measured
-        // worse three times.
-        s.addView(c.divider(20f))
-        s.addView(row(R.drawable.ic_usage_intro, "How to use the trackpad") {
-            closeDrawer()
-            showIntro(host.introPages())
-        })
-        drawerBody.addView(s, cardParams(12f))
-
-        // The tracking mode and layouts are in the glasses' Control panel (a three finger swipe down);
-        // they are here too, so they can be reached without a gesture.
-        drawerBody.addView(c.padText("Space", 14f, WHITE), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(30f) })
-        val space = card()
-        FollowMode.entries.forEachIndexed { i, m ->
-            if (i > 0) space.addView(c.divider(20f))
-            val selected = host.currentFollow() == m
-            space.addView(row(R.drawable.ic_follow_mode, "${m.label} (${m.dof})", tick = selected, enabled = m.available) {
-                host.followChosen(m)
+            // 0.5.37 (Mike: the Cursor follows head toggle in the Menu, not on the trackpad).
+            MenuItem.CURSOR_FOLLOWS_HEAD -> {
+                val follows = host.cursorFollowsHeadOn()
+                listOf(row(R.drawable.ic_cursor_speed, "Cursor follows head: ${if (follows) "ON" else "OFF"}", tick = follows) {
+                    host.cursorFollowsHeadChosen(!follows)
+                    buildDrawer()
+                })
+            }
+            // 0.5.51 (Mike: the cover screen never goes dark): off lets the phone's screen sleep while the glasses are used.
+            MenuItem.KEEPS_SCREEN_ON -> {
+                val keeps = host.keepsScreenOnOn()
+                listOf(row(R.drawable.ic_usage_intro, "Trackpad keeps screen on: ${if (keeps) "ON" else "OFF"}", tick = keeps) {
+                    host.keepsScreenOnChosen(!keeps)
+                    buildDrawer()
+                })
+            }
+            // 1.2.3 (issue 59): the Game controller, cycling Off, Gamepad and Touch.
+            MenuItem.GAME_CONTROLLER -> {
+                val mode = host.controllerMode()
+                val sub = when (mode) {
+                    com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF_SUBTITLE
+                    com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD -> com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD_SUBTITLE
+                    com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH_SUBTITLE
+                }
+                listOf(row(R.drawable.ic_cover_keyboard, "${com.hayeco.flipspaces.core.pointer.GameControllerMode.MENU_ROW}: ${mode.label}", tick = mode != com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF, subtitle = "$sub. Tap for ${mode.next().label}.") {
+                    closeDrawer()
+                    host.controllerModeChosen(mode.next())
+                })
+            }
+            // 1.2.3 (issue 59): in Touch, its spots.
+            MenuItem.TOUCH_SPOTS -> {
+                val setting = host.touchSpotSetting()
+                listOf(row(R.drawable.ic_cover_keyboard, "Set touch spots: ${if (setting) "ON" else "OFF"}", tick = setting, subtitle = "Aim the dot at the game's own button, then hold the matching control for a second") {
+                    closeDrawer()
+                    host.touchSpotSettingChosen(!setting)
+                })
+            }
+            MenuItem.CLEAR_TOUCH_SPOTS -> listOf(row(R.drawable.ic_cover_keyboard, "Clear touch spots for this game") {
+                closeDrawer()
+                host.clearTouchSpots()
+            })
+            // 0.5.37 (Mike: a setting for window snapping; the "Open a new instance" switch in the Menu).
+            MenuItem.SNAP_WINDOWS -> {
+                val snapOn = host.snapWindowsOn()
+                listOf(row(R.drawable.ic_arrange, "Snap windows: ${if (snapOn) "ON" else "OFF"}", tick = snapOn) {
+                    host.snapWindowsChosen(!snapOn)
+                    buildDrawer()
+                })
+            }
+            MenuItem.NEW_INSTANCE -> {
+                val newOn = host.newInstanceOn()
+                listOf(row(R.drawable.ic_arrange, "${com.hayeco.flipspaces.core.spatial.NewInstanceSwitch.LABEL}: ${if (newOn) "ON" else "OFF"}", tick = newOn, subtitle = com.hayeco.flipspaces.core.spatial.NewInstanceSwitch.SUBTITLE) {
+                    host.newInstanceChosen(!newOn)
+                    buildDrawer()
+                })
+            }
+            // 0.5.36 (Mike: one slider instead of four curve choices): the curve new windows open with, 0 to 100 % of the
+            // strongest ([com.hayeco.flipspaces.core.spatial.PanelCurve.MAX]).
+            MenuItem.NEW_WINDOWS_CURVE -> listOf(curveRow())
+            // 1.1.9 (issue 31), 1.1.16 (issue 12): the glasses' own settings the Space needs, with the head turn check.
+            MenuItem.GLASSES_CHECK -> listOf(row(R.drawable.ic_usage_intro, GLASSES_CHECK_ROW, subtitle = "The settings your glasses need, and a 10 second check") {
+                closeDrawer()
+                host.openGlassesCheck()
+            }.apply { tag = MENU_GLASSES_CHECK })
+            // 1.2.3 (issue 54): an Air's display mode, behind a switch that is off by default (untested on Air glasses).
+            MenuItem.AIR_DISPLAY -> {
+                val on = host.airDisplayOn()
+                listOf(row(R.drawable.ic_cover_view, "${com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_ROW}: ${if (on) "ON" else "OFF"}", tick = on, subtitle = com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_SUBTITLE) {
+                    host.airDisplayChosen(!on)
+                    buildDrawer()
+                })
+            }
+            MenuItem.AIR_DISPLAY_MODE -> listOf(row(R.drawable.ic_cover_view, "Glasses display: ${host.airDisplayLine()}", subtitle = host.airDisplayAction()) {
+                closeDrawer()
+                host.airDisplaySwitch()
+            })
+            MenuItem.HOW_TO -> listOf(row(R.drawable.ic_usage_intro, "How to use the trackpad") {
+                closeDrawer()
+                showIntro(host.introPages())
+            })
+            // 0.5.101 (Mike: each settings screen needs "a way to reset to Pocket XR default settings"): asks first.
+            MenuItem.RESET -> listOf(row(R.drawable.ic_follow_mode, "Reset these settings to Pocket XR defaults") {
+                android.app.AlertDialog.Builder(c, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle("Reset trackpad settings?")
+                    .setMessage(
+                        "Cursor, scroll and strip speeds, the strip's side, the sideways direction, cursor follows head, " +
+                            "keep screen on, the tracking mode, snap windows, new instances and the new windows' curve go back to " +
+                            "Pocket XR's defaults. The trackpad type, your windows and presets stay.",
+                    )
+                    .setPositiveButton("Reset") { _, _ ->
+                        host.resetSettings()
+                        buildDrawer()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            })
+            // 0.5.30, 1.1.6: the Developer card, shown by its own switch, remembered.
+            MenuItem.DEVELOPER -> listOf(row(R.drawable.ic_follow_mode, "Developer settings: ${if (developerShown) "ON" else "OFF"}", tick = developerShown) {
+                developerShown = !developerShown
                 buildDrawer()
             })
+            MenuItem.DEVELOPER_CARD -> developerRows()
         }
-        // 1.1.15 (John Davis: a "lock screens" option): Lock screens, also the Lock button by the window keys.
-        space.addView(c.divider(20f))
-        val lockedOn = host.windowsLockedOn()
-        space.addView(row(R.drawable.ic_cover_lock, com.hayeco.flipspaces.core.spatial.WindowLock.rowLabel(lockedOn), tick = lockedOn, subtitle = com.hayeco.flipspaces.core.spatial.WindowLock.SUBTITLE) {
-            host.windowsLockedChosen(!lockedOn)
-            refreshCover()
-            buildDrawer()
-        }.apply { tag = LockKey.MENU_TAG })
-        // 0.5.37 (Mike: a setting for window snapping; the "Open a new instance" switch in the Menu). 1.1.10: its subtitle
-        // says what it is for, as a window whose app moved away names it.
-        space.addView(c.divider(20f))
-        val snapOn = host.snapWindowsOn()
-        space.addView(row(R.drawable.ic_arrange, "Snap windows: ${if (snapOn) "ON" else "OFF"}", tick = snapOn) {
-            host.snapWindowsChosen(!snapOn)
-            buildDrawer()
-        })
-        space.addView(c.divider(20f))
-        val newOn = host.newInstanceOn()
-        space.addView(row(R.drawable.ic_arrange, "${com.hayeco.flipspaces.core.spatial.NewInstanceSwitch.LABEL}: ${if (newOn) "ON" else "OFF"}", tick = newOn, subtitle = com.hayeco.flipspaces.core.spatial.NewInstanceSwitch.SUBTITLE) {
-            host.newInstanceChosen(!newOn)
-            buildDrawer()
-        })
-        drawerBody.addView(space, cardParams(12f))
+    }
 
-        // 0.5.32 (Mike: more premade Arrange Windows layouts, knowing how many windows are open): the layouts that fit
-        // the windows open now, in a card of their own under a heading with the count.
-        val count = host.windowCount()
-        drawerBody.addView(c.padText(if (count == 1) "Arrange 1 window" else "Arrange $count windows", 14f, WHITE), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(30f) })
-        val arrangeCard = card()
-        val choices = com.hayeco.flipspaces.core.spatial.ArrangeLayouts.forCount(count)
-        if (choices.isEmpty()) arrangeCard.addView(row(R.drawable.ic_arrange, "Open a window first", enabled = false) {})
-        choices.forEachIndexed { i, choice ->
-            if (i > 0) arrangeCard.addView(c.divider(20f))
-            val icon = if (choice.kind == ArrangeKind.CIRCLE || choice.kind == ArrangeKind.WRAPAROUND) R.drawable.ic_circle_layout else R.drawable.ic_arrange
-            arrangeCard.addView(row(icon, choice.label) {
-                closeDrawer()
-                host.arrange(choice.kind)
-            })
-        }
-        // 0.5.88 (Mike: "a simple way to do this with trackpad and spatial mouse cursor dot"): every window held together,
-        // to push, pull, resize and turn as one with the held window's own gestures.
-        if (count > 0) {
-            arrangeCard.addView(c.divider(20f))
-            arrangeCard.addView(row(R.drawable.ic_arrange, "Adjust all windows together") {
-                closeDrawer()
-                host.arrange(ArrangeKind.ADJUST_ALL)
-            })
-        }
-        drawerBody.addView(arrangeCard, cardParams(12f))
-
-        // 0.5.37 (Mike: save preset app windows, reopened exactly as they were): each preset with a drawing of its windows
-        // around the head; a tap opens it (the windows now close), the mark deletes it; Save keeps the windows open now.
-        drawerBody.addView(c.padText("Window presets", 14f, WHITE), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(30f) })
-        val presetCard = card()
-        val presets = host.presets()
-        presets.forEach { p ->
-            presetCard.addView(PresetRow(c, p, onOpen = {
-                closeDrawer()
-                host.openPreset(p)
-            }, onDelete = {
-                host.deletePreset(p)
+    /** 0.5.30 onward: the Developer card's switches, each an A/B or a test. */
+    private fun developerRows(): List<View> {
+        val c = context
+        val out = ArrayList<View>()
+        fun switch(label: String, on: Boolean, chosen: (Boolean) -> Unit) {
+            out += row(R.drawable.ic_follow_mode, "$label: ${if (on) "ON" else "OFF"}", tick = on) {
+                chosen(!on)
                 buildDrawer()
-            }, onRename = {
-                host.renamePreset(p) { buildDrawer() }
-            }))
-            presetCard.addView(c.divider(20f))
+            }
         }
-        if (presets.isEmpty()) {
-            presetCard.addView(c.padText("Save the windows you have open, then open them all again with one tap, each where it was.", 12f, TEXT_99).apply { setPadding(c.dp(20f), c.dp(14f), c.dp(20f), c.dp(6f)) })
-        }
-        presetCard.addView(row(R.drawable.ic_arrange, if (count == 0) "Save current windows (open some first)" else "Save current windows as a preset", enabled = count > 0) {
-            host.savePreset()
+        switch("Debug info panel", host.debugInfoOn()) { host.debugInfoChosen(it) }
+        // 0.5.32: the still head's lock, on by default; off for an A/B against 0.5.31's tremor.
+        switch("Still lock", host.stillLockOn()) { host.stillLockChosen(it) }
+        // 0.5.64: the drawn orientation's One Euro filter, on by default; off for an A/B.
+        switch("Draw smoothing", host.drawSmoothingOn()) { host.drawSmoothingChosen(it) }
+        // 0.5.65: the glasses switched to the Space's view at plug-in, on by default.
+        switch("Switch the glasses' 3D / 2D", host.autoGlassesViewOn()) { host.autoGlassesViewChosen(it) }
+        // 0.5.65: the glasses' factory calibration in the head tracking, on by default; off for an A/B.
+        switch("Factory calibration", host.factoryCalibrationOn()) { host.factoryCalibrationChosen(it) }
+        // 0.5.43: the hand models on the Exynos 2500's NPU, MediaPipe behind them.
+        switch("Hands on the NPU", host.npuHandsOn()) { host.npuHandsChosen(it) }
+        // 0.5.52: window displays on a virtual device, in a display group of their own (applies to windows opened after).
+        switch("Windows stay awake when the phone sleeps (test)", host.deviceWindowsOn()) { host.deviceWindowsChosen(it) }
+        // 0.5.55: off draws the trackpad in its window again, scaled by SurfaceFlinger on the cover.
+        switch("Trackpad at the screen's own pixels", host.nativeBufferOn()) { host.nativeBufferChosen(it) }
+        // 0.5.54: the glasses set the Space's frame clock (sfdo force-pacesetter). 0.5.58: OFF gives the phone its clock
+        // back and checks it, and the last outcome shows under it.
+        val clock = host.frameClockOn()
+        val clockNote = host.frameClockUnavailable()?.let { " ($it, so it can't run)" } ?: ""
+        out += row(R.drawable.ic_follow_mode, "Glasses set the frame clock (test): ${if (clock) "ON" else "OFF"}$clockNote", tick = clock) {
+            host.frameClockChosen(!clock)
             buildDrawer()
-        })
-        drawerBody.addView(presetCard, cardParams(12f))
+        }
+        host.frameClockState()?.let { out += c.padText(it, 12f, WHITE).apply { setPadding(c.dp(20f), c.dp(8f), c.dp(20f), c.dp(12f)) } }
+        return out
+    }
 
-        // 0.5.36 (Mike: one slider instead of four curve choices; Curve and depth on the selected window only): the curve new
-        // windows open with, 0 to 100 % of the strongest ([com.hayeco.flipspaces.core.spatial.PanelCurve.MAX]). The
-        // wraparound is gone: it made Curve and Further/Closer act on every window at once.
-        drawerBody.addView(c.padText("Window curve", 14f, WHITE), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(30f) })
-        val curve = card()
+    /** 0.5.36: the new windows' curve slider, Flat to Strong. */
+    private fun curveRow(): View {
+        val c = context
         val curveBox = LinearLayout(c).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, c.dp(20f), 0, c.dp(14f))
@@ -2404,108 +2549,173 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             addView(c.padText("Flat", 12f, TEXT_B3), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             addView(c.padText("Strong", 12f, TEXT_B3))
         })
-        curve.addView(curveBox)
-        drawerBody.addView(curve, cardParams(12f))
+        return curveBox
+    }
 
-        // 0.5.101 (Mike: each settings screen needs "a way to reset to Pocket XR default settings"): asks first.
-        val reset = card()
-        reset.addView(row(R.drawable.ic_follow_mode, "Reset these settings to Pocket XR defaults") {
-            android.app.AlertDialog.Builder(c, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle("Reset trackpad settings?")
-                .setMessage(
-                    "Cursor, scroll and strip speeds, the strip's side, the sideways direction, cursor follows head, " +
-                        "keep screen on, the tracking mode, snap windows, new instances and the new windows' curve go back to " +
-                        "Pocket XR's defaults. The trackpad type, your windows and presets stay.",
-                )
-                .setPositiveButton("Reset") { _, _ ->
-                    host.resetSettings()
-                    buildDrawer()
+    /**
+     * 1.2.6: the quick tiles, [TrackpadMenu.TILES_ACROSS] to a row: what a session uses most, one tap each. A switch's
+     * tile is lit in the accent while on.
+     */
+    private fun quickTiles(items: List<TrackpadMenu.Item>): View {
+        val c = context
+        val grid = LinearLayout(c).apply { orientation = LinearLayout.VERTICAL }
+        val tiles = items.map { item ->
+            when (item) {
+                MenuItem.STEADY -> {
+                    val on = host.steadyOn()
+                    tile(item, R.drawable.ic_cover_steady, "Steady mode", on, "Steady mode") {
+                        host.coverButton(CoverButton.STEADY, true)
+                        host.coverButton(CoverButton.STEADY, false)
+                        postDelayed({ refreshDrawer() }, QUICK_REFRESH_MS)
+                    }
                 }
-                .setNegativeButton("Cancel", null)
-                .show()
-        })
-        drawerBody.addView(reset, cardParams(30f))
-
-        // 0.5.66 (Mike: remove the edge fade and the glasses test card settings): their Menu cards are gone. The test card
-        // is off at every start; the edge fade keeps its saved mode.
-
-        // 0.5.30 (Mike: remove the grey debug block at the bottom of the view): the Space's debug info panel is off
-        // by default and only here, in the Developer card. 1.1.6: shown by its own switch, remembered.
-        val devToggle = card()
-        devToggle.addView(row(R.drawable.ic_follow_mode, "Developer settings: ${if (developerShown) "ON" else "OFF"}", tick = developerShown) {
-            developerShown = !developerShown
-            buildDrawer()
-        })
-        drawerBody.addView(devToggle, cardParams(30f))
-        if (developerShown) {
-            drawerBody.addView(c.padText("Developer", 14f, WHITE), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(30f) })
-            val dev = card()
-            val infoOn = host.debugInfoOn()
-            dev.addView(row(R.drawable.ic_follow_mode, "Debug info panel: ${if (infoOn) "ON" else "OFF"}", tick = infoOn) {
-                host.debugInfoChosen(!infoOn)
-                buildDrawer()
-            })
-            // 0.5.32: the still head's lock, on by default; off for an A/B against 0.5.31's tremor.
-            val lockOn = host.stillLockOn()
-            dev.addView(row(R.drawable.ic_follow_mode, "Still lock: ${if (lockOn) "ON" else "OFF"}", tick = lockOn) {
-                host.stillLockChosen(!lockOn)
-                buildDrawer()
-            })
-            // 0.5.64: the drawn orientation's One Euro filter, on by default; off for an A/B.
-            val smoothOn = host.drawSmoothingOn()
-            dev.addView(row(R.drawable.ic_follow_mode, "Draw smoothing: ${if (smoothOn) "ON" else "OFF"}", tick = smoothOn) {
-                host.drawSmoothingChosen(!smoothOn)
-                buildDrawer()
-            })
-            // 0.5.65: the glasses switched to the Space's view at plug-in, on by default.
-            val autoViewOn = host.autoGlassesViewOn()
-            dev.addView(row(R.drawable.ic_follow_mode, "Switch the glasses' 3D / 2D: ${if (autoViewOn) "ON" else "OFF"}", tick = autoViewOn) {
-                host.autoGlassesViewChosen(!autoViewOn)
-                buildDrawer()
-            })
-            // 0.5.65: the glasses' factory calibration in the head tracking, on by default; off for an A/B.
-            val factoryOn = host.factoryCalibrationOn()
-            dev.addView(row(R.drawable.ic_follow_mode, "Factory calibration: ${if (factoryOn) "ON" else "OFF"}", tick = factoryOn) {
-                host.factoryCalibrationChosen(!factoryOn)
-                buildDrawer()
-            })
-            // 0.5.43: the hand models on the Exynos 2500's NPU, MediaPipe behind them.
-            val npuOn = host.npuHandsOn()
-            dev.addView(row(R.drawable.ic_follow_mode, "Hands on the NPU: ${if (npuOn) "ON" else "OFF"}", tick = npuOn) {
-                host.npuHandsChosen(!npuOn)
-                buildDrawer()
-            })
-            // 0.5.52: window displays on a virtual device, in a display group of their own (applies to windows opened after).
-            val devOn = host.deviceWindowsOn()
-            dev.addView(row(R.drawable.ic_follow_mode, "Windows stay awake when the phone sleeps (test): ${if (devOn) "ON" else "OFF"}", tick = devOn) {
-                host.deviceWindowsChosen(!devOn)
-                buildDrawer()
-            })
-            // 0.5.55: off draws the trackpad in its window again, scaled by SurfaceFlinger on the cover.
-            val nativeOn = host.nativeBufferOn()
-            dev.addView(row(R.drawable.ic_follow_mode, "Trackpad at the screen's own pixels: ${if (nativeOn) "ON" else "OFF"}", tick = nativeOn) {
-                host.nativeBufferChosen(!nativeOn)
-                buildDrawer()
-            })
-            // 0.5.54: the glasses set the Space's frame clock (sfdo force-pacesetter). 0.5.58: here,
-            // not in the Menu; OFF gives the phone its clock back and checks it, and the last outcome shows under it.
-            val clock = host.frameClockOn()
-            val clockNote = host.frameClockUnavailable()?.let { " ($it, so it can't run)" } ?: ""
-            dev.addView(row(R.drawable.ic_follow_mode, "Glasses set the frame clock (test): ${if (clock) "ON" else "OFF"}$clockNote", tick = clock) {
-                host.frameClockChosen(!clock)
-                buildDrawer()
-            })
-            host.frameClockState()?.let { dev.addView(c.padText(it, 12f, WHITE)) }
-            drawerBody.addView(dev, cardParams(12f))
+                MenuItem.POCKET_MODE -> tile(item, R.drawable.ic_cover_lock, com.hayeco.flipspaces.core.pointer.PocketMode.MENU_ROW, null, "${com.hayeco.flipspaces.core.pointer.PocketMode.MENU_ROW}. ${com.hayeco.flipspaces.core.pointer.PocketMode.MENU_SUBTITLE}") {
+                    closeDrawer()
+                    host.pocketMode()
+                }
+                // 1.2.3 (issue 59): Game keys on the open phone.
+                MenuItem.GAME_KEYS -> {
+                    val game = host.gameKeysOn()
+                    tile(item, R.drawable.ic_cover_keyboard, com.hayeco.flipspaces.core.pointer.GameKeyLayout.MENU_ROW, game, "${com.hayeco.flipspaces.core.pointer.GameKeyLayout.MENU_ROW}. ${com.hayeco.flipspaces.core.pointer.GameKeyLayout.MENU_SUBTITLE}") {
+                        closeDrawer()
+                        host.gameKeysChosen(!game)
+                    }
+                }
+                // 1.2.3 (issue 50): the Control panel without a swipe.
+                MenuItem.CONTROL_CENTER -> tile(item, R.drawable.ic_control_panel, com.hayeco.flipspaces.core.pointer.IntroPages.CONTROL_PANEL_ROW, null, com.hayeco.flipspaces.core.pointer.IntroPages.CONTROL_PANEL_ROW) {
+                    closeDrawer()
+                    host.openControlPanel()
+                }
+                // 0.5.99 (Mike: record the glasses as the Aura's puck does): the Space records what the left eye sees.
+                MenuItem.RECORD -> {
+                    val recordingNow = host.recordingGlasses()
+                    tile(item, R.drawable.ic_record, if (recordingNow) "Stop recording" else "Record", recordingNow, if (recordingNow) "Stop recording the glasses" else "Record the glasses") {
+                        closeDrawer()
+                        host.recordGlasses(!recordingNow)
+                    }
+                }
+                // 0.5.17 cover screen: the trackpad runs over the lock screen; this asks for the phone to unlock.
+                MenuItem.UNLOCK -> tile(item, R.drawable.ic_unlock_icon, "Unlock phone", null, "Unlock phone") {
+                    closeDrawer()
+                    host.unlockPhone()
+                }
+                MenuItem.PHONE_HOME -> tile(item, R.drawable.ic_back_home, "Phone home", null, "Go to the phone's home screen") { host.returnHome() }
+                // 0.5.87, 0.5.103: the app's settings home.
+                MenuItem.SETTINGS -> tile(item, R.drawable.ic_settings_sliders, "Pocket XR Settings", null, "Pocket XR Settings") { host.openSettings() }
+                else -> null
+            }
+        }.filterNotNull()
+        val across = TrackpadMenu.TILES_ACROSS
+        tiles.chunked(across).forEachIndexed { r, rowTiles ->
+            val line = LinearLayout(c).apply { orientation = LinearLayout.HORIZONTAL }
+            for (i in 0 until across) {
+                val v = rowTiles.getOrNull(i) ?: android.widget.Space(c)
+                line.addView(v, LinearLayout.LayoutParams(0, c.dp(QUICK_TILE_DP), 1f).apply { if (i > 0) marginStart = c.dp(8f) })
+            }
+            grid.addView(line, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { if (r > 0) topMargin = c.dp(8f) })
         }
-        // 1.1.10 (a tester: "an exit app button would be nice, as it stays active in the notification bar"): the Menu's
-        // last row quits Pocket XR. The tutorial's last page says it is here (IntroPages.EXIT_NOTE).
-        val exit = card()
-        exit.addView(row(R.drawable.ic_close, com.hayeco.flipspaces.core.pointer.IntroPages.EXIT_LABEL) {
-            closeDrawer()
-            host.exitApp()
-        })
-        drawerBody.addView(exit, cardParams(30f).apply { bottomMargin = c.dp(30f) })
+        return grid
+    }
+
+    /**
+     * 1.2.6: one quick tile: a 22 icon over an 11 sp label of two lines at most, the cards' fill and rim, or the accent's
+     * faint fill and rim while [on]. TalkBack reads [description] as one button, or a switch with its state.
+     */
+    private fun tile(item: TrackpadMenu.Item, iconRes: Int, label: String, on: Boolean?, description: String, onClick: () -> Unit): View {
+        val c = context
+        val lit = on == true
+        return LinearLayout(c).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(c.dp(4f), c.dp(8f), c.dp(4f), c.dp(6f))
+            background = GradientDrawable().apply {
+                cornerRadius = c.dpf(14f)
+                setColor(if (lit) com.hayeco.flipspaces.core.Support.FILL else com.hayeco.flipspaces.core.Look.CARD)
+                setStroke(c.dp(1f), if (lit) com.hayeco.flipspaces.core.Look.alpha(com.hayeco.flipspaces.core.Look.ACCENT, 0.6f) else com.hayeco.flipspaces.core.Look.RIM)
+            }
+            addView(c.icon(iconRes, 22f).apply { if (lit) setColorFilter(com.hayeco.flipspaces.core.Look.ACCENT) })
+            addView(c.padText(label, 11f, if (lit) WHITE else TEXT_B3).apply {
+                gravity = Gravity.CENTER
+                maxLines = 2
+                ellipsize = android.text.TextUtils.TruncateAt.END
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(6f) })
+            contentDescription = description
+            for (i in 0 until childCount) getChildAt(i).importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            accessibilityDelegate = object : View.AccessibilityDelegate() {
+                override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                    super.onInitializeAccessibilityNodeInfo(host, info)
+                    if (on == null) {
+                        info.className = android.widget.Button::class.java.name
+                    } else {
+                        info.className = android.widget.Switch::class.java.name
+                        info.isCheckable = true
+                        @Suppress("DEPRECATION")
+                        info.isChecked = on
+                    }
+                }
+            }
+            tag = "$MENU_TILE${item.name.lowercase()}"
+            pressLight(this, 14f)
+            setOnClickListener {
+                tick(this)
+                onClick()
+            }
+        }
+    }
+
+    /**
+     * 1.2.6: a titled row of side by side choices, the chosen one in the accent's faint fill and rim (the tracking mode:
+     * its name over its DoF).
+     */
+    private fun segmented(iconRes: Int, title: String, options: List<Pair<String, String>>, selected: Int, onPick: (Int) -> Unit): View {
+        val c = context
+        return LinearLayout(c).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(c.dp(20f), c.dp(16f), c.dp(20f), c.dp(16f))
+            addView(LinearLayout(c).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(c.icon(iconRes, 20f))
+                addView(c.padText(title, 14f, TEXT_B3), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = c.dp(10f) })
+            })
+            val buttons = LinearLayout(c).apply { orientation = LinearLayout.HORIZONTAL }
+            options.forEachIndexed { i, (label, small) ->
+                val chosen = i == selected
+                buttons.addView(LinearLayout(c).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER
+                    setPadding(c.dp(6f), c.dp(8f), c.dp(6f), c.dp(8f))
+                    background = GradientDrawable().apply {
+                        cornerRadius = c.dpf(10f)
+                        setColor(if (chosen) com.hayeco.flipspaces.core.Support.FILL else 0x0DFFFFFF)
+                        if (chosen) setStroke(c.dp(1f), com.hayeco.flipspaces.core.Look.alpha(com.hayeco.flipspaces.core.Look.ACCENT, 0.6f))
+                    }
+                    addView(c.padText(label, 13f, if (chosen) WHITE else TEXT_B3).apply { gravity = Gravity.CENTER })
+                    addView(c.padText(small, 11f, if (chosen) com.hayeco.flipspaces.core.Look.ACCENT else TEXT_80).apply { gravity = Gravity.CENTER },
+                        LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(2f) })
+                    contentDescription = "$label ($small)"
+                    for (k in 0 until childCount) getChildAt(k).importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+                    accessibilityDelegate = object : View.AccessibilityDelegate() {
+                        override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
+                            super.onInitializeAccessibilityNodeInfo(host, info)
+                            info.className = android.widget.RadioButton::class.java.name
+                            info.isCheckable = true
+                            @Suppress("DEPRECATION")
+                            info.isChecked = chosen
+                        }
+                    }
+                    pressLight(this, 10f)
+                    setOnClickListener {
+                        tick(this)
+                        if (!chosen) onPick(i)
+                    }
+                }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply {
+                    if (i > 0) marginStart = c.dp(8f)
+                    height = c.dp(52f)
+                })
+            }
+            addView(buttons, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(12f) })
+        }
     }
 
     /** 0.5.30: the hidden Developer card is shown (a long press on the wordmark); not kept past the Menu's view. */
@@ -2611,7 +2821,8 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     /**
      * 1.1.15: the Menu's "Buy me a beer" pill: 48 tall, the cards' own fill and rim, an 18 beer, the 14 sp line, and a quiet
-     * "Ko-fi" at its end. No accent colour, so it reads as part of the Menu rather than an ad. Opens Ko-fi in the browser.
+     * "Ko-fi" at its end. Opens Ko-fi in the browser. 1.2.6 (Mike): the theme's blue, faint ([com.hayeco.flipspaces.core.Support.FILL]),
+     * so it reads as Pocket XR's own rather than an ad: the line in white, the beer and "Ko-fi" in the accent.
      */
     private fun supportPill(): View = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
@@ -2620,13 +2831,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         minimumHeight = context.dp(48f)
         background = GradientDrawable().apply {
             cornerRadius = context.dpf(24f)
-            setColor(com.hayeco.flipspaces.core.Look.CARD)
-            setStroke(context.dp(1f), com.hayeco.flipspaces.core.Look.RIM)
+            setColor(com.hayeco.flipspaces.core.Support.FILL)
+            setStroke(context.dp(1f), com.hayeco.flipspaces.core.Support.RIM)
         }
-        addView(context.icon(R.drawable.ic_beer, 18f).apply { alpha = 0.7f })
-        addView(context.padText(com.hayeco.flipspaces.core.Support.LABEL, 14f, TEXT_B3).apply { setSingleLine(true) },
+        addView(context.icon(R.drawable.ic_beer, 18f).apply { setColorFilter(com.hayeco.flipspaces.core.Support.WHERE_TEXT) })
+        addView(context.padText(com.hayeco.flipspaces.core.Support.LABEL, 14f, com.hayeco.flipspaces.core.Support.TEXT).apply { setSingleLine(true) },
             LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = context.dp(10f) })
-        addView(context.padText(com.hayeco.flipspaces.core.Support.WHERE, 12f, TEXT_80))
+        addView(context.padText(com.hayeco.flipspaces.core.Support.WHERE, 12f, com.hayeco.flipspaces.core.Support.WHERE_TEXT, bold = true))
         // TalkBack reads one button, not its parts.
         contentDescription = com.hayeco.flipspaces.core.Support.DESCRIPTION
         for (i in 0 until childCount) getChildAt(i).importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
@@ -2642,6 +2853,63 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             tick(this)
             closeDrawer()
             SupportLink.open(context)
+        }
+    }
+
+    /** Unreleased: where the Play testers card's state is kept ([TrackpadPrefs.playTesters]). */
+    private val padPrefs by lazy { TrackpadPrefs(context) }
+
+    /**
+     * Unreleased (Mike: get the sideload users into the Play closed test): a soft blue card with the Ko-fi pill's round
+     * corners, fill and rim ([com.hayeco.flipspaces.core.Support.FILL], [com.hayeco.flipspaces.core.Support.RIM]). Join opens the Google Group, and the card then also offers Open Play invite; opening that finishes it. Not
+     * now hides it for 7 days, I already joined for good ([com.hayeco.flipspaces.core.PlayTesters]).
+     */
+    private fun playTestersCard(card: com.hayeco.flipspaces.core.PlayTesters.Card): View {
+        val c = context
+        val t = com.hayeco.flipspaces.core.PlayTesters
+        fun save(change: (com.hayeco.flipspaces.core.PlayTesters.State) -> com.hayeco.flipspaces.core.PlayTesters.State) {
+            padPrefs.playTesters = change(padPrefs.playTesters)
+            buildDrawer()
+        }
+        fun pill(label: String, primary: Boolean, tagged: String, onClick: () -> Unit) = c.padText(label, 14f, if (primary) DARK_TEXT else WHITE, bold = primary).apply {
+            gravity = Gravity.CENTER
+            minHeight = c.dp(40f)
+            setPadding(c.dp(14f), 0, c.dp(14f), 0)
+            if (primary) setBackgroundResource(R.drawable.bg_pad_button_light)
+            tag = tagged
+            setOnClickListener { tick(this); onClick() }
+        }
+        return LinearLayout(c).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(c.dp(18f), c.dp(14f), c.dp(12f), c.dp(8f))
+            background = GradientDrawable().apply {
+                cornerRadius = c.dpf(24f)
+                setColor(com.hayeco.flipspaces.core.Support.FILL)
+                setStroke(c.dp(1f), com.hayeco.flipspaces.core.Support.RIM)
+            }
+            tag = MENU_PLAY_TESTERS
+            addView(c.padText(t.TITLE, 14f, WHITE, bold = true))
+            addView(c.padText(t.BODY, 12f, TEXT_B3), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(4f); marginEnd = c.dp(6f) })
+            addView(LinearLayout(c).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(pill(t.JOIN, primary = card == com.hayeco.flipspaces.core.PlayTesters.Card.JOIN, tagged = MENU_PLAY_TESTERS_JOIN) {
+                    SupportLink.openUrl(c, t.GROUP_URL)
+                    save { t.joined(it) }
+                })
+                if (card == com.hayeco.flipspaces.core.PlayTesters.Card.PLAY_INVITE) {
+                    addView(pill(t.OPEN_PLAY, primary = true, tagged = MENU_PLAY_TESTERS_PLAY) {
+                        SupportLink.openUrl(c, t.PLAY_URL)
+                        save { t.playOpened(it) }
+                    }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = c.dp(8f) })
+                }
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(12f) })
+            addView(LinearLayout(c).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(pill(t.NOT_NOW, primary = false, tagged = MENU_PLAY_TESTERS_NOT_NOW) { save { t.notNow(it, System.currentTimeMillis()) } })
+                addView(pill(t.ALREADY_JOINED, primary = false, tagged = MENU_PLAY_TESTERS_ALREADY) { save { t.alreadyJoined(it) } })
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(4f) })
         }
     }
 
@@ -2706,8 +2974,12 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
      * 1.2.3 (issue 57: "a density slider for each window ... remembered per app"): the focused window's text size, with
      * smaller and larger steps and a reset to 100 %. Smaller fits more on the window (a browser's desktop layout), larger
      * makes text easier to read; the window keeps its size and place.
+     *
+     * 1.2.7 (Mike: tapping smaller and larger a lot, the window kept reloading at each size long after): while [busy], a
+     * tap still being laid out in the glasses, the three keys are off and dimmed, with Resizing under them, and a tap
+     * does nothing; they come back once the window drew at its new size, or after 3 s.
      */
-    private fun textSizeRow(label: String, percent: Int): View {
+    private fun textSizeRow(label: String, percent: Int, busy: Boolean = false): View {
         val c = context
         return LinearLayout(c).apply {
             orientation = LinearLayout.VERTICAL
@@ -2717,19 +2989,26 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             val buttons = LinearLayout(c).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                fun key(text: String, enabled: Boolean, steps: Int) = c.padText(text, 16f, if (enabled) WHITE else 0xFF666666.toInt(), bold = true).apply {
-                    gravity = Gravity.CENTER
-                    setBackgroundResource(R.drawable.bg_drawer_tile)
-                    isEnabled = enabled
-                    if (enabled) pressLight(this, 14f)
-                    contentDescription = when {
-                        steps < 0 -> "Smaller text"
-                        steps > 0 -> "Larger text"
-                        else -> "Text size back to 100 %"
-                    }
-                    setOnClickListener {
-                        tick(this)
-                        host.textSizeStep(steps)
+                alpha = if (busy) TEXT_SIZE_BUSY_ALPHA else 1f
+                fun key(text: String, usable: Boolean, steps: Int) = (usable && !busy).let { enabled ->
+                    c.padText(text, 16f, if (usable) WHITE else 0xFF666666.toInt(), bold = true).apply {
+                        gravity = Gravity.CENTER
+                        setBackgroundResource(R.drawable.bg_drawer_tile)
+                        isEnabled = enabled
+                        if (enabled) pressLight(this, 14f)
+                        contentDescription = when {
+                            steps < 0 -> "Smaller text"
+                            steps > 0 -> "Larger text"
+                            else -> "Text size back to 100 %"
+                        }
+                        setOnClickListener {
+                            // A tap while the last one is still being laid out is dropped, never queued.
+                            if (host.textSizeBusy()) return@setOnClickListener
+                            tick(this)
+                            host.textSizeStep(steps)
+                            // The keys dim at once, not on the next tick.
+                            refreshDrawerForFocus()
+                        }
                     }
                 }
                 val minus = com.hayeco.flipspaces.core.spatial.AppTextSize.MIN
@@ -2739,6 +3018,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 addView(key("A+", percent < plus, 1), LinearLayout.LayoutParams(0, c.dp(44f), 1f))
             }
             addView(buttons, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(12f) })
+            if (busy) addView(c.padText(TEXT_SIZE_BUSY_LABEL, 12f, TEXT_99).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(6f) })
         }
     }
 
@@ -3041,6 +3321,29 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         const val MENU_UPDATE = "menu:update"
         const val MENU_GLASSES_CHECK = "menu:glasses-check"
         const val GLASSES_CHECK_ROW = "Glasses setup check"
+
+        /** 1.2.6: a quick tile's tag is this and its item's name ("menu:tile:pocket_mode"). */
+        const val MENU_TILE = "menu:tile:"
+
+        /** 1.2.6: the room above a section's heading, a quick tile's height, and the wait before a Steady tile shows its state. */
+        private const val SECTION_GAP = 24f
+        private const val QUICK_TILE_DP = 76f
+        private const val QUICK_REFRESH_MS = 200L
+
+        /** Unreleased: the Google Play testers card and its buttons. */
+        const val MENU_PLAY_TESTERS = "menu:play-testers"
+        const val MENU_PLAY_TESTERS_JOIN = "menu:play-testers:join"
+        const val MENU_PLAY_TESTERS_PLAY = "menu:play-testers:play"
+        const val MENU_PLAY_TESTERS_NOT_NOW = "menu:play-testers:not-now"
+        const val MENU_PLAY_TESTERS_ALREADY = "menu:play-testers:already"
+
+        /** Unreleased (John Davis): This window's Text size and Side by side 3D rows. */
+        const val MENU_TEXT_SIZE = "menu:text-size"
+
+        /** 1.2.7: under the Text size keys while a tap is still being laid out, the keys dimmed to this. */
+        const val TEXT_SIZE_BUSY_LABEL = "Resizing"
+        const val TEXT_SIZE_BUSY_ALPHA = 0.4f
+        const val MENU_SIDE_BY_SIDE = "menu:side-by-side"
 
         /** 0.5.28: a toast with a one-tap action stays this long. */
         const val ACTION_TOAST_MS = 5000L

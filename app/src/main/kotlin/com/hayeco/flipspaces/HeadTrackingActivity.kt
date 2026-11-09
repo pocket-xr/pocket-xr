@@ -74,7 +74,7 @@ class HeadTrackingActivity : ComponentActivity() {
                 val answer by HeadTracker.answer.collectAsStateWithLifecycle()
                 val levelResult by HeadTracker.level.collectAsStateWithLifecycle()
                 val motionLine by com.hayeco.flipspaces.spatial.HidMotionRecorder.line.collectAsStateWithLifecycle()
-                // 1.2.6 (Discussion #24): read again as the status or a setting changes (a plug-in changes the status).
+                // 1.2.8 (Discussion #24): read again as the status or a setting changes (a plug-in changes the status).
                 val other = (status to settingsVersion).let { _ ->
                     val pick = com.hayeco.flipspaces.core.spatial.GlassesVendors.recordable(com.hayeco.flipspaces.spatial.GlassesUsbList.read(this))
                     com.hayeco.flipspaces.ui.OtherGlassesCard(

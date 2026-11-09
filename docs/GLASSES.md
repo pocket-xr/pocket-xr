@@ -171,7 +171,7 @@ glasses answered it.
 
 Glasses the app does not know are drawn with the One's view, no camera and the Aura's sensor axes. If their head
 tracking stream answers, head tracking works. If they have no control link, they stay in 2D until switched with their
-own button. 1.2.6: their 3840 x 1080 mode is one wide canvas in 2D and side by side in 3D, and the Depth button names
+own button. 1.2.8: their 3840 x 1080 mode is one wide canvas in 2D and side by side in 3D, and the Depth button names
 their menu when Pocket XR can't switch them.
 
 ## Reporting a problem
@@ -180,7 +180,7 @@ In the trackpad's Menu, tap **Glasses report**. It saves a text file to
 `Android/data/com.hayeco.flipspaces/files/reports/` and opens the share sheet. Paste it into the GitHub issue. It holds:
 - the model;
 - the display modes;
-- the USB IDs of every USB device, with each interface's class, protocol and endpoints (1.2.6; up to 1.2.5, XREAL's only);
+- the USB IDs of every USB device, with each interface's class, protocol and endpoints (1.2.8; up to 1.2.5, XREAL's only);
 - the HID report descriptors, from the newest motion recording;
 - whether head tracking, the control link, 3D and the calibration worked.
 

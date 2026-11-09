@@ -22,7 +22,7 @@ data class GlassesReport(
     val timeUtc: String,
     /** 1.1.12: the newest PocketXR-Tracking line ([TrackingBeat]), null before one. */
     val tracking: String? = null,
-    /** 1.2.6: the HID report descriptors from the newest motion recording ([HidRecording]), one line an interface. */
+    /** 1.2.8: the HID report descriptors from the newest motion recording ([HidRecording]), one line an interface. */
     val hidDescriptors: List<String> = emptyList(),
 ) {
     data class Display(val name: String, val productId: String?, val modes: List<String>, val current: String)
@@ -59,7 +59,7 @@ data class GlassesReport(
             appendLine("- \"${d.name}\"${d.productId?.let { " (EDID product $it)" } ?: ""}: now ${d.current}; modes ${d.modes.joinToString(", ")}")
         }
         appendLine()
-        // 1.2.6 (Discussion #24: a VITURE Beast's report said "USB devices from XREAL: none" and nothing else): every USB
+        // 1.2.8 (Discussion #24: a VITURE Beast's report said "USB devices from XREAL: none" and nothing else): every USB
         // device Android lists, the glasses makers named, so glasses of any make show up with their interfaces.
         appendLine("USB devices (every one Android lists):")
         if (usb.isEmpty()) appendLine("- none")

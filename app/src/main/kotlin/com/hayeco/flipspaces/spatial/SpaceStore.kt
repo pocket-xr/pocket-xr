@@ -443,14 +443,14 @@ class SpaceStore(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_AUTO_GLASSES_VIEW, value).apply()
 
     /**
-     * 1.2.6 (Discussion #24): the experimental VITURE reader ([com.hayeco.flipspaces.core.spatial.VitureImuProtocol]),
+     * 1.2.8 (Discussion #24): the experimental VITURE reader ([com.hayeco.flipspaces.core.spatial.VitureImuProtocol]),
      * off by default: it claims the glasses' HID interface and sends a command no VITURE glasses have taken from Pocket XR yet.
      */
     var vitureHeadTracking: Boolean
         get() = prefs.getBoolean("viture_head_tracking", false)
         set(value) = prefs.edit().putBoolean("viture_head_tracking", value).apply()
 
-    /** 1.2.6: the VITURE reader's two axis switches ([com.hayeco.flipspaces.core.spatial.VitureAxes]). */
+    /** 1.2.8: the VITURE reader's two axis switches ([com.hayeco.flipspaces.core.spatial.VitureAxes]). */
     var vitureAxes: com.hayeco.flipspaces.core.spatial.VitureAxes
         get() = com.hayeco.flipspaces.core.spatial.VitureAxes(prefs.getBoolean("viture_flip_up_down", false), prefs.getBoolean("viture_swap_turn_tilt", false))
         set(value) = prefs.edit().putBoolean("viture_flip_up_down", value.flipUpDown).putBoolean("viture_swap_turn_tilt", value.swapTurnTilt).apply()

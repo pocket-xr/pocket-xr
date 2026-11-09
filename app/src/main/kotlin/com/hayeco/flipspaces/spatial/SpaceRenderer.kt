@@ -306,6 +306,9 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     /** 0.5.8: the app drew at the size last sent (the newest reader took an image), for the resize gate. */
     val drewAtSize: Boolean get() = src.mailbox.offered > 0
 
+    /** 1.2.7: the frames the app gave the newest reader, for a Text size change's wait ([com.hayeco.flipspaces.core.spatial.TextSizeSettle]). */
+    val framesOffered: Long get() = src.mailbox.offered
+
     /**
      * The new reader has a frame: the one from before the resize goes. GL thread.
      *
@@ -600,7 +603,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * Menu or the Control panel ([from]): said on the glasses for [WARP_NOTICE_MS]. Nothing is sent from here;
      * [GlassesWarp] alone talks to the glasses, and only with the switch on.
      */
-    /** 1.2.6: [text] on the glasses for [ms], from the Space activity (the Depth button on glasses it cannot switch). Any thread. */
+    /** 1.2.8: [text] on the glasses for [ms], from the Space activity (the Depth button on glasses it cannot switch). Any thread. */
     fun say(text: String, ms: Long) {
         spaceNotice = text
         spaceNoticeUntilMs = SystemClock.uptimeMillis() + ms
@@ -717,6 +720,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         homeTexture = LabelTexture(192, 192)
         capReopened()
         layout.panels.forEach { panels[it.id] = PanelGl(it, frames!!, wideView.isOn(it.packageName), appDensity.smallestDp(it.packageName), appTextSize.percent(it.packageName)) }
+        // Unreleased (John Davis: no Text size in the Menu after clicking a window): the window focused in the Space before
+        // keeps its focus in this one, so a 2D / 3D re-plug does not leave the Menu's This window empty.
+        if (focusedPanelId == null) com.hayeco.flipspaces.core.spatial.FocusedWindow.restored(SpaceSession.focusKept, layout.panels)?.let { id ->
+            focusedPanelId = id
+            Log.i(PANEL_TAG, "panel $id ${layout.panel(id)?.label} has focus again (focused in the Space before)")
+        }
         GLES30.glDisable(GLES30.GL_DEPTH_TEST)
         GLES30.glEnable(GLES30.GL_BLEND)
         // 0.5.68: premultiplied everywhere ([GlKit.BLEND_SRC]).
@@ -1085,19 +1094,21 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.2: with the frame's clock, so hand cursors move on every display frame.
         apply(pointer.frame(head, layout, nowMs))
         SpaceSession.heldPanelId = pointer.heldPanelId
+        // Unreleased (John Davis): the focused window worked out once, for the Game controller and the Menu's This window.
+        val focused = com.hayeco.flipspaces.core.spatial.FocusedWindow.of(focusedPanelId) { panels[it]?.panel }
         // 1.2.3 (issue 59): the focused app and the dot's spot on a window, for the Game controller.
-        SpaceSession.focusedApp = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.packageName to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
+        SpaceSession.focusedApp = focused?.let { it.packageName to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
         SpaceSession.pointerSpot = pointer.hover?.takeIf { it.zone == PanelZone.BODY && it.panel.packageName.isNotEmpty() && it.u in 0f..1f && it.v in 0f..1f }?.let { Triple(it.panel.packageName, it.u, it.v) }
         // 1.2.3 (issue 58): whether the focused window's app shows Side by side 3D, for the trackpad's Menu.
         // 1.2.3 (issue 58): 2D while moving, from the head's turn and the cursor shown in the last frame.
         sideBySideFlat = sideBySideFlatOn && sideBySideMotion.update(HeadTracker.turnSpeedDegS, headCursorAlpha > 0.02f, SystemClock.uptimeMillis())
-        SpaceSession.focusedSideBySide = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to sideBySide.isOn(it.packageName) }
+        SpaceSession.focusedSideBySide = focused?.let { it.label to sideBySide.isOn(it.packageName) }
         // 0.5.32: the head's turn speed to the glasses' duty on turns (it sends nothing unless its switch is on).
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
         // 0.5.32: the open windows, for the Menu's Arrange layouts by count.
         SpaceSession.windowCount = layout.panels.size
         // 1.2.3 (issue 57): the focused window's app and text size, for the trackpad's Menu.
-        SpaceSession.focusedTextSize = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to appTextSize.percent(it.packageName) }
+        SpaceSession.focusedTextSize = focused?.let { it.label to appTextSize.percent(it.packageName) }
         // 0.5.37: Immersive's motion this frame, the others' presses held off while they are gone.
         stepImmersive()
         // 0.5.34 (vc54: Sharper turns on, nothing sent; 0.5.32 read these switches in the head cursor's draw, which a hand
@@ -1107,7 +1118,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             settingsCheckedMs = settingsNowMs
             HeadTracker.setStillLock(store.stillLock)
             HeadTracker.setDrawSmoothing(store.drawSmoothing)
-            // 1.2.6 (Discussion #24, a VITURE Beast in its 32:9 mode showed two copies): glasses other than XREAL's say
+            // 1.2.8 (Discussion #24, a VITURE Beast in its 32:9 mode showed two copies): glasses other than XREAL's say
             // nothing over a control link, so their wide mode is one canvas unless 3D is on ([com.hayeco.flipspaces.core.spatial.WideCanvas]).
             val wideNow = com.hayeco.flipspaces.core.spatial.WideCanvas.isCanvas(
                 viewport.surfaceWidth, viewport.surfaceHeight, GlassesDisplayControl.stereoState, GlassesDisplayControl.ultrawideRead,
@@ -2443,6 +2454,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             PanelHost.resize(display, w, h, dpi) { err -> if (err != null) problem = "Resize ${p.panel.label}: $err" }
             // 0.5.3: then onto the new reader at the new size (the host runs calls in order).
             PanelHost.setSurface(display, p.surface) { err -> if (err != null) problem = "Resize ${p.panel.label}: $err" }
+            // 1.2.7: a Text size change waits for the app's next frame after this.
+            textSizeSettle.sent(id, p.framesOffered)
             // 0.5.22: the new size is a configuration change for the app: read what it asks for after it.
             if (p.panel.isApp) shapeSoon(p, SHAPE_AFTER_LAUNCH_MS)
             // 0.5.23: after the release, that read also says whether the app took the size ([checkFit]).
@@ -2464,6 +2477,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val display = p.displayId ?: continue
             Log.i(PANEL_TAG, "panel $id ${p.panel.label}: relayout nudge, display $display to ${spec.line()}")
             PanelHost.resize(display, spec.widthPx, spec.heightPx, spec.dpi) { err -> if (err != null) problem = "Relayout ${p.panel.label}: $err" }
+            textSizeSettle.sent(id, p.framesOffered)
+        }
+        // 1.2.7: a Text size change has landed once its window has nothing more to send and drew after the last send.
+        textSizeSettle.check(nowMs, { resizeGate.pending(it) || relayout.pending(it) }, { id -> panels[id]?.takeIf { it.displayId != null }?.framesOffered })?.let { seq ->
+            Log.i(PANEL_TAG, "text size request $seq laid out")
+            textSizeSettled(seq)
         }
     }
 
@@ -2790,6 +2809,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val p = panels[id] ?: return
         if (focusedPanelId != id) Log.i(PANEL_TAG, "panel $id ${p.panel.label} has focus")
         focusedPanelId = id
+        // Unreleased (John Davis): kept for the next Space in this run (a 2D / 3D re-plug starts one).
+        SpaceSession.focusKept = com.hayeco.flipspaces.core.spatial.FocusedWindow.keep(p.panel)
         // The focused panel is the front one among equals, for drawing and hit tests alike.
         if (layout.panels.lastOrNull()?.id != id) setLayout(layout.raise(id), commit = false)
         p.displayId?.let { d -> PanelHost.focus(d) { err -> if (err != null) problem = "Focus on ${p.panel.label}: $err" } }
@@ -3170,21 +3191,44 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /**
      * 1.2.3 (issue 57): the trackpad Menu's text size for the focused window's app, [steps] steps up or down (0 puts it back
      * to 100 %). Remembered for the app; every window of that app takes the new density, as after a Fit video press.
+     *
+     * 1.2.7 (Mike: tapping it a lot, "it took a while for all the button actions to catch up since it kept reloading the
+     * windows to those sizes"): the requests taken off the queue in one frame ([textSizeBatch]) are folded into one final
+     * size per app, laid out once. The window then is waited on ([textSizeSettle]) until it drew at the new size, and
+     * that is said back to the Menu, whose keys stay off until then.
      */
-    private fun textSizeStep(steps: Int) {
-        val p = focusedPanelId?.let { panels[it] } ?: return
-        val pkg = p.panel.packageName
-        if (pkg.isEmpty()) return
-        val before = appTextSize.percent(pkg)
-        val after = if (steps == 0) com.hayeco.flipspaces.core.spatial.AppTextSize.DEFAULT else com.hayeco.flipspaces.core.spatial.AppTextSize.step(before, steps)
-        if (after == before) return
-        appTextSize.set(pkg, after)
-        store.appTextSize = appTextSize.encode()
+    private fun applyTextSizes() {
+        val finals = textSizeBatch.finals(appTextSize::percent)
+        val seq = textSizeBatch.seq
+        textSizeBatch.clear()
+        if (finals.isEmpty()) {
+            textSizeSettled(seq)
+            return
+        }
         val now = SystemClock.uptimeMillis()
-        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: text size $before % to $after % (remembered for $pkg), its display now ${displaySpec(p.panel, wideView.isOn(pkg), p.appShape).line()}")
-        showNotice(p, com.hayeco.flipspaces.core.spatial.AppTextSize.label(after), now)
-        // Every window's display is asked for again ([setLayout]); only this app's density changes.
+        val focused = focusedPanelId?.let { panels[it] }
+        for ((pkg, change) in finals) {
+            val (before, after) = change
+            appTextSize.set(pkg, after)
+            val p = focused?.takeIf { it.panel.packageName == pkg } ?: panels.values.firstOrNull { it.panel.packageName == pkg } ?: continue
+            Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: text size $before % to $after % (remembered for $pkg), its display now ${displaySpec(p.panel, wideView.isOn(pkg), p.appShape).line()}")
+            showNotice(p, com.hayeco.flipspaces.core.spatial.AppTextSize.label(after), now)
+        }
+        store.appTextSize = appTextSize.encode()
+        // Every window's display is asked for again ([setLayout]); only these apps' density changes.
         setLayout(layout, commit = true)
+        val waitOn = focused?.takeIf { it.panel.packageName in finals } ?: panels.values.firstOrNull { it.panel.packageName in finals }
+        if (waitOn == null) textSizeSettled(seq) else textSizeSettle.waitFor(waitOn.panel.id, seq, now)
+    }
+
+    /** 1.2.7: the Text size requests taken off the queue this frame, applied once after it ([applyTextSizes]). */
+    private val textSizeBatch = com.hayeco.flipspaces.core.spatial.TextSizeBatch()
+
+    /** 1.2.7: the window a Text size change is waited on, until it drew at its new size ([resizeDisplays]). */
+    private val textSizeSettle = com.hayeco.flipspaces.core.spatial.TextSizeSettle()
+
+    private fun textSizeSettled(seq: Long) {
+        if (seq > SpaceSession.textSizeSettledSeq) SpaceSession.textSizeSettledSeq = seq
     }
 
     /** 1.2.3 (issue 59): when the Game controller's touches went down, for every event of that gesture. */
@@ -3290,6 +3334,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val next = p.panel.copy(label = app.label, packageName = app.packageName, activityName = app.activityName)
         Log.i(PANEL_TAG, "panel ${p.panel.id}: ${p.panel.label} switched to ${app.label} (${app.packageName}) in the same window")
         p.panel = next
+        if (SpaceSession.focusKept?.panelId == next.id) SpaceSession.focusKept = com.hayeco.flipspaces.core.spatial.FocusedWindow.keep(next)
         p.state = showing.copy(appClosed = false)
         p.empty.launched(now)
         p.tasksCheckedMs = now
@@ -3825,7 +3870,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     Log.i(PANEL_TAG, "Side by side 3D: 2D while moving ${if (c.on) "on" else "off"}")
                 }
                 is SpaceCommand.Arrange -> apply(pointer.arrange(c.kind, layout, focusedPanelId))
-                is SpaceCommand.TextSize -> textSizeStep(c.steps)
+                is SpaceCommand.TextSize -> textSizeBatch.add(focusedPanelId?.let { panels[it] }?.panel?.packageName, c.steps, c.seq)
                 is SpaceCommand.OpenPreset -> openPreset(c.preset)
                 SpaceCommand.WrapChanged -> syncWrap()
                 is SpaceCommand.GlassesWarpChanged -> warpNotice(c.on, c.from)
@@ -3840,6 +3885,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 }
             }
         }
+        if (!textSizeBatch.isEmpty) applyTextSizes()
     }
 
     /**
@@ -3883,6 +3929,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // An app opened: the search is done with, wherever the app was opened from.
         launcher.clearSearch()
         Log.i(PANEL_TAG, "panel ${added.second.id} ${app.label} added${if (inFrontOfGaze) " in front of the gaze" else ""}")
+        // Unreleased (John Davis): the window just opened has focus, as one already open does when brought back.
+        focus(added.second.id)
     }
 
     /**
@@ -3943,8 +3991,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     private fun removePanel(id: Int) {
         if (focusedPanelId == id) focusedPanelId = null
+        if (SpaceSession.focusKept?.panelId == id) SpaceSession.focusKept = null
         resizeGate.forget(id)
         relayout.forget(id)
+        textSizeSettle.forget(id)
         panels.remove(id)?.let { p ->
             p.removed = true
             p.displayId?.let { closeDisplay(it) }
@@ -4768,7 +4818,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * so a view smaller than the panel shows in the log.
      */
     private fun fitLauncher() {
-        // 1.2.6 (Discussion #24: icons "pixelated on the edges"): app icons baked at their size in this view's own pixels.
+        // 1.2.8 (Discussion #24: icons "pixelated on the edges"): app icons baked at their size in this view's own pixels.
         launcherGl.iconPx = com.hayeco.flipspaces.core.spatial.LauncherIconRaster.px(com.hayeco.flipspaces.core.spatial.LauncherGrid.ICON, frustum.widthPx, frustum.horizontalFovDeg)
         val (w, h) = com.hayeco.flipspaces.core.spatial.LauncherGrid.angularDeg()
         val key = "%.1fx%.1f".format(java.util.Locale.ROOT, frustum.horizontalFovDeg, frustum.verticalFovDeg)

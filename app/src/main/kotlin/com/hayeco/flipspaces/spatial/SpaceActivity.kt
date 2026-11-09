@@ -991,7 +991,7 @@ class SpaceActivity : Activity() {
         // 0.5.14: side by side 3D at 3840x1080@60 unless 2D is chosen (1920x1080@120), only
         // from the modes Android offers; nothing is sent to the glasses. 0.5.12: the
         // fastest refresh at that size unless the phone runs hot.
-        // 1.2.6 (Discussion #24): what these glasses' wide mode is, and whether only their own menu switches them to 3D.
+        // 1.2.8 (Discussion #24): what these glasses' wide mode is, and whether only their own menu switches them to 3D.
         val plan = com.hayeco.flipspaces.core.spatial.ViewModeChoice.plan(
             store.view, triples, fastestAllowed = store.fastestRefresh && !thermalHot,
             wide = wideKind(store), glassesMenuOnly = !store.model.isXreal,
@@ -1020,14 +1020,14 @@ class SpaceActivity : Activity() {
 
     private var loggedView: String? = null
 
-    /** 1.2.6: the glasses' 3840 x 1080 mode on this display ([com.hayeco.flipspaces.core.spatial.WideCanvas.kind]). */
+    /** 1.2.8: the glasses' 3840 x 1080 mode on this display ([com.hayeco.flipspaces.core.spatial.WideCanvas.kind]). */
     private fun wideKind(store: SpaceStore): com.hayeco.flipspaces.core.spatial.WideKind =
         com.hayeco.flipspaces.core.spatial.WideCanvas.kind(store.model, store.glasses?.productId)
 
     /** 0.5.14: the 3D / 2D switch (the launcher tile or the phone's setting): saved, then asked for. UI thread. */
     fun switchView(why: String) {
         val store = SpaceStore(this)
-        // 1.2.6 (Discussion #24: the Depth button did nothing that could be seen until 3D was on in the glasses' menu):
+        // 1.2.8 (Discussion #24: the Depth button did nothing that could be seen until 3D was on in the glasses' menu):
         // glasses Pocket XR cannot switch say what to do on the glasses instead.
         val modes = display?.supportedModes.orEmpty().map { Triple(it.physicalWidth, it.physicalHeight, it.refreshRate) }
         val press = com.hayeco.flipspaces.core.spatial.DepthPress.decide(
@@ -1360,5 +1360,5 @@ class SpaceActivity : Activity() {
 /** 0.5.20: DeX's Full screen button is not pressed (it never took on the Flip7). */
 private const val PRESS_DEX_FULL_SCREEN = false
 
-/** 1.2.6: how long "Turn on 3D in your glasses menu first" stays on the glasses after a Depth press. */
+/** 1.2.8: how long "Turn on 3D in your glasses menu first" stays on the glasses after a Depth press. */
 private const val DEPTH_NOTICE_MS = 6_000L

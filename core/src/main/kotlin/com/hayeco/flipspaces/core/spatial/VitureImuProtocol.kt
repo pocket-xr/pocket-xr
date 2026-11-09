@@ -1,7 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
 /**
- * 1.2.6 (Discussion #24, a Galaxy Z Flip 7 with VITURE Beast glasses: no head tracking in either anchor mode): VITURE's
+ * 1.2.8 (Discussion #24, a Galaxy Z Flip 7 with VITURE Beast glasses: no head tracking in either anchor mode): VITURE's
  * glasses carry their IMU over USB HID on VITURE's own vendor id, 0x35CA, and Pocket XR only knew XREAL's.
  *
  * Experimental and off by default. Written from one public, MIT licensed protocol write-up, elasticjava/viture-v2's
@@ -121,7 +121,7 @@ object VitureImuProtocol {
 }
 
 /**
- * 1.2.6: the two VITURE axis switches on the head tracking screen, applied to the gyro and the accelerometer alike so the
+ * 1.2.8: the two VITURE axis switches on the head tracking screen, applied to the gyro and the accelerometer alike so the
  * fusion's gravity and turns stay in step. Both are whole turns of the sensor, never a mirror, so a turn stays a turn:
  * - [flipUpDown]: the sensor taken as facing backwards, half a turn about the up axis (x and z change sign). Looking up
  *   then reads as up, and a turn left stays a turn left.
@@ -144,7 +144,7 @@ data class VitureAxes(val flipUpDown: Boolean = false, val swapTurnTilt: Boolean
 }
 
 /**
- * 1.2.6: the raw samples' times. A sample carries only a counter, one a sample, so the time step comes from the rate the
+ * 1.2.8: the raw samples' times. A sample carries only a counter, one a sample, so the time step comes from the rate the
  * glasses really send at, measured against the phone's clock over the first [LEARN_SAMPLES] samples; until then the
  * asked for rate's ([nominalHz]). A counter that goes back (a restart) starts over.
  */
@@ -186,7 +186,7 @@ class VitureClock(private val nominalHz: Float = 120f) {
     }
 }
 
-/** 1.2.6: VITURE frames into [ImuReport]s in head axes, with the totals the diagnostics show. */
+/** 1.2.8: VITURE frames into [ImuReport]s in head axes, with the totals the diagnostics show. */
 class VitureImuFramer(private val axes: VitureAxes = VitureAxes(), nominalHz: Float = 120f) {
     private val clock = VitureClock(nominalHz)
     private var nRaw = 0L
