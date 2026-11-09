@@ -64,16 +64,34 @@ class PcVrPhoneCard(context: Context) : FrameLayout(context) {
         addView(column, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER))
     }
 
-    /** Every touch lights the screen again; the button then works as usual. Nothing reaches the trackpad below. */
+    private var shownAtMs = 0L
+    private var gestureCounts = false
+
+    /**
+     * Every touch lights the screen again; the button then works as usual. Nothing reaches the trackpad below. A touch
+     * that began before the card showed, or in its first [IGNORE_MS], presses nothing: the tap that opened PC VR from
+     * the trackpad must not land on "Back to your Space" as the card appears under it.
+     */
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        if (ev.actionMasked == MotionEvent.ACTION_DOWN) PcVrSession.wakePhone()
-        super.dispatchTouchEvent(ev)
+        if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            PcVrSession.wakePhone()
+            gestureCounts = android.os.SystemClock.uptimeMillis() - shownAtMs >= IGNORE_MS
+        }
+        if (gestureCounts) super.dispatchTouchEvent(ev)
         return true
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean = true
 
     fun show(open: Boolean) {
+        if (open && visibility != VISIBLE) {
+            shownAtMs = android.os.SystemClock.uptimeMillis()
+            gestureCounts = false
+        }
         visibility = if (open) VISIBLE else GONE
+    }
+
+    private companion object {
+        const val IGNORE_MS = 1_000L
     }
 }

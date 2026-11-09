@@ -44,11 +44,23 @@ namespace PocketXr
         [STAThread]
         static void Main(string[] args)
         {
-            bool created;
-            using (var mutex = new Mutex(true, "Global\\PocketXrPcHelper", out created))
+            // A fresh install first (no lock held, so the installed copy it starts can take it), then one helper at a time.
+            if (Install.Here(args)) return;
+            bool created = false;
+            Mutex mutex = null;
+            // The copy that just installed this one may still be closing: wait for it a moment.
+            for (int i = 0; i < 50 && !created; i++)
+            {
+                if (mutex != null) mutex.Dispose();
+                mutex = new Mutex(true, "Global\\PocketXrPcHelper", out created);
+                if (!created) Thread.Sleep(100);
+            }
+            using (mutex)
             {
                 if (!created) return;
-                if (Install.Here(args)) return;
+                // Installed just now: it starts with Windows from here on (the menu can turn that off).
+                if (args.Contains("--installed")) Install.SetStartWithWindows(true);
+                Log.Line("started from " + Application.ExecutablePath + (Install.StartsWithWindows ? ", starts with Windows" : ""));
                 Application.EnableVisualStyles();
                 Application.Run(new Tray());
             }
@@ -69,9 +81,16 @@ namespace PocketXr
             if (string.Equals(Path.GetFullPath(self), Path.GetFullPath(Exe), StringComparison.OrdinalIgnoreCase)) return false;
             try
             {
+                // An installed copy already running is closed first, so it can be replaced.
+                foreach (var p in Process.GetProcessesByName("PocketXrPcHelper"))
+                {
+                    if (p.Id == Process.GetCurrentProcess().Id) continue;
+                    try { p.Kill(); p.WaitForExit(3000); } catch { }
+                }
                 Directory.CreateDirectory(Dir);
                 File.Copy(self, Exe, true);
                 SetStartWithWindows(true);
+                Log.Line("installed to " + Exe);
                 // The PowerShell version's shortcut, from before.
                 string oldLink = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), "Pocket XR PC helper.lnk");
                 if (File.Exists(oldLink)) File.Delete(oldLink);
@@ -112,7 +131,9 @@ namespace PocketXr
                 try
                 {
                     Directory.CreateDirectory(Dir);
-                    File.AppendAllText(Path.Combine(Dir, "pc-helper.log"), DateTime.Now.ToString("HH:mm:ss ") + text + Environment.NewLine);
+                    // Shared, so a second copy (an install starting the installed one) can't lock the other out.
+                    using (var f = new FileStream(Path.Combine(Dir, "pc-helper.log"), FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                    using (var w = new StreamWriter(f)) w.WriteLine(DateTime.Now.ToString("HH:mm:ss ") + text);
                 }
                 catch { }
             }
