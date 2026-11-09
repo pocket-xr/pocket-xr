@@ -116,6 +116,8 @@ object PanelHost {
 
     /** Called on the main thread each time the service becomes Ready (0.4.3). */
     val onReady = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
+    private const val PANEL_PREFS = "phone_panel"
+    private const val KEY_PANEL_OFF = "left_off"
 
     /** Android's pause, resume and stop of panel displays, taken by the Space each frame. */
     val displayEvents = java.util.concurrent.ConcurrentLinkedQueue<Pair<Int, PanelDisplayEvent>>()
@@ -141,7 +143,22 @@ object PanelHost {
         val before = _state.value
         _state.value = next
         if (before != next) Log.i(TAG, "state ${before.name()} -> ${next.name()}: $why (generation $generation)")
-        if (before != next && next == State.Ready) main.post { onReady.forEach { it() } }
+        if (before != next && next == State.Ready) main.post {
+            restorePhonePanel()
+            onReady.forEach { it() }
+        }
+    }
+
+    /**
+     * A game or PC VR turns the phone's panel off and back on when it ends. If the app went away in between (closed,
+     * reinstalled, crashed), the panel stayed off with the phone awake: a black phone (8 November 2026). The off is
+     * remembered, and the first connection after it turns the panel on again.
+     */
+    private fun restorePhonePanel() {
+        val prefs = appContext?.getSharedPreferences(PANEL_PREFS, Context.MODE_PRIVATE) ?: return
+        if (!prefs.getBoolean(KEY_PANEL_OFF, false)) return
+        Log.i(TAG, "the phone's panel was left off by a game or PC VR that ended without turning it on: on again")
+        phonePanel(true)
     }
 
     private fun State.name(): String = when (this) {
@@ -456,6 +473,7 @@ object PanelHost {
 
     /** The phone's own panel off while a game owns the glasses, and back on after. */
     fun phonePanel(on: Boolean) {
+        appContext?.getSharedPreferences(PANEL_PREFS, Context.MODE_PRIVATE)?.edit()?.putBoolean(KEY_PANEL_OFF, !on)?.apply()
         calls.execute {
             val h = host ?: return@execute
             val err = runCatching { h.setPhonePanel(on) }.getOrElse { it.message }
