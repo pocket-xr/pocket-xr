@@ -216,6 +216,13 @@ object SpaceSession {
     /** 1.2.3 (issue 57): the focused window's label and its app's text size in percent, for the trackpad's Menu; null with none. */
     @Volatile var focusedTextSize: Pair<String, Int>? = null
 
+    /**
+     * Unreleased (John Davis: no Text size in the Menu after clicking a window): the focused window, kept across Space
+     * starts in this run ([com.hayeco.flipspaces.core.spatial.FocusedWindow.restored]), since the glasses' 2D / 3D
+     * re-plug starts a new Space whose renderer had nothing focused.
+     */
+    @Volatile var focusKept: com.hayeco.flipspaces.core.spatial.FocusedWindow.Kept? = null
+
     /** 0.5.19: packages that crashed on a panel, and when (uptime), across Space starts. */
     val crashedApps = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
