@@ -30,15 +30,21 @@ CPU. Only someone with read access to the private repository can fetch them; eve
    bash tools/fetch-npu.sh
    ```
 
-3. Run the tests and build the signed APK in one window, typing the release key's password when asked. The key's file
-   and alias are in Mike's `~/.gradle/gradle.properties` (`pocketxr.storeFile`, `pocketxr.keyAlias`); the password is
-   never stored. Use Android Studio's JBR and Gradle 9.8.2 (AGP 9.5 needs Gradle 9.6 or later):
+3. Run the tests and build the signed APK in one PowerShell window, typing the release key's password when asked. The
+   key's file and alias are in Mike's `~/.gradle/gradle.properties` (`pocketxr.storeFile`, `pocketxr.keyAlias`); the
+   password is never stored. Use Android Studio's JBR and Gradle 9.8.2 (AGP 9.5 needs Gradle 9.6 or later):
 
    ```
    $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-   $env:POCKETXR_STORE_PASSWORD = Read-Host "Release key password"
-   gradle :core:test :app:testDebugUnitTest :app:assembleRelease -Ppocketxr.official=true
+   $env:POCKETXR_STORE_PASSWORD = [Net.NetworkCredential]::new('', (Read-Host "Release key password" -AsSecureString)).Password
+   gradle :core:test :app:testDebugUnitTest :app:assembleRelease "-Ppocketxr.official=true"
    ```
+
+   - The prompt must hide what you type (`-AsSecureString`). A plain `Read-Host` shows the password on screen and in
+     the terminal's scrollback (1.2.5).
+   - Keep the quotes around `-Ppocketxr.official=true`: unquoted, PowerShell splits it at the dot and Gradle looks for a
+     task called `.official=true`.
+   - Close the window afterwards, so the password doesn't stay in its environment.
 
 4. Copy `app/build/outputs/apk/release/app-release.apk` to `pocketxr-x.y.z.apk` and check it:
 

@@ -921,12 +921,22 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     /**
-     * Test: the PC VR path for the hand cursor ([SpatialPointer.directAim]). The hand's calibrated ray (the one SteamVR
-     * got) turned into the room with the head at the camera frame's capture time, from the same smooth head estimate
-     * games get ([HeadTracker.gamePose]), not the raw history 20 ms before.
+     * 1.2.5: the head each frame was drawn with, by its present time. Hand rays placed in the room with it move exactly
+     * as the windows do; the raw history they used before wobbles a little against the drawn pose, which a still head
+     * holds ([com.hayeco.flipspaces.core.spatial.RestLock]).
+     */
+    private val drawnHeads = DrawnHeads()
+
+    private val headAt: (Long) -> Quat? = { t ->
+        drawnHeads.at(t * 1_000_000L) ?: HeadTracker.poseAt(t)?.let { HeadView.pose(follow.relative(it), manualYaw) }
+    }
+
+    /**
+     * 1.2.5: a hand's aim for [SpatialPointer.directAim]: its calibrated ray turned into the room with the head the Space
+     * drew at the camera frame's moment, then smoothed ([DirectAimSmoother]). Null when the hand is gone or stale.
      */
     private fun directHandAim(side: com.hayeco.flipspaces.core.pointer.HandSide): com.hayeco.flipspaces.core.spatial.Vec3? {
-        if (!directHands) return null
+        if (!DirectAimTuning.on) return null
         val status = SpaceSession.hands[side]?.takeIf { it.present }
         val ray = status?.ray
         val at = SpaceSession.handsCapturedAtMs
@@ -937,27 +947,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             return null
         }
         val head = drawnHeads.at(at * 1_000_000L)
-            ?: HeadTracker.gamePose(at * 1_000_000L)?.let { HeadView.pose(follow.relative(it), manualYaw) } ?: return null
+            ?: HeadTracker.poseAt(at)?.let { HeadView.pose(follow.relative(it), manualYaw) } ?: return null
         val room = head.rotate(ray.dir).normalized()
-        // A new camera frame is filtered once; every display frame glides toward it.
         return smooth.frame(room, at, nowMs, closing = status.pinched || status.locked)
     }
 
     private val directSmooth = HashMap<com.hayeco.flipspaces.core.pointer.HandSide, DirectAimSmoother>()
-
-    /**
-     * The head each frame was drawn with, by its present time: hand rays placed in the room with it move exactly as the
-     * windows do, so a still head (its drawn pose held by [com.hayeco.flipspaces.core.spatial.RestLock] and smoothed)
-     * adds no shake to the cursor. The raw history the rays used before wobbles a little against that held pose, and
-     * a still hand's cursor shook with it (8 November 2026, against PC VR, where both sides use one estimate).
-     */
-    private val drawnHeads = DrawnHeads()
-
-    /** The head pose when a hand frame was taken, for hand rays in world space; null without head tracking. */
-    private val headAt: (Long) -> Quat? = { t ->
-        if (handsOnDrawnHead) drawnHeads.at(t * 1_000_000L) ?: HeadTracker.poseAt(t)?.let { HeadView.pose(follow.relative(it), manualYaw) }
-        else HeadTracker.poseAt(t)?.let { HeadView.pose(follow.relative(it), manualYaw) }
-    }
 
     /**
      * While a game has the glasses: the glasses' real refresh for Monado's pacer ([com.hayeco.flipspaces.core.spatial.VblankLock]).
@@ -998,12 +993,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     companion object GameClockSwitch {
-        /** Test: the hand cursor by PC VR's path ([directHandAim]); the debug "handaim" command switches it. */
-        @Volatile var directHands = true
-
-        /** Hand rays placed with the head the Space drew with ([drawnHeads]); the debug "handaim --ez drawn" switches it. */
-        @Volatile var handsOnDrawnHead = true
-
         /** Debug: the game clock's feed to Monado on or off, for an A/B with the pacer's own clock. */
         @Volatile var feedGameClock = true
 
@@ -1342,6 +1331,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val trackedNow = if (ultrawide) canvasPose else HeadTracker.renderPose(presentNs)
         head = HeadView.pose(follow.relative(trackedNow), manualYaw)
         this.head = head
+        drawnHeads.add(presentNs, head)
         // 0.5.21: while the glasses warp, this frame carries its render pose in its top rows.
         // 0.5.25 (a frame whose record does not parse drops the glasses out of scene mode 1): every
         // frame carries one, the last pose held on a frame with no head pose, rather than a frame with none.
@@ -5604,8 +5594,14 @@ internal class DrawnHeads(private val size: Int = 64) {
     private var next = 0
     private var count = 0
 
+    /** A frame drawn again at the same present time (the late pose) replaces the first. */
     @Synchronized
     fun add(presentNs: Long, head: Quat) {
+        val last = (next - 1 + size) % size
+        if (count > 0 && times[last] == presentNs) {
+            poses[last] = head
+            return
+        }
         times[next] = presentNs
         poses[next] = head
         next = (next + 1) % size
@@ -5632,23 +5628,28 @@ internal class DrawnHeads(private val size: Int = 64) {
     }
 }
 
-/** Live settings for the PC VR style hand cursor ([DirectAimSmoother]); the debug "handaim" command sets them. */
+/** 1.2.5: the direct hand cursor ([DirectAimSmoother]) and its settings. */
 object DirectAimTuning {
+    /** The direct hand cursor; off gives the eased aim of 0.5.2 to 1.2.4. */
+    @Volatile var on = true
     /** One Euro on the aim's yaw and pitch (degrees): the cut-off of a slow hand, and how fast it opens with speed. */
     @Volatile var minCutoffHz = 0.8f
     @Volatile var beta = 0.05f
     /** Below this speed (degrees a second) a hand counts as still for the filter. */
     @Volatile var speedFloorDegS = 2f
-    /** Each display frame moves the cursor this share of a [glideMs] time constant toward the filtered aim. */
+    /** Each display frame moves the cursor along a [glideMs] time constant toward the filtered aim. */
     @Volatile var glideMs = 25f
     /** While the fingers close for a pinch the filter's cut-off is scaled by this, so the click doesn't nudge the aim. */
     @Volatile var pinchDamp = 0.3f
 }
 
 /**
- * The PC VR style hand cursor's smoothing: a One Euro filter on the room aim's yaw and pitch, run once per camera frame
- * (strong for small slow moves, light for fast ones, no dead zone, so no stick and hop), then a glide every display
- * frame toward it, so 30 camera frames a second still move the cursor on every refresh.
+ * 1.2.5: the hand cursor's smoothing (8 November 2026, tuned on the glasses with Mike: "smooth" next to Android XR and
+ * Quest hand tracking). A still hand's cursor already held still; the roughness was in motion: the eased aim's 0.35
+ * degree dead zone stuck then hopped, and its buffer, spring and prediction added to it. The hand's own ray straight into
+ * the room followed better but carried the camera's noise. So: a One Euro filter on the room aim's yaw and pitch, run
+ * once per camera frame (strong for small slow moves, light for fast ones, no dead zone), then a glide every display
+ * frame toward it, so about 30 camera frames a second still move the cursor on every refresh.
  */
 internal class DirectAimSmoother {
     private var yaw = com.hayeco.flipspaces.core.hands.OneEuroFilter()
@@ -5674,9 +5675,7 @@ internal class DirectAimSmoother {
             lastSampleMs = sampleMs
             val a = com.hayeco.flipspaces.core.spatial.Angles.of(room)
             val scale = if (closing) t.pinchDamp else 1f
-            val y = yaw.filter(a.yawDeg, sampleMs, scale)
-            val p = pitch.filter(a.pitchDeg, sampleMs, scale)
-            target = com.hayeco.flipspaces.core.spatial.Vec3.direction(y, p)
+            target = com.hayeco.flipspaces.core.spatial.Vec3.direction(yaw.filter(a.yawDeg, sampleMs, scale), pitch.filter(a.pitchDeg, sampleMs, scale))
         }
         val goal = target ?: room
         val dt = (nowMs - lastFrameMs).coerceIn(0L, 100L).toFloat()

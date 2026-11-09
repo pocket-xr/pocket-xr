@@ -209,16 +209,14 @@ class DebugReceiver : BroadcastReceiver() {
                 }
             }
             "handaim" -> {
-                com.hayeco.flipspaces.spatial.SpaceRenderer.directHands = intent.getBooleanExtra("direct", com.hayeco.flipspaces.spatial.SpaceRenderer.directHands)
-                com.hayeco.flipspaces.spatial.SpaceRenderer.handsOnDrawnHead = intent.getBooleanExtra("drawn", com.hayeco.flipspaces.spatial.SpaceRenderer.handsOnDrawnHead)
+                // The direct hand cursor (1.2.5) on or off, and its filter, live.
                 val t = com.hayeco.flipspaces.spatial.DirectAimTuning
+                t.on = intent.getBooleanExtra("direct", t.on)
                 t.minCutoffHz = intent.getFloatExtra("cutoff", t.minCutoffHz)
                 t.beta = intent.getFloatExtra("beta", t.beta)
                 t.glideMs = intent.getFloatExtra("glide", t.glideMs)
                 t.speedFloorDegS = intent.getFloatExtra("floor", t.speedFloorDegS)
-                Log.i(TAG, "PC VR style hand cursor: ${if (com.hayeco.flipspaces.spatial.SpaceRenderer.directHands) "on" else "off"}, cut-off ${t.minCutoffHz} Hz, beta ${t.beta}, floor ${t.speedFloorDegS} deg/s, glide ${t.glideMs} ms")
-                Log.i(TAG, "Space hand rays placed with ${if (com.hayeco.flipspaces.spatial.SpaceRenderer.handsOnDrawnHead) "the drawn head" else "the raw head history"}")
-                Log.i(TAG, "Space hand cursor: ${if (com.hayeco.flipspaces.spatial.SpaceRenderer.directHands) "the PC VR path (ray straight into the room)" else "the usual path"}")
+                Log.i(TAG, "Space hand cursor: ${if (t.on) "direct" else "the eased aim"}, cut-off ${t.minCutoffHz} Hz, beta ${t.beta}, floor ${t.speedFloorDegS} deg/s, glide ${t.glideMs} ms")
             }
             "gameclock" -> {
                 com.hayeco.flipspaces.spatial.SpaceRenderer.feedGameClock = intent.getBooleanExtra("on", true)
