@@ -25,7 +25,7 @@ import kotlin.math.sin
  * All calls on the GL thread.
  */
 class PcVrLoading {
-    enum class Phase { FINDING_PC, STARTING, RECONNECTING }
+    enum class Phase { FINDING_PC, STARTING, RECONNECTING, LEAVING }
 
     /** Each Joy-Con: not reporting, reporting, or rested (its drift measured this session). */
     enum class Pad { NONE, AWAKE, RESTED }
@@ -62,7 +62,7 @@ class PcVrLoading {
      */
     fun draw(
         nowNs: Long, head: FloatArray, tans: FloatArray, width: Int, height: Int, alpha: Float,
-        phase: Phase, waitedS: Float, left: Pad, right: Pad,
+        phase: Phase, waitedS: Float, left: Pad, right: Pad, progress: Float = -1f,
     ) {
         if (program == 0 || alpha <= 0f) return
         updateCard(phase, waitedS, left, right)
@@ -77,6 +77,7 @@ class PcVrLoading {
         GLES30.glUniformMatrix3fv(GLES30.glGetUniformLocation(program, "view"), 1, false, view, 0)
         GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "time"), ((nowNs - startNs) / 1e9).toFloat())
         GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "alpha"), alpha)
+        GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "progress"), progress)
         GLES30.glUniform2f(GLES30.glGetUniformLocation(program, "cardHalf"), CARD_HALF_TAN, CARD_HALF_TAN * CARD_H / CARD_W)
         GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "cardY"), CARD_Y_TAN)
         GLES30.glUniform2f(GLES30.glGetUniformLocation(program, "spinAt"), 0.5f, 1f - SPIN_Y / CARD_H)
@@ -115,14 +116,15 @@ class PcVrLoading {
             else "Connecting to your PC" to "This takes a few seconds."
             Phase.STARTING -> "Starting SteamVR" to "Almost there."
             Phase.RECONNECTING -> "Reconnecting to your PC" to "Your game keeps running."
+            Phase.LEAVING -> "Going back to your Space" to "Keep holding, or let go to stay."
         }
-        paintCard(title, line, left, right)
+        paintCard(title, line, left, right, phase != Phase.LEAVING)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, cardTex)
         GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, bitmap, 0)
         Log.i(TAG, "PC VR loading: $title; Joy-Cons left $left, right $right")
     }
 
-    private fun paintCard(title: String, line: String, left: Pad, right: Pad) {
+    private fun paintCard(title: String, line: String, left: Pad, right: Pad, joyCons: Boolean) {
         bitmap.eraseColor(Color.TRANSPARENT)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         val r = RectF(4f, 4f, CARD_W - 4f, CARD_H - 4f)
@@ -151,6 +153,7 @@ class PcVrLoading {
         paint.color = Color.rgb(170, 180, 200)
         canvas.drawText(line, cx, 428f, paint)
 
+        if (!joyCons) return
         paint.color = Color.argb(40, 150, 190, 255)
         canvas.drawRect(120f, 478f, CARD_W - 120f, 480f, paint)
 
@@ -238,6 +241,7 @@ class PcVrLoading {
             uniform vec2 spinAt;
             uniform float time;
             uniform float alpha;
+            uniform float progress;
             out vec4 color;
             void main() {
                 vec3 d = normalize(view * vec3(mix(tans.x, tans.y, vUv.x), mix(tans.w, tans.z, vUv.y), -1.0));
@@ -258,12 +262,18 @@ class PcVrLoading {
                     if (all(greaterThanEqual(c, vec2(0.0))) && all(lessThanEqual(c, vec2(1.0)))) {
                         vec4 k = texture(card, vec2(c.x, 1.0 - c.y));
                         col = mix(col, k.rgb, k.a);
-                        // A turning arc: something is happening.
                         vec2 s = (c - spinAt) * vec2(cardHalf.x / cardHalf.y, 1.0);
                         float r = length(s);
                         float band = 1.0 - smoothstep(0.004, 0.010, abs(r - 0.075));
-                        float a = fract(atan(s.y, s.x) / 6.2831853 + time * 0.7);
-                        col += vec3(0.45, 0.70, 1.0) * band * smoothstep(0.0, 0.8, a) * k.a;
+                        if (progress < 0.0) {
+                            // A turning arc: something is happening.
+                            float a = fract(atan(s.y, s.x) / 6.2831853 + time * 0.7);
+                            col += vec3(0.45, 0.70, 1.0) * band * smoothstep(0.0, 0.8, a) * k.a;
+                        } else {
+                            // A ring filling clockwise from the top: how long is left to hold.
+                            float a = fract(0.25 - atan(s.y, s.x) / 6.2831853);
+                            col += mix(vec3(0.16, 0.22, 0.32), vec3(0.45, 0.70, 1.0), step(a, progress)) * band * k.a;
+                        }
                     }
                 }
                 color = vec4(col, alpha);

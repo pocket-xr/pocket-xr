@@ -15,6 +15,8 @@ android {
     defaultConfig {
         // The private test copy (-Ppocketxr.dev=true), beside the real app, debug signed. See docs/OPENXR-PLAN.md.
         applicationId = if (findProperty("pocketxr.dev") == "true") "com.hayeco.flipspaces.dev" else "com.hayeco.flipspaces"
+        // Its own name on the phone, so it is never mistaken for the real app.
+        resValue("string", "app_label", if (findProperty("pocketxr.dev") == "true") "Pocket XR Test" else "Pocket XR")
         minSdk = 30
         targetSdk = 36
         versionCode = 156
@@ -112,6 +114,7 @@ android {
         aidl = true
         // 1.0.1: BuildConfig.PLAY_BUILD (above).
         buildConfig = true
+        resValues = true
     }
 
     // 1.0.1: the unit tests check BuildConfig.PLAY_BUILD against the build that was asked for.

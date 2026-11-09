@@ -349,7 +349,9 @@ class SpaceActivity : Activity() {
     private fun loadApps() {
         val installed = InstalledApps(this)
         Thread {
-            val apps = runCatching { AppCatalog.prepare(installed.load(), packageName) }.getOrDefault(emptyList())
+            val found = runCatching { AppCatalog.prepare(installed.load(), packageName) }.getOrDefault(emptyList())
+            // PC VR first, where the stream can be built in.
+            val apps = if (com.hayeco.flipspaces.pcvr.AlvrBridge.available) listOf(com.hayeco.flipspaces.pcvr.PcVrSession.tile(packageName)) + found else found
             SpaceSession.send(SpaceCommand.LauncherApps(apps))
         }.start()
     }
@@ -1134,6 +1136,7 @@ class SpaceActivity : Activity() {
     }
 
     override fun onDestroy() {
+        com.hayeco.flipspaces.pcvr.PcVrSession.close("the Space closed")
         PanelHost.onReady -= coverOnReady
         GlassesWarp.recheckChrome = null
         GlassesWarp.chromeOverRecord = false

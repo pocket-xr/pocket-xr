@@ -177,6 +177,10 @@ class TrackpadActivity : Activity(), PadHost {
         }
         frame.nativeOn = prefs.nativeBuffer
         setContentView(frame)
+        // PC VR on the glasses: the phone shows its way back over the trackpad.
+        addContentView(pcVrCard, android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT))
+        pcVrCard.show(com.hayeco.flipspaces.pcvr.PcVrSession.isOpen)
+        com.hayeco.flipspaces.pcvr.PcVrSession.changed += pcVrChanged
         // The phone's own keyboard opens over the trackpad: say where typing goes. 0.5.96 (open source audit): our own words.
         screen.setOnApplyWindowInsetsListener { v, insets ->
             val ime = insets.isVisible(WindowInsets.Type.ime())
@@ -509,6 +513,7 @@ class TrackpadActivity : Activity(), PadHost {
     }
 
     override fun onDestroy() {
+        com.hayeco.flipspaces.pcvr.PcVrSession.changed -= pcVrChanged
         keySink.hide()
         CoverTrackpad.destroyed(this)
         runCatching { unregisterReceiver(screenOff) }
@@ -545,7 +550,13 @@ class TrackpadActivity : Activity(), PadHost {
     // ---- input ----
 
     /** A mouse's clicks and drags on the phone go to the Space's pointer while the Space is up, never to the pad as a finger. */
-    override fun dispatchTouchEvent(ev: MotionEvent): Boolean = MouseRoute.onMotion(ev) || super.dispatchTouchEvent(ev)
+    private val pcVrCard by lazy { com.hayeco.flipspaces.pcvr.PcVrPhoneCard(this) }
+    private val pcVrChanged: (Boolean) -> Unit = { open -> pcVrCard.show(open) }
+
+    // While PC VR is on the glasses its card takes every touch, so nothing moves the Space's pointer underneath.
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean =
+        if (com.hayeco.flipspaces.pcvr.PcVrSession.isOpen) super.dispatchTouchEvent(ev)
+        else MouseRoute.onMotion(ev) || super.dispatchTouchEvent(ev)
 
     /** A mouse's moves and wheel on the phone, likewise. */
     override fun dispatchGenericMotionEvent(ev: MotionEvent): Boolean = MouseRoute.onMotion(ev) || super.dispatchGenericMotionEvent(ev)

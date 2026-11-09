@@ -3655,6 +3655,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 0.5.25: what the launcher asks for: an app into a window where it was, a button, App Info, a pin. */
     private fun launcherActions(actions: List<com.hayeco.flipspaces.core.spatial.XrLauncherAction>) {
         for (action in actions) when (action) {
+            // The PC VR tile: the stream over the Space, not an app in a window.
+            is com.hayeco.flipspaces.core.spatial.XrLauncherAction.Launch if com.hayeco.flipspaces.pcvr.PcVrSession.isTile(action.app) -> {
+                pickForPanel = null
+                logLauncher("PC VR tile")
+                com.hayeco.flipspaces.pcvr.PcVrSession.open("the launcher's PC VR tile")
+            }
             is com.hayeco.flipspaces.core.spatial.XrLauncherAction.Launch -> pickForPanel?.let { id ->
                 // 0.5.85: the launcher was opened by a window's Switch app (All apps): the app goes into that window.
                 pickForPanel = null
@@ -3825,6 +3831,17 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 is SpaceCommand.LauncherApps -> {
                     launcher.setApps(c.apps)
                     xr.setApps(c.apps)
+                    // PC VR pinned once, at the front, for everyone; unpinning it later is their choice.
+                    c.apps.firstOrNull { com.hayeco.flipspaces.pcvr.PcVrSession.isTile(it) }?.let { tile ->
+                        if (!store.pcVrPinned && store.pinsSeeded) {
+                            store.pcVrPinned = true
+                            val keys = (listOf(tile.key) + store.favourites.filter { it != tile.key }).take(com.hayeco.flipspaces.core.spatial.LauncherGrid.PIN_LIMIT)
+                            store.favourites = keys
+                            launcher.setFavourites(keys)
+                            xr.setPinned(keys)
+                            Log.i(tag, "launcher: PC VR pinned")
+                        }
+                    }
                     // Pinned once, for someone with none; emptying the row later is their choice.
                     if (!store.pinsSeeded && c.apps.isNotEmpty()) {
                         store.pinsSeeded = true

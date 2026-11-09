@@ -596,6 +596,11 @@ class SpaceStore(context: Context) {
         set(value) = prefs.edit().putString(KEY_STEADY_LAYOUT, value).apply()
 
     /** The launcher's default pins were offered ([com.hayeco.flipspaces.core.spatial.LauncherDefaults]). */
+    /** The PC VR tile was pinned once, for someone who had pins already; unpinning it later is their choice. */
+    var pcVrPinned: Boolean
+        get() = prefs.getBoolean("pcvr_pinned", false)
+        set(value) = prefs.edit().putBoolean("pcvr_pinned", value).apply()
+
     var pinsSeeded: Boolean
         get() = prefs.getBoolean(KEY_PINS_SEEDED, false)
         set(value) = prefs.edit().putBoolean(KEY_PINS_SEEDED, value).apply()

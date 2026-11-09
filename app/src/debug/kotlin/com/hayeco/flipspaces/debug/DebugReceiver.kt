@@ -188,8 +188,14 @@ class DebugReceiver : BroadcastReceiver() {
                 Log.i(TAG, "game head smoothing ${if (com.hayeco.flipspaces.openxr.OpenXrHeadFeed.smooth) "on" else "off"}")
             }
             "pcvr" -> {
-                PcVrTuning.zoom = intent.getFloatExtra("zoom", PcVrTuning.zoom).coerceIn(1f, 2f)
-                Log.i(TAG, "PC VR zoom asked: ${PcVrTuning.zoom}")
+                val tuning = com.hayeco.flipspaces.pcvr.PcVrTuning
+                tuning.zoom = intent.getFloatExtra("zoom", tuning.zoom).coerceIn(1f, 2f)
+                Log.i(TAG, "PC VR zoom asked: ${tuning.zoom}")
+                // As the launcher's tile does: `--ez open true` opens PC VR over the Space, false closes it.
+                if (intent.hasExtra("open")) {
+                    if (intent.getBooleanExtra("open", true)) com.hayeco.flipspaces.pcvr.PcVrSession.open("the debug command")
+                    else com.hayeco.flipspaces.pcvr.PcVrSession.close("the debug command")
+                }
             }
             "gameclock" -> {
                 com.hayeco.flipspaces.spatial.SpaceRenderer.feedGameClock = intent.getBooleanExtra("on", true)

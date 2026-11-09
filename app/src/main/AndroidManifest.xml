@@ -78,7 +78,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="@string/app_label"
         android:supportsRtl="true"
         android:theme="@style/Theme.FlipSpaces">
         <!-- 0.5.43: Samsung's NPU driver, public to apps on the Flip7 (/vendor/etc/public.libraries.txt); the Samsung dispatch opens it. -->
@@ -223,6 +223,13 @@
                 android:name="com.samsung.android.dex.launchheight"
                 android:value="0" />
         </activity>
+        <!-- The launcher's PC VR tile: a name and icon only. The Space opens PC VR over itself (pcvr.PcVrSession). -->
+        <activity-alias
+            android:name=".pcvr.PcVrTile"
+            android:exported="false"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:label="PC VR"
+            android:targetActivity=".spatial.SpaceActivity" />
 
         <!-- 1.1.0: the pointer accessibility service and the notification listener are in the Pocket XR
              add-on (the addon module), so this app declares neither and Google's install check does not block it. -->
