@@ -500,7 +500,9 @@ object GlassesCameraProvider {
             }
             // A game has the glasses: no hand is drawn or pressed there, so the model rests and the heat goes to the game.
             // PC VR is the exception: its hands go to SteamVR (8 November 2026: pinching did nothing there).
-            if (SpaceSession.gameOwnsGlasses && !com.hayeco.flipspaces.pcvr.PcVrSession.isOpen) {
+            // PC VR with both Joy-Cons in hand needs no hands either: about 0.6 W (9 November 2026, measured as the
+            // phone's charge current with the hand model on and off). Setting one down wakes it.
+            if (SpaceSession.gameOwnsGlasses && (!com.hayeco.flipspaces.pcvr.PcVrSession.isOpen || com.hayeco.flipspaces.openxr.OpenXrPads.bothHeld())) {
                 if (!pausedForGame) {
                     pausedForGame = true
                     Log.i(TAG, "Hand model paused: a game has the glasses")

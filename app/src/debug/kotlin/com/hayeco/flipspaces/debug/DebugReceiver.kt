@@ -192,6 +192,11 @@ class DebugReceiver : BroadcastReceiver() {
                 tuning.zoom = intent.getFloatExtra("zoom", tuning.zoom).coerceIn(1f, 2f)
                 tuning.operatingRate = intent.getIntExtra("rate", tuning.operatingRate)
                 tuning.direct = intent.getBooleanExtra("direct", tuning.direct)
+                if (intent.hasExtra("hands")) {
+                    if (intent.getBooleanExtra("hands", true)) com.hayeco.flipspaces.hands.HandTrackingService.start(context)
+                    else com.hayeco.flipspaces.hands.HandInputManager.stopHands(context)
+                    Log.i(TAG, "PC VR test: hands ${if (intent.getBooleanExtra("hands", true)) "on" else "off"}")
+                }
                 tuning.aimPitchDeg = intent.getFloatExtra("aimpitch", tuning.aimPitchDeg)
                 tuning.aimYawDeg = intent.getFloatExtra("aimyaw", tuning.aimYawDeg)
                 tuning.controllerForwardM = intent.getFloatExtra("forward", tuning.controllerForwardM)

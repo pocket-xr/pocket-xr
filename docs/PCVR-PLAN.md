@@ -145,3 +145,14 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   the tracked hand; the controller is the Space's own hand ray with the Space's pinch as the trigger (ALVR's gestures
   off); ALVR's 11 cm forward controller offset is taken back out; SteamVR's laser needed the pose turned 30 degrees
   (0 and 15 aimed low; 30 "On target"). Mike: pinch works, "perfectly smooth", smoother than the Space's own cursor.
+- Heat, 9 November: the phone was charging the whole time (14 % to 21 % while streaming, through the glasses' hub), and
+  the 30 frames a second cap comes from the SKIN sensor (45 C, status 3). The battery's charge current is the only power
+  reading the app has, and the charger moves it: hand tracking on against off was steady at about 150 mA (0.6 W) less
+  charge, twice. The picture size test was void: the PC helper (running outside the Claude app's container, where it
+  couldn't be stopped) set ALVR back to full size at each SteamVR restart, so all four runs were full size, and their
+  spread (478 to 757 mA) is the reading's noise. Hand tracking now pauses while both Joy-Cons are held. Open: the
+  charging itself, and a size test with the phone not charging.
+- First-time setup, 9 November, on Mike's PC reset to new (helper gone, phone unpaired and untrusted, ALVR's view and
+  frame rate at its defaults, its gestures on, SteamVR's safe-mode block, everything closed): SteamVR 9.9 s after the
+  tap, all fixed by the helper. Programs started from the Claude app run in its app container (AppData and HKCU writes go
+  to its package), which made the helper's install look broken from inside it; it wasn't.

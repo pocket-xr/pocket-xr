@@ -34,6 +34,7 @@ object OpenXrPads {
         var recentreHeld = false
         var restored = false
         var wasAtRest = false
+        var lastSampleNs = 0L
         var lastRecentreNs = 0L
         var lastLogNs = 0L
         var lagSumNs = 0L
@@ -61,6 +62,15 @@ object OpenXrPads {
         app = context.applicationContext
         pads = arrayOf(Pad(false), Pad(true))
     }
+
+    /** Both Joy-Cons reporting and neither lying still: both are in the player's hands. */
+    fun bothHeld(): Boolean = (0..1).all { h ->
+        val pad = pads.getOrNull(h) ?: return@all false
+        synchronized(pad) { System.nanoTime() - pad.lastSampleNs < HELD_FRESH_NS && !pad.pose.atRest }
+    }
+
+    /** A Joy-Con silent longer than this (off, or out of range) doesn't count as held. */
+    private const val HELD_FRESH_NS = 500_000_000L
 
     /** True while Joy-Con [hand] lies still (set down): a tracked hand can take its place. */
     fun resting(hand: Int): Boolean {
@@ -139,6 +149,7 @@ object OpenXrPads {
                 pad.started = true
                 Log.i(TAG, "Joy-Con ${pad.name} is reporting")
             }
+            pad.lastSampleNs = arrivedNs
             val stamp = pad.clock.sample(readNs)
             val dt = stamp.dt
             pad.pose.update(gx, gy, gz, ax, ay, az, dt)
