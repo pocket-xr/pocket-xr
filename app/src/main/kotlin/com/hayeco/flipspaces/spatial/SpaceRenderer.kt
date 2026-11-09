@@ -306,6 +306,9 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     /** 0.5.8: the app drew at the size last sent (the newest reader took an image), for the resize gate. */
     val drewAtSize: Boolean get() = src.mailbox.offered > 0
 
+    /** 1.2.7: the frames the app gave the newest reader, for a Text size change's wait ([com.hayeco.flipspaces.core.spatial.TextSizeSettle]). */
+    val framesOffered: Long get() = src.mailbox.offered
+
     /**
      * The new reader has a frame: the one from before the resize goes. GL thread.
      *
@@ -2439,6 +2442,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             PanelHost.resize(display, w, h, dpi) { err -> if (err != null) problem = "Resize ${p.panel.label}: $err" }
             // 0.5.3: then onto the new reader at the new size (the host runs calls in order).
             PanelHost.setSurface(display, p.surface) { err -> if (err != null) problem = "Resize ${p.panel.label}: $err" }
+            // 1.2.7: a Text size change waits for the app's next frame after this.
+            textSizeSettle.sent(id, p.framesOffered)
             // 0.5.22: the new size is a configuration change for the app: read what it asks for after it.
             if (p.panel.isApp) shapeSoon(p, SHAPE_AFTER_LAUNCH_MS)
             // 0.5.23: after the release, that read also says whether the app took the size ([checkFit]).
@@ -2460,6 +2465,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val display = p.displayId ?: continue
             Log.i(PANEL_TAG, "panel $id ${p.panel.label}: relayout nudge, display $display to ${spec.line()}")
             PanelHost.resize(display, spec.widthPx, spec.heightPx, spec.dpi) { err -> if (err != null) problem = "Relayout ${p.panel.label}: $err" }
+            textSizeSettle.sent(id, p.framesOffered)
+        }
+        // 1.2.7: a Text size change has landed once its window has nothing more to send and drew after the last send.
+        textSizeSettle.check(nowMs, { resizeGate.pending(it) || relayout.pending(it) }, { id -> panels[id]?.takeIf { it.displayId != null }?.framesOffered })?.let { seq ->
+            Log.i(PANEL_TAG, "text size request $seq laid out")
+            textSizeSettled(seq)
         }
     }
 
@@ -3168,21 +3179,44 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /**
      * 1.2.3 (issue 57): the trackpad Menu's text size for the focused window's app, [steps] steps up or down (0 puts it back
      * to 100 %). Remembered for the app; every window of that app takes the new density, as after a Fit video press.
+     *
+     * 1.2.7 (Mike: tapping it a lot, "it took a while for all the button actions to catch up since it kept reloading the
+     * windows to those sizes"): the requests taken off the queue in one frame ([textSizeBatch]) are folded into one final
+     * size per app, laid out once. The window then is waited on ([textSizeSettle]) until it drew at the new size, and
+     * that is said back to the Menu, whose keys stay off until then.
      */
-    private fun textSizeStep(steps: Int) {
-        val p = focusedPanelId?.let { panels[it] } ?: return
-        val pkg = p.panel.packageName
-        if (pkg.isEmpty()) return
-        val before = appTextSize.percent(pkg)
-        val after = if (steps == 0) com.hayeco.flipspaces.core.spatial.AppTextSize.DEFAULT else com.hayeco.flipspaces.core.spatial.AppTextSize.step(before, steps)
-        if (after == before) return
-        appTextSize.set(pkg, after)
-        store.appTextSize = appTextSize.encode()
+    private fun applyTextSizes() {
+        val finals = textSizeBatch.finals(appTextSize::percent)
+        val seq = textSizeBatch.seq
+        textSizeBatch.clear()
+        if (finals.isEmpty()) {
+            textSizeSettled(seq)
+            return
+        }
         val now = SystemClock.uptimeMillis()
-        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: text size $before % to $after % (remembered for $pkg), its display now ${displaySpec(p.panel, wideView.isOn(pkg), p.appShape).line()}")
-        showNotice(p, com.hayeco.flipspaces.core.spatial.AppTextSize.label(after), now)
-        // Every window's display is asked for again ([setLayout]); only this app's density changes.
+        val focused = focusedPanelId?.let { panels[it] }
+        for ((pkg, change) in finals) {
+            val (before, after) = change
+            appTextSize.set(pkg, after)
+            val p = focused?.takeIf { it.panel.packageName == pkg } ?: panels.values.firstOrNull { it.panel.packageName == pkg } ?: continue
+            Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: text size $before % to $after % (remembered for $pkg), its display now ${displaySpec(p.panel, wideView.isOn(pkg), p.appShape).line()}")
+            showNotice(p, com.hayeco.flipspaces.core.spatial.AppTextSize.label(after), now)
+        }
+        store.appTextSize = appTextSize.encode()
+        // Every window's display is asked for again ([setLayout]); only these apps' density changes.
         setLayout(layout, commit = true)
+        val waitOn = focused?.takeIf { it.panel.packageName in finals } ?: panels.values.firstOrNull { it.panel.packageName in finals }
+        if (waitOn == null) textSizeSettled(seq) else textSizeSettle.waitFor(waitOn.panel.id, seq, now)
+    }
+
+    /** 1.2.7: the Text size requests taken off the queue this frame, applied once after it ([applyTextSizes]). */
+    private val textSizeBatch = com.hayeco.flipspaces.core.spatial.TextSizeBatch()
+
+    /** 1.2.7: the window a Text size change is waited on, until it drew at its new size ([resizeDisplays]). */
+    private val textSizeSettle = com.hayeco.flipspaces.core.spatial.TextSizeSettle()
+
+    private fun textSizeSettled(seq: Long) {
+        if (seq > SpaceSession.textSizeSettledSeq) SpaceSession.textSizeSettledSeq = seq
     }
 
     /** 1.2.3 (issue 59): when the Game controller's touches went down, for every event of that gesture. */
@@ -3824,7 +3858,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     Log.i(PANEL_TAG, "Side by side 3D: 2D while moving ${if (c.on) "on" else "off"}")
                 }
                 is SpaceCommand.Arrange -> apply(pointer.arrange(c.kind, layout, focusedPanelId))
-                is SpaceCommand.TextSize -> textSizeStep(c.steps)
+                is SpaceCommand.TextSize -> textSizeBatch.add(focusedPanelId?.let { panels[it] }?.panel?.packageName, c.steps, c.seq)
                 is SpaceCommand.OpenPreset -> openPreset(c.preset)
                 SpaceCommand.WrapChanged -> syncWrap()
                 is SpaceCommand.GlassesWarpChanged -> warpNotice(c.on, c.from)
@@ -3839,6 +3873,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 }
             }
         }
+        if (!textSizeBatch.isEmpty) applyTextSizes()
     }
 
     /**
@@ -3947,6 +3982,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         if (SpaceSession.focusKept?.panelId == id) SpaceSession.focusKept = null
         resizeGate.forget(id)
         relayout.forget(id)
+        textSizeSettle.forget(id)
         panels.remove(id)?.let { p ->
             p.removed = true
             p.displayId?.let { closeDisplay(it) }

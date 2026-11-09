@@ -1364,10 +1364,18 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun textSizeStep(steps: Int) {
         if (!SpaceSession.active) return
-        SpaceSession.send(SpaceCommand.TextSize(steps))
+        // 1.2.7 (Mike: many quick taps kept the windows reloading long after): one tap at a time, the next only once the
+        // Space laid this one out (or 3 s passed); a tap meanwhile is dropped.
+        val seq = textSizeLock.tap(SystemClock.uptimeMillis(), SpaceSession.textSizeSettledSeq) ?: return
+        SpaceSession.send(SpaceCommand.TextSize(steps, seq))
         // The Space takes it on its next frame; the Menu shows the new size a moment later.
         window.decorView.postDelayed({ screen.refreshDrawer() }, TEXT_SIZE_REFRESH_MS)
     }
+
+    /** 1.2.7: the Text size keys, off until the Space says a tap was laid out ([SpaceSession.textSizeSettledSeq]). */
+    private val textSizeLock = com.hayeco.flipspaces.core.spatial.TextSizeLock()
+
+    override fun textSizeBusy(): Boolean = textSizeLock.locked(SystemClock.uptimeMillis(), SpaceSession.textSizeSettledSeq)
 
     override fun returnHome() {
         screen.closeDrawer()

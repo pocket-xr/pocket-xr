@@ -12,6 +12,9 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   trackpad, mouse, pinch or gaze, even while the Menu is open. The window keeps its focus when the glasses switch
   between 2D and 3D, and a window you just opened has it too. The same goes for Side by side 3D and the Game
   controller. Thanks to John Davis for the report.
+- **Text size waits for the window.** After you tap smaller, larger or the reset, the three keys dim and say Resizing
+  until the window in the glasses has redrawn at the new size, 3 seconds at most. Taps while they're dimmed are ignored,
+  so quick taps no longer pile up and keep reloading the window long after you stop.
 
 ## 1.2.6: a lighter Menu
 
