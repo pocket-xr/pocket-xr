@@ -141,3 +141,7 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
     closes the same way.
   - SteamVR hand tracking: the glasses' tracked hands as OpenXR's 26 joints (`core/hands/HandSkeleton.kt`, tested),
     sent for any hand with no Joy-Con in it; ALVR's hand gestures make a pinch the trigger.
+- Hands in SteamVR, tuned with Mike (8 November): hand tracking keeps running in PC VR; a Joy-Con set down gives way to
+  the tracked hand; the controller is the Space's own hand ray with the Space's pinch as the trigger (ALVR's gestures
+  off); ALVR's 11 cm forward controller offset is taken back out; SteamVR's laser needed the pose turned 30 degrees
+  (0 and 15 aimed low; 30 "On target"). Mike: pinch works, "perfectly smooth", smoother than the Space's own cursor.

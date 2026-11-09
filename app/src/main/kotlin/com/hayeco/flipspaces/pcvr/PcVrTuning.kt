@@ -12,7 +12,8 @@ object PcVrTuning {
      * Tracked hands' aim: SteamVR's laser on the emulated Quest controller is turned this much from the pose sent, so
      * the pose is turned back by it. Degrees; pitch up, yaw toward the body's middle (mirrored for the left hand).
      */
-    @Volatile var aimPitchDeg = 0f
+    // 8 November 2026, on the glasses: 0 aimed below, -15 still below, -30 on target.
+    @Volatile var aimPitchDeg = -30f
     @Volatile var aimYawDeg = 0f
 
     /** ALVR moves every controller this far forward along its aim (left_controller_position_offset); taken back out. */
