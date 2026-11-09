@@ -106,6 +106,33 @@ object HandInputManager {
         }
     }
 
+    /**
+     * PC VR: hands start with it, whether or not they were ever turned on, without turning on the Space's own auto
+     * start ([HandsPrefs.autoStart] stays as it is). True when this call started them, so PC VR can stop them again.
+     */
+    fun startForPcVr(context: Context): Boolean {
+        if (HandTrackingService.isRunning()) return false
+        refresh(context)
+        val device = GlassesUsbAccess.find(context)
+        val facts = AutoStartFacts(
+            wanted = true,
+            pausedThisPlug = false,
+            cameraGranted = context.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED,
+            usbPresent = device != null,
+            usbGranted = device != null && GlassesUsbAccess.hasPermission(context, device),
+            modelReady = HandModelStore.available(context),
+            running = false,
+            visible = true,
+        )
+        val step = HandAutoStart.decide(facts)
+        Log.i(TAG, "Hands for PC VR: ${HandAutoStart.line(step, "PC VR")}")
+        return when (step) {
+            AutoStartStep.Start, AutoStartStep.AskUsb -> runCatching { HandTrackingService.start(context) }
+                .onFailure { Log.w(TAG, "Hands for PC VR: Android refused the camera service: ${it.message}") }.isSuccess
+            is AutoStartStep.NeedsSetup, is AutoStartStep.Nothing -> false
+        }
+    }
+
     private var lastAutoLine: String? = null
     private const val TAG = "FlipSpacesHands"
 

@@ -44,6 +44,8 @@ object PcVrSession {
     private var multicast: WifiManager.MulticastLock? = null
     private var wake: PowerManager.WakeLock? = null
     private val heldSinceMs = LongArray(2)
+    /** PC VR started hand tracking (it wasn't running), so it stops it when it closes. */
+    private var handsStartedHere = false
 
     val isOpen: Boolean get() = layer != null
 
@@ -169,6 +171,8 @@ object PcVrSession {
             portalCloseNs = 0L
             main.postDelayed({ if (pausedSpace === space && portalCloseNs == 0L) space.pauseForGame(true) }, PORTAL_OPEN_MS + 100L)
             keepAwake(space, true)
+            // Hands for SteamVR: started with PC VR if they aren't running, and stopped with it again.
+            handsStartedHere = com.hayeco.flipspaces.hands.HandInputManager.startForPcVr(space)
             leaveProgress = 0f
             // The PC helper, if one answers, starts SteamVR so nobody has to touch the PC.
             helperStage = null
@@ -213,6 +217,8 @@ object PcVrSession {
             gl = null
             layerManager = null
             teardown()
+            if (handsStartedHere) pausedSpace?.let { com.hayeco.flipspaces.hands.HandInputManager.stopHands(it) }
+            handsStartedHere = false
             pausedSpace = null
             portalCloseNs = 0L
             SpaceSession.gameOwnsGlasses = false
