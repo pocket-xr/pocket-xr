@@ -198,7 +198,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
     private var handsLoggedMs = 0L
 
     /**
-     * Free hands the glasses' camera sees, for SteamVR: a hand with no Joy-Con in it (or the Joy-Con silent) and seen in
+     * Free hands the glasses' camera sees, for SteamVR: a hand with no Joy-Con in it (silent, or set down) and seen in
      * the last [HAND_FRESH_MS] is turned from the head frame into the room with the head pose of the moment the camera
      * saw it, and sent as a hand skeleton, with its wrist as that hand's pose. Returns the mask of hands sent.
      */
@@ -206,7 +206,8 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         var mask = 0
         val nowMs = SystemClock.uptimeMillis()
         for (side in 0..1) {
-            if (hands[14 * side] > 0.5f) continue
+            // A Joy-Con in the hand wins; one set down (lying still) gives way to the hand the camera sees.
+            if (hands[14 * side] > 0.5f && !OpenXrPads.resting(side)) continue
             val seenMs = PcVrHands.latest(side, handJoints)
             if (seenMs == 0L || nowMs - seenMs > HAND_FRESH_MS) continue
             // The uptime and nanoTime clocks share their base on Android.

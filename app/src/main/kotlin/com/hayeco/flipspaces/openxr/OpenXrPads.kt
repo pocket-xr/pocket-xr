@@ -62,6 +62,12 @@ object OpenXrPads {
         pads = arrayOf(Pad(false), Pad(true))
     }
 
+    /** True while Joy-Con [hand] lies still (set down): a tracked hand can take its place. */
+    fun resting(hand: Int): Boolean {
+        val pad = pads.getOrNull(hand) ?: return false
+        return synchronized(pad) { pad.started && pad.pose.atRest }
+    }
+
     /** One Joy-Con for a status screen: 0 not reporting, 1 reporting, 2 rested this session (its drift measured). */
     fun padState(hand: Int): Int {
         val pad = pads.getOrNull(hand) ?: return 0
