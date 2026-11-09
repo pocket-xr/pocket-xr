@@ -1196,7 +1196,7 @@ class TrackpadActivity : Activity(), PadHost {
             return
         }
         com.hayeco.flipspaces.spatial.SpaceSession.recordWanted = on
-        screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped: saved to Movies/Pocket XR.")
+        screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped. The glasses say where it was saved.")
     }
 
     /** 1.2.3 (issue 59): Game keys on; for this run of the trackpad, off again when it closes. */

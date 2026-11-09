@@ -752,7 +752,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     /** 0.5.99: the Space records itself (the left eye, to an MP4), when asked ([SpaceSession.recordWanted]). */
     private val recorder = SpaceRecorder(context)
-    private var wasRecording = false
 
     // ---- 0.5.26 (Mike: "everything is a bit choppy"): the frame's pacing ----
 
@@ -2014,7 +2013,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         if (recordAlign.aligned) endFrameRecords(0L, why)
         // 0.5.99: a recording under way is finished and kept as the Space stops.
         recorder.release()
-        wasRecording = false
+        SpaceSession.recordSaved = null
     }
 
     /**
@@ -2041,11 +2040,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             GLES30.glDisable(GLES30.GL_SCISSOR_TEST)
             GLES30.glClearColor(0f, 0f, 0f, 1f)
         }
-        if (wasRecording && !on) SpaceSession.recordSaved?.let { saved ->
+        // 1.2.11: taken once, also when the recording never started (its frame never returned true), which said nothing.
+        if (!on) SpaceSession.recordSaved?.let { saved ->
+            SpaceSession.recordSaved = null
             spaceNotice = saved
             spaceNoticeUntilMs = SystemClock.uptimeMillis() + WARP_OFF_NOTICE_MS
         }
-        wasRecording = on
     }
 
     /** The warp plane's depth: the window nearest the gaze, else [com.hayeco.flipspaces.core.spatial.FrameRecords.DEFAULT_PLANE_M]. */

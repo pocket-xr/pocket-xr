@@ -17,6 +17,8 @@ import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Log
 import android.view.Surface
+import com.hayeco.flipspaces.core.spatial.EglConfigSizes
+import com.hayeco.flipspaces.core.spatial.RecordSurface
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -92,9 +94,10 @@ class SpaceRecorder(private val context: Context) {
                 setInteger(MediaFormat.KEY_FRAME_RATE, FPS)
                 setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
             }
-            val c = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+            // 1.2.11: each part kept as it is made, so a start that fails part way releases them and deletes the entry.
+            val c = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also { codec = it }
             c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            val input = c.createInputSurface()
+            val input = c.createInputSurface().also { inputSurface = it }
             c.start()
 
             val name = "PocketXR_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ROOT).format(Date()) + ".mp4"
@@ -107,23 +110,18 @@ class SpaceRecorder(private val context: Context) {
                 }
             }
             val u = context.contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values) ?: error("MediaStore gave no place for the video")
+            uri = u
             val fd = context.contentResolver.openFileDescriptor(u, "rw") ?: error("the video file could not be opened")
-            val m = MediaMuxer(fd.fileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-            fd.close()
+            val m = fd.use { MediaMuxer(it.fileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4) }
+            muxer = m
 
             val display = EGL14.eglGetCurrentDisplay()
             // 1.1.5 (issue 26: a 0 byte video on a Retroid): a video encoder's surface wants a recordable config. Adreno
-            // takes the Space's own config anyway; other GPUs then drop every frame. A recordable one first, else the own.
-            val surface = recordableConfig(display)?.let { EGL14.eglCreateWindowSurface(display, it, input, intArrayOf(EGL14.EGL_NONE), 0) }
-                ?.takeIf { it != EGL14.EGL_NO_SURFACE }
-                ?: EGL14.eglCreateWindowSurface(display, currentConfig(display), input, intArrayOf(EGL14.EGL_NONE), 0)
-            if (surface == null || surface == EGL14.EGL_NO_SURFACE) error("no EGL surface for the encoder (EGL 0x${Integer.toHexString(EGL14.eglGetError())})")
+            // takes the Space's own config anyway; other GPUs then drop every frame. 1.2.11 (the Flip 7's Xclipse refused
+            // a recordable config unlike the context's, EGL 0x3009, every time): one that matches the context, tried.
+            val surface = encoderSurface(display, input)
 
-            codec = c
-            muxer = m
-            inputSurface = input
             encoderSurface = surface
-            uri = u
             frameNo = 0
             frames = 0
             samples = 0
@@ -137,6 +135,7 @@ class SpaceRecorder(private val context: Context) {
             wanted = false
             SpaceSession.recordWanted = false
             cleanUp(keep = false)
+            SpaceSession.recordSaved = RecordSurface.notice(kept = false, frames = 0, seconds = 0.0)
         }
     }
 
@@ -152,11 +151,7 @@ class SpaceRecorder(private val context: Context) {
         wanted = false
         SpaceSession.recordWanted = false
         SpaceSession.recording = false
-        SpaceSession.recordSaved = when {
-            kept -> "Saved to Movies/Pocket XR (%.0f s)".format(Locale.ROOT, secs)
-            frames > 0 -> "The recording didn't work on this phone. Nothing was saved."
-            else -> null
-        }
+        SpaceSession.recordSaved = RecordSurface.notice(kept, frames, secs)
     }
 
     private fun cleanUp(keep: Boolean) {
@@ -215,17 +210,60 @@ class SpaceRecorder(private val context: Context) {
     /** 1.1.5: samples the encoder wrote into the MP4 (drain thread). */
     @Volatile private var samples = 0L
 
-    /** 1.1.5: an RGBA8888, OpenGL ES 3 config that a video encoder's surface takes (EGL_RECORDABLE_ANDROID), or null. */
-    private fun recordableConfig(display: android.opengl.EGLDisplay): EGLConfig? {
+    /**
+     * 1.2.11: the encoder's surface, on the first config in [RecordSurface.order] that the driver both makes a surface
+     * of and makes current with the Space's context (then the window is current again). Render thread.
+     */
+    private fun encoderSurface(display: android.opengl.EGLDisplay, input: Surface): EGLSurface {
+        val window = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
+        val ctx = EGL14.eglGetCurrentContext()
+        val own = currentConfig(display)
+        val recordable = recordableConfigs(display)
+        val ownSizes = sizes(display, own)
+        val order = RecordSurface.order(ownSizes, recordable.map { sizes(display, it) })
+        val tried = mutableListOf<String>()
+        for (i in order) {
+            val config = if (i == RecordSurface.OWN) own else recordable[i]
+            val name = if (i == RecordSurface.OWN) "own" else "recordable $i"
+            val s = EGL14.eglCreateWindowSurface(display, config, input, intArrayOf(EGL14.EGL_NONE), 0)
+            if (s == null || s == EGL14.EGL_NO_SURFACE) {
+                tried += "$name: no surface (EGL 0x${Integer.toHexString(EGL14.eglGetError())})"
+                continue
+            }
+            val ok = EGL14.eglMakeCurrent(display, s, window, ctx)
+            val err = EGL14.eglGetError()
+            EGL14.eglMakeCurrent(display, window, window, ctx)
+            if (ok) {
+                Log.i(tag, "encoder surface on the $name config ($ownSizes as the Space's)${if (tried.isEmpty()) "" else "; refused: " + tried.joinToString()}")
+                return s
+            }
+            EGL14.eglDestroySurface(display, s)
+            tried += "$name: not current with the Space (EGL 0x${Integer.toHexString(err)})"
+        }
+        error("no EGL surface for the encoder works with the Space's context: ${tried.joinToString()}")
+    }
+
+    /** 1.1.5: the OpenGL ES 3 configs that a video encoder's surface takes (EGL_RECORDABLE_ANDROID), the driver's order. */
+    private fun recordableConfigs(display: android.opengl.EGLDisplay): List<EGLConfig> {
         val attribs = intArrayOf(
-            EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8, EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_ALPHA_SIZE, 8,
+            EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8, EGL14.EGL_BLUE_SIZE, 8,
             EGL14.EGL_RENDERABLE_TYPE, EGLExt.EGL_OPENGL_ES3_BIT_KHR,
             EGL_RECORDABLE_ANDROID, 1,
             EGL14.EGL_NONE,
         )
-        val configs = arrayOfNulls<EGLConfig>(1)
+        val configs = arrayOfNulls<EGLConfig>(32)
         val n = IntArray(1)
-        return if (EGL14.eglChooseConfig(display, attribs, 0, configs, 0, 1, n, 0) && n[0] > 0) configs[0] else null
+        if (!EGL14.eglChooseConfig(display, attribs, 0, configs, 0, configs.size, n, 0)) return emptyList()
+        return configs.take(n[0]).filterNotNull()
+    }
+
+    private fun sizes(display: android.opengl.EGLDisplay, config: EGLConfig): EglConfigSizes {
+        fun attr(a: Int): Int = IntArray(1).also { EGL14.eglGetConfigAttrib(display, config, a, it, 0) }[0]
+        return EglConfigSizes(
+            red = attr(EGL14.EGL_RED_SIZE), green = attr(EGL14.EGL_GREEN_SIZE), blue = attr(EGL14.EGL_BLUE_SIZE),
+            alpha = attr(EGL14.EGL_ALPHA_SIZE), depth = attr(EGL14.EGL_DEPTH_SIZE), stencil = attr(EGL14.EGL_STENCIL_SIZE),
+            samples = attr(EGL14.EGL_SAMPLES), recordable = attr(EGL_RECORDABLE_ANDROID) == 1,
+        )
     }
 
     /** The config of the Space's own context, so the encoder's surface matches it. */

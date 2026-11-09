@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+- **Record works on the Galaxy Z Flip7.** Tapping Record in the Menu did nothing there: the recording stopped a tenth of
+  a second after it started and nothing was saved. Pocket XR asked the phone's graphics for a video surface that didn't
+  match the Space's own, and the Flip7 refuses that. It now picks one that matches. If a recording still can't start,
+  the glasses say so instead of saying nothing.
+
 ## 1.2.10: VITURE tracking comes back
 
 Thanks to the tester in GitHub Discussion #24 for a second round of VITURE Beast logs, the motion recording and the
