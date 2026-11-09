@@ -305,6 +305,13 @@ data class LauncherPlacement(val yawDeg: Float, val pitchDeg: Float, val distanc
 
 /** 0.5.25: the home tray's round buttons, each mapped to something Pocket XR has. */
 enum class LauncherButton(val label: String) {
+    /**
+     * PC VR (private builds with the stream built in): first in the row, a built-in part of Pocket XR rather than an app
+     * among the user's (9 November 2026, Mike: "shouldnt the PC VR tile be with the default app launcher buttons so it
+     * doesnt look like just another app"). Drawn with a soft breathing glow.
+     */
+    PC_VR("PC VR"),
+
     /** Recentre: brings the Space back in front. */
     RECENTRE("Recentre"),
 
@@ -560,7 +567,7 @@ class XrLauncher {
         private set
 
     /** The buttons the home tray shows. */
-    var buttons: List<LauncherButton> = LauncherButton.values().filter { it != LauncherButton.STEADY }
+    var buttons: List<LauncherButton> = LauncherButton.values().filter { it != LauncherButton.STEADY && it != LauncherButton.PC_VR }
 
     // Open and close.
     private val alphaAnim = Eased(0f)

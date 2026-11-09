@@ -361,8 +361,7 @@ class SpaceActivity : Activity() {
     /** PC VR first, where the stream can be built in, named with how the PC is ([com.hayeco.flipspaces.pcvr.PcVrTileStatus]). */
     private fun sendApps() {
         val found = foundApps
-        val apps = if (com.hayeco.flipspaces.pcvr.AlvrBridge.available) listOf(com.hayeco.flipspaces.pcvr.PcVrSession.tile(packageName, pcVrLabel)) + found else found
-        SpaceSession.send(SpaceCommand.LauncherApps(apps))
+        SpaceSession.send(SpaceCommand.LauncherApps(found))
     }
 
     private val pcVrStatus by lazy {

@@ -1157,7 +1157,13 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 applyViewport(viewport, force = true)
             }
             steadyWindows()
-            val trayButtons = com.hayeco.flipspaces.core.spatial.LauncherButton.values().filter { it != com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY || com.hayeco.flipspaces.core.spatial.SteadyMode.offeredOn(store.model) }
+            val trayButtons = com.hayeco.flipspaces.core.spatial.LauncherButton.values().filter {
+                when (it) {
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY -> com.hayeco.flipspaces.core.spatial.SteadyMode.offeredOn(store.model)
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.PC_VR -> com.hayeco.flipspaces.pcvr.AlvrBridge.available
+                    else -> true
+                }
+            }
             if (xr.buttons != trayButtons) xr.buttons = trayButtons
             GlassesDisplayControl.configure(context, spaceUp = true, turnDuty = store.turnDuty, picture32by9 = StereoLayout.isSbsMode(viewport.surfaceWidth, viewport.surfaceHeight))
             // 0.5.36: the trackpad cursor anchored in the room or following the head (the trackpad's chip).
@@ -3728,6 +3734,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             is com.hayeco.flipspaces.core.spatial.XrLauncherAction.Button -> {
                 Log.i(tag, "launcher: the ${action.button.label} button")
                 when (action.button) {
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.PC_VR -> {
+                        pickForPanel = null
+                        com.hayeco.flipspaces.pcvr.PcVrSession.open("the launcher's PC VR button")
+                    }
                     com.hayeco.flipspaces.core.spatial.LauncherButton.RECENTRE -> recentre()
                     com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY -> GlassesDisplayControl.steady(context, !GlassesDisplayControl.steadyOn)
                     com.hayeco.flipspaces.core.spatial.LauncherButton.VIEW -> SpaceActivity.alive()?.let { a -> a.runOnUiThread { a.switchView("the launcher's 3D / 2D button") } }
@@ -3867,15 +3877,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     launcher.setApps(c.apps)
                     xr.setApps(c.apps)
                     // PC VR pinned once, at the front, for everyone; unpinning it later is their choice.
-                    c.apps.firstOrNull { com.hayeco.flipspaces.pcvr.PcVrSession.isTile(it) }?.let { tile ->
-                        if (!store.pcVrPinned && store.pinsSeeded) {
-                            store.pcVrPinned = true
-                            val keys = (listOf(tile.key) + store.favourites.filter { it != tile.key }).take(com.hayeco.flipspaces.core.spatial.LauncherGrid.PIN_LIMIT)
-                            store.favourites = keys
-                            launcher.setFavourites(keys)
-                            xr.setPinned(keys)
-                            Log.i(tag, "launcher: PC VR pinned")
-                        }
+                    // PC VR is a built-in button now, not an app tile: a tile pinned by earlier test builds is taken out.
+                    val oldTile = com.hayeco.flipspaces.pcvr.PcVrSession.tile(context.packageName).key
+                    if (oldTile in store.favourites) {
+                        val keys = store.favourites.filter { it != oldTile }
+                        store.favourites = keys
+                        launcher.setFavourites(keys)
+                        xr.setPinned(keys)
+                        Log.i(tag, "launcher: the old PC VR tile unpinned (PC VR is a built-in button now)")
                     }
                     // Pinned once, for someone with none; emptying the row later is their choice.
                     if (!store.pinsSeeded && c.apps.isNotEmpty()) {
