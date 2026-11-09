@@ -83,7 +83,16 @@ object AlvrBridge {
         nativeSendButtons(hand, buttons, trigger, squeeze, stickX, stickY)
 
     /** The head (10 floats, as [sendHead]) and both hands (14 floats each, valid first) at [targetNs], one packet. */
-    fun sendTracking(targetNs: Long, head: FloatArray, hands: FloatArray) = nativeSendTracking(targetNs, head, hands)
+    fun sendTracking(targetNs: Long, head: FloatArray, hands: FloatArray) = nativeSendTracking(targetNs, head, hands, EMPTY_SKELETONS, 0)
+
+    /**
+     * As [sendTracking], with tracked hands: [skeletons] holds 26 joints a hand (x y z w, then position, left hand
+     * first), [mask] bit 0 the left hand present, bit 1 the right.
+     */
+    fun sendTracking(targetNs: Long, head: FloatArray, hands: FloatArray, skeletons: FloatArray, mask: Int) =
+        nativeSendTracking(targetNs, head, hands, skeletons, mask)
+
+    private val EMPTY_SKELETONS = FloatArray(2 * 26 * 7)
 
     /** ALVR's measured delay, ns: how far ahead the head sent to the PC is predicted. 0 before a stream. */
     fun predictionOffsetNs(): Long = nativePredictionOffsetNs()
@@ -135,7 +144,7 @@ object AlvrBridge {
     @JvmStatic private external fun nativePredictionOffsetNs(): Long
     @JvmStatic private external fun nativeSendControllerProfile()
     @JvmStatic private external fun nativeSendButtons(hand: Int, buttons: Int, trigger: Float, squeeze: Float, stickX: Float, stickY: Float)
-    @JvmStatic private external fun nativeSendTracking(targetNs: Long, head: FloatArray, hands: FloatArray)
+    @JvmStatic private external fun nativeSendTracking(targetNs: Long, head: FloatArray, hands: FloatArray, skeletons: FloatArray, mask: Int)
     @JvmStatic private external fun nativeAcquireFrame(oesTexture: Int, outPose: FloatArray): Long
     @JvmStatic private external fun nativeSubmitFrame(timestampNs: Long, vsyncQueueNs: Long)
     @JvmStatic private external fun nativeRenderFrame(nowOrientation: FloatArray, vsyncQueueNs: Long, outPose: FloatArray): Long

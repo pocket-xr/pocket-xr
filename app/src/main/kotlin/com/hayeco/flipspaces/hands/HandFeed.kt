@@ -134,6 +134,8 @@ object HandFeed {
      */
     fun deliver(context: Context, frame: List<HandFrame>, capturedAtMs: Long, latencyMs: Float?): HandUpdate {
         val r = recognizer(context)
+        // PC VR: the hands go to SteamVR as well.
+        if (com.hayeco.flipspaces.pcvr.PcVrSession.isOpen && frame.isNotEmpty()) com.hayeco.flipspaces.pcvr.PcVrHands.store(frame, capturedAtMs)
         val update = synchronized(this) {
             val box = GlassesCameraProvider.airBox
             r.primary.airBox = box

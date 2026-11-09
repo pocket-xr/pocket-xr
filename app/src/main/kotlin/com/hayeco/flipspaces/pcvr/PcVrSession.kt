@@ -56,6 +56,14 @@ object PcVrSession {
     @Volatile var helper: PcVrHelper? = null
         private set
 
+    /** When the portal into PC VR began to open and to close (System.nanoTime), for the renderer; 0 when not. */
+    @Volatile var portalOpenNs = 0L
+        private set
+    @Volatile var portalCloseNs = 0L
+        private set
+    const val PORTAL_OPEN_MS = 750L
+    const val PORTAL_CLOSE_MS = 550L
+
     /** 0 to 1 while Home or Capture is held to leave, for the glasses to show; 0 otherwise. */
     @Volatile var leaveProgress = 0f
         private set
@@ -79,7 +87,7 @@ object PcVrSession {
     }
 
     /** The launcher's tile: an app entry for the manifest's PC VR alias, which only gives it a name and an icon. */
-    fun tile(packageName: String) = com.hayeco.flipspaces.core.AppEntry("PC VR", packageName, TILE_ACTIVITY)
+    fun tile(packageName: String, label: String = PcVrTileStatus.TILE) = com.hayeco.flipspaces.core.AppEntry(label, packageName, TILE_ACTIVITY)
 
     fun isTile(app: com.hayeco.flipspaces.core.AppEntry) = app.activityName == TILE_ACTIVITY
 
@@ -121,7 +129,9 @@ object PcVrSession {
             val view = GLSurfaceView(host.context).apply {
                 setEGLContextClientVersion(3)
                 setZOrderOnTop(true)
-                holder.setFormat(PixelFormat.OPAQUE)
+                // See-through, for the portal: the Space shows around the opening circle while it grows.
+                setEGLConfigChooser(8, 8, 8, 8, 0, 0)
+                holder.setFormat(PixelFormat.TRANSLUCENT)
                 setRenderer(PcVrRenderer(space, pads))
                 renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
             }
@@ -136,7 +146,7 @@ object PcVrSession {
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                     WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                PixelFormat.OPAQUE,
+                PixelFormat.TRANSLUCENT,
             ).apply {
                 this.token = token
                 title = "Pocket XR PC VR"
@@ -153,7 +163,10 @@ object PcVrSession {
             layerManager = manager
             pausedSpace = space
             SpaceSession.gameOwnsGlasses = true
-            space.pauseForGame(true)
+            // The portal opens over the live Space; the Space pauses once it has filled the view.
+            portalOpenNs = System.nanoTime()
+            portalCloseNs = 0L
+            main.postDelayed({ if (pausedSpace === space && portalCloseNs == 0L) space.pauseForGame(true) }, PORTAL_OPEN_MS + 100L)
             keepAwake(space, true)
             leaveProgress = 0f
             // The PC helper, if one answers, starts SteamVR so nobody has to touch the PC.
@@ -173,17 +186,34 @@ object PcVrSession {
     }
 
     /** Back to the Space, its windows where they were. */
-    fun close(why: String) {
+    /** [now]: no portal, at once (the Space itself is closing). */
+    fun close(why: String, now: Boolean = false) {
         main.post {
             if (layer == null) return@post
+            if (now) {
+                finishClose(why)
+                return@post
+            }
+            if (portalCloseNs != 0L) return@post
+            // The Space first, then the portal closes over it, then the stream goes.
+            pausedSpace?.pauseForGame(false)
+            portalCloseNs = System.nanoTime()
+            Log.i(TAG, "PC VR closing: $why")
+            main.postDelayed({ finishClose(why) }, PORTAL_CLOSE_MS + 80L)
+        }
+    }
+
+    private fun finishClose(why: String) {
+        run {
+            if (layer == null) return
             gl?.onPause()
             layer?.let { v -> runCatching { layerManager?.removeView(v) } }
             layer = null
             gl = null
             layerManager = null
             teardown()
-            pausedSpace?.pauseForGame(false)
             pausedSpace = null
+            portalCloseNs = 0L
             SpaceSession.gameOwnsGlasses = false
             leaveProgress = 0f
             changed.toList().forEach { it(false) }

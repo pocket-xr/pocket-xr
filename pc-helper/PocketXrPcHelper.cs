@@ -217,7 +217,15 @@ namespace PocketXr
                     readyFor.Add(phoneAlvrName);
                 }
                 var root = (Dictionary<string, object>)Json.DeserializeObject(session);
-                var video = (Dictionary<string, object>)((Dictionary<string, object>)root["session_settings"])["video"];
+                var settings = (Dictionary<string, object>)root["session_settings"];
+                var video = (Dictionary<string, object>)settings["video"];
+                if (!HandGesturesOn(settings))
+                {
+                    Log.Line("ALVR: turning on hand gestures over its API");
+                    Api("POST", "/api/session/values", Json.Serialize(new object[] {
+                        PathValue(new object[] { "headset", "controllers", "content", "hand_tracking_interaction", "enabled" }, true),
+                    }));
+                }
                 if (VideoIsRight(video)) return false;
                 Log.Line("ALVR: setting the glasses' view and frame rate over its API");
                 Api("POST", "/api/session/values", Json.Serialize(new object[] {
@@ -237,7 +245,13 @@ namespace PocketXr
             {
                 var root = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(file));
                 bool changed = false;
-                var video = (Dictionary<string, object>)((Dictionary<string, object>)root["session_settings"])["video"];
+                var settings = (Dictionary<string, object>)root["session_settings"];
+                var video = (Dictionary<string, object>)settings["video"];
+                if (!HandGesturesOn(settings))
+                {
+                    HandGestures(settings)["enabled"] = true;
+                    changed = true;
+                }
                 if (!VideoIsRight(video))
                 {
                     foreach (var key in new[] { "transcoding_view_resolution", "emulated_headset_view_resolution" })
@@ -275,6 +289,20 @@ namespace PocketXr
             }
             catch (Exception e) { Log.Line("ALVR settings: " + e.Message); }
             return false;
+        }
+
+        /** ALVR's hand gestures (a pinch is the trigger), for the glasses' tracked hands when no Joy-Con is held. */
+        static Dictionary<string, object> HandGestures(Dictionary<string, object> settings)
+        {
+            var controllers = (Dictionary<string, object>)((Dictionary<string, object>)settings["headset"])["controllers"];
+            var content = (Dictionary<string, object>)controllers["content"];
+            return (Dictionary<string, object>)content["hand_tracking_interaction"];
+        }
+
+        static bool HandGesturesOn(Dictionary<string, object> settings)
+        {
+            try { var h = HandGestures(settings); return h["enabled"] is bool && (bool)h["enabled"]; }
+            catch { return true; }
         }
 
         static bool VideoIsRight(Dictionary<string, object> video)

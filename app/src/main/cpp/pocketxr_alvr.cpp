@@ -469,12 +469,30 @@ JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeSendButt
  * (14 floats each, 28 in all), in the play space.
  */
 JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeSendTracking(
-    JNIEnv *env, jclass, jlong target_ns, jfloatArray head, jfloatArray hands) {
+    JNIEnv *env, jclass, jlong target_ns, jfloatArray head, jfloatArray hands, jfloatArray skeletons, jint skeleton_mask) {
     make_hand_ids();
     float h[10];
     float d[28];
     env->GetFloatArrayRegion(head, 0, 10, h);
     env->GetFloatArrayRegion(hands, 0, 28, d);
+    // Tracked hands: 26 joints each (x y z w, then position), left then right; skeleton_mask bit 0 left, bit 1 right.
+    static AlvrPose joints[2][26];
+    const AlvrPose *skeleton_ptrs[2] = {nullptr, nullptr};
+    if (skeleton_mask != 0) {
+        float s[2 * 26 * 7];
+        env->GetFloatArrayRegion(skeletons, 0, 2 * 26 * 7, s);
+        for (int k = 0; k < 2; ++k) {
+            if ((skeleton_mask & (1 << k)) == 0) continue;
+            for (int j = 0; j < 26; ++j) {
+                const float *q = s + (k * 26 + j) * 7;
+                joints[k][j].orientation = AlvrQuat{q[0], q[1], q[2], q[3]};
+                joints[k][j].position[0] = q[4];
+                joints[k][j].position[1] = q[5];
+                joints[k][j].position[2] = q[6];
+            }
+            skeleton_ptrs[k] = joints[k];
+        }
+    }
     AlvrDeviceMotion m[3]{};
     uint64_t n = 0;
     m[n].device_id = g_head_id;
@@ -502,7 +520,7 @@ JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeSendTrac
         m[n].linear_velocity[2] = p[13];
         ++n;
     }
-    alvr_send_tracking(static_cast<uint64_t>(target_ns), m, n, nullptr, nullptr);
+    alvr_send_tracking(static_cast<uint64_t>(target_ns), m, n, skeleton_mask != 0 ? skeleton_ptrs : nullptr, nullptr);
 }
 
 }  // extern "C"

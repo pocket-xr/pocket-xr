@@ -12,6 +12,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import com.hayeco.flipspaces.core.hands.HandSkeleton
 import kotlin.math.abs
 import kotlin.math.tan
 
@@ -33,6 +34,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
     private var copyProgram = 0
     private var warpProgram = 0
     private var warpOesProgram = 0
+    private var portalProgram = 0
     private var quad = 0
     private var surfaceW = 1
     private var surfaceH = 1
@@ -97,6 +99,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         copyProgram = link(VERTEX, COPY_FRAGMENT)
         warpProgram = link(VERTEX, WARP_FRAGMENT)
         warpOesProgram = link(VERTEX, WARP_OES_FRAGMENT)
+        portalProgram = link(VERTEX, PORTAL_FRAGMENT)
         val verts = floatArrayOf(-1f, -1f, 0f, 0f, 1f, -1f, 1f, 0f, -1f, 1f, 0f, 1f, 1f, 1f, 1f, 1f)
         val buf = ByteBuffer.allocateDirect(verts.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(verts).position(0)
         val ids = IntArray(1)
@@ -131,7 +134,8 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
             head[4] = 0f; head[5] = EYE_HEIGHT_M; head[6] = 0f
             if (q0 != null && q1 != null) turnRate(q0.x, q0.y, q0.z, q0.w, q1.x, q1.y, q1.z, q1.w, head) else { head[7] = 0f; head[8] = 0f; head[9] = 0f }
             pads.at(target, now, EYE_HEIGHT_M, hands)
-            AlvrBridge.sendTracking(target, head, hands)
+            val handMask = trackedHands(now)
+            AlvrBridge.sendTracking(target, head, hands, skeletons, handMask)
             if (zoom != PcVrTuning.zoom) applyZoom()
             if (!viewsSent) {
                 AlvrBridge.sendViewParams(wideViews)
@@ -168,6 +172,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
             headAt(now + PHOTON_NS)?.let { q -> set(nowOrientation, q.x, q.y, q.z, q.w) }
             drawLoading(now)
         }
+        drawPortal(now)
         drawn++
         val nowMs = SystemClock.uptimeMillis()
         if (nowMs - lastLogMs >= 2_000L) {
@@ -187,6 +192,49 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
 
     private fun powerThermal(): Int =
         context.getSystemService(android.os.PowerManager::class.java)?.currentThermalStatus ?: -1
+
+    private val skeletons = FloatArray(2 * HandSkeleton.JOINTS * HandSkeleton.STRIDE)
+    private val handJoints = FloatArray(HandSkeleton.JOINTS * HandSkeleton.STRIDE)
+    private var handsLoggedMs = 0L
+
+    /**
+     * Free hands the glasses' camera sees, for SteamVR: a hand with no Joy-Con in it (or the Joy-Con silent) and seen in
+     * the last [HAND_FRESH_MS] is turned from the head frame into the room with the head pose of the moment the camera
+     * saw it, and sent as a hand skeleton, with its wrist as that hand's pose. Returns the mask of hands sent.
+     */
+    private fun trackedHands(now: Long): Int {
+        var mask = 0
+        val nowMs = SystemClock.uptimeMillis()
+        for (side in 0..1) {
+            if (hands[14 * side] > 0.5f) continue
+            val seenMs = PcVrHands.latest(side, handJoints)
+            if (seenMs == 0L || nowMs - seenMs > HAND_FRESH_MS) continue
+            // The uptime and nanoTime clocks share their base on Android.
+            val q = headAt(seenMs * 1_000_000L) ?: continue
+            val o = side * HandSkeleton.JOINTS * HandSkeleton.STRIDE
+            for (j in 0 until HandSkeleton.JOINTS) {
+                val i = j * HandSkeleton.STRIDE
+                val jq = com.hayeco.flipspaces.core.spatial.Quat(handJoints[i + 3], handJoints[i], handJoints[i + 1], handJoints[i + 2])
+                val wq = (q * jq).normalized()
+                val wp = q.rotate(com.hayeco.flipspaces.core.spatial.Vec3(handJoints[i + 4], handJoints[i + 5], handJoints[i + 6]))
+                skeletons[o + i] = wq.x; skeletons[o + i + 1] = wq.y; skeletons[o + i + 2] = wq.z; skeletons[o + i + 3] = wq.w
+                skeletons[o + i + 4] = wp.x; skeletons[o + i + 5] = wp.y + EYE_HEIGHT_M; skeletons[o + i + 6] = wp.z
+            }
+            // The hand's own pose: its wrist (joint 1).
+            val h = 14 * side
+            val w = o + HandSkeleton.STRIDE
+            hands[h] = 1f
+            hands[h + 1] = skeletons[w]; hands[h + 2] = skeletons[w + 1]; hands[h + 3] = skeletons[w + 2]; hands[h + 4] = skeletons[w + 3]
+            hands[h + 5] = skeletons[w + 4]; hands[h + 6] = skeletons[w + 5]; hands[h + 7] = skeletons[w + 6]
+            for (k in 8..13) hands[h + k] = 0f
+            mask = mask or (1 shl side)
+        }
+        if (mask != 0 && nowMs - handsLoggedMs > 5_000L) {
+            handsLoggedMs = nowMs
+            Log.i(TAG, "PC VR hands: ${if (mask and 1 != 0) "left " else ""}${if (mask and 2 != 0) "right " else ""}sent to SteamVR as tracked hands")
+        }
+        return mask
+    }
 
     /** The glasses' head, or the debug "wearer" command's turning head in its place. */
     private fun headAt(ns: Long) = com.hayeco.flipspaces.openxr.OpenXrHeadFeed.testPose?.invoke(ns) ?: HeadTracker.gamePose(ns)
@@ -326,6 +374,41 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
             PcVrLoading.Phase.LEAVING, 0f, PcVrLoading.Pad.NONE, PcVrLoading.Pad.NONE, p)
     }
 
+    /**
+     * The portal: PC VR opens as a circle growing from the middle of each eye's view over the live Space, with a soft
+     * blue rim, and closes the same way. Everything outside the circle is made see-through (the surface is
+     * premultiplied), so the Space shows there.
+     */
+    private fun drawPortal(now: Long) {
+        val open = PcVrSession.portalOpenNs
+        val close = PcVrSession.portalCloseNs
+        val opened = if (open == 0L) 1f else ((now - open) / (PcVrSession.PORTAL_OPEN_MS * 1e6f)).coerceIn(0f, 1f)
+        val closed = if (close == 0L) 0f else ((now - close) / (PcVrSession.PORTAL_CLOSE_MS * 1e6f)).coerceIn(0f, 1f)
+        // Eased: quick to start, gentle to settle.
+        fun ease(t: Float) = 1f - (1f - t) * (1f - t) * (1f - t)
+        val size = ease(opened) * (1f - ease(closed))
+        if (size >= 1f) return
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        GLES30.glUseProgram(portalProgram)
+        bindQuad()
+        GLES30.glUniform1f(GLES30.glGetUniformLocation(portalProgram, "size"), size)
+        GLES30.glUniform1f(GLES30.glGetUniformLocation(portalProgram, "aspect"), (surfaceW / 2f) / surfaceH.coerceAtLeast(1))
+        GLES30.glEnable(GLES30.GL_BLEND)
+        val half = surfaceW / 2
+        for (eye in 0..1) {
+            GLES30.glViewport(eye * half, 0, half, surfaceH)
+            // Outside the circle to nothing, inside kept: destination times the shader's alpha.
+            GLES30.glBlendFunc(GLES30.GL_ZERO, GLES30.GL_SRC_ALPHA)
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(portalProgram, "rim"), 0)
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
+            // The rim's glow added on top.
+            GLES30.glBlendFunc(GLES30.GL_ONE, GLES30.GL_ONE)
+            GLES30.glUniform1i(GLES30.glGetUniformLocation(portalProgram, "rim"), 1)
+            GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
+        }
+        GLES30.glDisable(GLES30.GL_BLEND)
+    }
+
     private fun drawLoading(now: Long) {
         val alpha = if (revealNs == 0L) 1f else {
             val t = ((now - revealNs) / FADE_NS.toFloat()).coerceIn(0f, 1f)
@@ -412,6 +495,8 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         private const val TAG = "PocketXrAlvr"
         /** The PC draws this share of each eye's width and height more on every side, so the late warp has room. */
         const val MARGIN = 0.06f
+        /** A tracked hand older than this is not sent (the camera runs at about 30 a second). */
+        private const val HAND_FRESH_MS = 150L
         /** No new frame this long, after the stream was showing: the freeze guard steps in. */
         private const val STALL_NS = 1_000_000_000L
         private const val FRESH_AGAIN_NS = 3_000_000_000L
@@ -502,6 +587,32 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
                 vec2 f = vec2((t.x - frameTans.x) / (frameTans.y - frameTans.x), (t.y - frameTans.w) / (frameTans.z - frameTans.w));
                 if (any(lessThan(f, vec2(0.0))) || any(greaterThan(f, vec2(1.0)))) { color = vec4(0.0, 0.0, 0.0, 1.0); return; }
                 color = texture(tex, vec2(eyeOffset + f.x * 0.5, f.y));
+            }
+        """
+
+        /**
+         * The portal's mask ([rim] 0: alpha 1 inside the circle, 0 outside, a soft edge) and its rim (1: a blue glow at
+         * the edge, premultiplied). [size] 0 to 1: the circle's radius from nothing to past the view's corners.
+         */
+        const val PORTAL_FRAGMENT = """#version 300 es
+            precision mediump float;
+            in vec2 vUv;
+            uniform float size;
+            uniform float aspect;
+            uniform int rim;
+            out vec4 color;
+            void main() {
+                vec2 p = (vUv - 0.5) * vec2(aspect, 1.0);
+                float r = length(p);
+                float radius = size * (0.5 * length(vec2(aspect, 1.0)) + 0.08);
+                float edge = 0.02;
+                float inside = 1.0 - smoothstep(radius - edge, radius + edge, r);
+                if (rim == 0) {
+                    color = vec4(0.0, 0.0, 0.0, inside);
+                } else {
+                    float glow = exp(-abs(r - radius) * 38.0) * (1.0 - size * size) * 0.9;
+                    color = vec4(vec3(0.30, 0.55, 1.0) * glow, glow);
+                }
             }
         """
 

@@ -126,3 +126,18 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   in 11.4 s, including clicking Yes. Mike: "It started". Found on the way: the tray's timer kept ticking inside the
   question box's own loop and opened endless boxes; it now stops while one is open.
 - Next for the helper: a proper .exe with an icon and an installer; "Start with Windows" on by default.
+- 8 November, evening, "complete all 5":
+  - First-time setup in the PC helper (now a C# program built with Windows' own compiler, installing itself and
+    starting with Windows): checks Steam, SteamVR and ALVR; trusts the phone; sets ALVR's view, 60 frames a second and
+    hand gestures; starts ALVR's dashboard (ALVR needs it to restart SteamVR, and without it waits forever with no
+    picture); lifts SteamVR's safe-mode block on ALVR (SteamVR sets it after a few abrupt stops, then says no headset).
+  - Heat, measured: at thermal status 3 Android holds the app at exactly 30 frames a second, whatever the decoder hint,
+    bitrate or copy pass; cool, 60. Asking the PC for 30 when hot was tried and removed: a different rate makes ALVR
+    restart SteamVR, and the game with it. Open: cutting the heat itself.
+  - The tile says how the PC is: "PC VR: ready", "PC VR: starting", "PC VR: PC off".
+  - Freeze guard: a second with no new frame and the loading room fades in ("Waiting for your PC"), the PC is asked for
+    a full frame every 3 s; logged as "PC VR freeze".
+  - Portal: PC VR opens as a circle with a blue rim over the live Space, which pauses once it has filled the view, and
+    closes the same way.
+  - SteamVR hand tracking: the glasses' tracked hands as OpenXR's 26 joints (`core/hands/HandSkeleton.kt`, tested),
+    sent for any hand with no Joy-Con in it; ALVR's hand gestures make a pinch the trigger.
