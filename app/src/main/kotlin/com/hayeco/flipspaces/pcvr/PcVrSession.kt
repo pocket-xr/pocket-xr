@@ -52,6 +52,9 @@ object PcVrSession {
         private set
     @Volatile var helperPc: String? = null
         private set
+    /** This session's PC helper, for the freeze guard. */
+    @Volatile var helper: PcVrHelper? = null
+        private set
 
     /** 0 to 1 while Home or Capture is held to leave, for the glasses to show; 0 otherwise. */
     @Volatile var leaveProgress = 0f
@@ -59,6 +62,13 @@ object PcVrSession {
 
     /** Told on the main thread when PC VR opens or closes: the phone's trackpad shows its way back. */
     val changed = mutableListOf<(Boolean) -> Unit>()
+
+    /** The freeze guard: the PC helper, if there is one, asks the streamer for a fresh full frame. Any thread. */
+    fun askFreshFrame() {
+        val h = helper ?: return
+        val pc = h.lastPc ?: return
+        Thread({ h.freshFrame(pc) }, "pcvr-fresh-frame").start()
+    }
 
     /** A touch on the dark phone: its screen on again for a while. */
     fun wakePhone() {
@@ -94,6 +104,8 @@ object PcVrSession {
                 ?.createMulticastLock("pocketxr-pcvr")?.apply { setReferenceCounted(false); acquire() }
             val (vw, vh) = AlvrBridge.viewSize(PcVrRenderer.MARGIN)
             // ALVR asks this activity for the microphone permission at start, if it isn't granted yet.
+            // Always 60: a different rate makes ALVR restart SteamVR, and the game with it (8 November 2026, a heat mode
+            // that asked for 30 when hot left SteamVR waiting for a restart only ALVR's dashboard can do).
             AlvrBridge.init(space, vw, vh, 60f)
 
             val pads = PcVrPads()
@@ -147,7 +159,8 @@ object PcVrSession {
             // The PC helper, if one answers, starts SteamVR so nobody has to touch the PC.
             helperStage = null
             helperPc = null
-            val helper = PcVrHelper(space)
+            val helper = PcVrHelper(space).also { it.alvrName = AlvrBridge.hostname() }
+            this.helper = helper
             Thread({
                 helper.startSteamVr(
                     stage = { s, pc -> helperStage = s; helperPc = pc },

@@ -19,7 +19,7 @@ import java.net.SocketTimeoutException
  */
 class PcVrHelper(context: Context) {
     /** What the loading scene says while the helper works. */
-    enum class Stage { LOOKING, NO_HELPER, ASK_ON_PC, REFUSED, STARTING_STEAMVR, STEAMVR_READY }
+    enum class Stage { LOOKING, NO_HELPER, ASK_ON_PC, REFUSED, NO_STEAM, NO_ALVR, STARTING_STEAMVR, STEAMVR_READY }
 
     class Pc(val address: InetAddress, val port: Int, val name: String)
 
@@ -74,16 +74,35 @@ class PcVrHelper(context: Context) {
         return true
     }
 
-    /** "off", "starting" or "ready"; "unpaired" if the PC forgot this phone; null if the helper doesn't answer. */
+    /**
+     * "off", "starting" or "ready"; "no_steam" or "no_alvr" when the PC is missing one; "unpaired" if the PC forgot this
+     * phone; null if the helper doesn't answer. Starting also has the helper trust this phone in ALVR and set it up.
+     */
     fun status(pc: Pc, start: Boolean): String? {
         val token = tokenFor(pc) ?: return "unpaired"
-        val answer = ask(pc, JSONObject().put("op", if (start) "start" else "status").put("token", token), CONNECT_MS) ?: return null
+        val request = JSONObject().put("op", if (start) "start" else "status").put("token", token).put("alvr", alvrName)
+        val answer = ask(pc, request, START_WAIT_MS) ?: return null
         if (!answer.optBoolean("ok")) {
             if (answer.optString("why") == "not paired") prefs.edit().remove("token:${pc.name}").apply()
             return "unpaired"
         }
+        if (!answer.optBoolean("steam", true)) return "no_steam"
+        if (!answer.optBoolean("alvr", true)) return "no_alvr"
         return answer.optString("steamvr")
     }
+
+    /** The streamer is asked for a fresh full frame, when the picture has stopped (the freeze guard). */
+    fun freshFrame(pc: Pc) {
+        val token = tokenFor(pc) ?: return
+        ask(pc, JSONObject().put("op", "idr").put("token", token), CONNECT_MS)
+    }
+
+    /** The PC found by the last [startSteamVr], for later requests. */
+    @Volatile var lastPc: Pc? = null
+        private set
+
+    /** The phone's name in ALVR, sent so the helper can trust it. */
+    var alvrName: String = ""
 
     /**
      * The whole start: find the PC, be allowed if needed, start SteamVR and wait until it is ready, telling [stage]
@@ -98,6 +117,7 @@ class PcVrHelper(context: Context) {
             return
         }
         Log.i(TAG, "PC helper: found on ${pc.name} (${pc.address.hostAddress})")
+        lastPc = pc
         var state = status(pc, start = true)
         if (state == "unpaired") {
             stage(Stage.ASK_ON_PC, pc.name)
@@ -117,6 +137,14 @@ class PcVrHelper(context: Context) {
                     return
                 }
                 null -> return
+                "no_steam" -> {
+                    stage(Stage.NO_STEAM, pc.name)
+                    return
+                }
+                "no_alvr" -> {
+                    stage(Stage.NO_ALVR, pc.name)
+                    return
+                }
                 else -> stage(Stage.STARTING_STEAMVR, pc.name)
             }
             Thread.sleep(POLL_MS)
@@ -137,6 +165,8 @@ class PcVrHelper(context: Context) {
         private const val CONNECT_MS = 2_000
         /** The PC's user has a minute to answer, as the helper waits. */
         private const val PAIR_WAIT_MS = 65_000
+        /** Starting may first set ALVR up over its API. */
+        private const val START_WAIT_MS = 8_000
         private const val POLL_MS = 1_000L
         private const val READY_WAIT_MS = 120_000L
     }

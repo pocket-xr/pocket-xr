@@ -172,14 +172,14 @@ JNIEXPORT jstring JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeHudMe
 
 /** After DecoderConfig: the hardware decoder for [codec], with ALVR's buffering of [max_buffering] frames. */
 JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeCreateDecoder(
-    JNIEnv *, jclass, jint codec, jfloat max_buffering) {
+    JNIEnv *, jclass, jint codec, jfloat max_buffering, jint operating_rate) {
     const uint64_t size = alvr_get_decoder_config(nullptr);
     std::vector<char> config(size);
     if (size > 0) alvr_get_decoder_config(config.data());
     AlvrMediacodecOption options[2];
     options[0].key = "operating-rate";
     options[0].ty = ALVR_MEDIACODEC_PROP_TYPE_INT32;
-    options[0].value.int32 = 120;
+    options[0].value.int32 = operating_rate;
     options[1].key = "priority";
     options[1].ty = ALVR_MEDIACODEC_PROP_TYPE_INT32;
     options[1].value.int32 = 0;
@@ -188,13 +188,14 @@ JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeCreateDe
     dc.force_software_decoder = false;
     dc.max_buffering_frames = max_buffering;
     dc.buffering_history_weight = 0.9f;
-    dc.options = options;
-    dc.options_count = 2;
+    // An operating rate of 0 leaves the codec's own pace.
+    dc.options = operating_rate > 0 ? options : options + 1;
+    dc.options_count = operating_rate > 0 ? 2 : 1;
     dc.config_buffer = reinterpret_cast<const uint8_t *>(config.data());
     dc.config_buffer_size = size;
     alvr_create_decoder(dc);
-    LOGI("decoder: codec %d, %llu config bytes, buffering %.1f frames", codec, static_cast<unsigned long long>(size),
-         max_buffering);
+    LOGI("decoder: codec %d, %llu config bytes, buffering %.1f frames, operating rate %d", codec,
+         static_cast<unsigned long long>(size), max_buffering, operating_rate);
 }
 
 JNIEXPORT void JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeDestroyDecoder(JNIEnv *, jclass) {
@@ -341,6 +342,13 @@ JNIEXPORT jlong JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeAcquire
         env->SetFloatArrayRegion(out_pose, 0, 12, p);
     }
     return static_cast<jlong>(ts);
+}
+
+/** The name the PC streamer knows this phone by ("9784.client.local."), for the PC helper to trust it. */
+JNIEXPORT jstring JNICALL Java_com_hayeco_flipspaces_pcvr_AlvrBridge_nativeHostname(JNIEnv *env, jclass) {
+    char host[128] = {0};
+    if (g_initialized) alvr_hostname(host);
+    return env->NewStringUTF(host);
 }
 
 /** How far ahead to predict the head sent with nativeSendHead: ALVR's measured delay (0 before a stream). */

@@ -92,11 +92,15 @@ object AlvrBridge {
         nativeInit(context, viewWidth, viewHeight, refreshHz)
 
     fun destroy() = nativeDestroy()
+
+    /** The name the PC streamer knows this phone by; empty before [init]. */
+    fun hostname(): String = nativeHostname()
     fun glResume(width: Int, height: Int, leftTexture: Int, rightTexture: Int) = nativeGlResume(width, height, leftTexture, rightTexture)
     fun glPause() = nativeGlPause()
     fun pollEvent(out: FloatArray): Int = nativePollEvent(out)
     fun hudMessage(): String = nativeHudMessage()
-    fun createDecoder(codec: Int, maxBuffering: Float = 2f) = nativeCreateDecoder(codec, maxBuffering)
+    fun createDecoder(codec: Int, maxBuffering: Float = 2f, operatingRate: Int = PcVrTuning.operatingRate) =
+        nativeCreateDecoder(codec, maxBuffering, operatingRate)
     fun destroyDecoder() = nativeDestroyDecoder()
     fun startStream(width: Int, height: Int) = nativeStartStream(width, height)
     fun sendViewParams(views: Views) = nativeSendViewParams(views.ipdM, views.fovs)
@@ -117,11 +121,12 @@ object AlvrBridge {
 
     @JvmStatic private external fun nativeInit(context: Context, viewWidth: Int, viewHeight: Int, refreshHz: Float)
     @JvmStatic private external fun nativeDestroy()
+    @JvmStatic private external fun nativeHostname(): String
     @JvmStatic private external fun nativeGlResume(width: Int, height: Int, leftTexture: Int, rightTexture: Int)
     @JvmStatic private external fun nativeGlPause()
     @JvmStatic private external fun nativePollEvent(out: FloatArray): Int
     @JvmStatic private external fun nativeHudMessage(): String
-    @JvmStatic private external fun nativeCreateDecoder(codec: Int, maxBuffering: Float)
+    @JvmStatic private external fun nativeCreateDecoder(codec: Int, maxBuffering: Float, operatingRate: Int)
     @JvmStatic private external fun nativeDestroyDecoder()
     @JvmStatic private external fun nativeStartStream(width: Int, height: Int)
     @JvmStatic private external fun nativeSendViewParams(ipdM: Float, fovs: FloatArray)

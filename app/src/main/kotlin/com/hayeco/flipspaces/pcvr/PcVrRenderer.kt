@@ -32,6 +32,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
     private var hasFrame = false
     private var copyProgram = 0
     private var warpProgram = 0
+    private var warpOesProgram = 0
     private var quad = 0
     private var surfaceW = 1
     private var surfaceH = 1
@@ -55,6 +56,10 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
     private val loading = PcVrLoading()
     /** Its own card, so holding to leave never repaints the loading card back and forth. */
     private val leaving = PcVrLoading()
+    private val stalledCard = PcVrLoading()
+    private var stallSinceNs = 0L
+    private var lastFreshAskNs = 0L
+    private var stallAlpha = 0f
     private var loadStartNs = 0L
     private var everStreamed = false
     private var lastFrameNs = 0L
@@ -91,6 +96,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         GLES30.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
         copyProgram = link(VERTEX, COPY_FRAGMENT)
         warpProgram = link(VERTEX, WARP_FRAGMENT)
+        warpOesProgram = link(VERTEX, WARP_OES_FRAGMENT)
         val verts = floatArrayOf(-1f, -1f, 0f, 0f, 1f, -1f, 1f, 0f, -1f, 1f, 0f, 1f, 1f, 1f, 1f, 1f)
         val buf = ByteBuffer.allocateDirect(verts.size * 4).order(ByteOrder.nativeOrder()).asFloatBuffer().put(verts).position(0)
         val ids = IntArray(1)
@@ -101,6 +107,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         applyZoom()
         loading.create(VERTEX)
         leaving.create(VERTEX)
+        stalledCard.create(VERTEX)
         loadStartNs = System.nanoTime()
         Log.i(TAG, "PC VR: each frame copied once, then turned to the head every refresh; glasses ${views.line()}; the PC draws ${(MARGIN * 100).toInt()} % wider: ${wideViews.line()}")
     }
@@ -132,7 +139,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
             }
             val ts = AlvrBridge.acquireFrame(oes, framePose)
             if (ts != 0L) {
-                copyFrame()
+                if (!PcVrTuning.direct) copyFrame()
                 poseStep += angle(copyPose, framePose)
                 poseLag += angle(framePose, sentOrientation)
                 copyPose.indices.forEach { copyPose[it] = framePose[it] }
@@ -154,6 +161,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
                 Log.i(TAG, "PC VR ready after %.1f s: fading in".format(java.util.Locale.ROOT, (now - loadStartNs) / 1e9))
             }
             drawLoading(now)
+            drawStalled(now)
             drawLeaving(now)
         } else {
             clear()
@@ -163,6 +171,9 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         drawn++
         val nowMs = SystemClock.uptimeMillis()
         if (nowMs - lastLogMs >= 2_000L) {
+            val battery = context.getSystemService(android.os.BatteryManager::class.java)
+            val currentMa = battery?.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)?.div(1000) ?: 0
+            Log.i(TAG, "PC VR power: battery current $currentMa mA, thermal ${powerThermal()}")
             Log.i(TAG, "PC VR: ${if (streaming) "streaming ${streamW}x$streamH" else "waiting"}, ${newFrames / 2f} new frames a second, ${drawn / 2f} drawn, head predicted ${predictNs / 1_000_000} ms ahead")
             if (streaming && newFrames > 0) Log.i(TAG, "PC VR frames: pose turned %.2f degrees a frame, %.1f degrees behind the head sent".format(
                 java.util.Locale.ROOT, poseStep / newFrames, poseLag / newFrames))
@@ -173,6 +184,9 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
             drawn = 0
         }
     }
+
+    private fun powerThermal(): Int =
+        context.getSystemService(android.os.PowerManager::class.java)?.currentThermalStatus ?: -1
 
     /** The glasses' head, or the debug "wearer" command's turning head in its place. */
     private fun headAt(ns: Long) = com.hayeco.flipspaces.openxr.OpenXrHeadFeed.testPose?.invoke(ns) ?: HeadTracker.gamePose(ns)
@@ -273,6 +287,35 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
     }
 
+    /**
+     * The freeze guard: no new frame for [STALL_NS] after the stream was showing. Rather than a still picture that only
+     * turns with the head, the loading room fades back in saying so, the PC is asked for a fresh full frame, and it all
+     * fades out again once frames come back. Logged, to catch the cause (8 November 2026: freezes of about 20 s).
+     */
+    private fun drawStalled(now: Long) {
+        val stalled = revealNs != 0L && lastFrameNs != 0L && now - lastFrameNs > STALL_NS
+        if (stalled && stallSinceNs == 0L) {
+            stallSinceNs = now
+            Log.w(TAG, "PC VR freeze: no new frame for %.1f s; asking the PC for a full frame".format(java.util.Locale.ROOT, (now - lastFrameNs) / 1e9))
+            PcVrSession.askFreshFrame()
+            lastFreshAskNs = now
+        } else if (stalled && now - lastFreshAskNs > FRESH_AGAIN_NS) {
+            PcVrSession.askFreshFrame()
+            lastFreshAskNs = now
+        } else if (!stalled && stallSinceNs != 0L) {
+            Log.i(TAG, "PC VR freeze over after %.1f s".format(java.util.Locale.ROOT, (now - stallSinceNs) / 1e9 + STALL_NS / 1e9))
+            stallSinceNs = 0L
+        }
+        // Eased in and out over about half a second.
+        val target = if (stalled) 1f else 0f
+        stallAlpha += (target - stallAlpha) * STALL_EASE
+        if (stallAlpha < 0.01f) return
+        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        bindQuad()
+        stalledCard.draw(now, nowOrientation, tans, surfaceW, surfaceH, stallAlpha.coerceAtMost(0.95f),
+            PcVrLoading.Phase.STALLED, 0f, PcVrLoading.Pad.NONE, PcVrLoading.Pad.NONE)
+    }
+
     /** Home or Capture held: the game dims into the loading room, with a ring filling until the Space comes back. */
     private fun drawLeaving(now: Long) {
         val p = PcVrSession.leaveProgress
@@ -307,6 +350,8 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         return when (PcVrSession.helperStage) {
             PcVrHelper.Stage.ASK_ON_PC -> "Allow Pocket XR on your PC" to "Click Yes on $pc. You only do this once."
             PcVrHelper.Stage.REFUSED -> "Your PC said no" to "Start SteamVR on $pc yourself, or allow Pocket XR next time."
+            PcVrHelper.Stage.NO_STEAM -> "SteamVR isn't on $pc" to "Install Steam and SteamVR on your PC, then try again."
+            PcVrHelper.Stage.NO_ALVR -> "ALVR isn't set up on $pc" to "Install the ALVR streamer on your PC and open it once."
             PcVrHelper.Stage.STARTING_STEAMVR -> "Starting SteamVR on $pc" to "This takes a few seconds."
             PcVrHelper.Stage.STEAMVR_READY -> "Connecting to SteamVR" to "Almost there."
             PcVrHelper.Stage.NO_HELPER -> "Connecting to your PC" to "Start SteamVR on your PC, or run the Pocket XR PC helper."
@@ -320,19 +365,22 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         if (!hasFrame) return
         // Directions in the view now, turned into the frame's view: inverse(frame) * now, as a 3x3 matrix.
         relative(copyPose, nowOrientation, warp)
-        GLES30.glUseProgram(warpProgram)
+        // Test: straight from the decoder's image, no copy (PcVrTuning.direct).
+        val direct = PcVrTuning.direct
+        val program = if (direct) warpOesProgram else warpProgram
+        GLES30.glUseProgram(program)
         bindQuad()
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, copyTex)
-        GLES30.glUniformMatrix3fv(GLES30.glGetUniformLocation(warpProgram, "warp"), 1, false, warp, 0)
+        if (direct) GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oes) else GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, copyTex)
+        GLES30.glUniformMatrix3fv(GLES30.glGetUniformLocation(program, "warp"), 1, false, warp, 0)
         val half = surfaceW / 2
         for (eye in 0..1) {
             GLES30.glViewport(eye * half, 0, half, surfaceH)
             val o = eye * 4
             // Left, right, up, down tangents: the glasses' view for this eye's half, and the wider one the PC drew.
-            GLES30.glUniform4f(GLES30.glGetUniformLocation(warpProgram, "tans"), tans[o], tans[o + 1], tans[o + 2], tans[o + 3])
-            GLES30.glUniform4f(GLES30.glGetUniformLocation(warpProgram, "frameTans"), frameTans[o], frameTans[o + 1], frameTans[o + 2], frameTans[o + 3])
-            GLES30.glUniform1f(GLES30.glGetUniformLocation(warpProgram, "eyeOffset"), eye * 0.5f)
+            GLES30.glUniform4f(GLES30.glGetUniformLocation(program, "tans"), tans[o], tans[o + 1], tans[o + 2], tans[o + 3])
+            GLES30.glUniform4f(GLES30.glGetUniformLocation(program, "frameTans"), frameTans[o], frameTans[o + 1], frameTans[o + 2], frameTans[o + 3])
+            GLES30.glUniform1f(GLES30.glGetUniformLocation(program, "eyeOffset"), eye * 0.5f)
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
         }
     }
@@ -364,6 +412,10 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         private const val TAG = "PocketXrAlvr"
         /** The PC draws this share of each eye's width and height more on every side, so the late warp has room. */
         const val MARGIN = 0.06f
+        /** No new frame this long, after the stream was showing: the freeze guard steps in. */
+        private const val STALL_NS = 1_000_000_000L
+        private const val FRESH_AGAIN_NS = 3_000_000_000L
+        private const val STALL_EASE = 0.08f
         /** New frames no further apart than this count as steady; this long steady and the loading scene fades. */
         private const val STEADY_GAP_NS = 150_000_000L
         private const val STEADY_NS = 1_500_000_000L
@@ -450,6 +502,28 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
                 vec2 f = vec2((t.x - frameTans.x) / (frameTans.y - frameTans.x), (t.y - frameTans.w) / (frameTans.z - frameTans.w));
                 if (any(lessThan(f, vec2(0.0))) || any(greaterThan(f, vec2(1.0)))) { color = vec4(0.0, 0.0, 0.0, 1.0); return; }
                 color = texture(tex, vec2(eyeOffset + f.x * 0.5, f.y));
+            }
+        """
+
+        /** As [WARP_FRAGMENT], straight from the decoder's image (its first row at the top). */
+        const val WARP_OES_FRAGMENT = """#version 300 es
+            #extension GL_OES_EGL_image_external_essl3 : require
+            precision highp float;
+            in vec2 vUv;
+            uniform samplerExternalOES tex;
+            uniform mat3 warp;
+            uniform vec4 tans;
+            uniform vec4 frameTans;
+            uniform float eyeOffset;
+            out vec4 color;
+            void main() {
+                vec3 dir = vec3(mix(tans.x, tans.y, vUv.x), mix(tans.w, tans.z, vUv.y), -1.0);
+                vec3 d = warp * dir;
+                if (d.z >= -1e-4) { color = vec4(0.0, 0.0, 0.0, 1.0); return; }
+                vec2 t = d.xy / -d.z;
+                vec2 f = vec2((t.x - frameTans.x) / (frameTans.y - frameTans.x), (t.y - frameTans.w) / (frameTans.z - frameTans.w));
+                if (any(lessThan(f, vec2(0.0))) || any(greaterThan(f, vec2(1.0)))) { color = vec4(0.0, 0.0, 0.0, 1.0); return; }
+                color = texture(tex, vec2(eyeOffset + f.x * 0.5, 1.0 - f.y));
             }
         """
     }

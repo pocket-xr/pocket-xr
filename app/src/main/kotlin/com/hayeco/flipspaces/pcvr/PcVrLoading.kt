@@ -25,7 +25,7 @@ import kotlin.math.sin
  * All calls on the GL thread.
  */
 class PcVrLoading {
-    enum class Phase { FINDING_PC, STARTING, RECONNECTING, LEAVING }
+    enum class Phase { FINDING_PC, STARTING, RECONNECTING, LEAVING, STALLED }
 
     /** Each Joy-Con: not reporting, reporting, or rested (its drift measured this session). */
     enum class Pad { NONE, AWAKE, RESTED }
@@ -119,8 +119,9 @@ class PcVrLoading {
             Phase.STARTING -> "Starting SteamVR" to "Almost there."
             Phase.RECONNECTING -> "Reconnecting to your PC" to "Your game keeps running."
             Phase.LEAVING -> "Going back to your Space" to "Keep holding, or let go to stay."
+            Phase.STALLED -> "Waiting for your PC" to "The picture paused. It comes back by itself."
         }
-        paintCard(title, line, left, right, phase != Phase.LEAVING)
+        paintCard(title, line, left, right, phase != Phase.LEAVING && phase != Phase.STALLED)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, cardTex)
         GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, bitmap, 0)
         Log.i(TAG, "PC VR loading: $title; Joy-Cons left $left, right $right")

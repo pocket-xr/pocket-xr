@@ -190,6 +190,8 @@ class DebugReceiver : BroadcastReceiver() {
             "pcvr" -> {
                 val tuning = com.hayeco.flipspaces.pcvr.PcVrTuning
                 tuning.zoom = intent.getFloatExtra("zoom", tuning.zoom).coerceIn(1f, 2f)
+                tuning.operatingRate = intent.getIntExtra("rate", tuning.operatingRate)
+                tuning.direct = intent.getBooleanExtra("direct", tuning.direct)
                 Log.i(TAG, "PC VR zoom asked: ${tuning.zoom}")
                 // As the launcher's tile does: `--ez open true` opens PC VR over the Space, false closes it.
                 if (intent.hasExtra("open")) {
