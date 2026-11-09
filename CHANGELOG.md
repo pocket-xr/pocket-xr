@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.7: Text size for the window you clicked
 
 - **Help Pocket XR get on Google Play.** The trackpad's Menu has a card asking you to join the Play testers. Tap Join
   for the testers group, then Open Play invite. Installing from Play means uninstalling this copy first, and that resets
