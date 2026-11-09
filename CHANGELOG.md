@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.2.5: a smoother hand cursor
+
+- **Smoother hand cursor.** The dot follows your hand closely and glides on every refresh, with no sticking and hopping
+  on slow moves. It steadies while you pinch, so a click lands where you aimed.
+- **Cooler while you wear the glasses.** Head tracking uses about a third less of the phone's processor, with the same
+  steady picture.
+
 ## 1.2.4: the game controller
 
 - **Game controller.** The trackpad's Menu has a Game controller with a stick and buttons on the phone: L2, L1 and Select
