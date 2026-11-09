@@ -297,7 +297,21 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         fun pad(h: Int) = PcVrLoading.Pad.entries[OpenXrPads.padState(h)]
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
         bindQuad()
-        loading.draw(now, nowOrientation, tans, surfaceW, surfaceH, alpha, phase, (now - loadStartNs) / 1e9f, pad(0), pad(1))
+        loading.draw(now, nowOrientation, tans, surfaceW, surfaceH, alpha, phase, (now - loadStartNs) / 1e9f, pad(0), pad(1),
+            words = if (phase == PcVrLoading.Phase.FINDING_PC) helperWords() else null)
+    }
+
+    /** What the PC helper is doing, in the card's words; null for the usual "Connecting to your PC". */
+    private fun helperWords(): Pair<String, String>? {
+        val pc = PcVrSession.helperPc ?: "your PC"
+        return when (PcVrSession.helperStage) {
+            PcVrHelper.Stage.ASK_ON_PC -> "Allow Pocket XR on your PC" to "Click Yes on $pc. You only do this once."
+            PcVrHelper.Stage.REFUSED -> "Your PC said no" to "Start SteamVR on $pc yourself, or allow Pocket XR next time."
+            PcVrHelper.Stage.STARTING_STEAMVR -> "Starting SteamVR on $pc" to "This takes a few seconds."
+            PcVrHelper.Stage.STEAMVR_READY -> "Connecting to SteamVR" to "Almost there."
+            PcVrHelper.Stage.NO_HELPER -> "Connecting to your PC" to "Start SteamVR on your PC, or run the Pocket XR PC helper."
+            PcVrHelper.Stage.LOOKING, null -> null
+        }
     }
 
     /** Each eye's half: the copy turned from the pose the PC drew it for to the head now. */

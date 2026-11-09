@@ -63,9 +63,10 @@ class PcVrLoading {
     fun draw(
         nowNs: Long, head: FloatArray, tans: FloatArray, width: Int, height: Int, alpha: Float,
         phase: Phase, waitedS: Float, left: Pad, right: Pad, progress: Float = -1f,
+        words: Pair<String, String>? = null,
     ) {
         if (program == 0 || alpha <= 0f) return
-        updateCard(phase, waitedS, left, right)
+        updateCard(phase, waitedS, left, right, words)
         follow(head)
         relative(anchor, head, view)
         GLES30.glUseProgram(program)
@@ -106,13 +107,14 @@ class PcVrLoading {
         anchor[0] = 0f; anchor[1] = sin(anchorYaw / 2); anchor[2] = 0f; anchor[3] = cos(anchorYaw / 2)
     }
 
-    private fun updateCard(phase: Phase, waitedS: Float, left: Pad, right: Pad) {
+    /** [words]: the title and line while the PC is being found, from the PC helper; null for the usual ones. */
+    private fun updateCard(phase: Phase, waitedS: Float, left: Pad, right: Pad, words: Pair<String, String>?) {
         val slow = phase == Phase.FINDING_PC && waitedS > SLOW_FIND_S
-        val key = "$phase $slow $left $right"
+        val key = "$phase $slow $left $right $words"
         if (key == cardKey) return
         cardKey = key
         val (title, line) = when (phase) {
-            Phase.FINDING_PC -> if (slow) "Still looking for your PC" to "Check that ALVR is open and both are on the same Wi-Fi."
+            Phase.FINDING_PC -> words ?: if (slow) "Still looking for your PC" to "Check that ALVR is open and both are on the same Wi-Fi."
             else "Connecting to your PC" to "This takes a few seconds."
             Phase.STARTING -> "Starting SteamVR" to "Almost there."
             Phase.RECONNECTING -> "Reconnecting to your PC" to "Your game keeps running."

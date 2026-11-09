@@ -47,6 +47,12 @@ object PcVrSession {
 
     val isOpen: Boolean get() = layer != null
 
+    /** What the PC helper is doing for this PC VR session, for the loading card; null before it starts. */
+    @Volatile var helperStage: PcVrHelper.Stage? = null
+        private set
+    @Volatile var helperPc: String? = null
+        private set
+
     /** 0 to 1 while Home or Capture is held to leave, for the glasses to show; 0 otherwise. */
     @Volatile var leaveProgress = 0f
         private set
@@ -138,6 +144,16 @@ object PcVrSession {
             space.pauseForGame(true)
             keepAwake(space, true)
             leaveProgress = 0f
+            // The PC helper, if one answers, starts SteamVR so nobody has to touch the PC.
+            helperStage = null
+            helperPc = null
+            val helper = PcVrHelper(space)
+            Thread({
+                helper.startSteamVr(
+                    stage = { s, pc -> helperStage = s; helperPc = pc },
+                    stop = { layer !== root || pads.streaming },
+                )
+            }, "pcvr-helper").start()
             changed.toList().forEach { it(true) }
             Log.i(TAG, "PC VR open over the Space ($why)")
         }

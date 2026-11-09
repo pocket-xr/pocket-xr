@@ -119,3 +119,10 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   real app is force stopped.
 - Left: the PC helper (step 6), so the tile also starts SteamVR; the tile's status (PC off, starting, ready); the
   portal transition; SteamVR hand tracking; the 20 s freezes if they come back.
+- Step 6, the PC helper, version 0 (8 November): `pc-helper/PocketXrPcHelper.ps1`, a PowerShell tray program (nothing
+  to install on Windows). Port 47610: UDP to be found, TCP for pair, status and start. The PC's user allows a phone once
+  (a Yes/No box); its token then lets it start SteamVR. The tile finds it (`pcvr/PcVrHelper.kt`), and the loading card
+  says each step: "Allow Pocket XR on your PC", "Starting SteamVR on MIKE". First run, from SteamVR off: tap to SteamVR
+  in 11.4 s, including clicking Yes. Mike: "It started". Found on the way: the tray's timer kept ticking inside the
+  question box's own loop and opened endless boxes; it now stops while one is open.
+- Next for the helper: a proper .exe with an icon and an installer; "Start with Windows" on by default.
