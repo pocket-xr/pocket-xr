@@ -111,3 +111,11 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
 - Step 5, game sound (8 November): already working with nothing added. ALVR's client library plays the PC's game sound
   itself (AAudio, out to the glasses as a USB headset), and the PC streamer sends it and mutes the PC's speakers.
   Mike: "Clean sound". The microphone stays off: on Windows it needs VB-CABLE on the PC, only worth it for voice chat.
+- Step 7, the tile (8 November): "PC VR" is the first pinned tile in the Space's launcher (`pcvr/PcVrSession.kt`). It
+  opens the stream over the paused Space in a sub-window, as OpenXR games do, with the Space's windows kept. Back: the
+  phone's "Back to your Space" button (a touch wakes its dark screen for 8 s), or a 2 s hold of Home or Capture, shown
+  on the glasses as the game dimming into the loading room with a ring (a press still only recentres). Mike: "Both
+  worked". The test copy is named "Pocket XR Test" on the phone; it opens from its own "Open the Space" button after the
+  real app is force stopped.
+- Left: the PC helper (step 6), so the tile also starts SteamVR; the tile's status (PC off, starting, ready); the
+  portal transition; SteamVR hand tracking; the 20 s freezes if they come back.
