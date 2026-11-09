@@ -2,6 +2,26 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+- **Help Pocket XR get on Google Play.** The trackpad's Menu has a card asking you to join the Play testers. Tap Join
+  for the testers group, then Open Play invite. Installing from Play means uninstalling this copy first, and that resets
+  your Pocket XR settings. Not now hides the card for 7 days. I already joined hides it for good. The Play version
+  doesn't show it.
+
+## 1.2.6: a lighter Menu
+
+- **A tidier Menu.** The trackpad's Menu is about half as long. The things used every session are tiles at the top:
+  Steady mode, Pocket mode, Game keys, Open Control Center, Record, Phone home and Pocket XR Settings. Unlock phone
+  joins them while the phone is locked.
+- **This window.** Text size and Side by side 3D for the window you are using sit together under This window, right
+  under the tiles.
+- **Sections.** The Space (tracking, Lock screens, Arrange and presets) is open. Trackpad and controls, Windows and
+  glasses, and Help and more start closed: tap a heading to open it, and the Menu remembers. Exit Pocket XR stays last.
+- **Only what you can use.** Rows that need the Space, such as Pocket mode, Record and Arrange, show while it's open,
+  and greyed out rows are gone. Every setting keeps its value.
+- **Ko-fi in Pocket XR blue.** The Buy me a beer pill uses the same blue as the window glow, softly.
+
 ## 1.2.5: a smoother hand cursor
 
 - **Smoother hand cursor.** The dot follows your hand closely and glides on every refresh, with no sticking and hopping

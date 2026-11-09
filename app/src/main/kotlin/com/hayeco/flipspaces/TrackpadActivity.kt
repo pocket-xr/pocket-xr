@@ -1145,6 +1145,10 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun windowCount(): Int = if (SpaceSession.active) SpaceSession.windowCount else 0
 
+    override fun spaceActive(): Boolean = SpaceSession.active
+
+    override fun phoneLocked(): Boolean = getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true
+
     override fun arrange(kind: ArrangeKind) {
         if (!SpaceSession.active) {
             screen.showToast("Open the Space on the glasses first.")

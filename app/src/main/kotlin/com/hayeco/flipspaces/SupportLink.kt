@@ -11,4 +11,8 @@ object SupportLink {
 
     /** False when nothing on the phone opens a web page. */
     fun open(context: Context): Boolean = runCatching { context.startActivity(intent()) }.isSuccess
+
+    /** Unreleased: [url] in the browser (the Play testers card's two links); false when nothing opens it. */
+    fun openUrl(context: Context, url: String): Boolean =
+        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
 }
