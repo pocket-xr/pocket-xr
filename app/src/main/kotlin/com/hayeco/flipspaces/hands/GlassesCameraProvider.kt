@@ -499,7 +499,8 @@ object GlassesCameraProvider {
                 Log.i(TAG, "Hand tracking resumed: the Space draws again")
             }
             // A game has the glasses: no hand is drawn or pressed there, so the model rests and the heat goes to the game.
-            if (SpaceSession.gameOwnsGlasses) {
+            // PC VR is the exception: its hands go to SteamVR (8 November 2026: pinching did nothing there).
+            if (SpaceSession.gameOwnsGlasses && !com.hayeco.flipspaces.pcvr.PcVrSession.isOpen) {
                 if (!pausedForGame) {
                     pausedForGame = true
                     Log.i(TAG, "Hand model paused: a game has the glasses")
