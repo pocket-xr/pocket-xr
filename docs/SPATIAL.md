@@ -82,6 +82,17 @@ app has no HID IMU reader: for HID glasses `HeadTracker` opens nothing on them a
 family's 0x19 above is not confirmed for Helen, which may use its own IMU format), the checksum
 and the sample layout, checked on real glasses before anything is sent to them.
 
+**VITURE (HID, 1.2.6, experimental, off by default).** VITURE's glasses use their own vendor id, 0x35CA, and no USB
+network. The one public, MIT licensed description of their newer protocol
+([elasticjava/viture-v2 PROTOCOL.md](https://github.com/elasticjava/viture-v2/blob/master/PROTOCOL.md), measured on a
+Pro 2, 35CA:1301): one HID interface with 64 byte interrupt IN and OUT endpoints; little endian frames of preamble
+0x0010, message id, payload length and a plain byte sum checksum, then the payload; 0x0301 `[streams, rate]` starts or
+stops the IMU (0x02 raw, rate index 2 is 120 Hz); 0x7309 carries a sample counter, gyro in rad/s and accelerometer in
+g as float32. Axes are not described. `VitureImuProtocol` (core) and `VitureImuLink` (app) read it only with the head
+tracking screen's switch on; otherwise `HeadTrackingStatus.VitureNotYet` says plainly that it isn't supported yet. No
+VITURE SDK (closed) and no code under a licence that forbids it is used. Other public notes describe an older format
+with Euler angles; they carry no licence, so nothing from them is used. See docs/GLASSES.md, "VITURE glasses".
+
 **One family (network).** One, One Pro and 1S appear to the host as a USB network device
 (NCM / ECM) with the glasses at `169.254.2.1`:
 

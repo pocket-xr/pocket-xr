@@ -11,6 +11,7 @@ set on the glasses themselves, and what to send when something is wrong.
 | XREAL One | Tested (30 October 2026) | Not yet: possible with the XREAL Eye add-on (help wanted) | Use **Follow mode** with **Stabilizer off**, see below. |
 | XREAL One Pro | Community testing | Not yet: possible with the XREAL Eye add-on (help wanted) | Treated as a One with a 57 degree view. Not run by the project yet. |
 | XREAL 1S | Community testing | No | Treated as a One. Its view is not published, so the One's 50 degrees is used. |
+| VITURE (Beast seen) | Community testing, partly working | No | The Space works head locked. Head tracking isn't supported yet; an experimental reader is off by default. See "VITURE glasses" below. |
 | Other glasses | Help wanted | No | Plain fallbacks; see "Unknown glasses" below. |
 
 The app reads which glasses are plugged in from what they report to Android: the display's name and product id, and
@@ -117,11 +118,61 @@ Its head tracking stream is the same One-family stream as the Aura's, at 1000 re
 wrong way, the head tracking screen has the axis list. The Glasses report and the head attitude log line ("tilt error"
 should stay at a degree or two) help find the right one.
 
+## VITURE glasses
+
+Seen once, from a tester's Send logs in GitHub Discussion #24 (a Galaxy Z Flip 7 with VITURE Beast glasses, Pocket XR
+1.2.0 to 1.2.5, November 2026). The tester also has an XREAL One Pro, which worked in the same logs. What the logs showed:
+
+- **The display.** Android names it "VITURE Beast". Its modes, one at a time as the glasses switch: 1920 x 1200 at 120 or
+  60 Hz and 1920 x 1080 at 60 Hz in 2D, and 3840 x 1080 at 60 Hz in the wide modes. The EDID product id changes with the
+  mode: 288 in 2D, 800 in the sessions that showed two copies (the 32:9 ultrawide mode, by the tester's report) and 544 in
+  the session where 3D then worked (the glasses' own 3D). The app now uses that to tell ultrawide from 3D; it is inferred
+  from one log, so any other id falls back to the rule below.
+- **Head tracking.** The app only looked for XREAL's USB network, so every line said "No USB network to the glasses",
+  in both of the tester's anchor modes and in the glasses' own 0DoF follow mode. VITURE glasses have no USB network: their
+  motion sensor is on USB HID, on VITURE's vendor id 0x35CA. The logs had nothing about the glasses' USB device, because
+  Send logs listed XREAL's devices only.
+- **Two copies in 32:9.** Every 3840 x 1080 mode was taken as side by side 3D, and in 2D the Space put the same picture in
+  both halves. On glasses showing that mode as one wide screen, that is two copies side by side.
+- **3D only after the glasses' menu.** The Depth button saved "3D" but the glasses offered no 3840 x 1080 mode, and
+  Pocket XR can only switch XREAL glasses itself, so nothing visible happened.
+- **Icons.** The launcher cut each icon to a circle with a clip that isn't anti-aliased, at a fixed 2 px a dp, so the
+  edges stepped whatever the icon pack.
+- In another app the Beast's tracking worked but its axes were mixed up (up was down, turning left tilted the view).
+
+What the app does now:
+
+- **Head tracking** says plainly that it isn't supported yet on VITURE glasses, and the Space stays head locked. The head
+  tracking screen has **Experimental VITURE head tracking**, off by default. It follows the one public, MIT licensed
+  description of VITURE's newer USB protocol (elasticjava/viture-v2's PROTOCOL.md, measured on a Pro 2): frames start
+  `10 00`, then a message id, a length and a byte sum checksum; message 0x0301 with `02 02` starts the raw gyro and
+  accelerometer stream, which comes back as message 0x7309 (gyro in rad/s and accelerometer in g, as floats). No VITURE
+  SDK or code is used. The write-up does not say which way the sensor's axes point, so the reader takes them as head
+  axes as they are, and two switches turn them: **Flip up and down** (half a turn about the up axis) and **Swap turn and
+  tilt** (a quarter turn about the right axis, the sensor's z as up). Both are whole turns, never mirrors, so the
+  gyro and gravity stay in step. Not run on any VITURE glasses yet; the Beast may not speak this protocol.
+- **Record motion for 20 seconds** on the head tracking screen, for any glasses that aren't XREAL's. It asks for USB
+  access, saves each HID interface's report descriptor and every input report for 20 seconds with its time, and on
+  VITURE glasses sends the start command above after 5 seconds (and the stop at the end). Send logs takes the newest.
+- **The wide mode** on glasses other than XREAL's is one 32:9 canvas, unless 3D is on in Pocket XR (or the Beast's EDID
+  says its 3D mode), when it is side by side.
+- **The Depth button** on glasses Pocket XR can't switch says "Turn on 3D in your glasses menu first" on the glasses
+  when they offer no 3D mode (or are in their ultrawide mode), instead of changing a setting that shows nothing.
+- **Icons** are cut with an anti-aliased circle a pixel inside a transparent edge, baked at their size in the glasses'
+  own pixels, and an older bitmap icon is read at the app's highest density.
+
+What a next log needs (Send logs with the glasses plugged in, after **Record motion for 20 seconds**): the
+`glasses-report.txt` (the Beast's USB ids, interfaces, endpoints and HID report descriptors), the `motion/` recording
+made while turning the head left, right, up and down and then tilting it, and a note of which glasses mode was on
+(2D, 3D, ultrawide; anchor or 0DoF). With the experimental reader on, the head tracking diagnostics show whether the
+glasses answered it.
+
 ## Unknown glasses
 
 Glasses the app does not know are drawn with the One's view, no camera and the Aura's sensor axes. If their head
 tracking stream answers, head tracking works. If they have no control link, they stay in 2D until switched with their
-own button.
+own button. 1.2.6: their 3840 x 1080 mode is one wide canvas in 2D and side by side in 3D, and the Depth button names
+their menu when Pocket XR can't switch them.
 
 ## Reporting a problem
 
@@ -129,7 +180,11 @@ In the trackpad's Menu, tap **Glasses report**. It saves a text file to
 `Android/data/com.hayeco.flipspaces/files/reports/` and opens the share sheet. Paste it into the GitHub issue. It holds:
 - the model;
 - the display modes;
-- the USB IDs;
+- the USB IDs of every USB device, with each interface's class, protocol and endpoints (1.2.6; up to 1.2.5, XREAL's only);
+- the HID report descriptors, from the newest motion recording;
 - whether head tracking, the control link, 3D and the calibration worked.
+
+**Send logs** (Settings, or the head tracking screen) puts the same Glasses report in its zip, with the newest motion
+recording.
 
 The glasses' serial appears only as its last four characters.

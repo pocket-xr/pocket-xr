@@ -469,40 +469,74 @@ internal class LauncherGl(private val context: Context) {
             c.restore()
         }
 
+    /**
+     * 1.2.6 (Discussion #24: icons "pixelated on the edges"): the size app icons are baked at, their size in the glasses' own
+     * pixels ([com.hayeco.flipspaces.core.spatial.LauncherIconRaster], set by the renderer for each view). A new size
+     * drops the icons baked at the old one. GL thread.
+     */
+    var iconPx: Int = (LauncherGrid.ICON * PX_PER_DP).toInt()
+        set(value) {
+            if (value == field || value <= 0) return
+            field = value
+            textures.keys.filter { it.startsWith("icon:") }.forEach { k -> textures.remove(k)?.let(GlKit::deleteTexture) }
+            icons.values.forEach { it.recycle() }
+            icons.clear()
+            iconsLoading.clear()
+        }
+
     /** The app's icon as a circle, once loaded off the GL thread; null until then. */
     private fun iconTexture(app: AppEntry): Int? {
-        val key = "icon:${app.key}"
+        val size = iconPx
+        val key = "icon:$size:${app.key}"
+        val loadKey = "${app.key}@$size"
         textures[key]?.let { return it }
-        val bmp = if (uploadsLeft > 0) icons.remove(app.key) else null
+        val bmp = if (uploadsLeft > 0) icons.remove(loadKey) else null
         if (bmp != null) {
             uploadsLeft--
             val id = upload(bmp)
             bmp.recycle()
-            iconsLoading.remove(app.key)
+            iconsLoading.remove(loadKey)
             textures[key] = id
             return id
         }
-        if (!iconLoader.isShutdown && iconsLoading.add(app.key)) {
+        if (!iconLoader.isShutdown && iconsLoading.add(loadKey)) {
             iconLoader.execute {
-                runCatching { roundIcon(app) }.getOrNull()?.let { icons[app.key] = it } ?: iconsLoading.remove(app.key)
+                runCatching { roundIcon(app, size) }.getOrNull()?.let { icons[loadKey] = it } ?: iconsLoading.remove(loadKey)
             }
         }
         return null
     }
 
     /**
+     * 1.2.6: the activity's icon from the app's own resources at the highest density (xxxhdpi) when the phone's density
+     * gives one smaller than [px], so a bitmap icon is not scaled up; else what Android gives (a theme's or icon pack's
+     * replacement included).
+     */
+    private fun sourceIcon(app: AppEntry, px: Int): Drawable {
+        val pm = context.packageManager
+        val cn = ComponentName(app.packageName, app.activityName)
+        val d = pm.getActivityIcon(cn)
+        if (d is AdaptiveIconDrawable || d.intrinsicWidth >= px) return d
+        return runCatching {
+            val info = pm.getActivityInfo(cn, 0)
+            pm.getResourcesForApplication(info.applicationInfo).getDrawableForDensity(info.iconResource, android.util.DisplayMetrics.DENSITY_XXXHIGH, null)
+        }.getOrNull()?.takeIf { it.intrinsicWidth > d.intrinsicWidth } ?: d
+    }
+
+    /**
      * Adaptive icons are drawn as circles. An adaptive icon's background and foreground
      * (108 x 108 dp layers whose middle 72 dp is the visible icon) are drawn 1.5 times the circle and
-     * clipped to it; an older icon sits on a white disc at 70 %, as Launcher3 treats legacy icons.
+     * cut to it; an older icon sits on a white disc at 70 %, as Launcher3 treats legacy icons.
+     *
+     * 1.2.6 (Discussion #24: edges "pixelated"): the circle is cut with an anti-aliased mask (DST_IN), not clipPath, whose
+     * edge is not anti-aliased; it stops a pixel short of the bitmap's edge so the texture's border is transparent and
+     * filtering has nothing opaque to smear there; and the bitmap is [size] square, the icon's size on the glasses.
      */
-    private fun roundIcon(app: AppEntry): Bitmap? {
-        val d: Drawable = context.packageManager.getActivityIcon(ComponentName(app.packageName, app.activityName))
-        val size = (LauncherGrid.ICON * PX_PER_DP).toInt()
+    private fun roundIcon(app: AppEntry, size: Int): Bitmap? {
+        val d: Drawable = sourceIcon(app, size)
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
-        val circle = Path().apply { addCircle(size / 2f, size / 2f, size / 2f, Path.Direction.CW) }
-        c.save()
-        c.clipPath(circle)
+        val r = size / 2f - ICON_EDGE_PX
         if (d is AdaptiveIconDrawable) {
             val inset = size / 4
             for (layer in listOf(d.background, d.foreground)) {
@@ -511,12 +545,14 @@ internal class LauncherGl(private val context: Context) {
                 layer.draw(c)
             }
         } else {
-            c.drawColor(Color.WHITE)
+            c.drawCircle(size / 2f, size / 2f, r, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
             val inset = (size * 0.15f).toInt()
             d.setBounds(inset, inset, size - inset, size - inset)
+            (d as? android.graphics.drawable.BitmapDrawable)?.setFilterBitmap(true)
             d.draw(c)
         }
-        c.restore()
+        val mask = Paint(Paint.ANTI_ALIAS_FLAG).apply { xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN) }
+        c.drawCircle(size / 2f, size / 2f, r, mask)
         return bmp
     }
 
@@ -755,6 +791,9 @@ internal class LauncherGl(private val context: Context) {
 
         /** Texture pixels a dp: the glasses show about 1.5 px a dp at 1 m, so 2 with mipmaps stays sharp. */
         const val PX_PER_DP = 2f
+
+        /** 1.2.6: the transparent ring around a baked app icon, so its texture's border is clear. */
+        const val ICON_EDGE_PX = 1f
         const val MAX_TEXTURES = 160
 
         /** At most this many textures baked a frame (a new page's 15 icons and labels come over a few frames). */

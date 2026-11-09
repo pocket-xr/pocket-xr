@@ -600,6 +600,13 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * Menu or the Control panel ([from]): said on the glasses for [WARP_NOTICE_MS]. Nothing is sent from here;
      * [GlassesWarp] alone talks to the glasses, and only with the switch on.
      */
+    /** 1.2.6: [text] on the glasses for [ms], from the Space activity (the Depth button on glasses it cannot switch). Any thread. */
+    fun say(text: String, ms: Long) {
+        spaceNotice = text
+        spaceNoticeUntilMs = SystemClock.uptimeMillis() + ms
+        Log.i(tag, "said on the glasses for ${ms / 1000} s: $text")
+    }
+
     private fun warpNotice(on: Boolean, from: String) {
         // The hint label is one line of about 44 characters at 40 px.
         spaceNotice = if (on) "Glasses warp (experimental): ON" else "Glasses warp (experimental): OFF"
@@ -1100,7 +1107,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             settingsCheckedMs = settingsNowMs
             HeadTracker.setStillLock(store.stillLock)
             HeadTracker.setDrawSmoothing(store.drawSmoothing)
-            val wideNow = StereoLayout.isUltrawide(viewport.surfaceWidth, viewport.surfaceHeight, GlassesDisplayControl.stereoState) && GlassesDisplayControl.ultrawideRead != 0
+            // 1.2.6 (Discussion #24, a VITURE Beast in its 32:9 mode showed two copies): glasses other than XREAL's say
+            // nothing over a control link, so their wide mode is one canvas unless 3D is on ([com.hayeco.flipspaces.core.spatial.WideCanvas]).
+            val wideNow = com.hayeco.flipspaces.core.spatial.WideCanvas.isCanvas(
+                viewport.surfaceWidth, viewport.surfaceHeight, GlassesDisplayControl.stereoState, GlassesDisplayControl.ultrawideRead,
+                com.hayeco.flipspaces.core.spatial.WideCanvas.kind(store.model, store.glasses?.productId), store.view,
+            )
             if (wideNow != ultrawide) {
                 ultrawide = wideNow
                 canvasPose = null
@@ -4756,6 +4768,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * so a view smaller than the panel shows in the log.
      */
     private fun fitLauncher() {
+        // 1.2.6 (Discussion #24: icons "pixelated on the edges"): app icons baked at their size in this view's own pixels.
+        launcherGl.iconPx = com.hayeco.flipspaces.core.spatial.LauncherIconRaster.px(com.hayeco.flipspaces.core.spatial.LauncherGrid.ICON, frustum.widthPx, frustum.horizontalFovDeg)
         val (w, h) = com.hayeco.flipspaces.core.spatial.LauncherGrid.angularDeg()
         val key = "%.1fx%.1f".format(java.util.Locale.ROOT, frustum.horizontalFovDeg, frustum.verticalFovDeg)
         if (key == launcherFitLogged) return

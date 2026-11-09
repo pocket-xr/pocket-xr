@@ -37,6 +37,8 @@ data class ViewPlan(
     val sameForBothEyes: Boolean,
     val needsGlasses: String?,
     val line: String,
+    /** 1.2.6: the wide mode is drawn as one 32:9 canvas ([WideCanvas]), not two eyes. */
+    val canvas: Boolean = false,
 ) {
     /** True when the glasses show what was wanted. */
     val met: Boolean get() = needsGlasses == null
@@ -55,27 +57,46 @@ object ViewModeChoice {
      * asked for: switching the glasses themselves between 2D and 3D needs their control channel
      * (EDID index 5), which Pocket XR does not use without Mike's approval.
      */
-    fun plan(wanted: GlassesView, modes: List<Triple<Int, Int, Float>>, fastestAllowed: Boolean = true): ViewPlan {
+    fun plan(
+        wanted: GlassesView,
+        modes: List<Triple<Int, Int, Float>>,
+        fastestAllowed: Boolean = true,
+        // 1.2.6 (Discussion #24): what the wide mode is on these glasses ([WideCanvas.kind]), and whether only their own
+        // menu can switch them to 3D (every glasses but XREAL's with the control link).
+        wide: WideKind = WideKind.SIDE_BY_SIDE,
+        glassesMenuOnly: Boolean = false,
+    ): ViewPlan {
         val sbs = StereoLayout.pickSbsMode(modes)
         val flat = pickFlatMode(modes)
         val all = modes.joinToString { fmt(it) }
+        val turnOn3d = if (glassesMenuOnly) DepthPress.GLASSES_MENU else "Turn on the glasses' 3D mode (Full SBS) for 3D"
         // Thermal limits keep the rate Android picked: ask only for the size, at the slowest rate offered there.
         fun atSize(i: Int?): Int? = i?.let { pick ->
             if (fastestAllowed) pick else modes.withIndex().filter { it.value.first == modes[pick].first && it.value.second == modes[pick].second }.minByOrNull { it.value.third }!!.index
         }
         return when (wanted) {
-            GlassesView.SBS_3D -> if (sbs != null) {
+            GlassesView.SBS_3D -> if (sbs != null && wide == WideKind.CANVAS) {
+                // The glasses said their wide mode is one canvas: two eyes drawn on it would show as two pictures.
+                ViewPlan(
+                    wanted, atSize(sbs), StereoMode.MONO, false, turnOn3d,
+                    "view: 3D side by side wanted, but the glasses' ${fmt(modes[atSize(sbs)!!])} is their ultrawide mode (${wide.label}): one wide canvas until 3D is on in their own menu (modes $all)",
+                    canvas = true,
+                )
+            } else if (sbs != null) {
                 ViewPlan(wanted, atSize(sbs), StereoMode.SIDE_BY_SIDE, false, null, "view: 3D side by side at ${fmt(modes[atSize(sbs)!!])}, one half per eye (modes $all)")
             } else {
                 ViewPlan(
                     wanted, atSize(flat), StereoMode.MONO, false,
-                    "Turn on the glasses' 3D mode (Full SBS) for 3D",
+                    turnOn3d,
                     "view: 3D side by side wanted, but Android offers no 3840x1080 mode on the glasses now (modes $all): the glasses are in their 2D mode, " +
                         "and only their own 3D switch (or the control channel, not used) changes that; one picture for both eyes" + (flat?.let { " at ${fmt(modes[atSize(it)!!])}" } ?: ""),
                 )
             }
             GlassesView.FLAT_2D -> if (flat != null) {
                 ViewPlan(wanted, atSize(flat), StereoMode.MONO, false, null, "view: 2D at ${fmt(modes[atSize(flat)!!])}, one picture for both eyes (modes $all)")
+            } else if (sbs != null && wide != WideKind.SIDE_BY_SIDE) {
+                // 1.2.6: glasses that are not XREAL's show their 3840 x 1080 as one 32:9 screen unless they said 3D.
+                ViewPlan(wanted, atSize(sbs), StereoMode.MONO, false, null, "view: 2D on the glasses' wide mode at ${fmt(modes[atSize(sbs)!!])}: one wide canvas (${wide.label}) (modes $all)", canvas = true)
             } else {
                 ViewPlan(
                     wanted, atSize(sbs), if (sbs != null) StereoMode.SIDE_BY_SIDE else StereoMode.MONO, sbs != null,
@@ -94,7 +115,10 @@ object ViewModeChoice {
      */
     fun eyes(plan: ViewPlan?, width: Int, height: Int, ipdMm: Float): List<EyeView> {
         val sbsSurface = StereoLayout.isSbsMode(width, height)
-        if (!sbsSurface) return StereoLayout.eyes(StereoMode.MONO, width, height, ipdMm)
+        // 1.2.6: a plan that draws one picture on a wide surface is one wide canvas ([WideCanvas]), not two halves.
+        if (!sbsSurface || plan?.canvas == true) {
+            return StereoLayout.eyes(StereoMode.MONO, width, height, ipdMm)
+        }
         val same = plan?.wanted == GlassesView.FLAT_2D
         val eyes = StereoLayout.eyes(StereoMode.SIDE_BY_SIDE, width, height, ipdMm)
         return if (same) eyes.map { it.copy(offset = Vec3.ZERO) } else eyes

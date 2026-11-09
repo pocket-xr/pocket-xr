@@ -46,6 +46,18 @@ sealed interface HeadTrackingStatus {
                 "USB interfaces: " + interfaces.ifEmpty { listOf("none listed") }.joinToString(", ") + "."
     }
 
+    /**
+     * 1.2.6 (Discussion #24, VITURE Beast: "no head tracking", while the log blamed a missing USB network): VITURE glasses
+     * have no USB network; their motion sensor is on USB HID in VITURE's own protocol. Said plainly, with what to try.
+     */
+    data class VitureNotYet(val productId: Int, val experimentalOn: Boolean = false) : HeadTrackingStatus {
+        override val summary =
+            "Head tracking isn't supported yet on VITURE glasses (USB %04X:%04X). The Space stays in front of you and turns with your head. ".format(java.util.Locale.ROOT, VitureImuProtocol.VENDOR, productId) +
+                if (experimentalOn) "The experimental VITURE reader is on but got no motion from these glasses. " +
+                    "Record motion for 20 seconds on the head tracking screen and send logs, so they can be added."
+                else "You can try the experimental VITURE reader on the head tracking screen, or record motion for 20 seconds there and send logs."
+    }
+
     data class Connecting(val network: String) : HeadTrackingStatus {
         override val summary = "Connecting to ${OneImuProtocol.HOST}:${OneImuProtocol.STREAM_PORT} over $network."
     }
@@ -75,6 +87,7 @@ sealed interface HeadTrackingStatus {
     companion object {
         const val ONE_FAMILY_HINT = "This firmware may not serve the One family stream."
         const val AIR_FAMILY_HINT = "The glasses' motion sensor did not answer the start command over USB HID."
+        const val VITURE_HINT = "These VITURE glasses did not answer the documented start command; head tracking isn't supported on them yet. Record motion for 20 seconds on the head tracking screen and send logs."
     }
 
     data class Streaming(val network: String, val rateHz: Double) : HeadTrackingStatus {

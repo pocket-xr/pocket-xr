@@ -22,6 +22,8 @@ data class GlassesReport(
     val timeUtc: String,
     /** 1.1.12: the newest PocketXR-Tracking line ([TrackingBeat]), null before one. */
     val tracking: String? = null,
+    /** 1.2.6: the HID report descriptors from the newest motion recording ([HidRecording]), one line an interface. */
+    val hidDescriptors: List<String> = emptyList(),
 ) {
     data class Display(val name: String, val productId: String?, val modes: List<String>, val current: String)
     /**
@@ -57,14 +59,21 @@ data class GlassesReport(
             appendLine("- \"${d.name}\"${d.productId?.let { " (EDID product $it)" } ?: ""}: now ${d.current}; modes ${d.modes.joinToString(", ")}")
         }
         appendLine()
-        appendLine("USB devices from XREAL:")
-        val xreal = usb.filter { it.vendorId == XREAL_VENDOR }
-        if (xreal.isEmpty()) appendLine("- none")
-        xreal.forEach { u ->
-            appendLine("- %04X:%04X \"%s\": %s".format(java.util.Locale.ROOT, u.vendorId, u.productId, u.name, u.infos.joinToString(", ") { it.label() }.ifEmpty { "no interfaces listed" }))
+        // 1.2.6 (Discussion #24: a VITURE Beast's report said "USB devices from XREAL: none" and nothing else): every USB
+        // device Android lists, the glasses makers named, so glasses of any make show up with their interfaces.
+        appendLine("USB devices (every one Android lists):")
+        if (usb.isEmpty()) appendLine("- none")
+        usb.forEach { u ->
+            appendLine("- %04X:%04X \"%s\": %s".format(java.util.Locale.ROOT, u.vendorId, u.productId, u.name, u.infos.joinToString(", ") { it.label() }.ifEmpty { "no interfaces listed" }) +
+                (GlassesVendors.name(u.vendorId)?.let { " [$it glasses]" } ?: ""))
+            if (u.infos.any { it.endpoints.isNotEmpty() || it.id >= 0 }) appendLine("  Interfaces: " + u.infos.joinToString(", ") { it.detail() })
             // 1.1.10: how these glasses carry head tracking, so a report from HID glasses says so at once.
             appendLine("  Head tracking link: ${HeadImuTransport.choose(u.vendorId, u.productId, u.infos).label}")
         }
+        appendLine()
+        appendLine("HID report descriptors:")
+        if (hidDescriptors.isEmpty()) appendLine("- not read (they need USB access: Record motion for 20 seconds on the head tracking screen reads them)")
+        hidDescriptors.forEach { appendLine("- $it") }
         appendLine()
         appendLine("What worked:")
         appendLine("- Head tracking: ${if (headTrackingWorks) "yes" else "no"} ($headTracking)")

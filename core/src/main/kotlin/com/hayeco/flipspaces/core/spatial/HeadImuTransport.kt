@@ -16,11 +16,34 @@ package com.hayeco.flipspaces.core.spatial
 enum class ImuTransport(val label: String) {
     USB_NETWORK("USB network (NCM / ECM), the One family's link"),
     USB_HID("USB HID, like XREAL's Air family"),
+    /** 1.2.6: VITURE's glasses ([VitureImuProtocol]): read only with the experimental switch on. */
+    VITURE_HID("USB HID, VITURE's own protocol (experimental, off unless turned on)"),
     UNKNOWN("not known from the USB device"),
 }
 
-/** One USB interface as Android lists it: class, subclass and its name string, when it has one. */
-data class UsbInterfaceInfo(val cls: Int, val subclass: Int = 0, val name: String? = null) {
+/**
+ * One USB interface as Android lists it: class, subclass and its name string, when it has one. 1.2.6: [id], [protocol]
+ * and [endpoints] too, for the motion recording and Send logs.
+ */
+data class UsbInterfaceInfo(
+    val cls: Int,
+    val subclass: Int = 0,
+    val name: String? = null,
+    val id: Int = -1,
+    val protocol: Int = 0,
+    /** Each endpoint as "IN interrupt 64 B" and the like. */
+    val endpoints: List<String> = emptyList(),
+) {
+    /** [label] with the interface number, subclass, protocol and endpoints, for the logs. */
+    fun detail(): String {
+        val head = (if (id >= 0) "#$id " else "") + label()
+        val extra = buildList {
+            if (cls >= 0) add("subclass $subclass, protocol $protocol")
+            if (endpoints.isNotEmpty()) add("endpoints " + endpoints.joinToString(" / "))
+        }
+        return if (extra.isEmpty()) head else "$head [${extra.joinToString("; ")}]"
+    }
+
     /** For the Glasses report: the name and the class in words. */
     fun label(): String {
         val kind = when (cls) {
@@ -93,8 +116,9 @@ object HeadImuTransport {
 
     private val NETWORK_NAME = Regex("\\b(NCM|ECM)\\b|Network Control Model|Ethernet", RegexOption.IGNORE_CASE)
 
-    /** The transport for an XREAL USB device ([vendorId] 0x3318); [UNKNOWN] for any other vendor. */
+    /** The transport for an XREAL USB device ([vendorId] 0x3318) or a VITURE one (1.2.6); [UNKNOWN] for any other vendor. */
     fun choose(vendorId: Int, productId: Int, interfaces: List<UsbInterfaceInfo>): ImuTransport = when {
+        vendorId == VitureImuProtocol.VENDOR -> ImuTransport.VITURE_HID
         vendorId != GlassesReport.XREAL_VENDOR -> ImuTransport.UNKNOWN
         productId in NETWORK_PRODUCTS -> ImuTransport.USB_NETWORK
         hasCdcNetwork(interfaces) -> ImuTransport.USB_NETWORK
@@ -106,6 +130,9 @@ object HeadImuTransport {
     /** The first XREAL device of [usb] whose link is HID, with its transport decided; null when none is. */
     fun hidGlasses(usb: List<GlassesReport.Usb>): GlassesReport.Usb? =
         usb.firstOrNull { it.vendorId == GlassesReport.XREAL_VENDOR && choose(it.vendorId, it.productId, it.infos) == ImuTransport.USB_HID }
+
+    /** 1.2.6: the first VITURE device of [usb], null when none is plugged in. */
+    fun vitureGlasses(usb: List<GlassesReport.Usb>): GlassesReport.Usb? = usb.firstOrNull { it.vendorId == VitureImuProtocol.VENDOR }
 }
 
 /**
