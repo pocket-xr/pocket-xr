@@ -175,17 +175,23 @@ Without it, everything else in Pocket XR works; the Notifications page stays emp
 
 ### Foreground services (Pocket XR, App content, Foreground service permissions)
 
+1.2.6 (Nov 2026): the form only lists the permissions when opened from the release's error ("Go to declaration"; from
+App content directly it shows none). Each type asks for a task (tick boxes), a video link and one description; Save stays
+off until every ticked task has its video link, so nothing can be saved as a draft before the videos exist. Paste these
+as they are; each is one box on the form.
+
 **camera** (`HandTrackingService`):
 
-- Use case: "Other" or the closest offered ("Camera: user-initiated capture").
-- Description: `Hand tracking for XREAL glasses. When the user starts hand tracking (Hands screen, Start, or plugging in the glasses with "Start hands automatically" on), Pocket XR reads the glasses' own USB camera to find the user's hands, so they can point at and pinch the app windows shown in the glasses while their phone is in their pocket and Pocket XR is not in front on the phone. Frames are processed on the phone and discarded.`
-- If deferred or interrupted: `The user's hands stop moving the cursor in the glasses mid gesture; a pinch or drag on a window is lost or left half done, and the user can no longer click in the glasses until they take the phone out.`
+- Task: "Other" (the form offers "Background camera streaming" and "Other"; hands frames are not streamed anywhere).
+- Video: video 3 below.
+- Description: `Hand tracking for XREAL glasses. The user starts it on Pocket XR's Hands screen (Start hands), or, once they have turned on "Start hands with the glasses", it starts when Pocket XR's workspace opens on the glasses. The service reads the camera built into the glasses over USB and finds the user's hands on the phone, so they can point at and pinch the windows shown in the glasses while Pocket XR is not in front on the phone (the phone is in a pocket or another app is open). Frames are processed on the phone only. It must run in the foreground because the user is looking at the glasses, not the phone, the whole time. If it is paused or delayed, the cursor in the glasses stops following the user's hand mid gesture, a pinch or drag is lost, and they cannot click in the glasses until they take the phone out. The ongoing notification has "Stop until next plug-in" and "Exit" buttons.`
 
 **connectedDevice** (`GlassesReadyService`):
 
-- Use case: "Interacting with external devices over USB" (or the closest offered).
-- Description: `Pocket XR drives XREAL glasses connected to the phone's USB-C port. While the user has Pocket XR set up, a quiet foreground service keeps it able to answer the glasses' display connection, so that plugging the glasses in opens Pocket XR's workspace on them and its head tracking connects to the glasses' motion sensor over USB. The notification has an Exit action that stops it.`
-- If deferred or interrupted: `Plugging in the glasses shows a blank or mirrored screen instead of the user's workspace, and head tracking does not connect, until the user opens Pocket XR on the phone by hand.`
+- Task: "Other" (the form offers "Continuous data transfer to an external device", "Automotive key" and "Other"; the
+  service itself transfers nothing, it waits for the glasses' display).
+- Video: video 4 below.
+- Description: `Pocket XR drives XREAL glasses plugged into the phone's USB-C port. A quiet foreground service with the notification "Pocket XR is ready for your glasses" starts when the user opens Pocket XR, after the phone restarts and after an update. It keeps Pocket XR able to receive Android's event that the glasses' display has connected, so that plugging the glasses in opens Pocket XR's workspace on them and its head tracking reconnects to the glasses' motion sensor over USB. It must be running before the glasses are plugged in, because the user can plug them in at any moment and the connection event is not delivered to an idle app. If it is stopped or delayed, plugging in the glasses shows Android's own screen instead of the user's workspace and head tracking does not connect until the user opens Pocket XR on the phone by hand. The notification's "Exit" button stops it.`
 
 Risk to know: Play looks for foreground services the user starts. GlassesReadyService also starts after boot and waits
 for the glasses. If the reviewer rejects that, the fallback is to start it only from a user action (opening Pocket XR or
