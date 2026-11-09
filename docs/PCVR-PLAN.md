@@ -156,3 +156,8 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   frame rate at its defaults, its gestures on, SteamVR's safe-mode block, everything closed): SteamVR 9.9 s after the
   tap, all fixed by the helper. Programs started from the Claude app run in its app container (AppData and HKCU writes go
   to its package), which made the helper's install look broken from inside it; it wasn't.
+- Heat, off the charger (9 November): the battery's drain is then a clean power reading. PC VR at the capped 30 frames
+  a second about 4.4 W with hands, 3.8 to 4.6 W without, the Space alone about 4.3 W: PC VR adds little to what the
+  glasses, display and head tracking already cost. Off the charger the phone cooled while streaming (skin 45.3 to
+  44.1 C, processor 51.9 to 49.1 C in 5 minutes); on it, it held at the limit. So: don't charge while playing (or use
+  Samsung's pause of USB power delivery), and the loading card says so while the phone charges.

@@ -447,6 +447,11 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
     }
 
     private fun drawLoading(now: Long) {
+        val nowMs = SystemClock.uptimeMillis()
+        if (nowMs - chargingCheckedMs > 2_000L) {
+            chargingCheckedMs = nowMs
+            charging = context.getSystemService(android.os.BatteryManager::class.java)?.isCharging == true
+        }
         val alpha = if (revealNs == 0L) 1f else {
             val t = ((now - revealNs) / FADE_NS.toFloat()).coerceIn(0f, 1f)
             1f - t * t * (3f - 2f * t)
@@ -461,8 +466,21 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
         bindQuad()
         loading.draw(now, nowOrientation, tans, surfaceW, surfaceH, alpha, phase, (now - loadStartNs) / 1e9f, pad(0), pad(1),
-            words = if (phase == PcVrLoading.Phase.FINDING_PC) helperWords() else null)
+            words = if (phase == PcVrLoading.Phase.FINDING_PC) helperWords() else chargingWords(phase))
     }
+
+    /**
+     * While SteamVR starts on a charging phone: a tip. Charging heats the phone, and a hot phone is held at 30 frames a
+     * second (9 November 2026: skin 45 C and capped while charging through the glasses' hub; off the charger it cooled
+     * while streaming).
+     */
+    private fun chargingWords(phase: PcVrLoading.Phase): Pair<String, String>? {
+        if (phase != PcVrLoading.Phase.STARTING || !charging) return null
+        return "Starting SteamVR" to "Tip: unplug the charger for a smoother picture."
+    }
+
+    @Volatile private var charging = false
+    private var chargingCheckedMs = 0L
 
     /** What the PC helper is doing, in the card's words; null for the usual "Connecting to your PC". */
     private fun helperWords(): Pair<String, String>? {
