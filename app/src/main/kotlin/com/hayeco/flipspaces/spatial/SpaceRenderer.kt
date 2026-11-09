@@ -710,6 +710,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         homeTexture = LabelTexture(192, 192)
         capReopened()
         layout.panels.forEach { panels[it.id] = PanelGl(it, frames!!, wideView.isOn(it.packageName), appDensity.smallestDp(it.packageName), appTextSize.percent(it.packageName)) }
+        // Unreleased (John Davis: no Text size in the Menu after clicking a window): the window focused in the Space before
+        // keeps its focus in this one, so a 2D / 3D re-plug does not leave the Menu's This window empty.
+        if (focusedPanelId == null) com.hayeco.flipspaces.core.spatial.FocusedWindow.restored(SpaceSession.focusKept, layout.panels)?.let { id ->
+            focusedPanelId = id
+            Log.i(PANEL_TAG, "panel $id ${layout.panel(id)?.label} has focus again (focused in the Space before)")
+        }
         GLES30.glDisable(GLES30.GL_DEPTH_TEST)
         GLES30.glEnable(GLES30.GL_BLEND)
         // 0.5.68: premultiplied everywhere ([GlKit.BLEND_SRC]).
@@ -1078,19 +1084,21 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.2: with the frame's clock, so hand cursors move on every display frame.
         apply(pointer.frame(head, layout, nowMs))
         SpaceSession.heldPanelId = pointer.heldPanelId
+        // Unreleased (John Davis): the focused window worked out once, for the Game controller and the Menu's This window.
+        val focused = com.hayeco.flipspaces.core.spatial.FocusedWindow.of(focusedPanelId) { panels[it]?.panel }
         // 1.2.3 (issue 59): the focused app and the dot's spot on a window, for the Game controller.
-        SpaceSession.focusedApp = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.packageName to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
+        SpaceSession.focusedApp = focused?.let { it.packageName to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
         SpaceSession.pointerSpot = pointer.hover?.takeIf { it.zone == PanelZone.BODY && it.panel.packageName.isNotEmpty() && it.u in 0f..1f && it.v in 0f..1f }?.let { Triple(it.panel.packageName, it.u, it.v) }
         // 1.2.3 (issue 58): whether the focused window's app shows Side by side 3D, for the trackpad's Menu.
         // 1.2.3 (issue 58): 2D while moving, from the head's turn and the cursor shown in the last frame.
         sideBySideFlat = sideBySideFlatOn && sideBySideMotion.update(HeadTracker.turnSpeedDegS, headCursorAlpha > 0.02f, SystemClock.uptimeMillis())
-        SpaceSession.focusedSideBySide = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to sideBySide.isOn(it.packageName) }
+        SpaceSession.focusedSideBySide = focused?.let { it.label to sideBySide.isOn(it.packageName) }
         // 0.5.32: the head's turn speed to the glasses' duty on turns (it sends nothing unless its switch is on).
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
         // 0.5.32: the open windows, for the Menu's Arrange layouts by count.
         SpaceSession.windowCount = layout.panels.size
         // 1.2.3 (issue 57): the focused window's app and text size, for the trackpad's Menu.
-        SpaceSession.focusedTextSize = focusedPanelId?.let { panels[it] }?.panel?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to appTextSize.percent(it.packageName) }
+        SpaceSession.focusedTextSize = focused?.let { it.label to appTextSize.percent(it.packageName) }
         // 0.5.37: Immersive's motion this frame, the others' presses held off while they are gone.
         stepImmersive()
         // 0.5.34 (vc54: Sharper turns on, nothing sent; 0.5.32 read these switches in the head cursor's draw, which a hand
@@ -2778,6 +2786,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val p = panels[id] ?: return
         if (focusedPanelId != id) Log.i(PANEL_TAG, "panel $id ${p.panel.label} has focus")
         focusedPanelId = id
+        // Unreleased (John Davis): kept for the next Space in this run (a 2D / 3D re-plug starts one).
+        SpaceSession.focusKept = com.hayeco.flipspaces.core.spatial.FocusedWindow.keep(p.panel)
         // The focused panel is the front one among equals, for drawing and hit tests alike.
         if (layout.panels.lastOrNull()?.id != id) setLayout(layout.raise(id), commit = false)
         p.displayId?.let { d -> PanelHost.focus(d) { err -> if (err != null) problem = "Focus on ${p.panel.label}: $err" } }
@@ -3278,6 +3288,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val next = p.panel.copy(label = app.label, packageName = app.packageName, activityName = app.activityName)
         Log.i(PANEL_TAG, "panel ${p.panel.id}: ${p.panel.label} switched to ${app.label} (${app.packageName}) in the same window")
         p.panel = next
+        if (SpaceSession.focusKept?.panelId == next.id) SpaceSession.focusKept = com.hayeco.flipspaces.core.spatial.FocusedWindow.keep(next)
         p.state = showing.copy(appClosed = false)
         p.empty.launched(now)
         p.tasksCheckedMs = now
@@ -3871,6 +3882,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // An app opened: the search is done with, wherever the app was opened from.
         launcher.clearSearch()
         Log.i(PANEL_TAG, "panel ${added.second.id} ${app.label} added${if (inFrontOfGaze) " in front of the gaze" else ""}")
+        // Unreleased (John Davis): the window just opened has focus, as one already open does when brought back.
+        focus(added.second.id)
     }
 
     /**
@@ -3931,6 +3944,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     private fun removePanel(id: Int) {
         if (focusedPanelId == id) focusedPanelId = null
+        if (SpaceSession.focusKept?.panelId == id) SpaceSession.focusKept = null
         resizeGate.forget(id)
         relayout.forget(id)
         panels.remove(id)?.let { p ->

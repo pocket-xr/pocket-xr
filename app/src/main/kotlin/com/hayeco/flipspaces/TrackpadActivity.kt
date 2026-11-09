@@ -782,6 +782,8 @@ class TrackpadActivity : Activity(), PadHost {
                 shownHold = hold
                 screen.refreshCover()
             }
+            // Unreleased (John Davis): the open Menu follows the focused window.
+            screen.refreshDrawerForFocus()
             if (unlock.tick(now)) unlocked()
             if (screen.locked) screen.lockProgress(unlock.progress(now), unlock.holding)
             while (true) buzz(SpaceSession.haptics.poll() ?: break)
@@ -1282,7 +1284,7 @@ class TrackpadActivity : Activity(), PadHost {
                 }
             }
             com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> {
-                val pkg = SpaceSession.focusedApp?.first
+                val pkg = focusedApp()?.first
                 if (pkg == null || touchSpots.of(pkg).isEmpty()) {
                     spotSetting = true
                     screen.showToast("Set the spots: aim the dot at the game's button, then hold the matching control.")
@@ -1300,7 +1302,7 @@ class TrackpadActivity : Activity(), PadHost {
             com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD ->
                 com.hayeco.flipspaces.spatial.PanelHost.gamepadInput(com.hayeco.flipspaces.core.pointer.UhidGamepad.report(state))
             com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> if (spotSetting) spotHolds(state) else {
-                val (pkg, aspect) = SpaceSession.focusedApp ?: return
+                val (pkg, aspect) = focusedApp() ?: return
                 sendTouches(touchPointers.next(com.hayeco.flipspaces.core.pointer.TouchSpots.touches(state, touchSpots.of(pkg), aspect)))
             }
             com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> Unit
@@ -1345,7 +1347,7 @@ class TrackpadActivity : Activity(), PadHost {
     }
 
     override fun clearTouchSpots() {
-        val pkg = SpaceSession.focusedApp?.first ?: return screen.showToast("Click the game's window first.")
+        val pkg = focusedApp()?.first ?: return screen.showToast("Click the game's window first.")
         touchSpots.clear(pkg)
         com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots = touchSpots.encode()
         screen.showToast("Touch spots cleared for this game.")
@@ -1356,6 +1358,9 @@ class TrackpadActivity : Activity(), PadHost {
     }
 
     override fun focusedTextSize(): Pair<String, Int>? = if (SpaceSession.active) SpaceSession.focusedTextSize else null
+
+    /** Unreleased: the Game controller's focused app, only while the Space is up (as the Menu's This window), never one left from a closed Space. */
+    private fun focusedApp(): Pair<String, Float>? = if (SpaceSession.active) SpaceSession.focusedApp else null
 
     override fun textSizeStep(steps: Int) {
         if (!SpaceSession.active) return

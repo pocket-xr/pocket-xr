@@ -2060,12 +2060,28 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     }
 
     /**
+     * Unreleased (John Davis: no Text size in the Menu after clicking a window): the Menu was built once as it opened, so
+     * a window focused while it was open (a hand pinch, the gaze, a mouse, the Space starting again) never showed in This
+     * window. The trackpad asks every tick; the open Menu is built again when the focused window, its text size, its Side
+     * by side 3D or the window count changed since.
+     */
+    fun refreshDrawerForFocus() {
+        if (drawerOpen && focusInputs() != builtFor) buildDrawer()
+    }
+
+    /** What the open Menu's This window and Arrange were built from ([refreshDrawerForFocus]). */
+    private var builtFor: Any? = null
+
+    private fun focusInputs(): Any = Triple(host.focusedTextSize(), host.focusedSideBySide(), host.windowCount())
+
+    /**
      * 1.2.6 (Mike: the Menu "has become congested and feels like too much"): built from [TrackpadMenu], which picks the
      * rows and their order; this only draws them. The wordmark, the Ko-fi pill and the update row, then the quick tiles,
      * This window, the Space, three sections that start closed, and Exit. docs/design/menu-reorganization.md.
      */
     private fun buildDrawer() {
         val c = context
+        builtFor = focusInputs()
         drawerBody.removeAllViews()
         trackpadHeading = null
         // The wordmark: the app's own name at the drawer's top (64 x 14).
@@ -2240,13 +2256,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         return when (item) {
             MenuItem.STEADY, MenuItem.POCKET_MODE, MenuItem.GAME_KEYS, MenuItem.CONTROL_CENTER, MenuItem.RECORD, MenuItem.UNLOCK, MenuItem.PHONE_HOME, MenuItem.SETTINGS, MenuItem.EXIT -> emptyList()
             // 1.2.3 (issue 57): the focused window's text size, remembered for its app.
-            MenuItem.TEXT_SIZE -> host.focusedTextSize()?.let { (label, percent) -> listOf(textSizeRow(label, percent)) }.orEmpty()
+            MenuItem.TEXT_SIZE -> host.focusedTextSize()?.let { (label, percent) -> listOf(textSizeRow(label, percent).apply { tag = MENU_TEXT_SIZE }) }.orEmpty()
             // 1.2.3 (issue 58): Side by side 3D for the focused window's app.
             MenuItem.SIDE_BY_SIDE -> host.focusedSideBySide()?.let { (label, on) ->
                 listOf(row(R.drawable.ic_cover_view, "Side by side 3D in $label: ${if (on) "ON" else "OFF"}", tick = on, subtitle = "For a video split into two halves. Each eye sees its half.") {
                     closeDrawer()
                     host.sideBySideChosen(!on)
-                })
+                }.apply { tag = MENU_SIDE_BY_SIDE })
             }.orEmpty()
             // 1.2.3 (issue 58): 2D while moving, offered while the window shows Side by side 3D; off by default.
             MenuItem.SIDE_BY_SIDE_FLAT -> {
@@ -3302,6 +3318,10 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         const val MENU_PLAY_TESTERS_PLAY = "menu:play-testers:play"
         const val MENU_PLAY_TESTERS_NOT_NOW = "menu:play-testers:not-now"
         const val MENU_PLAY_TESTERS_ALREADY = "menu:play-testers:already"
+
+        /** Unreleased (John Davis): This window's Text size and Side by side 3D rows. */
+        const val MENU_TEXT_SIZE = "menu:text-size"
+        const val MENU_SIDE_BY_SIDE = "menu:side-by-side"
 
         /** 0.5.28: a toast with a one-tap action stays this long. */
         const val ACTION_TOAST_MS = 5000L

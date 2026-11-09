@@ -8,6 +8,10 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   for the testers group, then Open Play invite. Installing from Play means uninstalling this copy first, and that resets
   your Pocket XR settings. Not now hides the card for 7 days. I already joined hides it for good. The Play version
   doesn't show it.
+- **Text size shows for the window you clicked.** The Menu's This window now keeps up with the window you focus, by
+  trackpad, mouse, pinch or gaze, even while the Menu is open. The window keeps its focus when the glasses switch
+  between 2D and 3D, and a window you just opened has it too. The same goes for Side by side 3D and the Game
+  controller. Thanks to John Davis for the report.
 
 ## 1.2.6: a lighter Menu
 
