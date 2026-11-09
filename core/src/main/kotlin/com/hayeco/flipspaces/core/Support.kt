@@ -16,6 +16,18 @@ object Support {
     /** What TalkBack reads for the row. */
     const val DESCRIPTION = "Buy me a beer on Ko-fi. Opens ko-fi.com in the browser."
 
+    /**
+     * 1.2.6 (Mike: the pill in the Pocket XR blue at a reduced opacity, not its own colour): the accent ([Look.ACCENT], the
+     * window glow's blue) at 18 % for the fill, 40 % for the rim, the line in white and "Ko-fi" in the accent itself.
+     * Over the Menu's page ([Look.PAGE]) the fill comes to #1A253B: white reads at about 15 to 1, the accent at about 5 to 1.
+     */
+    const val FILL_ALPHA = 0.18f
+    const val RIM_ALPHA = 0.40f
+    val FILL: Int get() = Look.alpha(Look.ACCENT, FILL_ALPHA)
+    val RIM: Int get() = Look.alpha(Look.ACCENT, RIM_ALPHA)
+    const val TEXT = Look.INK
+    const val WHERE_TEXT = Look.ACCENT
+
     /** Whether the row shows: in every build but the Google Play one. */
     fun shows(playBuild: Boolean): Boolean = !playBuild
 
