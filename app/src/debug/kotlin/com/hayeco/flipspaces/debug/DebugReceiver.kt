@@ -192,6 +192,10 @@ class DebugReceiver : BroadcastReceiver() {
                 tuning.zoom = intent.getFloatExtra("zoom", tuning.zoom).coerceIn(1f, 2f)
                 tuning.operatingRate = intent.getIntExtra("rate", tuning.operatingRate)
                 tuning.direct = intent.getBooleanExtra("direct", tuning.direct)
+                tuning.aimPitchDeg = intent.getFloatExtra("aimpitch", tuning.aimPitchDeg)
+                tuning.aimYawDeg = intent.getFloatExtra("aimyaw", tuning.aimYawDeg)
+                tuning.controllerForwardM = intent.getFloatExtra("forward", tuning.controllerForwardM)
+                Log.i(TAG, "PC VR hand aim: pitch ${tuning.aimPitchDeg}, yaw ${tuning.aimYawDeg}, forward offset ${tuning.controllerForwardM} m")
                 Log.i(TAG, "PC VR zoom asked: ${tuning.zoom}")
                 // As the launcher's tile does: `--ez open true` opens PC VR over the Space, false closes it.
                 if (intent.hasExtra("open")) {

@@ -236,8 +236,12 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
             // The controller: at the hand on the Space's ray, pointing along it.
             val origin = com.hayeco.flipspaces.core.spatial.Vec3(handAim[0], handAim[1], handAim[2])
             val dir = com.hayeco.flipspaces.core.spatial.Vec3(handAim[3], handAim[4], handAim[5]).normalized()
-            val at = q.rotate(origin + dir * handAim[6])
-            val look = (q * lookAlong(dir)).normalized()
+            // Turned back by the laser's own turn (live tuning), then moved back by ALVR's forward offset, so the
+            // controller sits at the hand and its laser runs along the Space's ray.
+            val yawSign = if (side == 0) -1f else 1f
+            val correction = com.hayeco.flipspaces.core.spatial.Quat.fromYawPitch(yawSign * PcVrTuning.aimYawDeg, PcVrTuning.aimPitchDeg)
+            val look = (q * lookAlong(dir) * correction.conjugate()).normalized()
+            val at = q.rotate(origin + dir * handAim[6]) - look.rotate(com.hayeco.flipspaces.core.spatial.Vec3(0f, 0f, -PcVrTuning.controllerForwardM))
             val h = 14 * side
             hands[h] = 1f
             hands[h + 1] = look.x; hands[h + 2] = look.y; hands[h + 3] = look.z; hands[h + 4] = look.w
