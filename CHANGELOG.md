@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.8: VITURE glasses, a first step
 
 Thanks to the tester in GitHub Discussion #24 for VITURE Beast logs and a clear report.
 
