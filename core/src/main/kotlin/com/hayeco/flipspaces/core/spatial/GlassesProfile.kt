@@ -67,6 +67,10 @@ enum class GlassesModel(
     // round, the Space facing behind.
     AIR("XREAL Air", "air", tested = false, camera = false, diagonalFovDeg = 46f),
     OTHER_XREAL("XREAL glasses", "xreal", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT),
+    // 1.2.8 (Discussion #24, a VITURE Beast showed as "Unknown glasses"): VITURE's glasses, by their display's name. Their
+    // own settings (axes, screen size) are kept apart from other glasses'. The experimental reader turns its reports into
+    // head axes itself ([VitureAxes]), so the default axes.
+    VITURE("VITURE glasses", "viture", tested = false, camera = false, diagonalFovDeg = null),
     UNKNOWN("Unknown glasses", "unknown", tested = false, camera = false, diagonalFovDeg = null);
 
     /**
@@ -83,6 +87,12 @@ enum class GlassesModel(
      * none, and the One Pro's was never checked, so the level calibration's mount is used there.
      */
     val factoryMountChecked: Boolean get() = this == AURA
+
+    /**
+     * 1.2.8: an XREAL model, whose 3840 x 1080 mode is always their side by side 3D (or an Ultrawide their control link
+     * says). Other glasses' wide mode may be one 32:9 canvas ([WideCanvas]).
+     */
+    val isXreal: Boolean get() = this != VITURE && this != UNKNOWN
 
     /** Whether [tanPerPx1to1] comes from this model's own figure. */
     val fovKnown: Boolean get() = this == AURA || diagonalFovDeg != null
@@ -133,6 +143,7 @@ enum class GlassesModel(
                 id?.productId == EDID_ONE || lower == "xreal one" -> ONE
                 lower.contains("one pro") -> ONE_PRO
                 lower.contains("1s") || lower.contains("one s") -> ONE_S
+                lower.contains("viture") -> VITURE
                 usbProduct == USB_AURA -> AURA
                 usbProduct == USB_ONE -> ONE
                 usbProduct?.let(AirImuProtocol::modelName) != null || lower.contains("xreal air") || lower.contains("nreal air") -> AIR

@@ -2,6 +2,24 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+Thanks to the tester in GitHub Discussion #24 for VITURE Beast logs and a clear report.
+
+- **VITURE glasses say so plainly.** Head tracking isn't supported yet on VITURE glasses, and the head tracking screen
+  now says that instead of blaming a missing USB network. The Space works head locked.
+- **Experimental VITURE head tracking.** Off by default, on the head tracking screen. It's untested on VITURE glasses, so
+  your model may not answer. If the view moves the wrong way, try Flip up and down or Swap turn and tilt.
+- **Record motion for 20 seconds.** On the head tracking screen, for glasses that aren't XREAL's. It saves what the
+  glasses' motion sensor sends, and Send logs takes it along, so support for them can be added.
+- **Send logs lists every glasses device.** Not only XREAL's: the USB IDs, interfaces, report descriptors and the display
+  modes Android reports.
+- **No more two copies in 32:9.** On glasses other than XREAL's, the wide 3840 x 1080 mode is one wide screen in 2D, and
+  side by side only with 3D on.
+- **The Depth button tells you what to do.** On glasses Pocket XR can't switch to 3D itself, it says "Turn on 3D in your
+  glasses menu first" on the glasses.
+- **Smoother launcher icons.** Icon edges are smooth with any icon pack, drawn at the glasses' own pixel size.
+
 ## 1.2.7: Text size for the window you clicked
 
 - **Help Pocket XR get on Google Play.** The trackpad's Menu has a card asking you to join the Play testers. Tap Join

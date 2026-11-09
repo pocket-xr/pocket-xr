@@ -28,8 +28,13 @@ data class HeadDiagnosticsText(
     val timing: String?,
     val soc: String,
     val dynamicSensors: List<String>,
-    /** The XREAL USB devices and their interfaces, one line each, with each device's head tracking link. */
+    /**
+     * The USB devices and their interfaces, one line each, with each device's head tracking link. 1.2.8: every device
+     * Android lists, not only XREAL's (Discussion #24's VITURE Beast showed "none").
+     */
     val usb: List<String>,
+    /** 1.2.8: the newest motion recording ([HidRecording]) in one line; null when there is none. */
+    val motion: String? = null,
 ) {
     fun text(): String = buildString {
         appendLine("Pocket XR head tracking diagnostics")
@@ -40,9 +45,10 @@ data class HeadDiagnosticsText(
         route?.let { appendLine("Route: $it") }
         answer?.let { appendLine(it) }
         appendLine()
-        appendLine("USB devices from XREAL:")
+        appendLine("USB devices (glasses of every make):")
         if (usb.isEmpty()) appendLine("- none")
         usb.forEach { appendLine("- $it") }
+        appendLine("Motion recording: ${motion ?: "none yet (Record motion for 20 seconds, for glasses that aren't XREAL's)"}")
         appendLine()
         appendLine("1. Glasses USB network:")
         if (networks.isEmpty()) appendLine("- nothing listed yet")

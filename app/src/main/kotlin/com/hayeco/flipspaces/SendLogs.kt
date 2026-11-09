@@ -11,9 +11,11 @@ import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.hayeco.flipspaces.core.LogBundle
-import com.hayeco.flipspaces.core.spatial.GlassesReport
+import com.hayeco.flipspaces.core.spatial.GlassesVendors
+import com.hayeco.flipspaces.spatial.GlassesReportFile
 import com.hayeco.flipspaces.spatial.GlassesUsbList
 import com.hayeco.flipspaces.spatial.HeadDiagnosticsFile
+import com.hayeco.flipspaces.spatial.HidMotionRecorder
 import com.hayeco.flipspaces.spatial.SpaceStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,6 +39,9 @@ object SendLogs {
     /** The zips kept in reports/: the newest few, so a second try does not pile them up. */
     private const val KEEP = 2
 
+    /** 1.2.8: a motion recording older than this is not sent. */
+    private const val MOTION_MAX_AGE_MS = 2L * 24 * 60 * 60 * 1000
+
     /** Builds the zip off the main thread, then opens the email from [context] (an activity). */
     fun send(context: Context, owner: LifecycleOwner) {
         Toast.makeText(context, "Getting the logs ready...", Toast.LENGTH_SHORT).show()
@@ -53,7 +58,9 @@ object SendLogs {
     private fun info(context: Context): LogBundle.Info {
         val pkg = runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
         val store = SpaceStore(context)
-        val plugged = GlassesUsbList.read(context).filter { it.vendorId == GlassesReport.XREAL_VENDOR }
+        // 1.2.8 (Discussion #24: a VITURE Beast's zip said "Unknown glasses (the last used; none plugged in now)"): glasses
+        // of every make Pocket XR knows, not only XREAL's.
+        val plugged = GlassesUsbList.read(context).filter { GlassesVendors.name(it.vendorId) != null }
         val glasses = if (plugged.isEmpty()) {
             "${store.model.label} (the last used; none plugged in now)"
         } else {
@@ -81,8 +88,17 @@ object SendLogs {
         val secrets = (listOfNotNull(wifi.connected) + wifi.saved.map { it.ssid }).distinct()
         // The paired Bluetooth names, likewise, each the same <bt-device-N> in every file of the zip.
         val btNames = com.hayeco.flipspaces.phone.PhoneConnections.pairedNames(context)
+        // 1.2.8 (Discussion #24): the Glasses report (every USB device with its interfaces, endpoints and HID report
+        // descriptors, and the display modes Android reports) and the newest motion recording from the last two days.
+        val extras = buildList {
+            runCatching { GlassesReportFile.build(context).text() }.onSuccess { add("glasses-report.txt" to it) }
+                .onFailure { add("glasses-report.txt" to "not made: ${it.javaClass.simpleName}: ${it.message}") }
+            HidMotionRecorder.newest(context)?.takeIf { System.currentTimeMillis() - it.lastModified() < MOTION_MAX_AGE_MS }?.let { f ->
+                runCatching { f.readText() }.onSuccess { add("motion/${f.name}" to it) }
+            }
+        }
         val written = file.outputStream().use { out ->
-            LogBundle.write(out, info, HeadDiagnosticsFile.text(context), LogBundle.logFiles(logDir), secrets, btNames = btNames)
+            LogBundle.write(out, info, HeadDiagnosticsFile.text(context), LogBundle.logFiles(logDir), secrets, btNames = btNames, extras = extras)
         }
         Log.i(TAG, "logs zipped for Mike: ${file.name}, ${written.bytes / 1024} KB, ${written.included.size} log files" +
             if (written.leftOut.isEmpty()) "" else ", ${written.leftOut.size} older ones left out")

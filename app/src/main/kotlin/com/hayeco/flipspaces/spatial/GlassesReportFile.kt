@@ -62,6 +62,8 @@ object GlassesReportFile {
             hands = hands,
             timeUtc = utc,
             tracking = HeadTracker.lastTrackingLine,
+            // 1.2.8: the report descriptors need USB access, so they come from the newest motion recording.
+            hidDescriptors = HidMotionRecorder.newest(context)?.let { f -> runCatching { com.hayeco.flipspaces.core.spatial.HidRecording.descriptorsIn(f.readText()) }.getOrNull() }.orEmpty(),
         )
     }
 

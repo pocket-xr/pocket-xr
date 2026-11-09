@@ -277,6 +277,22 @@ object HeadTracker {
         }
     }
 
+    /**
+     * 1.2.8: the reader started again for its users, for a setting it reads only when it opens the glasses (the VITURE
+     * reader's axis switches). Nothing happens while it is not running.
+     */
+    @Synchronized
+    fun restart(context: Context, why: String) {
+        if (thread?.isAlive != true) return
+        Log.i(TAG, "head tracking: starting the reader again ($why)")
+        stop()
+        val store = SpaceStore(context)
+        if (users > 0 && store.headTracking) {
+            settings = fromStore(store, context)
+            startThread(context.applicationContext)
+        }
+    }
+
     private fun startThread(app: Context) {
         _ethernet.value = emptyList()
         _attempts.value = emptyList()
@@ -628,6 +644,23 @@ object HeadTracker {
                 if (!streamAir(air, context, fusion, backoff)) return
                 continue
             }
+            // 1.2.8 (Discussion #24, a VITURE Beast: no head tracking, and the status blamed a missing USB network): VITURE
+            // glasses have no USB network. With the experimental reader on, their HID is read; otherwise the status says
+            // plainly that they are not supported yet, and nothing is opened on them.
+            val viture = VitureImuLink.find(context)
+            if (viture != null) {
+                val store = SpaceStore(context)
+                if (store.vitureHeadTracking) {
+                    if (!streamViture(viture, context, fusion, backoff, store.vitureAxes)) return
+                } else {
+                    val st = HeadTrackingStatus.VitureNotYet(viture.productId)
+                    if (_status.value != st) Log.i(TAG, "head tracking: ${st.summary}")
+                    report(st)
+                    _answer.value = null
+                    if (!waitFor(HID_RECHECK_MS, GlassesNetwork.scan(context).fingerprint, context)) return
+                }
+                continue
+            }
             // 1.1.10 (USB 3318:0442 on a Pixel 8a: "No USB network to the glasses ... One UI may not bring up the glasses'
             // NCM or ECM interface"): other glasses whose IMU is on USB HID have no USB network to find. Nothing is opened
             // on them; the status says so, and the USB list is read again every [HID_RECHECK_MS] or on a kick (plug-in).
@@ -791,6 +824,60 @@ object HeadTracker {
         return waitFor(delay, print, context)
     }
 
+    /**
+     * 1.2.8: one round on VITURE glasses with the experimental reader on ([VitureImuLink]), as [streamAir] does for the Air
+     * family. A round that gets no motion at all says plainly that these glasses are not supported yet.
+     */
+    private fun streamViture(device: android.hardware.usb.UsbDevice, context: Context, fusion: HeadFusion, backoff: HeadRetryBackoff, axes: com.hayeco.flipspaces.core.spatial.VitureAxes): Boolean {
+        val name = VitureImuLink.glassesName(device)
+        val print = GlassesNetwork.scan(context).fingerprint
+        if (!VitureImuLink.manager(context).hasPermission(device)) {
+            report(HeadTrackingStatus.UsbPermission(name))
+            if (askedUsbFor != device.deviceName) {
+                askedUsbFor = device.deviceName
+                Log.i(TAG, "head tracking: $name found on USB without access to it; asking Android (its USB prompt) for the experimental VITURE reader")
+                runCatching { com.hayeco.flipspaces.hands.GlassesUsbAccess.requestPermission(context, device) }
+                    .onFailure { Log.w(TAG, "head tracking: the USB prompt for $name failed: ${it.javaClass.simpleName}: ${it.message}") }
+            }
+            return waitFor(1000L, print, context)
+        }
+        val link = try {
+            VitureImuLink.open(context, device, axes, READ_TIMEOUT_MS)
+        } catch (e: Exception) {
+            if (Thread.currentThread().isInterrupted) return false
+            val error = "${e.javaClass.simpleName}: ${e.message}"
+            val delay = backoff.nextDelayMs()
+            report(HeadTrackingStatus.UsbFailed(name, error))
+            _attempts.value = listOf("$name over USB HID (experimental VITURE reader): $error")
+            Log.w(TAG, "head tracking: $name over USB HID failed: $error; next try in ${delay / 1000} s")
+            return waitFor(delay, print, context)
+        }
+        _attempts.value = listOf("${link.label}: opened, the raw stream start sent")
+        _route.value = link.label
+        sourceLine = link.label
+        Log.i(TAG, "head tracking route: ${link.label}, the raw stream start sent; ${axes.line()}")
+        val opened = SystemClock.elapsedRealtime()
+        val streamed = try {
+            stream(link, link.label, fusion)
+        } finally {
+            runCatching { link.close() }
+            sourceLine = null
+            _route.value = null
+        }
+        Log.i(TAG, "head tracking stream over ${link.label} ended after ${(SystemClock.elapsedRealtime() - opened) / 1000.0} s: ${_status.value.summary}; ${link.clockLine}; ${link.counts}")
+        if (Thread.currentThread().isInterrupted) return false
+        if (streamed) backoff.reset()
+        val delay = backoff.nextDelayMs()
+        if (streamed) {
+            _answer.value = "The stream stopped."
+            report(HeadTrackingStatus.RetryLater("The stream stopped.", (delay / 1000).toInt()))
+        } else {
+            _answer.value = HeadTrackingStatus.VITURE_HINT
+            report(HeadTrackingStatus.VitureNotYet(device.productId, experimentalOn = true))
+        }
+        return waitFor(delay, print, context)
+    }
+
     // ---- 1.1.12: the once a second PocketXR-Tracking line ----
 
     private const val TRACK_TAG = "PocketXR-Tracking"
@@ -831,11 +918,12 @@ object HeadTracker {
     /** The glasses' model from their display and every XREAL device on USB, with whether Pocket XR may use it. */
     private fun glassesSeen(c: Context): String {
         val manager = AirImuLink.manager(c)
-        val usb = runCatching { manager.deviceList.values.filter { com.hayeco.flipspaces.core.hands.GlassesUsb.isXreal(it.vendorId) } }.getOrDefault(emptyList())
-        val devices = if (usb.isEmpty()) "no XREAL device on USB" else usb.joinToString(", ") { d ->
+        // 1.2.8 (Discussion #24): VITURE's devices too; their line said "no XREAL device on USB" and nothing more.
+        val usb = runCatching { manager.deviceList.values.filter { com.hayeco.flipspaces.core.spatial.GlassesVendors.name(it.vendorId) != null } }.getOrDefault(emptyList())
+        val devices = if (usb.isEmpty()) "no XREAL or VITURE device on USB" else usb.joinToString(", ") { d ->
             val air = AirImuProtocol.isAir(d.vendorId, d.productId)
             "%s USB %04X:%04X%s, USB access %s".format(
-                java.util.Locale.ROOT, AirImuProtocol.modelName(d.productId) ?: d.productName ?: "XREAL", d.vendorId, d.productId,
+                java.util.Locale.ROOT, (if (air) AirImuProtocol.modelName(d.productId) else null) ?: d.productName ?: com.hayeco.flipspaces.core.spatial.GlassesVendors.name(d.vendorId), d.vendorId, d.productId,
                 if (air) " (Air family, IMU on HID interface ${AirImuProtocol.imuInterface(d.productId)})" else "",
                 if (runCatching { manager.hasPermission(d) }.getOrDefault(false)) "yes" else "no",
             )

@@ -238,6 +238,11 @@ object LogBundle {
         secrets: Collection<String> = emptyList(),
         maxBytes: Long = MAX_ZIP_BYTES,
         btNames: Collection<String> = emptyList(),
+        /**
+         * 1.2.8 (Discussion #24): more text files by name, scrubbed like the rest: the Glasses report (every USB device, its
+         * interfaces and the display modes) and the newest motion recording.
+         */
+        extras: List<Pair<String, String>> = emptyList(),
     ): Written {
         // One for the whole zip: a device is the same <bt-device-N> in every file.
         val bt = BtNames(btNames)
@@ -250,6 +255,12 @@ object LogBundle {
             w.write(LogScrub.text(diagnostics, secrets, bt))
             w.flush()
             zip.closeEntry()
+            for ((name, text) in extras) {
+                zip.putNextEntry(ZipEntry(name))
+                w.write(LogScrub.text(text, secrets, bt))
+                w.flush()
+                zip.closeEntry()
+            }
             for (f in logs) {
                 if (counted.count >= maxBytes) {
                     leftOut += f.name
@@ -270,16 +281,17 @@ object LogBundle {
             }
             zip.putNextEntry(ZipEntry("about.txt"))
             // The glasses line can carry a device's name too, so about.txt goes through the same scrub.
-            w.write(LogScrub.text(about(info, included, leftOut), secrets, bt))
+            w.write(LogScrub.text(about(info, included, leftOut, extras.map { it.first }), secrets, bt))
             w.flush()
             zip.closeEntry()
         }
         return Written(included, leftOut, counted.count)
     }
 
-    fun about(info: Info, included: List<String>, leftOut: List<String>): String = buildString {
+    fun about(info: Info, included: List<String>, leftOut: List<String>, extras: List<String> = emptyList()): String = buildString {
         appendLine("Pocket XR logs, sent with $BUTTON")
         append(facts(info))
+        if (extras.isNotEmpty()) appendLine("Also: " + extras.joinToString(", "))
         appendLine("Log files: " + included.ifEmpty { listOf("none on the phone") }.joinToString(", "))
         if (leftOut.isNotEmpty()) appendLine("Left out to keep the email small (the oldest): " + leftOut.joinToString(", "))
         appendLine("Taken out of every line: email addresses, account names, Wi-Fi names, Bluetooth device names (as <bt-device-1> and on, the same in every file), MAC addresses, and IP addresses other than the glasses' own link.")

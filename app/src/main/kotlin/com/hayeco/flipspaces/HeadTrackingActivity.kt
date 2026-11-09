@@ -73,7 +73,38 @@ class HeadTrackingActivity : ComponentActivity() {
                 val route by HeadTracker.route.collectAsStateWithLifecycle()
                 val answer by HeadTracker.answer.collectAsStateWithLifecycle()
                 val levelResult by HeadTracker.level.collectAsStateWithLifecycle()
+                val motionLine by com.hayeco.flipspaces.spatial.HidMotionRecorder.line.collectAsStateWithLifecycle()
+                // 1.2.8 (Discussion #24): read again as the status or a setting changes (a plug-in changes the status).
+                val other = (status to settingsVersion).let { _ ->
+                    val pick = com.hayeco.flipspaces.core.spatial.GlassesVendors.recordable(com.hayeco.flipspaces.spatial.GlassesUsbList.read(this))
+                    com.hayeco.flipspaces.ui.OtherGlassesCard(
+                        glasses = pick?.let { "%04X:%04X \"%s\"".format(java.util.Locale.ROOT, it.vendorId, it.productId, it.name) },
+                        viture = pick?.vendorId == com.hayeco.flipspaces.core.spatial.VitureImuProtocol.VENDOR || store.model == com.hayeco.flipspaces.core.spatial.GlassesModel.VITURE,
+                        vitureOn = store.vitureHeadTracking,
+                        vitureAxes = store.vitureAxes,
+                        recording = com.hayeco.flipspaces.spatial.HidMotionRecorder.busy || motionLine?.startsWith("Recording") == true || motionLine?.startsWith("Allow") == true,
+                        motionLine = motionLine ?: com.hayeco.flipspaces.spatial.HidMotionRecorder.newestLine(this)?.let { "Last recording: $it" },
+                        onViture = { on ->
+                            store.vitureHeadTracking = on
+                            Log.i("FlipSpaces/Head", "experimental VITURE head tracking ${if (on) "on" else "off"} (the head tracking screen)")
+                            settingsVersion++
+                            // Off closes the open stream at once; on tries now.
+                            if (on) HeadTracker.kick("Experimental VITURE head tracking on") else HeadTracker.restart(this, "Experimental VITURE head tracking off")
+                        },
+                        onVitureAxes = { a ->
+                            store.vitureAxes = a
+                            Log.i("FlipSpaces/Head", "${a.line()} (the head tracking screen)")
+                            settingsVersion++
+                            // The reader turns the axes as it reads, so it starts again with the new ones.
+                            if (store.vitureHeadTracking) HeadTracker.restart(this, "VITURE axes changed")
+                        },
+                        onRecord = {
+                            if (com.hayeco.flipspaces.spatial.HidMotionRecorder.start(this)) settingsVersion++
+                        },
+                    )
+                }
                 HeadTrackingScreen(
+                    other = other,
                     status = status,
                     live = live,
                     networks = networks,
