@@ -173,7 +173,7 @@ which the block does not cover, or turn off "Scan apps with Play Protect" in the
 Pocket XR needs 12 testers in its Google Play test for 14 days before it can go public on Play. If you'd like to
 help, it takes two taps:
 
-1. Join the testers group: [groups.google.com/g/pocketxr-testers](https://groups.google.com/g/pocketxr-testers).
+1. Join the testers group: [groups.google.com/a/mikehaye.com/g/pocketxr-testers](https://groups.google.com/a/mikehaye.com/g/pocketxr-testers).
 2. Open the Play invite and tap Become a tester:
    [play.google.com/apps/testing/com.hayeco.flipspaces](https://play.google.com/apps/testing/com.hayeco.flipspaces).
 

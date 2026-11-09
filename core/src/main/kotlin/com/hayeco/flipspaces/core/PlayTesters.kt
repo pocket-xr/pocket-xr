@@ -7,7 +7,7 @@ package com.hayeco.flipspaces.core
  * build (BuildConfig.PLAY_BUILD), whose users are on Play already.
  */
 object PlayTesters {
-    const val GROUP_URL = "https://groups.google.com/g/pocketxr-testers"
+    const val GROUP_URL = "https://groups.google.com/a/mikehaye.com/g/pocketxr-testers"
     const val PLAY_URL = "https://play.google.com/apps/testing/com.hayeco.flipspaces"
 
     const val TITLE = "Help Pocket XR get on Google Play"

@@ -4,10 +4,9 @@ Pocket XR (`com.hayeco.flipspaces`) closed track: **Closed testing - Alpha**, Ha
 
 ## Links
 
-- **Tester group:** not created yet. The planned group is `pocketxr-testers@googlegroups.com`, join page
-  https://groups.google.com/g/pocketxr-testers (anyone can join without approval, members hidden, owners post).
-  Google Groups asked for a CAPTCHA when creating it, so Mike has to create it by hand and then add it on the track's
-  Testers tab under Google Groups.
+- **Tester group:** `pocketxr-testers@mikehaye.com`, in Mike's Workspace, join page
+  https://groups.google.com/a/mikehaye.com/g/pocketxr-testers. It has to be added on the track's Testers tab under
+  Google Groups.
 - **Play opt-in link:** https://play.google.com/apps/testing/com.hayeco.flipspaces
   It works once a release is rolled out to the closed track. A tester must join the group first, using the same
   Google account as on their phone.

@@ -2,6 +2,11 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+- **The testers card's Join button opens the right group.** It went to a Google Group that didn't exist. It now opens
+  the Pocket XR testers group, so you can join and then take the Play invite.
+
 ## 1.2.8: VITURE glasses, a first step
 
 Thanks to the tester in GitHub Discussion #24 for VITURE Beast logs and a clear report.
