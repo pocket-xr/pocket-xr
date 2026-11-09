@@ -9,10 +9,10 @@ rating answers are in [store/play/LISTING.md](../store/play/LISTING.md); the ima
 | | Pocket XR | Pocket XR add-on |
 | --- | --- | --- |
 | Package | `com.hayeco.flipspaces` (kept; it is Pocket XR's since the first build and not on Play) | `com.hayeco.flipspaces.addon` |
-| Version | 1.1.12, versionCode 143 | 1.1, versionCode 2 |
+| Version | 1.2.6, versionCode 158 | 1.1, versionCode 2 |
 | minSdk / targetSdk / compileSdk | 30 / 36 / 37 | 30 / 36 / 37 |
-| Bundle | [release/play/pocketxr-1.1.12-143.aab](../release/play/pocketxr-1.1.12-143.aab) (Git LFS) | [release/play/pocketxr-addon-1.1-2.aab](../release/play/pocketxr-addon-1.1-2.aab) (Git LFS) |
-| R8 mapping | [release/play/pocketxr-1.1.12-143-mapping.txt](../release/play/pocketxr-1.1.12-143-mapping.txt) (Git LFS): upload it with the bundle, under App bundle explorer, Downloads, ReTrace mapping file | Not shrunk, none |
+| Bundle | [release/play/pocketxr-1.2.6-158.aab](../release/play/pocketxr-1.2.6-158.aab) (Git LFS) | [release/play/pocketxr-addon-1.1-2.aab](../release/play/pocketxr-addon-1.1-2.aab) (Git LFS) |
+| R8 mapping | [release/play/pocketxr-1.2.6-158-mapping.txt](../release/play/pocketxr-1.2.6-158-mapping.txt) (Git LFS): upload it with the bundle, under App bundle explorer, Downloads, ReTrace mapping file | Not shrunk, none |
 | Declares | Camera and connectedDevice foreground services | The AccessibilityService and the notification listener |
 
 Checksums are in [release/play/SHA256SUMS](../release/play/SHA256SUMS).
@@ -102,6 +102,9 @@ Build with Android Studio's JBR:
 $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 gradle -Ppocketxr.play=true :core:test :app:bundleRelease :addon:bundleRelease
 ```
+
+Run `:app:testDebugUnitTest` in its own Gradle run without `-Ppocketxr.play=true`: with it the app's tests run as a Play
+copy, and the add-on tests that expect the GitHub install step fail (1.2.6).
 
 The bundles are `app/build/outputs/bundle/release/app-release.aab` and `addon/build/outputs/bundle/release/addon-release.aab`,
 the mapping `app/build/outputs/mapping/release/mapping.txt`. Copy them to release/play with the version in the name and

@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased: a lighter Menu
+## 1.2.6: a lighter Menu
 
 - **A tidier Menu.** The trackpad's Menu is about half as long. The things used every session are tiles at the top:
   Steady mode, Pocket mode, Game keys, Open Control Center, Record, Phone home and Pocket XR Settings. Unlock phone
