@@ -62,6 +62,12 @@ object OpenXrPads {
         pads = arrayOf(Pad(false), Pad(true))
     }
 
+    /** One Joy-Con for a status screen: 0 not reporting, 1 reporting, 2 rested this session (its drift measured). */
+    fun padState(hand: Int): Int {
+        val pad = pads.getOrNull(hand) ?: return 0
+        return synchronized(pad) { if (!pad.started) 0 else if (pad.pose.biasLearned) 2 else 1 }
+    }
+
     private fun keep(pad: Pad) {
         val context = app ?: return
         val b = pad.pose.biasRadS

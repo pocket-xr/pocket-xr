@@ -21,6 +21,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
+import kotlin.math.abs
 import kotlin.math.tan
 
 /**
@@ -70,21 +71,43 @@ class PcVrTestActivity : Activity() {
             setRenderer(Renderer())
             renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
         }
-        // On the glasses, a Presentation: the desktop mode there makes an activity a floating window, a Presentation
-        // always fills its display (the Space does the same).
+        showOnGlasses(0)
+    }
+
+    /**
+     * On the glasses, a Presentation: the desktop mode there makes an activity a floating window, a Presentation always
+     * fills its display (the Space does the same). The glasses blink off for a moment when another app lets them go, so
+     * a display that is listed but not ready yet is tried again for a few seconds instead of closing the stream.
+     */
+    private fun showOnGlasses(attempt: Int) {
+        if (isFinishing || isDestroyed) return
         val glasses = getSystemService(DisplayManager::class.java)
             ?.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)
             ?.firstOrNull { it.mode.physicalWidth >= 3 * it.mode.physicalHeight }
-        if (glasses != null) {
-            Log.i(TAG, "PC VR proof on the glasses: display ${glasses.displayId}, ${glasses.mode.physicalWidth}x${glasses.mode.physicalHeight}")
-            presentation = Presentation(this, glasses).apply {
+        if (glasses == null) {
+            if (presentation == null && attempt == 0) setContentView(view)
+            return
+        }
+        val shown = runCatching {
+            Presentation(this, glasses).apply {
                 window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 setContentView(view)
                 show()
             }
+        }
+        shown.onSuccess {
+            presentation = it
+            Log.i(TAG, "PC VR proof on the glasses: display ${glasses.displayId}, ${glasses.mode.physicalWidth}x${glasses.mode.physicalHeight}")
             setContentView(android.widget.TextView(this).apply { text = "PC VR proof: on the glasses" })
-        } else {
-            setContentView(view)
+        }.onFailure {
+            (view.parent as? android.view.ViewGroup)?.removeView(view)
+            if (attempt >= GLASSES_TRIES) {
+                Log.w(TAG, "the glasses' display never became ready: ${it.message}")
+                setContentView(view)
+                return
+            }
+            Log.i(TAG, "the glasses' display is not ready yet, trying again")
+            window.decorView.postDelayed({ showOnGlasses(attempt + 1) }, GLASSES_RETRY_MS)
         }
     }
 
@@ -184,6 +207,21 @@ class PcVrTestActivity : Activity() {
         private var predictNs = DEFAULT_PREDICT_NS
         private val warp = FloatArray(9)
         private var newFrames = 0
+        /** The loading scene, until the stream is steady, then faded out over it. */
+        private val loading = com.hayeco.flipspaces.pcvr.PcVrLoading()
+        private var loadStartNs = 0L
+        private var everStreamed = false
+        private var lastFrameNs = 0L
+        private var steadySinceNs = 0L
+        private var revealNs = 0L
+        private var copies = 0
+        private val sampleBuf = ByteBuffer.allocateDirect(SAMPLE_PIXELS * 4).order(ByteOrder.nativeOrder())
+        private val pictures = HashSet<Long>()
+        private var samples = 0
+        private var brightness = 0.0
+        /** Per log: summed turn between successive frames' poses, and from each frame's pose to the newest head sent. */
+        private var poseStep = 0.0
+        private var poseLag = 0.0
         private var drawn = 0
         private var lastLogMs = 0L
         /** The views each eye's half shows (zoomed out by [PcVrTuning.zoom]) and the wider views the PC is asked to draw. */
@@ -220,6 +258,8 @@ class PcVrTestActivity : Activity() {
             GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, quad)
             GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, verts.size * 4, buf, GLES30.GL_STATIC_DRAW)
             applyZoom()
+            loading.create(VERTEX)
+            loadStartNs = System.nanoTime()
             Log.i(TAG, "PC VR proof: each frame copied once, then turned to the head every refresh; glasses ${views.line()}; the PC draws ${(MARGIN * 100).toInt()} % wider: ${wideViews.line()}")
         }
 
@@ -235,8 +275,8 @@ class PcVrTestActivity : Activity() {
                 // The head at the time the PC's frame will be shown: ALVR's own measured delay, as its client does.
                 predictNs = AlvrBridge.predictionOffsetNs().takeIf { it in 1..MAX_PREDICT_NS } ?: DEFAULT_PREDICT_NS
                 val target = now + predictNs
-                val q0 = HeadTracker.gamePose(target)
-                val q1 = HeadTracker.gamePose(target + RATE_STEP_NS)
+                val q0 = headAt(target)
+                val q1 = headAt(target + RATE_STEP_NS)
                 if (q0 != null) set(sentOrientation, q0.x, q0.y, q0.z, q0.w)
                 head[0] = sentOrientation[0]; head[1] = sentOrientation[1]; head[2] = sentOrientation[2]; head[3] = sentOrientation[3]
                 head[4] = 0f; head[5] = EYE_HEIGHT_M; head[6] = 0f
@@ -251,26 +291,56 @@ class PcVrTestActivity : Activity() {
                 val ts = AlvrBridge.acquireFrame(oes, framePose)
                 if (ts != 0L) {
                     copyFrame()
+                    poseStep += angle(copyPose, framePose)
+                    poseLag += angle(framePose, sentOrientation)
                     copyPose.indices.forEach { copyPose[it] = framePose[it] }
                     for (i in 0 until 8) frameTans[i] = tan(copyPose[4 + i].toDouble()).toFloat()
                     hasFrame = true
                     newFrames++
+                    if (lastFrameNs == 0L || now - lastFrameNs > STEADY_GAP_NS) steadySinceNs = now
+                    lastFrameNs = now
                 }
                 // The head at this refresh's light, about a frame and a half ahead.
-                HeadTracker.gamePose(now + PHOTON_NS)?.let { q -> set(nowOrientation, q.x, q.y, q.z, q.w) }
+                headAt(now + PHOTON_NS)?.let { q -> set(nowOrientation, q.x, q.y, q.z, q.w) }
                 drawWarped()
                 if (ts != 0L) AlvrBridge.submitFrame(ts, PHOTON_NS)
+                // Steady new frames for a moment: SteamVR is up. Fade the loading scene out.
+                if (revealNs == 0L && steadySinceNs != 0L && now - lastFrameNs < STEADY_GAP_NS &&
+                    now - steadySinceNs >= STEADY_NS && now - loadStartNs >= MIN_LOADING_NS
+                ) {
+                    revealNs = now
+                    Log.i(TAG, "PC VR ready after %.1f s: fading in".format(java.util.Locale.ROOT, (now - loadStartNs) / 1e9))
+                }
+                drawLoading(now)
             } else {
                 clear()
+                headAt(now + PHOTON_NS)?.let { q -> set(nowOrientation, q.x, q.y, q.z, q.w) }
+                drawLoading(now)
             }
             drawn++
             val nowMs = SystemClock.uptimeMillis()
             if (nowMs - lastLogMs >= 2_000L) {
                 Log.i(TAG, "PC VR proof: ${if (streaming) "streaming ${streamW}x$streamH" else "waiting"}, ${newFrames / 2f} new frames a second, ${drawn / 2f} drawn, head predicted ${predictNs / 1_000_000} ms ahead")
+                if (streaming && newFrames > 0) Log.i(TAG, "PC VR frames: pose turned %.2f degrees a frame, %.1f degrees behind the head sent".format(
+                    java.util.Locale.ROOT, poseStep / newFrames, poseLag / newFrames))
+                if (samples > 0) Log.i(TAG, "PC VR picture: %d different of %d looked at, brightness %.0f".format(
+                    java.util.Locale.ROOT, pictures.size, samples, brightness / samples))
+                pictures.clear(); samples = 0; brightness = 0.0
+                poseStep = 0.0
+                poseLag = 0.0
                 lastLogMs = nowMs
                 newFrames = 0
                 drawn = 0
             }
+        }
+
+        /** The glasses' head, or the debug "wearer" command's turning head in its place. */
+        private fun headAt(ns: Long) = com.hayeco.flipspaces.openxr.OpenXrHeadFeed.testPose?.invoke(ns) ?: HeadTracker.gamePose(ns)
+
+        /** Degrees between two orientations, x y z w first in each array. */
+        private fun angle(a: FloatArray, b: FloatArray): Double {
+            val d = abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]).coerceAtMost(1f)
+            return Math.toDegrees(2.0 * kotlin.math.acos(d.toDouble()))
         }
 
         private fun set(q: FloatArray, x: Float, y: Float, z: Float, w: Float) {
@@ -286,6 +356,7 @@ class PcVrTestActivity : Activity() {
                         streamH = event[1].toInt()
                         Log.i(TAG, "streaming started: ${streamW}x$streamH per eye, refresh hint ${event[2]} Hz, foveation ${event[3] > 0f}")
                         streaming = true
+                        everStreamed = true
                         pads.streaming = true
                         viewsSent = false
                         AlvrBridge.sendControllerProfile()
@@ -295,6 +366,10 @@ class PcVrTestActivity : Activity() {
                         streaming = false
                         pads.streaming = false
                         hasFrame = false
+                        // Back to the loading scene until the stream is steady again.
+                        revealNs = 0L
+                        lastFrameNs = 0L
+                        steadySinceNs = 0L
                         AlvrBridge.destroyDecoder()
                         decoderMade = false
                     }
@@ -323,7 +398,24 @@ class PcVrTestActivity : Activity() {
             GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
             GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oes)
             GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
+            if (++copies % SAMPLE_EVERY == 0) samplePicture(w, h)
             GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+        }
+
+        /** Test only: a row of pixels across the left eye, to tell a still picture from a moving one, and its brightness. */
+        private fun samplePicture(w: Int, h: Int) {
+            sampleBuf.clear()
+            GLES30.glReadPixels(w / 16, h / 2, SAMPLE_PIXELS, 1, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, sampleBuf)
+            var hash = 0L
+            var light = 0L
+            for (i in 0 until SAMPLE_PIXELS * 4) {
+                val v = sampleBuf.get(i).toInt() and 0xff
+                hash = hash * 31 + v
+                if (i % 4 != 3) light += v
+            }
+            pictures += hash
+            samples++
+            brightness += light.toDouble() / (SAMPLE_PIXELS * 3)
         }
 
         private fun makeCopyTarget(w: Int, h: Int) {
@@ -356,6 +448,23 @@ class PcVrTestActivity : Activity() {
             GLES30.glViewport(0, 0, surfaceW, surfaceH)
             GLES30.glClearColor(0f, 0f, 0f, 1f)
             GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+        }
+
+        private fun drawLoading(now: Long) {
+            val alpha = if (revealNs == 0L) 1f else {
+                val t = ((now - revealNs) / FADE_NS.toFloat()).coerceIn(0f, 1f)
+                1f - t * t * (3f - 2f * t)
+            }
+            if (alpha <= 0f) return
+            val phase = when {
+                !streaming && everStreamed -> com.hayeco.flipspaces.pcvr.PcVrLoading.Phase.RECONNECTING
+                !streaming -> com.hayeco.flipspaces.pcvr.PcVrLoading.Phase.FINDING_PC
+                else -> com.hayeco.flipspaces.pcvr.PcVrLoading.Phase.STARTING
+            }
+            fun pad(h: Int) = com.hayeco.flipspaces.pcvr.PcVrLoading.Pad.entries[OpenXrPads.padState(h)]
+            GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
+            bindQuad()
+            loading.draw(now, nowOrientation, tans, surfaceW, surfaceH, alpha, phase, (now - loadStartNs) / 1e9f, pad(0), pad(1))
         }
 
         /** Each eye's half: the copy turned from the pose the PC drew it for to the head now. */
@@ -409,6 +518,17 @@ class PcVrTestActivity : Activity() {
         const val TAG = "PocketXrAlvr"
         /** The PC draws this share of each eye's width and height more on every side, so the late warp has room. */
         const val MARGIN = 0.06f
+        const val GLASSES_TRIES = 10
+        const val GLASSES_RETRY_MS = 1_000L
+        /** New frames no further apart than this count as steady; this long steady and the loading scene fades. */
+        const val STEADY_GAP_NS = 150_000_000L
+        const val STEADY_NS = 1_500_000_000L
+        /** The loading scene shows at least this long, so it never flashes, and fades over [FADE_NS]. */
+        const val MIN_LOADING_NS = 1_200_000_000L
+        const val FADE_NS = 800_000_000L
+        /** Test only: every this many new frames, a row of [SAMPLE_PIXELS] is read back. */
+        const val SAMPLE_EVERY = 6
+        const val SAMPLE_PIXELS = 64
         /** Until ALVR has measured its delay. */
         const val DEFAULT_PREDICT_NS = 60_000_000L
         const val MAX_PREDICT_NS = 150_000_000L

@@ -96,3 +96,15 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   with its turn rate. The PC draws a view 6 % wider on every side at the glasses' sharpness (2144 x 1216 per eye), and
   the warp reads each frame's own view. The PC's ALVR now follows the phone's size (transcoding and emulated headset
   resolution set to Scale 1.0; a SteamVR restart applies it). Mike: "No edges, smooth". 59.5 new frames a second, 89 ms.
+- Joy-Cons, zoom and loading (8 November): both Joy-Cons are Quest Touch controllers to SteamVR, and the SteamVR menu and
+  buttons work. The PC draws a view 1.3 times wider that the glasses show in the same space (more in view, as a game's
+  field of view setting). Mike: "Feels right". Hands sit 7 cm lower and 5 cm out from the default.
+- Joy-Con drift: both measured about 0.8 degrees a second, which is why they needed recentring so often. It is only
+  measured when a Joy-Con lies still, and was only saved when a game closed cleanly, so it had never been kept. Now it is
+  saved as soon as a rest measures it, and each recentre logs how far out the Joy-Con was.
+- Loading scene: a SteamVR cold start gives about 5 to 11 s of nothing, then SteamVR's blue room, then its dashboard.
+  `pcvr/PcVrLoading.kt` shows a dark room with a blue horizon, fixed in the world, and a card: "Connecting to your PC",
+  "Starting SteamVR", "Reconnecting to your PC", with a spinner and a Joy-Con row asking you to set them down (each gets
+  a check once its drift is measured). After 1.5 s of steady frames it fades out over 0.8 s. Mike: "Looks great".
+- The 20 s freezes: not caught in 15 minutes of recording. Short dips then were the phone (the PC kept 60 a second) while
+  it was hot.
