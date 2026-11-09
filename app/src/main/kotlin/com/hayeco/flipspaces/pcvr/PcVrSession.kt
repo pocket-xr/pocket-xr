@@ -120,7 +120,7 @@ object PcVrSession {
 
             val pads = PcVrPads()
             heldSinceMs.fill(0L)
-            OpenXrPads.start(space)
+            OpenXrPads.start(space, pcVr = true)
             OpenXrPads.sink = OpenXrPads.Sink { hand, sampleNs, p, q, w, v, buttons, trigger, squeeze, sx, sy ->
                 pads.store(hand, sampleNs, p, q, w, v)
                 // A hand sent as a tracked hand has its pinch as the trigger; its Joy-Con (set down) stays out.

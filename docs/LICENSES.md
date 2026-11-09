@@ -17,6 +17,13 @@ in this repository.
   runs MediaPipe on the GPU or CPU. The official GitHub release APK includes them (docs/RELEASE.md); the Google Play
   build does not.
 
+## ALVR (PC VR, private builds)
+
+- ALVR's client library (`alvr_client_core`, built from https://github.com/alvr-org/ALVR at nightly 21.0.0-dev14,
+  with Pocket XR's small patch in `app/src/main/cpp/alvr/alvr-pocketxr.patch`): MIT License, Copyright (c) 2018-2019
+  polygraphene, Copyright (c) 2020-2024 alvr-org. The licence text ships inside the app as
+  `assets/licenses/ALVR.txt`. The PC helper's bundle includes ALVR's streamer for Windows with its own `licenses` folder.
+
 ## Fonts (0.5.68)
 
 - Inter 4.1, Copyright (c) 2016 The Inter Project Authors, https://github.com/rsms/inter, under the SIL Open Font

@@ -91,6 +91,10 @@ namespace PocketXr
                 File.Copy(self, Exe, true);
                 SetStartWithWindows(true);
                 Log.Line("installed to " + Exe);
+                // The ALVR streamer that matches Pocket XR, when it came in the same download.
+                string bundled = Path.Combine(Path.GetDirectoryName(self), "alvr_streamer_windows");
+                if (Directory.Exists(bundled)) Streamer.InstallFrom(bundled);
+                Streamer.AllowThroughFirewall();
                 // The PowerShell version's shortcut, from before.
                 string oldLink = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Startup), "Pocket XR PC helper.lnk");
                 if (File.Exists(oldLink)) File.Delete(oldLink);
@@ -116,6 +120,104 @@ namespace PocketXr
                 if (on) k.SetValue(RunName, "\"" + Exe + "\"");
                 else if (k.GetValue(RunName) != null) k.DeleteValue(RunName);
             }
+        }
+    }
+
+    /**
+     * ALVR's streamer for Windows, the version Pocket XR's built-in client speaks (ALVR only connects to its own
+     * version). It comes in the helper's download and is installed beside the helper, then registered with SteamVR in
+     * place of any other ALVR. Its starting settings have ALVR's setup wizard and new-version popup off, and what the
+     * glasses need on.
+     */
+    static class Streamer
+    {
+        /** The version Pocket XR's client was built for; another ALVR won't connect to it. */
+        public const string Version = "21.0.0-dev14";
+        public static readonly string Dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PocketXR", "ALVR");
+        static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue, RecursionLimit = 200 };
+
+        public static bool Installed { get { return File.Exists(Path.Combine(Dir, "driver.vrdrivermanifest")); } }
+
+        public static void InstallFrom(string source)
+        {
+            try
+            {
+                // Its own settings are kept when it's already there (trusted phones, anything the user changed).
+                string session = Path.Combine(Dir, "session.json");
+                string keep = File.Exists(session) ? File.ReadAllText(session) : null;
+                CopyTree(source, Dir);
+                if (keep != null) File.WriteAllText(session, keep);
+                Log.Line("ALVR streamer " + Version + " installed to " + Dir);
+            }
+            catch (Exception e) { Log.Line("ALVR streamer install: " + e.Message); }
+        }
+
+        static void CopyTree(string from, string to)
+        {
+            Directory.CreateDirectory(to);
+            foreach (var f in Directory.GetFiles(from)) File.Copy(f, Path.Combine(to, Path.GetFileName(f)), true);
+            foreach (var d in Directory.GetDirectories(from)) CopyTree(d, Path.Combine(to, Path.GetFileName(d)));
+        }
+
+        /** The ALVR in [dir] is the version Pocket XR speaks: ours, or one whose settings say so. */
+        public static bool Matches(string dir)
+        {
+            if (dir == null) return false;
+            if (string.Equals(Path.GetFullPath(dir).TrimEnd('\\'), Path.GetFullPath(Dir).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) return true;
+            try
+            {
+                var root = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(Path.Combine(dir, "session.json")));
+                object v;
+                return root.TryGetValue("server_version", out v) && (v as string ?? "").StartsWith(Version);
+            }
+            catch { return false; }
+        }
+
+        /**
+         * With SteamVR closed: when the registered ALVR isn't the version Pocket XR speaks and ours is installed, ours is
+         * registered with SteamVR in its place (SteamVR's own vrpathreg). True when it changed.
+         */
+        public static bool UseOurs(string steamDir)
+        {
+            string registered = Pc.AlvrDir;
+            if (Matches(registered) || !Installed) return false;
+            string reg = Path.Combine(steamDir, "steamapps", "common", "SteamVR", "bin", "win64", "vrpathreg.exe");
+            if (!File.Exists(reg)) { Log.Line("SteamVR's vrpathreg not found"); return false; }
+            foreach (var other in Pc.AlvrDirs()) Run(reg, "removedriver \"" + other + "\"");
+            Run(reg, "adddriver \"" + Dir + "\"");
+            Log.Line("ALVR: " + (registered == null ? "none was set up" : "the one in " + registered + " is another version") + "; registered Pocket XR's " + Version);
+            return true;
+        }
+
+        static void Run(string exe, string args)
+        {
+            var p = Process.Start(new ProcessStartInfo(exe, args) { UseShellExecute = false, CreateNoWindow = true });
+            p.WaitForExit(15000);
+        }
+
+        /**
+         * SteamVR's server receives the stream: Windows Firewall must let it in. ALVR's own setup adds these rules; on a
+         * PC without them, they are added once, which asks the user to allow it (Windows' administrator prompt).
+         */
+        public static void AllowThroughFirewall()
+        {
+            try
+            {
+                var check = Process.Start(new ProcessStartInfo("netsh", "advfirewall firewall show rule name=\"SteamVR ALVR vrserver\"") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true });
+                check.StandardOutput.ReadToEnd();
+                check.WaitForExit(10000);
+                if (check.ExitCode == 0) return;
+                string steam = Pc.SteamExe == null ? null : Path.GetDirectoryName(Pc.SteamExe);
+                if (steam == null) return;
+                string bin = Path.Combine(steam, "steamapps", "common", "SteamVR", "bin");
+                string rules = "";
+                foreach (var arch in new[] { "win64", "win32" })
+                    rules += (rules.Length > 0 ? " & " : "") + "netsh advfirewall firewall add rule name=\"SteamVR ALVR vrserver\" dir=in action=allow program=\"" + Path.Combine(bin, arch, "vrserver.exe") + "\" enable=yes";
+                Log.Line("asking to let SteamVR through Windows Firewall");
+                var p = Process.Start(new ProcessStartInfo("cmd.exe", "/c " + rules) { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden });
+                p.WaitForExit(60000);
+            }
+            catch (Exception e) { Log.Line("firewall: " + e.Message); }
         }
     }
 
@@ -157,6 +259,29 @@ namespace PocketXr
                     return p != null && File.Exists(p) ? p : null;
                 }
             }
+        }
+
+        /// <summary>Every SteamVR driver folder named alvr_server in openvrpaths.vrpath.</summary>
+        public static List<string> AlvrDirs()
+        {
+            var found = new List<string>();
+            try
+            {
+                string paths = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "openvr", "openvrpaths.vrpath");
+                if (!File.Exists(paths)) return found;
+                var root = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(paths));
+                object drivers;
+                if (!root.TryGetValue("external_drivers", out drivers) || drivers == null) return found;
+                foreach (var d in (IEnumerable)drivers)
+                {
+                    string dir = d as string;
+                    if (dir == null) continue;
+                    string manifest = Path.Combine(dir, "driver.vrdrivermanifest");
+                    if (File.Exists(manifest) && File.ReadAllText(manifest).Contains("alvr_server")) found.Add(dir);
+                }
+            }
+            catch (Exception e) { Log.Line("drivers: " + e.Message); }
+            return found;
         }
 
         /// <summary>ALVR's streamer folder: the SteamVR driver named alvr_server in openvrpaths.vrpath.</summary>
@@ -401,6 +526,8 @@ namespace PocketXr
         {
             if (SteamVrRunning || (DateTime.Now - startedAt).TotalSeconds < 30) return;
             startedAt = DateTime.Now;
+            string steamDir = SteamExe == null ? null : Path.GetDirectoryName(SteamExe);
+            if (steamDir != null) Streamer.UseOurs(steamDir);
             UnblockAlvr();
             StartAlvrDashboard();
             Log.Line("starting SteamVR for the phone");
@@ -576,7 +703,8 @@ namespace PocketXr
             string op = Text(request, "op");
             if (op == "pair") return Pair(Text(request, "phone") ?? "A phone");
             if (!Phones.Known(Text(request, "token"))) return new Dictionary<string, object> { { "ok", false }, { "why", "not paired" } };
-            bool steam = Pc.SteamExe != null, alvr = Pc.AlvrDir != null;
+            bool steam = Pc.SteamExe != null;
+            bool alvr = Streamer.Installed || Streamer.Matches(Pc.AlvrDir);
             if (op == "idr")
             {
                 Pc.Api("POST", "/api/insert-idr", "null");
@@ -585,6 +713,8 @@ namespace PocketXr
             if ((op == "start" || op == "status") && steam && alvr && Pc.SteamVrRunning) Pc.StartAlvrDashboard();
             if (op == "start" && steam && alvr)
             {
+                // Pocket XR's own ALVR in place of another version, before its settings are set.
+                if (!Pc.SteamVrRunning) Streamer.UseOurs(Path.GetDirectoryName(Pc.SteamExe));
                 if (Pc.Prepare(Text(request, "alvr"))) Pc.RestartSteamVr();
                 Pc.StartSteamVr();
             }

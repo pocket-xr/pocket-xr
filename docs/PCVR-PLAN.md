@@ -161,3 +161,10 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   glasses, display and head tracking already cost. Off the charger the phone cooled while streaming (skin 45.3 to
   44.1 C, processor 51.9 to 49.1 C in 5 minutes); on it, it held at the limit. So: don't charge while playing (or use
   Samsung's pause of USB power delivery), and the loading card says so while the phone charges.
+- Ready for others, 9 November: the PC helper's download (`pc-helper/make-bundle.py`, 94 MB zip) carries ALVR's
+  streamer at the version the app speaks, with starting settings (no setup wizard or version popup, no trusted phones,
+  the glasses' view, 60 a second, ALVR's gestures off). The helper installs it beside itself, registers it with SteamVR
+  in place of any other ALVR (SteamVR's vrpathreg), and adds the firewall rule SteamVR needs if missing (one
+  administrator prompt). Tested from no ALVR registered at all: one tap, one Yes, SteamVR in 10.5 s, Mike: "Ended up in
+  SteamVR". PC VR's Joy-Con arm is built in (tuned 8 November) and kept apart from games'. ALVR's licence ships in the
+  app. Open: code signing for the helper (a certificate in Mike's name), and where to post the zip.

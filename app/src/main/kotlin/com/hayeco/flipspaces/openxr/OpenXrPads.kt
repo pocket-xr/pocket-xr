@@ -57,17 +57,33 @@ object OpenXrPads {
     @Volatile var sink: Sink? = null
     @Volatile private var app: Context? = null
 
-    /** A game is starting: fresh Joy-Cons, with the drift each learned last time. */
-    fun start(context: Context) {
+    /**
+     * PC VR's hands, not a game's: ALVR moves every controller 11 cm forward along its aim
+     * (left_controller_position_offset), so the arm that lines the Joy-Cons up with the hands differs, and is kept apart.
+     */
+    @Volatile private var pcvr = false
+
+    /** A game ([pcVr] false) or PC VR is starting: fresh Joy-Cons, with the drift each learned last time. */
+    fun start(context: Context, pcVr: Boolean = false) {
         app = context.applicationContext
+        pcvr = pcVr
         pads = arrayOf(Pad(false), Pad(true))
     }
+
+    private fun key(name: String) = if (pcvr) "pcvr_$name" else name
 
     /** Both Joy-Cons reporting and neither lying still: both are in the player's hands. */
     fun bothHeld(): Boolean = (0..1).all { h ->
         val pad = pads.getOrNull(h) ?: return@all false
         synchronized(pad) { System.nanoTime() - pad.lastSampleNs < HELD_FRESH_NS && !pad.pose.atRest }
     }
+
+    /**
+     * PC VR's arm, tuned live with Mike in SteamVR, 8 November 2026 ("Feels right"): hands 7 cm lower and 5 cm further
+     * out than Daydream's, at its full shoulder width.
+     */
+    val PCVR_ARM_OFFSET = Vec3(0f, -0.07f, -0.05f)
+    const val PCVR_ARM_SPREAD = 1.0f
 
     /** A Joy-Con silent longer than this (off, or out of range) doesn't count as held. */
     private const val HELD_FRESH_NS = 500_000_000L
@@ -106,25 +122,25 @@ object OpenXrPads {
 
     /** Where both hands sit against the arm model, metres (x right, y up, z back), kept in the "joycons" preferences. */
     fun armOffset(context: Context): Vec3 {
-        val saved = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString("arm_offset", null)
+        val saved = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(key("arm_offset"), null)
         val parts = saved?.split(',')?.mapNotNull { it.toFloatOrNull() }
-        return if (parts != null && parts.size == 3) Vec3(parts[0], parts[1], parts[2]) else JoyConArm.DEFAULT_OFFSET
+        return if (parts != null && parts.size == 3) Vec3(parts[0], parts[1], parts[2]) else if (pcvr) PCVR_ARM_OFFSET else JoyConArm.DEFAULT_OFFSET
     }
 
     /** How far apart the hands sit (1 is Daydream's shoulder width), kept in the "joycons" preferences. */
     fun armSpread(context: Context): Float =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getFloat("arm_spread", JoyConArm.DEFAULT_SPREAD)
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getFloat(key("arm_spread"), if (pcvr) PCVR_ARM_SPREAD else JoyConArm.DEFAULT_SPREAD)
 
     fun setArmSpread(context: Context, spread: Float) {
         val s = spread.coerceIn(0f, 2f)
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putFloat("arm_spread", s).apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putFloat(key("arm_spread"), s).apply()
         for (pad in pads) synchronized(pad) { pad.arm.spread = s }
         Log.i(TAG, "Joy-Con hands spread: %.2f of shoulder width".format(java.util.Locale.ROOT, s))
     }
 
     /** Moves both hands, now and for later games. */
     fun setArmOffset(context: Context, offset: Vec3) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("arm_offset", "${offset.x},${offset.y},${offset.z}").apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(key("arm_offset"), "${offset.x},${offset.y},${offset.z}").apply()
         for (pad in pads) synchronized(pad) { pad.arm.offset = offset }
         Log.i(TAG, "Joy-Con hands moved: %.2f right, %.2f up, %.2f back (metres)".format(java.util.Locale.ROOT, offset.x, offset.y, offset.z))
     }

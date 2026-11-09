@@ -46,7 +46,7 @@ class PcVrTestActivity : Activity() {
         }
         HeadTracker.acquire(this)
         // Joy-Cons: the same pose, arm and buttons as for games, sent to this ALVR client instead of Monado.
-        OpenXrPads.start(this)
+        OpenXrPads.start(this, pcVr = true)
         OpenXrPads.sink = OpenXrPads.Sink { hand, sampleNs, p, q, w, v, buttons, trigger, squeeze, sx, sy ->
             pads.store(hand, sampleNs, p, q, w, v)
             if (pads.streaming) AlvrBridge.sendButtons(hand, buttons, trigger, squeeze, sx, sy)
