@@ -1,6 +1,11 @@
 """Builds the PC helper's download: PocketXR-PC-Setup.zip.
 
-    python pc-helper/make-bundle.py <ALVR streamer folder> [settings to seed from]
+    python pc-helper/make-bundle.py <ALVR streamer folder> [settings to seed from] [--sign]
+
+--sign signs the helper with Mike's Azure Artifact Signing account (account "pocketxr", East US), so Windows names the
+publisher instead of warning about an unknown one. It needs: the identity validation passed and a certificate profile
+named "pocketxr-helper" in the account; Microsoft's Artifact Signing client tools (signtool and its Azure library) and
+the Azure CLI, signed in with `az login` as a user with the account's Certificate Profile Signer role.
 
 The zip holds:
 - PocketXrPcHelper.exe (built here with Windows' own C# compiler);
@@ -30,6 +35,42 @@ def build_exe():
     subprocess.check_call([csc, "-nologo", "-target:winexe", "-win32icon:pocketxr.ico", "-r:System.Web.Extensions.dll",
                            "-r:System.Windows.Forms.dll", "-r:System.Drawing.dll", "-out:PocketXrPcHelper.exe",
                            "PocketXrPcHelper.cs"], cwd=HERE)
+
+
+SIGNING = {
+    "Endpoint": "https://eus.codesigning.azure.net",
+    "CodeSigningAccountName": "pocketxr",
+    "CertificateProfileName": "pocketxr-helper",
+}
+
+
+def find_signing_tools():
+    """signtool and the Azure signing library from Microsoft's Artifact Signing client tools."""
+    roots = [os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\MicrosoftArtifactSigningClientTools"),
+             os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\MicrosoftTrustedSigningClientTools"),
+             r"C:\Program Files (x86)\Windows Kits\10\bin"]
+    signtool = dlib = None
+    for root in roots:
+        for d, _, files in os.walk(root):
+            for f in files:
+                low = f.lower()
+                if low == "signtool.exe" and ("x64" in d.lower() or signtool is None):
+                    signtool = os.path.join(d, f)
+                if low in ("azure.codesigning.dlib.dll",):
+                    dlib = os.path.join(d, f)
+    if not signtool or not dlib:
+        sys.exit("signing: Microsoft's Artifact Signing client tools are not installed (signtool %s, library %s)" % (signtool, dlib))
+    return signtool, dlib
+
+
+def sign(path):
+    signtool, dlib = find_signing_tools()
+    meta = os.path.join(HERE, "dist", "signing.json")
+    json.dump(SIGNING, open(meta, "w"))
+    subprocess.check_call([signtool, "sign", "/v", "/fd", "SHA256", "/tr", "http://timestamp.acs.microsoft.com", "/td", "SHA256",
+                           "/dlib", dlib, "/dmdf", meta, path])
+    subprocess.check_call([signtool, "verify", "/pa", path])
+    print("signed: " + path)
 
 
 def copy_streamer(src, dst):
@@ -65,7 +106,8 @@ README = """Pocket XR PC helper
 Lets Pocket XR on your phone start SteamVR on this PC, with nothing to do here after setup.
 
 1. Unzip this folder anywhere.
-2. Double-click PocketXrPcHelper.exe. If Windows says it protected your PC, choose More info, then Run anyway.
+2. Double-click PocketXrPcHelper.exe. (An unsigned test copy makes Windows say it protected your PC: choose More info,
+   then Run anyway. The signed one names Mike Haye as the publisher.)
 3. When Windows asks to let the helper change your device, choose Yes. That lets SteamVR receive the picture from your
    phone through Windows Firewall. It only asks once.
 4. On your glasses, tap PC VR in Pocket XR. The first time, this PC asks whether your phone may start SteamVR: choose Yes.
@@ -77,11 +119,16 @@ SteamVR installed.
 
 
 def main():
-    if len(sys.argv) < 2:
+    args = [a for a in sys.argv[1:] if a != "--sign"]
+    signing = "--sign" in sys.argv
+    if not args:
         sys.exit(__doc__)
-    src = sys.argv[1]
-    seed = sys.argv[2] if len(sys.argv) > 2 else os.path.join(src, "session.json")
+    src = args[0]
+    seed = args[1] if len(args) > 1 else os.path.join(src, "session.json")
     build_exe()
+    if signing:
+        os.makedirs(os.path.join(HERE, "dist"), exist_ok=True)
+        sign(os.path.join(HERE, "PocketXrPcHelper.exe"))
     out = os.path.join(HERE, "dist", "PocketXR-PC-Setup")
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
