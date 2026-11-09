@@ -185,6 +185,7 @@ object HandFeed {
             PointerHub.submit(it, HandProviderKind.GLASSES_CAMERA)
         }
         SpaceSession.hands = update.hands
+        SpaceSession.handsCapturedAtMs = capturedAtMs
         // Only on a change: an unchanged "no hand" posted every frame redrew the pointer overlay
         // 25 times a second for nothing.
         if (update.status != lastStatus) {
