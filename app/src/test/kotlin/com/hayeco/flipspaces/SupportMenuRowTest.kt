@@ -72,11 +72,15 @@ class SupportMenuRowTest {
         assertTrue("at least 48 dp tall", row.minimumHeight >= (48 * app.resources.displayMetrics.density).toInt())
     }
 
-    /** 1.1.16: the Menu's other tagged rows (Lock screens, the glasses check) come after these two. */
+    /**
+     * 1.1.16: the Menu's other tagged rows (Lock screens, the glasses check) come after these two. Unreleased: the Play
+     * testers card sits between them until it is done with.
+     */
     @Test
     fun theUpdateRowFollowsIt() {
         assumeFalse(BuildConfig.PLAY_BUILD)
-        assertEquals(listOf(PadScreen.MENU_KO_FI, PadScreen.MENU_UPDATE), menu(update = "99.0.0").menuRowTags().take(2))
+        val rows = menu(update = "99.0.0").menuRowTags().filterNot { it.startsWith(PadScreen.MENU_PLAY_TESTERS + ":") }
+        assertEquals(listOf(PadScreen.MENU_KO_FI, PadScreen.MENU_PLAY_TESTERS, PadScreen.MENU_UPDATE), rows.take(3))
     }
 
     @Test

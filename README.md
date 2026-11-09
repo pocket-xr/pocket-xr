@@ -168,6 +168,18 @@ Tap **Install add-on** in the trackpad's tutorial or at the end of the glasses s
 with that key. If Play Protect blocks the add-on, install it from a computer with `adb install pocketxr-addon-x.y.apk`,
 which the block does not cover, or turn off "Scan apps with Play Protect" in the Play Store for the install.
 
+## Help get Pocket XR on Google Play
+
+Pocket XR needs 12 testers in its Google Play test for 14 days before it can go public on Play. If you'd like to
+help, it takes two taps:
+
+1. Join the testers group: [groups.google.com/g/pocketxr-testers](https://groups.google.com/g/pocketxr-testers).
+2. Open the Play invite and tap Become a tester:
+   [play.google.com/apps/testing/com.hayeco.flipspaces](https://play.google.com/apps/testing/com.hayeco.flipspaces).
+
+Then install Pocket XR from Play. You'll need to uninstall the copy you have first, as the Play version is signed with
+a different key. That resets your Pocket XR settings. The trackpad's Menu has a card with both links.
+
 ## Updates
 
 Every update is free. There are three ways to get them:
