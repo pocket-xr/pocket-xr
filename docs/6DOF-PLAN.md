@@ -127,8 +127,14 @@ Tried in the Pocket XR Space the same day:
   Head tracking off. The windows stay in place in the room as the head leans and steps aside. The picture is the
   glasses' normal 16:9 screen, so it is smaller than Steady mode's Ultrawide.
 
-Still to try: Spatial Anchor with Ultrawide (Steady mode turns Spatial Anchor off, so set Ultrawide in the glasses'
-menu); how far the head can move before the picture drifts or resets.
+- **With Ultrawide it is 3DoF again.** Ultrawide turned on in the glasses' own menu, Spatial Anchor and the rest
+  unchanged: the picture was wide, but it only followed turns. So on the Aura the 6DoF hold needs the normal 16:9 2D
+  screen: no 3D, no Full SBS, no Ultrawide.
+
+So the Aura offers two glasses-held modes: **wide and 3DoF** (Steady mode today) or **16:9 and 6DoF** (Spatial Anchor
+in 2D). A Pocket XR "Steady 6DoF" button could set the second one: 3D off, Ultrawide off, Spatial Anchor on, the
+Space drawn fixed. Still to try: a larger screen size in the glasses' menu with 6DoF, and how far the head can move
+before the picture drifts or resets.
 
 ### 2.3 XREAL One and One Pro with the XREAL Eye
 
