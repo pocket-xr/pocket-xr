@@ -267,7 +267,7 @@ fun HeadTrackingScreen(
                         Text(
                             "Once per pair of glasses: with the Space on the glasses, tap Check level. A green line appears across the middle of the view. " +
                                 "Look at a level edge at eye height (the horizon, a far shelf or window frame), tilt your head until the line lies on it, hold still, then tap Save level. " +
-                                "The sensor may read up to 40 degrees of pitch (the Aura's sits about 14.5 degrees tilted, a One Pro more) and 10 of roll.",
+                                "The sensor may read up to 50 degrees of pitch (the Aura's sits about 14.5 degrees tilted, a One Pro more, a One Pro+ about 40) and 10 of roll.",
                             style = MaterialTheme.typography.bodySmall,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

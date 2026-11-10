@@ -1021,7 +1021,7 @@ object HeadTracker {
     }
 
     /**
-     * 1.2.13 (Discussion #81, a One Pro+ whose level head read as looking straight up): the fusion's newest rest reading
+     * 1.2.13 (Discussion #81, a level head read as looking up; for axes a quarter or half turn off): the fusion's newest rest reading
      * against the axis layout in use ([com.hayeco.flipspaces.core.spatial.GravityAxes]). When gravity says another layout,
      * it is saved for the model, the gyro bias is carried over into it, and the fusion starts again on it. Reader thread.
      */

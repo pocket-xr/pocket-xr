@@ -6,11 +6,15 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
 
 - **XREAL One Pro+ head tracking the right way up.** Thanks to gegonut in GitHub Discussion #81 for the report: on a One
   Pro+ looking straight ahead showed as looking straight up, and a recentre put every window straight down. Pocket XR
-  now knows the One Pro+ by name and gives it its own sensor axes. As a safety net on any glasses, when the glasses
-  first sit still and on each recentre, Pocket XR checks which way gravity reads. If it's a quarter or half turn off
-  the axes in use, it picks the axes that match, saves them and logs it, so wrong axes fix themselves. Glasses lying
-  still on a table at the start are left alone. The Glasses report now says the model, what it was told from (the
-  display's name and EDID product, and the USB ids), the axes in use and why, and gravity at the last rest.
+  now knows the One Pro+ by its name, its display's EDID and its USB id, and treats it as a One Pro. Its Send logs
+  showed the One's sensor axes are right for it and the head read about 40 degrees up when level, a tilt between the
+  sensor and the optics: the level calibration on the head tracking screen now takes up to 50 degrees of pitch (it was
+  40) so it can correct that, and the log now says why the glasses' own calibration gave no tilt. As a safety net on
+  any glasses, when the glasses first sit still and on each recentre, Pocket XR checks which way gravity reads. If
+  it's a quarter or half turn off the axes in use, it picks the axes that match, saves them and logs it, so wrong axes
+  fix themselves. Glasses lying still on a table at the start are left alone. The Glasses report now says the model,
+  what it was told from (the display's name and EDID product, and the USB ids), the axes in use and why, and gravity
+  at the last rest.
 
 ## 1.2.12: VITURE Beast tracking by default, and a mouse on Spatial Mouse
 

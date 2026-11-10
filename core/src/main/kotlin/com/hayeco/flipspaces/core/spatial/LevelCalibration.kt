@@ -26,8 +26,10 @@ object LevelCalibration {
      * 14.3, all refused by 0.5.15's 10), as a glasses frame's forward tilt puts it.
      * 1.1.7 (issue 30, an XREAL One Pro: about 20 degrees off when level, and its level calibration refused): 40, for
      * glasses whose optics sit steeper than the Aura's. A head bent further than that is still refused.
+     * 1.2.13 (Discussion #81, a One Pro+ whose steady recentres read 29 to 49 degrees up, about 40 in the middle): 50,
+     * so its level calibration is not refused about half the time.
      */
-    const val MAX_PITCH_DEG = 40f
+    const val MAX_PITCH_DEG = 50f
 
     /** 0.5.15's single limit, for both. */
     const val MAX_DEG = MAX_ROLL_DEG
