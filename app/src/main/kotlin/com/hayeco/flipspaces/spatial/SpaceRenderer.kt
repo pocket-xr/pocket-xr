@@ -1134,7 +1134,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         if (ultrawide && live != null && (canvasPose == null || canvasRecentre)) {
             if (canvasRecentre) GlassesDisplayControl.recenter()
             canvasRecentre = false
-            canvasPose = live
+            // 1.4.3: level, so glasses lying upside down when the Space opens again cannot turn the canvas over.
+            canvasPose = com.hayeco.flipspaces.core.spatial.SteadyMode.levelCanvas(live)
         }
         val tracked = if (ultrawide) canvasPose else live
         follow.mode = SpaceSession.follow

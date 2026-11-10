@@ -74,6 +74,20 @@ object SteadyMode {
     /** 1.4.1: said when it ends there, as normal tracking needs the glasses' own anchor off. */
     const val TURN_OFF_6DOF = "Steady mode is off: turn 6DoF off again in your glasses' menu, and use Follow mode with Stabilizer off"
 
+    /**
+     * 1.4.3 (Mike, 10 November 2026: "everything is upside down"): the Ultrawide canvas's pose from the head's when it is
+     * set, level. Only the heading is taken, and the look up or down while it is within [CANVAS_PITCH_MAX] degrees; the
+     * roll never is. Glasses lying upside down on a desk when the Space opens again (a re-plug in Steady mode) put the
+     * whole canvas upside down until a Recentre.
+     */
+    fun levelCanvas(head: Quat): Quat {
+        val a = Angles.of(head.forward)
+        val pitch = if (kotlin.math.abs(a.pitchDeg) <= CANVAS_PITCH_MAX) a.pitchDeg else 0f
+        return Quat.fromYawPitch(a.yawDeg, pitch)
+    }
+
+    const val CANVAS_PITCH_MAX = 45f
+
     /** Glasses that get the key. The One series is untested (7 November 2026): it should work, so a refusal only ends the change. */
     fun offeredOn(model: GlassesModel?): Boolean = model == GlassesModel.AURA || model == GlassesModel.ONE || model == GlassesModel.ONE_PRO || model == GlassesModel.ONE_PRO_PLUS || model == GlassesModel.ONE_S
 
