@@ -1114,6 +1114,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         followGlassesScreen()
         syncPictureAdjust()
         // 0.5.26: why the Glasses warp turned itself off (or was refused), said on the glasses.
+        // 1.4.1: a line from the display control (Steady mode in 6DoF on the One series).
+        GlassesNotice.take()?.let { (text, ms) -> say(text, ms) }
         GlassesWarp.takeOffNotice()?.let {
             spaceNotice = it
             spaceNoticeUntilMs = nowMs + WARP_OFF_NOTICE_MS

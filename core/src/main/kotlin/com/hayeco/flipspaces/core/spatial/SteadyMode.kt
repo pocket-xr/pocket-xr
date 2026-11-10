@@ -27,8 +27,19 @@ object SteadyMode {
      * turned on last, after Ultrawide and the screen size (each of those re-plugs the display), and off first on the
      * way out.
      */
-    fun next(on: Boolean, g: Glasses, sixDof: Boolean = false): Step {
+    fun next(on: Boolean, g: Glasses, sixDof: Boolean = false, appAnchor: Boolean = true): Step {
         val ultrawide = g.ultrawide ?: return Step.WAIT
+        // 1.4.1: with the One series and the XREAL Eye, the 6DoF switch is in the glasses' own menu, and Pocket XR has no
+        // confirmed command for it, so it neither reads nor sets the anchor there; the user turns 6DoF on and off.
+        if (sixDof && !appAnchor) return when {
+            !on -> if (ultrawide == 1) Step.ULTRAWIDE_OFF else Step.DONE
+            g.stereo == null -> Step.WAIT
+            g.stereo == 1 -> Step.LEAVE_3D
+            ultrawide != 1 -> Step.ULTRAWIDE_ON
+            g.screenSize == null || g.screenSizeMax == null -> Step.WAIT
+            g.screenSize < g.screenSizeMax - SIZE_SAME -> Step.SCREEN_MAX
+            else -> Step.DONE
+        }
         if (!on) return when {
             sixDof && g.anchor == 1 -> Step.ANCHOR_OFF
             ultrawide == 1 -> Step.ULTRAWIDE_OFF
@@ -47,8 +58,21 @@ object SteadyMode {
         }
     }
 
-    /** Glasses that can hold Steady mode in 6DoF: the Aura, checked on 10 November 2026. */
-    fun sixDofOn(model: GlassesModel?): Boolean = model == GlassesModel.AURA
+    /**
+     * Glasses that can hold Steady mode in 6DoF: the Aura (checked on 10 November 2026), and 1.4.1 the One series with
+     * the XREAL Eye ([eye], [XrealEye]), whose own 6DoF anchor the user turns on in the glasses' menu. Untested there.
+     */
+    fun sixDofOn(model: GlassesModel?, eye: Boolean = false): Boolean =
+        model == GlassesModel.AURA || (eye && XrealEye.oneFamily(model))
+
+    /** Glasses whose 6DoF hold Pocket XR turns on and off itself (Spatial Anchor, 10405): the Aura only. */
+    fun appAnchor(model: GlassesModel?): Boolean = model == GlassesModel.AURA
+
+    /** 1.4.1: said on the glasses when Steady mode in 6DoF is ready on glasses where the user turns 6DoF on. */
+    const val TURN_ON_6DOF = "Steady mode in 6DoF: turn on 6DoF in your glasses' menu (Spatial Display) so the screen stays put as you move"
+
+    /** 1.4.1: said when it ends there, as normal tracking needs the glasses' own anchor off. */
+    const val TURN_OFF_6DOF = "Steady mode is off: turn 6DoF off again in your glasses' menu, and use Follow mode with Stabilizer off"
 
     /** Glasses that get the key. The One series is untested (7 November 2026): it should work, so a refusal only ends the change. */
     fun offeredOn(model: GlassesModel?): Boolean = model == GlassesModel.AURA || model == GlassesModel.ONE || model == GlassesModel.ONE_PRO || model == GlassesModel.ONE_PRO_PLUS || model == GlassesModel.ONE_S

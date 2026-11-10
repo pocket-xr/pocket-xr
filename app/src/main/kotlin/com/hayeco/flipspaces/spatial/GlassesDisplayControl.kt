@@ -168,9 +168,13 @@ object GlassesDisplayControl {
      */
     @Volatile private var steadySixDof = false
 
+    /** 1.4.1: Pocket XR sets the 6DoF hold itself (the Aura); false on the One series, where the user does in the glasses' menu. */
+    @Volatile private var steadyAppAnchor = true
+
     private fun sixDofWanted(): Boolean = app?.let {
         val store = SpaceStore(it)
-        store.steadySixDof && com.hayeco.flipspaces.core.spatial.SteadyMode.sixDofOn(store.model)
+        val eye = com.hayeco.flipspaces.core.spatial.XrealEye.seen(store.model, GlassesUsbList.read(it))
+        store.steadySixDof && com.hayeco.flipspaces.core.spatial.SteadyMode.sixDofOn(store.model, eye)
     } == true
 
     @Volatile private var linkOpenedMs = 0L
@@ -190,7 +194,11 @@ object GlassesDisplayControl {
         app = context.applicationContext
         steadyWant = on
         // Coming in, the setting decides; going out, the kind it was decides, so a 6DoF Steady mode puts Spatial Anchor off.
-        if (on) steadySixDof = sixDofWanted()
+        if (on) {
+            steadySixDof = sixDofWanted()
+            steadyAppAnchor = com.hayeco.flipspaces.core.spatial.SteadyMode.appAnchor(SpaceStore(context).model)
+            if (steadySixDof && !steadyAppAnchor) Log.i(TAG, "Steady mode in 6DoF on ${SpaceStore(context).model.label} with the XREAL Eye: the user turns 6DoF on in the glasses' menu; Pocket XR leaves their anchor alone")
+        }
         // The user's own change: a drop seen after this is the glasses' own.
         if (!on) steadyHeld = false
         lastUltrawide = null
@@ -401,10 +409,12 @@ object GlassesDisplayControl {
                             else if (commands.spatialAnchor == 1 && sixDofHold) Log.i(TAG, "Spatial Anchor left on: Steady mode in 6DoF holds the canvas")
                         }
                         steadyWant?.let { on ->
-                            val step = commands.steady(on, now, steadySixDof)
+                            val step = commands.steady(on, now, steadySixDof, steadyAppAnchor)
                             if (step == com.hayeco.flipspaces.core.spatial.SteadyMode.Step.DONE) {
                                 steadyWant = null
                                 steadyHeld = on
+                                // 1.4.1: on the One series the user turns the glasses' 6DoF on and off; the glasses say when.
+                                if (steadySixDof && !steadyAppAnchor) GlassesNotice.post(if (on) com.hayeco.flipspaces.core.spatial.SteadyMode.TURN_ON_6DOF else com.hayeco.flipspaces.core.spatial.SteadyMode.TURN_OFF_6DOF, 10_000L)
                                 if (!on) steadySixDof = false
                                 Log.i(TAG, "Steady mode ${if (on) "on" else "off"}: done (Ultrawide ${commands.ultrawide}, screen size ${commands.screenSize}, Spatial Anchor ${commands.spatialAnchor})")
                             } else if (commands.stillTries > GlassesDisplayCommands.STILL_TRIES || now - steadyStartedMs > STEADY_GIVE_UP_MS) {

@@ -98,6 +98,13 @@ Ultrawide). It needs 2D: in 3D side by side the Aura holds only turns. It's on b
 Settings turns it off, for the 3DoF Steady mode above with Spatial Anchor off. Found and checked on 10 November 2026; see
 docs/6DOF-PLAN.md.
 
+**On the One series with the XREAL Eye** (1.4.1, help wanted): when the Eye is seen (any camera on the glasses' USB),
+Settings offers **Steady mode in 6DoF** too, on by default. Steady mode then sets up the wide screen without touching
+the glasses' own anchor, and the glasses say to turn on 6DoF in their menu (Spatial Display); leaving Steady mode, they
+say to turn it off again. Pocket XR has no confirmed command for the One's 6DoF switch, so it does not send one. Not
+tried on real glasses yet: the Glasses report has an "XREAL Eye" line, and a report plus logs from a tester would
+confirm the Eye detection and whether the One's 6DoF holds with Ultrawide.
+
 Steady mode is tested on the Aura only. It should work on the One, One Pro and 1S, but hasn't been tried on them: please open an issue if it doesn't. There it reads and changes those glasses' settings only once you tap it.
 
 ### 3D mode

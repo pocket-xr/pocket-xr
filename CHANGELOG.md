@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.4.1: Steady mode in 6DoF for the XREAL One series with the Eye (help wanted)
+
+- **XREAL One, One Pro, One Pro+ and 1S with the XREAL Eye** now get **Steady mode in 6DoF** too. With the Eye on,
+  Steady mode sets up the wide screen as usual, then the glasses say to turn on 6DoF in their own menu (Spatial
+  Display). The screen should then stay put as you lean in and walk around. Pocket XR can't switch the One's 6DoF on
+  by itself yet, so for now that one step is yours. When you leave Steady mode, the glasses remind you to turn it off.
+- **Help wanted:** we don't have a One with an Eye. If you do, please try it and send a Glasses report and your
+  logs (Send logs) with what you saw. The report now says whether the Eye was seen. With your logs we can make 6DoF
+  turn on by itself, as it does on the Aura.
+
 ## 1.4.0: Steady mode in 6DoF on the XREAL Aura
 
 - **Lean in and walk around your windows.** On the XREAL Aura, Steady mode now holds the wide screen in place in the
