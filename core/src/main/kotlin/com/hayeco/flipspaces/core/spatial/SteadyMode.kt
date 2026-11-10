@@ -88,10 +88,20 @@ object SteadyMode {
      * Steady mode. The first time it puts Ultrawide back ([Dropped.BACK_IN]); a second time within [SECOND_DROP_MS]
      * means the user wants out, so Steady mode ends properly, with 3D and the windows back ([Dropped.LEAVE]).
      */
-    enum class Dropped { BACK_IN, LEAVE }
+    enum class Dropped { BACK_IN, LEAVE, REPLUG }
 
     const val SECOND_DROP_MS = 30_000L
 
-    fun dropped(nowMs: Long, lastDropMs: Long?): Dropped =
-        if (lastDropMs != null && nowMs - lastDropMs in 0 until SECOND_DROP_MS) Dropped.LEAVE else Dropped.BACK_IN
+    /**
+     * 1.4.2 (Mike, 10 November 2026: Steady mode came back as plain 2D after unplugging the glasses): Ultrawide seen off
+     * within this long of a new link is the glasses coming back from a re-plug without it, not their button. Steady mode
+     * is put back ([Dropped.REPLUG]) and it does not count toward [Dropped.LEAVE].
+     */
+    const val REPLUG_MS = 15_000L
+
+    fun dropped(nowMs: Long, lastDropMs: Long?, linkOpenedMs: Long? = null): Dropped = when {
+        linkOpenedMs != null && nowMs - linkOpenedMs in 0 until REPLUG_MS -> Dropped.REPLUG
+        lastDropMs != null && nowMs - lastDropMs in 0 until SECOND_DROP_MS -> Dropped.LEAVE
+        else -> Dropped.BACK_IN
+    }
 }

@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.4.2: Steady mode comes back after unplugging
+
+- **Steady mode survives a replug.** Unplugging the glasses in Steady mode and plugging them back in used to bring
+  you back to the normal Space in 2D, with Spatial Anchor off: Pocket XR asked the glasses for 3D and follow mode
+  again, which took them out of Ultrawide, and then took that for you pressing the glasses' button twice. Now it
+  leaves 3D and follow alone while Steady mode is on, and puts Steady mode back, in 6DoF where it was.
+
 ## 1.4.1: Steady mode in 6DoF for the XREAL One series with the Eye (help wanted)
 
 - **XREAL One, One Pro, One Pro+ and 1S with the XREAL Eye** now get **Steady mode in 6DoF** too. With the Eye on,

@@ -92,7 +92,12 @@ object GlassesDisplayControl {
         openBackoffMs = 0L
         nextOpenMs = 0L
         if (stereoWant == sbs || stereoRefused == sbs) return
-        if (sbs && (steadyWant == true || (link != null && commands.ultrawide == 1))) return
+        // 1.4.2: nor while Steady mode is held, through a re-plug too: the new Space asked for 3D before the link was open,
+        // which took the glasses out of Ultrawide, and that looked like their button pressed twice (10 November 2026).
+        if (sbs && (steadyWant == true || steadyHeld || (link != null && commands.ultrawide == 1))) {
+            if (steadyHeld && steadyWant == null) Log.i(TAG, "3D not asked for: Steady mode is held, so the glasses stay in Ultrawide")
+            return
+        }
         val now = SystemClock.elapsedRealtime()
         // The Aura can take 3D just after plug-in and drop it by itself 1 to 5 s later (6 November 2026): that is asked again.
         val fellBack = sbs && now - stereoFellBackMs < FELL_BACK_MS && stereoFallbacks < FALLBACK_ASKS
@@ -397,7 +402,8 @@ object GlassesDisplayControl {
                             // Not just after a new link's own read: the first seconds are when the glasses have most to do.
                             if (auraLink && now - linkOpenedMs > SETTINGS_FRESH_MS) commands.readSettings()
                         }
-                        if (spaceUp && auraLink && !hoverTestWanted && steadyWant == null) commands.keepFollow(now)
+                        // 1.4.2: no follow while Steady mode is held: a follow takes the Aura out of Ultrawide.
+                        if (spaceUp && auraLink && !hoverTestWanted && steadyWant == null && !steadyHeld) commands.keepFollow(now)
                         // Spatial Anchor hurts head tracking, so it goes off once per link. Only the Aura reads it.
                         // 1.4.0: not while Steady mode holds in 6DoF: there the glasses' Spatial Anchor is what holds the
                         // canvas, and a re-plug (Ultrawide, the screen size) opens a new link. So it waits for the Ultrawide
@@ -431,11 +437,15 @@ object GlassesDisplayControl {
                         // out properly if it happens again soon ([com.hayeco.flipspaces.core.spatial.SteadyMode.dropped]).
                         val uw = commands.ultrawide
                         if (steadyWant == null && steadyHeld && lastUltrawide == 1 && uw == 0) {
-                            val what = com.hayeco.flipspaces.core.spatial.SteadyMode.dropped(now, lastDropMs)
-                            lastDropMs = now
+                            val what = com.hayeco.flipspaces.core.spatial.SteadyMode.dropped(now, lastDropMs, linkOpenedMs)
+                            // 1.4.2: a re-plug is not the user's button, so it does not count toward leaving.
+                            if (what != com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.REPLUG) lastDropMs = now
                             steadyStartedMs = SystemClock.elapsedRealtime()
                             commands.steadyStart()
-                            if (what == com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.BACK_IN) {
+                            if (what == com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.REPLUG) {
+                                steadyWant = true
+                                Log.i(TAG, "Steady mode: the glasses came back from a re-plug without Ultrawide; putting Steady mode back")
+                            } else if (what == com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.BACK_IN) {
                                 steadyWant = true
                                 Log.i(TAG, "Steady mode: the glasses left Ultrawide by themselves (their button?); putting it back")
                             } else {
