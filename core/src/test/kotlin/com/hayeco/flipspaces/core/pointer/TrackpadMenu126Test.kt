@@ -117,7 +117,8 @@ class TrackpadMenu126Test {
 
     @Test
     fun everyItemHasAPlace() {
-        // Everything at once: each item shows somewhere, so no feature fell out of the Menu.
+        // Everything at once: each item shows somewhere, so no feature fell out of the Menu, except the ones only the
+        // Control Center on the glasses has (1.3.4).
         val all = State(
             spaceActive = true, phoneLocked = true, steadyOffered = true, gameKeysOn = true, recording = true,
             controllerMode = GameControllerMode.TOUCH, textSizeShown = true, shapeShown = true, sideBySideShown = true, sideBySideOn = true,
@@ -125,6 +126,6 @@ class TrackpadMenu126Test {
         )
         val open = TrackpadMenu.items(all)
         val cover = TrackpadMenu.items(all.copy(cover = true))
-        assertEquals(Item.entries.toSet(), (open + cover).toSet())
+        assertEquals(Item.entries.toSet() - TrackpadMenu.CONTROL_CENTER_ONLY, (open + cover).toSet())
     }
 }
