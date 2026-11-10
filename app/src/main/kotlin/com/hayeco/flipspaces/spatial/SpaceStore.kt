@@ -115,7 +115,29 @@ class SpaceStore(context: Context) {
     // 1.2.10 (Discussion #24): VITURE glasses' default by the USB product plugged in, so the Beast starts the right way up.
     var axisMap: AxisMap
         get() = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: defaultAxes()
-        set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).apply()
+        set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).remove(perModel(KEY_AXES_GRAVITY)).apply()
+
+    /**
+     * 1.2.13 (Discussion #81, a One Pro+ whose pitch was a quarter turn off): the layout the gravity check picked
+     * ([com.hayeco.flipspaces.core.spatial.GravityAxes]), saved per model as a pick on the head tracking screen is, with
+     * its line so the Glasses report says why. A pick by hand afterwards clears the line.
+     */
+    fun setAxesByGravity(axes: AxisMap, line: String) {
+        prefs.edit().putString(perModel(KEY_AXES), axes.name).putString(perModel(KEY_AXES_GRAVITY), line).apply()
+    }
+
+    /** 1.2.13: the model's own default layout, what the gravity check prefers when it fits. */
+    val modelAxes: AxisMap get() = defaultAxes()
+
+    /** 1.2.13: where [axisMap] came from, in words, for the Glasses report. */
+    fun axesFrom(): String {
+        val gravity = prefs.getString(perModel(KEY_AXES_GRAVITY), null)
+        return when {
+            gravity != null -> "set by the gravity check: $gravity"
+            prefs.contains(perModel(KEY_AXES)) -> "picked on the head tracking screen; the ${model.label}'s default is ${defaultAxes().label}"
+            else -> "the ${model.label}'s default"
+        }
+    }
 
     private fun defaultAxes(): AxisMap {
         val m = model
@@ -726,6 +748,7 @@ class SpaceStore(context: Context) {
         private const val KEY_RECENTS = "launcher_recents"
         private const val KEY_LAYOUT = "layout"
         private const val KEY_AXES = "axes"
+        private const val KEY_AXES_GRAVITY = "axes_gravity"
         private const val KEY_FOV = "fov"
         private const val KEY_SCREEN_2D = "glasses_screen_2d_0526"
         private const val KEY_SCREEN_3D = "glasses_screen_3d_0526"

@@ -59,6 +59,13 @@ enum class GlassesModel(
     AURA("XREAL Aura", "aura", tested = true, camera = true, diagonalFovDeg = null),
     ONE("XREAL One", "one", tested = true, camera = false, diagonalFovDeg = 50f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
     ONE_PRO("XREAL One Pro", "onepro", tested = false, camera = false, diagonalFovDeg = 57f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
+    // 1.2.13 (Discussion #81, gegonut's One Pro+ on a Galaxy Z Fold 6: "When looking straight ahead it's as if I'm looking
+    // straight up. When I recenter, all of the windows appear straight down"): XREAL's 1 Pro+ (October 2026, the One Pro's
+    // 57 degrees). The One's layout read a level head as one looking straight up, which is gravity's reaction along the
+    // sensor's +z: "x right, y front, z up", a quarter turn from the One's about the side axis. Inferred from the tester's
+    // words, not from a log: the gravity check ([GravityAxes]) puts it right at the start or the first recentre if the
+    // sensor sits another way.
+    ONE_PRO_PLUS("XREAL One Pro+", "oneproplus", tested = false, camera = false, diagonalFovDeg = 57f, defaultAxes = AxisMap.XRIGHT_ZUP_YFRONT, setupHint = ONE_STABILIZER),
     ONE_S("XREAL 1S", "1s", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
     // 1.1.0: the One family's axes. Every XREAL with this head tracking link but the Aura has them, and the Aura's axes
     // on a One family model turn the picture upside down (0.5.91).
@@ -125,6 +132,9 @@ enum class GlassesModel(
         const val EDID_AURA = "16656"
         const val EDID_ONE = "16641"
 
+        /** 1.2.13: "One Pro+", "1 Pro+", "One Pro Plus", "1Pro+" and the like. */
+        private val PRO_PLUS = Regex("(one|1) ?pro ?(\\+|plus)")
+
         /** Tan per pixel of a 1920 x 1080 picture whose diagonal spans [diagonalDeg]. */
         fun tanPerPx(diagonalDeg: Float): Float = tan(diagonalDeg * DEG / 2f) / (sqrt(1920f * 1920f + 1080f * 1080f) / 2f)
 
@@ -141,7 +151,9 @@ enum class GlassesModel(
             return when {
                 id?.productId == EDID_AURA || lower == "xreal 1 ultra" || lower.contains("aura") -> AURA
                 id?.productId == EDID_ONE || lower == "xreal one" -> ONE
-                lower.contains("one pro") -> ONE_PRO
+                // 1.2.13: XREAL sells it as the "1 Pro+"; its display's name has not been seen yet, so any of these.
+                PRO_PLUS.containsMatchIn(lower) -> ONE_PRO_PLUS
+                lower.contains("one pro") || lower.contains("1 pro") -> ONE_PRO
                 lower.contains("1s") || lower.contains("one s") -> ONE_S
                 lower.contains("viture") -> VITURE
                 usbProduct == USB_AURA -> AURA

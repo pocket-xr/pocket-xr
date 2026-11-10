@@ -22,9 +22,27 @@ enum class AxisMap(val label: String, private val ix: Int, private val sx: Float
      * [XRIGHT_YDOWN_ZFRONT]; this one stays in the list.
      */
     XLEFT_YDOWN_ZBACK("x left, y down, z back", 0, -1f, 1, -1f, 2, 1f),
+
+    /**
+     * 1.2.13 (Discussion #81, an XREAL One Pro+: looking straight ahead read as looking straight up, its sensor's z up, so
+     * [XRIGHT_ZUP_YFRONT]): the One's layout turned the other quarter about the side axis, gravity's reaction along the
+     * sensor's -z. With [XUP_YLEFT_ZBACK] every direction gravity can read along has a layout, so the gravity check
+     * ([GravityAxes]) always has one to pick.
+     */
+    XRIGHT_ZDOWN_YBACK("x right, y back, z down", 0, 1f, 2, -1f, 1, 1f),
+    XUP_YLEFT_ZBACK("x up, y left, z back", 1, -1f, 0, 1f, 2, 1f),
     ;
 
     fun apply(v: Vec3): Vec3 = Vec3(pick(v, ix) * sx, pick(v, iy) * sy, pick(v, iz) * sz)
+
+    /** 1.2.13: head axes back to the sensor's, the inverse of [apply]. */
+    fun unapply(h: Vec3): Vec3 {
+        val a = FloatArray(3)
+        a[ix] = h.x * sx
+        a[iy] = h.y * sy
+        a[iz] = h.z * sz
+        return Vec3(a[0], a[1], a[2])
+    }
 
     /** 0.5.55: the axis by index, without the FloatArray each call made (two a sample, the gyro and the accelerometer). */
     private fun pick(v: Vec3, i: Int): Float = when (i) {
@@ -763,6 +781,7 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         if (settings.startGate && !settings.legacyBias && !startGate.passed) {
             val w = startGate.addWindow(gyro - bias, accel, settings, dt)
             if (w != null && w.passed) {
+                restGravity = GravityAxes.Rest(settings.axes.unapply(w.mean), "start", tableStill = w.gyroPeakToPeak < settings.staticPeakToPeak)
                 align(w.mean)
                 startGateEvent = startGateLine()
             } else if (w != null && settings.startStrict && w.fallbackOk && w.gyroPeakToPeak < fallbackScore) {
@@ -775,6 +794,7 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
             if (!startGate.passed && settings.startStrict && fb != null && runS >= settings.startFallbackS) {
                 val mean = q.conjugate().rotate(fb)
                 startGate.passFallback(mean, fallbackScore, fallbackSpread)
+                restGravity = GravityAxes.Rest(settings.axes.unapply(mean), "start", tableStill = fallbackScore < settings.staticPeakToPeak)
                 align(mean)
                 startGateEvent = startGateLine()
             }
@@ -789,6 +809,14 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
      * the fallback. Taken (and cleared) by the caller's log.
      */
     private var startGateEvent: String? = null
+
+    /**
+     * 1.2.13 (Discussion #81): the averaged accelerometer, in the sensor's own axes, when the start gate passed or a steady
+     * recentre relevelled, for the gravity check of the axis layout ([GravityAxes]). Taken (and cleared) by the caller.
+     */
+    private var restGravity: GravityAxes.Rest? = null
+
+    fun takeRestGravity(): GravityAxes.Rest? = restGravity.also { restGravity = null }
 
     fun takeStartGateEvent(): String? = startGateEvent?.let { "head gravity: $it (${if (startGate.passedByFallback) "by the fallback" else "on a still window"})" }.also { startGateEvent = null }
 
@@ -1919,6 +1947,8 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         val steady = startAligned && accelMean.full && gw != null && lastGravityOff <= settings.gravityFull &&
             lastGravityChange <= settings.gravityChangeFull && lastOmega.length < settings.recentreGyro
         val levelled = settings.recentreLevels && steady
+        // 1.2.13: a steady recentre is a worn head looking ahead, so its gravity checks the axis layout ([GravityAxes]).
+        if (steady) restGravity = GravityAxes.Rest(settings.axes.unapply(q.conjugate().rotate(gw)), "recentre")
         if (levelled) {
             val old = q
             q = relevel(q, q.conjugate().rotate(gw!!))
@@ -2058,6 +2088,7 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         fullForS = 0f
         settledS = 0f
         lastGravityWorld = null
+        restGravity = null
         fallbackWorld = null
         fallbackScore = Float.MAX_VALUE
         chunkSum = Vec3.ZERO

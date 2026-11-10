@@ -10,6 +10,7 @@ set on the glasses themselves, and what to send when something is wrong.
 | XREAL Aura | Tested | Yes, through its camera | The model the app was built on. |
 | XREAL One | Tested (30 October 2026) | Not yet: possible with the XREAL Eye add-on (help wanted) | Use **Follow mode** with **Stabilizer off**, see below. |
 | XREAL One Pro | Community testing | Not yet: possible with the XREAL Eye add-on (help wanted) | Treated as a One with a 57 degree view. Not run by the project yet. |
+| XREAL One Pro+ (sold as the 1 Pro+) | Community testing | Not yet | Its own sensor axes, "x right, y front, z up" (Discussion #81, inferred from the report, not a log). Otherwise treated as a One Pro. |
 | XREAL 1S | Community testing | No | Treated as a One. Its view is not published, so the One's 50 degrees is used. |
 | VITURE (Beast seen) | Community testing, partly working | No | The Space works head locked. Head tracking isn't supported yet; an experimental reader is off by default. See "VITURE glasses" below. |
 | Other glasses | Help wanted | No | Plain fallbacks; see "Unknown glasses" below. |
@@ -117,6 +118,21 @@ The factory calibration is saved per pair (by serial).
 Its head tracking stream is the same One-family stream as the Aura's, at 1000 reports a second. If a model turns the
 wrong way, the head tracking screen has the axis list. The Glasses report and the head attitude log line ("tilt error"
 should stay at a degree or two) help find the right one.
+
+**One Pro+ and the gravity check (1.2.13, Discussion #81).** On a One Pro+ (with a Galaxy Z Fold 6) the One's axes
+showed a level head as one looking straight up, and a recentre put every window straight down: gravity read along the
+sensor's z, which the One's axes take for front and back. The One Pro+ is told from its display's name ("One Pro+",
+"1 Pro+" or "Pro Plus"); its USB product id is not published yet, so the Glasses report's USB line will say it. Its
+axes, "x right, y front, z up", are inferred from the report, not from a log.
+
+So that wrong axes fix themselves on any glasses (`GravityAxes` in `core/.../spatial/`), the averaged accelerometer is
+checked when the start gate passes and on each steady recentre. If gravity is more than 60 degrees from the axes' up and
+within 25 degrees of another layout's, that layout is picked: the model's own if it fits, else the one the smallest turn
+away (so right stays right). It is saved for the model, the gyro bias is carried over, the fusion starts again on it,
+and a "gravity check" line is logged. At the start, glasses lying still on a table (gyro under the static detector's
+gate) are left alone, since they may lie any way up. A recentre lying flat on your back can pick a layout that makes
+that view level; the next recentre sitting up puts the model's own back. The Glasses report has the layout, where it
+came from (the model's default, picked by hand, or the gravity check) and gravity at the last rest.
 
 ## VITURE glasses
 

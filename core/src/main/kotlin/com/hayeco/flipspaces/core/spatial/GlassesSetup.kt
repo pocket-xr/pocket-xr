@@ -102,7 +102,7 @@ object GlassesSetup {
      * 0x043E) tell the family when the name does not; the model itself is left to [GlassesModel.detect].
      */
     fun family(model: GlassesModel?, usbProduct: Int? = null): SetupFamily = when (model) {
-        GlassesModel.ONE, GlassesModel.ONE_PRO, GlassesModel.ONE_S -> SetupFamily.ONE_SERIES
+        GlassesModel.ONE, GlassesModel.ONE_PRO, GlassesModel.ONE_PRO_PLUS, GlassesModel.ONE_S -> SetupFamily.ONE_SERIES
         GlassesModel.AIR -> SetupFamily.AIR
         GlassesModel.AURA -> SetupFamily.AURA
         else -> if (usbProduct in ONE_SERIES_PRODUCTS) SetupFamily.ONE_SERIES else SetupFamily.OTHER

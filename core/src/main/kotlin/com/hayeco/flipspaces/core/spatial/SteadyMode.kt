@@ -34,7 +34,7 @@ object SteadyMode {
     }
 
     /** Glasses that get the key. The One series is untested (7 November 2026): it should work, so a refusal only ends the change. */
-    fun offeredOn(model: GlassesModel?): Boolean = model == GlassesModel.AURA || model == GlassesModel.ONE || model == GlassesModel.ONE_PRO || model == GlassesModel.ONE_S
+    fun offeredOn(model: GlassesModel?): Boolean = model == GlassesModel.AURA || model == GlassesModel.ONE || model == GlassesModel.ONE_PRO || model == GlassesModel.ONE_PRO_PLUS || model == GlassesModel.ONE_S
 
     /** Glasses whose menu settings are read and put right on every link. Others only once Steady mode has been used. */
     fun managedOn(model: GlassesModel?): Boolean = model == GlassesModel.AURA

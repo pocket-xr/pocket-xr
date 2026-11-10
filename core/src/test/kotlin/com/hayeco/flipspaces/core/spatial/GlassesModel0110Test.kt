@@ -21,7 +21,8 @@ class GlassesModel0110Test {
     }
 
     @Test fun onlyTheAuraKeepsTheDefaultAxes() {
-        GlassesModel.entries.filter { it != GlassesModel.AURA && it != GlassesModel.AIR && it != GlassesModel.VITURE && it != GlassesModel.UNKNOWN }.forEach {
+        // 1.2.13 (Discussion #81): the One Pro+'s sensor sits a quarter turn from the One's ([Discussion81Test]).
+        GlassesModel.entries.filter { it != GlassesModel.AURA && it != GlassesModel.AIR && it != GlassesModel.VITURE && it != GlassesModel.UNKNOWN && it != GlassesModel.ONE_PRO_PLUS }.forEach {
             assertEquals(it.name, AxisMap.XRIGHT_YDOWN_ZFRONT, it.defaultAxes)
         }
         assertEquals(AxisMap.DEFAULT, GlassesModel.AURA.defaultAxes)

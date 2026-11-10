@@ -1008,6 +1008,49 @@ object HeadTracker {
     @Volatile var lastTrackingLine: String? = null
         private set
 
+    /** 1.2.13 (Discussion #81): the newest rest's accelerometer (sensor axes) and the gravity check's line, for the Glasses report. */
+    @Volatile var lastRestGravity: Vec3? = null
+        private set
+    @Volatile var lastAxesCheck: String? = null
+        private set
+
+    /** 1.2.13: the axis layout, where it came from and gravity at the last rest, one line for the Glasses report. */
+    fun axesReport(context: Context): String {
+        val store = SpaceStore(context)
+        return com.hayeco.flipspaces.core.spatial.GravityAxes.reportLine(store.axisMap, store.axesFrom(), lastRestGravity, lastAxesCheck)
+    }
+
+    /**
+     * 1.2.13 (Discussion #81, a One Pro+ whose level head read as looking straight up): the fusion's newest rest reading
+     * against the axis layout in use ([com.hayeco.flipspaces.core.spatial.GravityAxes]). When gravity says another layout,
+     * it is saved for the model, the gyro bias is carried over into it, and the fusion starts again on it. Reader thread.
+     */
+    private fun checkAxes(fusion: HeadFusion) {
+        val rest = fusion.takeRestGravity() ?: return
+        val c = appContext ?: return
+        val store = SpaceStore(c)
+        val verdict = com.hayeco.flipspaces.core.spatial.GravityAxes.check(rest, settings.axes, store.modelAxes)
+        lastRestGravity = rest.raw
+        lastAxesCheck = verdict.line
+        Log.i(TAG, verdict.line)
+        val next = verdict.axes ?: return
+        val old = settings.axes
+        fun carry(b: Vec3) = com.hayeco.flipspaces.core.spatial.GravityAxes.carry(b, old, next)
+        val bias = fusion.gyroBias.takeIf { it != Vec3.ZERO }?.let(::carry)
+        val static = fusion.staticBias?.let(::carry)
+        store.setAxesByGravity(next, verdict.line)
+        store.staticGyroBias?.let { store.staticGyroBias = carry(it) }
+        store.wornGyroBias?.let { store.wornGyroBias = carry(it) }
+        settings = settings.copy(axes = next)
+        fusion.settings = settings
+        fusion.reset()
+        bias?.let { fusion.seedBias(it, static) }
+        frameRef = FrameRef(frameRef.epoch + 1, Quat.IDENTITY)
+        history.clear()
+        synchronized(predictor) { predictor.reset() }
+        lastSampleHostNs = 0L
+    }
+
     private val beatTick = object : Runnable {
         override fun run() {
             runCatching { logBeat() }.onFailure { Log.w(TRACK_TAG, "tracking line failed: ${it.javaClass.simpleName}: ${it.message}") }
@@ -1298,6 +1341,8 @@ object HeadTracker {
                     fusion.lastLearnLine?.let { if (it != loggedLearn) { loggedLearn = it; Log.i(TAG, it) } }
                     // 0.5.16: the start gate's result the moment it passes, and which way.
                     fusion.takeStartGateEvent()?.let { Log.i(TAG, it) }
+                    // 1.2.13 (Discussion #81): the start's gravity checks the axis layout.
+                    checkAxes(fusion)
                     // 0.5.16: the old saved bias confirmed: it is the static bias
                     // from now on, saved so the next session starts seeded.
                     fusion.oldBiasConfirmedLine?.let { line ->
@@ -1411,6 +1456,8 @@ object HeadTracker {
                 val turn = (fusion.pose().orientation * before.conjugate()).normalized()
                 frameRef = frameRef.copy(jump = (turn * frameRef.jump).normalized())
                 restartPrediction(fusion)
+                // 1.2.13 (Discussion #81): a steady recentre is a head looking ahead, so its gravity checks the layout.
+                checkAxes(fusion)
             }
             val silentS = (nowMs - lastImuMs) / 1000
             if (silentS >= NO_REPORT_SECONDS) {
