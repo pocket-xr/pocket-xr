@@ -134,6 +134,15 @@ class GlassesDisplayCommands(private val io: Io) {
         stillSentMs = Long.MIN_VALUE / 2
     }
 
+    /**
+     * 1.4.0: Spatial Anchor on, for Steady mode in 6DoF: the same set as [spatialAnchorOff] with 1. Read back, as its
+     * value's field is inferred.
+     */
+    fun spatialAnchorOn() {
+        rpc({ ControlWire.spatialAnchorSet(it, true) }, "Spatial Anchor on (10405 = 1), Steady mode in 6DoF")
+        rpc({ ControlWire.settingGet(it, GlassesControl.SPATIAL_ANCHOR_GET) }, "Spatial Anchor read back (10404)")
+    }
+
     /** Spatial Anchor off, for normal tracking too. Read back, as its value's field is inferred. */
     fun spatialAnchorOff() {
         rpc({ ControlWire.spatialAnchorSet(it, false) }, "Spatial Anchor off (10405 = 0)")
@@ -144,9 +153,11 @@ class GlassesDisplayCommands(private val io: Io) {
      * One beat of a Steady mode change: at most one set each [STILL_RETRY_MS], so each is read back before the next goes
      * out and the display's re-plug has time to pass. Answers the step the glasses are on.
      */
-    fun steady(on: Boolean, nowMs: Long): SteadyMode.Step {
-        val anchor = if (anchorTries >= ANCHOR_TRIES) 0 else spatialAnchor
-        val step = SteadyMode.next(on, SteadyMode.Glasses(stereo, ultrawide, anchor, screenSize, screenSizeMax))
+    fun steady(on: Boolean, nowMs: Long, sixDof: Boolean = false): SteadyMode.Step {
+        // Past its tries, Spatial Anchor counts as set the way this change wants it, so the change can finish.
+        val anchorWanted = if (on && sixDof) 1 else 0
+        val anchor = if (anchorTries >= ANCHOR_TRIES) anchorWanted else spatialAnchor
+        val step = SteadyMode.next(on, SteadyMode.Glasses(stereo, ultrawide, anchor, screenSize, screenSizeMax), sixDof)
         if (nowMs - settingsAskedMs >= STILL_READ_MS) {
             settingsAskedMs = nowMs
             rpc(ControlWire::stereoGet, "2D / 3D state read (10273)")
@@ -159,6 +170,10 @@ class GlassesDisplayCommands(private val io: Io) {
             SteadyMode.Step.ANCHOR_OFF -> {
                 anchorTries++
                 spatialAnchorOff()
+            }
+            SteadyMode.Step.ANCHOR_ON -> {
+                anchorTries++
+                spatialAnchorOn()
             }
             SteadyMode.Step.LEAVE_3D -> rpc({ ControlWire.stereoSet(it, false) }, "2D (10274 = 0), on the way to Ultrawide")
             SteadyMode.Step.ULTRAWIDE_ON -> rpc({ ControlWire.ultrawideSet(it, true) }, "Ultrawide on (10278 = 1)")

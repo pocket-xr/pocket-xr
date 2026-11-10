@@ -108,6 +108,9 @@ fun PhoneScreen(
     // 1.1.14 (a tester asked for a way to turn head tracking on and off): saved, applied at once.
     var headTracking by remember { mutableStateOf(com.hayeco.flipspaces.spatial.SpaceStore(context).headTracking) }
     var recentreFollowsTilt by remember { mutableStateOf(com.hayeco.flipspaces.spatial.SpaceStore(context).recentreFollowsTilt) }
+    // 1.4.0: Steady mode in 6DoF, shown for the glasses that can hold it (the Aura).
+    var steadySixDof by remember { mutableStateOf(com.hayeco.flipspaces.spatial.SpaceStore(context).steadySixDof) }
+    val sixDofGlasses = remember { com.hayeco.flipspaces.core.spatial.SteadyMode.sixDofOn(com.hayeco.flipspaces.spatial.SpaceStore(context).model) }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -191,6 +194,19 @@ fun PhoneScreen(
                         com.hayeco.flipspaces.spatial.HeadTracker.setRecentreFollowsTilt(context, it)
                     }
                     RowDivider()
+                    if (sixDofGlasses) {
+                        // 1.4.0 (docs/6DOF-PLAN.md): the Aura's Spatial Anchor holds the Steady mode screen in 6DoF.
+                        ToggleRow(
+                            "Steady mode in 6DoF",
+                            if (steadySixDof) "On: in Steady mode the wide screen stays put as you lean and move. The glasses' Spatial Anchor does it, and 3D is off"
+                            else "Off: Steady mode keeps the wide screen still as you turn your head",
+                            steadySixDof,
+                        ) {
+                            steadySixDof = it
+                            com.hayeco.flipspaces.spatial.SpaceStore(context).steadySixDof = it
+                        }
+                        RowDivider()
+                    }
                     // 1.1.16 (issue 12): the settings these glasses need and the head turn check, at any time.
                     NavRow("Glasses setup check", "The settings your glasses need, and a 10 second check that windows stay put", onGlassesCheck)
                     RowDivider()

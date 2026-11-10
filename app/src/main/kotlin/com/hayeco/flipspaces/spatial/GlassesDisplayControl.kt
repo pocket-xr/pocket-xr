@@ -162,6 +162,17 @@ object GlassesDisplayControl {
     /** A Steady mode change under way: true on, false off, null none. See [com.hayeco.flipspaces.core.spatial.SteadyMode]. */
     @Volatile private var steadyWant: Boolean? = null
 
+    /**
+     * 1.4.0: this Steady mode is the 6DoF kind (Settings' Steady mode in 6DoF, on the Aura): Spatial Anchor goes on with
+     * it, and stays on. Taken when Steady mode is turned on, kept until it is turned off.
+     */
+    @Volatile private var steadySixDof = false
+
+    private fun sixDofWanted(): Boolean = app?.let {
+        val store = SpaceStore(it)
+        store.steadySixDof && com.hayeco.flipspaces.core.spatial.SteadyMode.sixDofOn(store.model)
+    } == true
+
     @Volatile private var linkOpenedMs = 0L
 
     /** The glasses on this link are ones whose menu settings Pocket XR reads. */
@@ -178,6 +189,8 @@ object GlassesDisplayControl {
     fun steady(context: Context, on: Boolean) {
         app = context.applicationContext
         steadyWant = on
+        // Coming in, the setting decides; going out, the kind it was decides, so a 6DoF Steady mode puts Spatial Anchor off.
+        if (on) steadySixDof = sixDofWanted()
         // The user's own change: a drop seen after this is the glasses' own.
         if (!on) steadyHeld = false
         lastUltrawide = null
@@ -188,7 +201,7 @@ object GlassesDisplayControl {
         // Coming out, 3D is asked for again as on a new plug-in.
         if (!on) stereoAsked = false
         synchronized(lock) { commands.steadyStart() }
-        Log.i(TAG, "Steady mode ${if (on) "on" else "off"}")
+        Log.i(TAG, "Steady mode ${if (on) "on" else "off"}${if (steadySixDof) " (6DoF: the glasses' Spatial Anchor ${if (on) "on" else "off"})" else ""}")
         ensureLoop()
     }
 
@@ -378,19 +391,26 @@ object GlassesDisplayControl {
                         }
                         if (spaceUp && auraLink && !hoverTestWanted && steadyWant == null) commands.keepFollow(now)
                         // Spatial Anchor hurts head tracking, so it goes off once per link. Only the Aura reads it.
-                        if (!anchorChecked && commands.spatialAnchor != null) {
+                        // 1.4.0: not while Steady mode holds in 6DoF: there the glasses' Spatial Anchor is what holds the
+                        // canvas, and a re-plug (Ultrawide, the screen size) opens a new link. So it waits for the Ultrawide
+                        // read too, and leaves Spatial Anchor on in Ultrawide with Steady mode in 6DoF set.
+                        if (!anchorChecked && commands.spatialAnchor != null && commands.ultrawide != null) {
                             anchorChecked = true
-                            if (commands.spatialAnchor == 1 && steadyWant == null && auraOn()) commands.spatialAnchorOff()
+                            val sixDofHold = (steadySixDof && steadyHeld) || (commands.ultrawide == 1 && sixDofWanted())
+                            if (commands.spatialAnchor == 1 && steadyWant == null && auraOn() && !sixDofHold) commands.spatialAnchorOff()
+                            else if (commands.spatialAnchor == 1 && sixDofHold) Log.i(TAG, "Spatial Anchor left on: Steady mode in 6DoF holds the canvas")
                         }
                         steadyWant?.let { on ->
-                            val step = commands.steady(on, now)
+                            val step = commands.steady(on, now, steadySixDof)
                             if (step == com.hayeco.flipspaces.core.spatial.SteadyMode.Step.DONE) {
                                 steadyWant = null
                                 steadyHeld = on
+                                if (!on) steadySixDof = false
                                 Log.i(TAG, "Steady mode ${if (on) "on" else "off"}: done (Ultrawide ${commands.ultrawide}, screen size ${commands.screenSize}, Spatial Anchor ${commands.spatialAnchor})")
                             } else if (commands.stillTries > GlassesDisplayCommands.STILL_TRIES || now - steadyStartedMs > STEADY_GIVE_UP_MS) {
                                 steadyWant = null
                                 steadyHeld = false
+                                if (!on) steadySixDof = false
                                 // Back to the usual view on glasses that would not go.
                                 stereoAsked = false
                                 if (on) app?.let { requestStereo(it, true) }
