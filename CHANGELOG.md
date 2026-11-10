@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.12: VITURE Beast tracking by default, and a mouse on Spatial Mouse
 
 Thanks to the tester in GitHub Discussion #24 for confirming 1.2.10 on the VITURE Beast and for the two things left to
 fix.
