@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.13: XREAL One Pro+ head tracking the right way up
 
 - **XREAL One Pro+ head tracking the right way up.** Thanks to gegonut in GitHub Discussion #81 for the report: on a One
   Pro+ looking straight ahead showed as looking straight up, and a recentre put every window straight down. Pocket XR
