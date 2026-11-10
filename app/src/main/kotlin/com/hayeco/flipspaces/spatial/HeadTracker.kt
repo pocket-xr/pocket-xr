@@ -520,6 +520,13 @@ object HeadTracker {
 
     private val recentreGate = com.hayeco.flipspaces.core.spatial.RecentreRoute.Debounce()
 
+    /** 1.2.13 (Discussion #81): Settings' Recenter follows head tilt; the fusion takes it for the next recentre. */
+    fun setRecentreFollowsTilt(context: Context, on: Boolean) {
+        SpaceStore(context).recentreFollowsTilt = on
+        Log.i(TAG, "recenter follows head tilt turned ${if (on) "on" else "off"} in Settings")
+        applySettings(context)
+    }
+
     fun applySettings(context: Context) {
         val store = SpaceStore(context)
         val next = fromStore(store, context)
@@ -545,6 +552,7 @@ object HeadTracker {
         val cal = if (store.factoryCalibration) GlassesCalibrationStore.last(context) else null
         return settings.copy(
             axes = store.axisMap, predictSeconds = store.predictMs / 1000f, mountRollDeg = store.mountRollDeg, mountPitchDeg = store.mountPitchDeg,
+            recentreFollowsTilt = store.recentreFollowsTilt,
             factoryMount = cal?.displayMount?.takeIf { store.model.factoryMountChecked }, gyroMatrix = cal?.gyroMatrix,
         )
     }
@@ -1370,7 +1378,8 @@ object HeadTracker {
                     val wornNow = SystemClock.uptimeMillis()
                     if (wornNow - lastWornMs >= 100L) {
                         lastWornMs = wornNow
-                        val (_, pitch, roll) = fused.last().orientation.yawPitchRoll()
+                        // 1.2.13: against gravity, so a recentre that followed a tilted head does not hide or fake a tilt.
+                        val (pitch, roll) = fusion.levelPitchRoll()
                         com.hayeco.flipspaces.core.hands.PhoneHandling.shared.glasses(roll, pitch, fusion.isStatic, wornNow)
                     }
                     val nowStill = SystemClock.elapsedRealtime()

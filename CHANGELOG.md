@@ -15,6 +15,13 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   fix themselves. Glasses lying still on a table at the start are left alone. The Glasses report now says the model,
   what it was told from (the display's name and EDID product, and the USB ids), the axes in use and why, and gravity
   at the last rest.
+- **Recenter puts the windows where you look, up or down.** Thanks to gegonut again: the logs from Discussion #81 showed
+  his head really was about 40 degrees up for 20 minutes of videos, and each recenter kept the windows on the horizon,
+  40 degrees below his view. Lots of people watch lying back or looking down, so now a recenter with your head more
+  than 15 degrees up or down puts the front window in the middle of your view, facing you and level with it. Nearer
+  level, recenter works as before. It applies to Home hold, the Recenter button and every other recenter, and works
+  with Body Anchor, Smooth Follow and Steady mode. A new switch in Settings, Recenter follows head tilt, is on by
+  default; turn it off to keep the windows on the horizon.
 
 ## 1.2.12: VITURE Beast tracking by default, and a mouse on Spatial Mouse
 

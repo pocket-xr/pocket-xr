@@ -303,6 +303,14 @@ data class FusionSettings(
     val recentreLevels: Boolean = true,
     val recentreGyro: Float = 0.2f,
     /**
+     * 1.2.13 (Discussion #81: a head 40 degrees up for 20 minutes of videos, so every recentre left the windows 40
+     * degrees below the view): a recentre takes the head's pitch as straight ahead too, when it is more than
+     * [recentreTiltMinDeg] from level, so the windows land where the head looks, lying back or looking down. Within it,
+     * the horizon stays straight ahead, as before. Never roll: the windows stay level to that view.
+     */
+    val recentreFollowsTilt: Boolean = true,
+    val recentreTiltMinDeg: Float = 15f,
+    /**
      * 0.5.15: the [settleS] fast level after the start gate counts only samples in the full tier
      * with the head quiet, for at most [settleMaxS]; while the head moves it pulls at [kpMoving].
      */
@@ -1938,7 +1946,9 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
     /**
      * Makes the current heading the new forward. 0.5.15: roll and pitch are
      * also relevelled from the averaged gravity when it is steady (the full tier) and the head turns
-     * slower than [FusionSettings.recentreGyro]; 0.5.14 reset yaw only. Returns the log line.
+     * slower than [FusionSettings.recentreGyro]; 0.5.14 reset yaw only. 1.2.13: a head tilted more than
+     * [FusionSettings.recentreTiltMinDeg] up or down makes its pitch straight ahead too, never its roll
+     * ([FusionSettings.recentreFollowsTilt]). The gravity check's rest is in the sensor's axes, apart from this. Returns the log line.
      */
     fun recentre(): String {
         val before = displayQ().yawPitchRoll()
@@ -1965,13 +1975,25 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
             }
         }
         val after = displayQ().yawPitchRoll()
-        val yaw = Angles.of(displayQ().forward).yawDeg
-        reference = Quat.axisAngle(Vec3.UP, yaw * DEG).normalized()
+        val d = displayQ()
+        val look = Angles.of(d.forward)
+        // 1.2.13: the head's pitch is straight ahead too when tilted past the threshold ([FusionSettings.recentreFollowsTilt]).
+        val pitch = recentrePitch(look.pitchDeg)
+        // Looking nearly straight up or down, the forward's heading is noise: the head's right side gives it instead.
+        val side = Vec3.UP cross d.rotate(Vec3.RIGHT)
+        val yaw = if (kotlin.math.abs(look.pitchDeg) < NEAR_VERTICAL_DEG || side.length < 0.2f) look.yawDeg else Angles.of(side).yawDeg
+        reference = Quat.fromYawPitch(yaw, pitch).conjugate().normalized()
+        recentrePitchDeg = pitch
         recentres++
         return String.format(
             java.util.Locale.ROOT,
-            "recentre %d: forward is now yaw %.1f deg; %s",
+            "recentre %d: forward is now yaw %.1f deg, %s; %s",
             recentres, yaw,
+            when {
+                pitch != 0f -> "pitch %.1f deg (recenter follows head tilt)".format(java.util.Locale.ROOT, pitch)
+                !settings.recentreFollowsTilt -> "the horizon (head pitch %.1f deg; recenter follows head tilt off)".format(java.util.Locale.ROOT, look.pitchDeg)
+                else -> "the horizon (head pitch %.1f deg, within %.0f deg of level)".format(java.util.Locale.ROOT, look.pitchDeg, settings.recentreTiltMinDeg)
+            },
             if (levelled) {
                 "roll and pitch relevelled from the %.1f s gravity mean: roll %.2f to %.2f deg, pitch %.2f to %.2f deg".format(
                     java.util.Locale.ROOT, settings.accelMeanS, before.third, after.third, before.second, after.second,
@@ -1993,6 +2015,23 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
 
     var recentres = 0
         private set
+
+    /** 1.2.13: the pitch the last recentre took as straight ahead (degrees, up positive); 0 on the horizon. */
+    var recentrePitchDeg = 0f
+        private set
+
+    /** 1.2.13: the pitch a recentre at head pitch [headPitchDeg] makes straight ahead: the head's, or 0 near level or with the switch off. */
+    fun recentrePitch(headPitchDeg: Float): Float =
+        if (settings.recentreFollowsTilt && headPitchDeg.isFinite() && kotlin.math.abs(headPitchDeg) > settings.recentreTiltMinDeg) headPitchDeg else 0f
+
+    /**
+     * 1.2.13: the display's pitch and roll against gravity (degrees), whatever the recentre took as straight ahead.
+     * [pose] is relative to a tilted recentre, so a head 40 degrees up reads level there; this does not.
+     */
+    fun levelPitchRoll(): Pair<Float, Float> {
+        val (_, p, r) = displayQ().yawPitchRoll()
+        return p to r
+    }
 
     /**
      * 0.5.15: the IMU to display mounting rotation from [FusionSettings.mountRollDeg] and
@@ -2051,8 +2090,11 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         val a = staticBias
         return String.format(
             java.util.Locale.ROOT,
-            "head attitude: yaw %.1f pitch %.2f roll %.2f deg (tracking frame); %s; mount roll %.2f pitch %.2f deg; %d recentres; bias %.5f, %.5f, %.5f rad/s, %s",
-            y, p, r, grav, settings.mountRollDeg, settings.mountPitchDeg, recentres, b.x, b.y, b.z,
+            "head attitude: yaw %.1f pitch %.2f roll %.2f deg (tracking frame%s); %s; mount roll %.2f pitch %.2f deg; %d recentres; bias %.5f, %.5f, %.5f rad/s, %s",
+            y, p, r,
+            // 1.2.13: the tracking frame's pitch is from a tilted recentre's straight ahead, so the line says by how much.
+            if (recentrePitchDeg != 0f) ", straight ahead %.1f deg %s the horizon".format(java.util.Locale.ROOT, kotlin.math.abs(recentrePitchDeg), if (recentrePitchDeg > 0f) "above" else "below") else "",
+            grav, settings.mountRollDeg, settings.mountPitchDeg, recentres, b.x, b.y, b.z,
             if (a == null) "no static bias to hold it to" else "%.5f, %.5f, %.5f from the static one".format(java.util.Locale.ROOT, b.x - a.x, b.y - a.y, b.z - a.z),
         )
     }
@@ -2067,6 +2109,7 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         initialised = false
         stillFor = 0f
         reference = Quat.IDENTITY
+        recentrePitchDeg = 0f
         gravityNorm = 0f
         samples = 0
         biasLearned = false
@@ -2139,6 +2182,11 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         val c = up dot Vec3.UP
         if (s < 1e-6f) return if (c > 0) Quat.IDENTITY else Quat.axisAngle(Vec3.RIGHT, Math.PI.toFloat())
         return Quat.axisAngle(axis, kotlin.math.atan2(s, c)).normalized()
+    }
+
+    private companion object {
+        /** 1.2.13: past this pitch a recentre takes its heading from the head's right side, not its forward. */
+        const val NEAR_VERTICAL_DEG = 80f
     }
 }
 

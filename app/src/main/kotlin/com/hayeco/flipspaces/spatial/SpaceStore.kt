@@ -517,6 +517,14 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(KEY_FACTORY_CALIBRATION, true)
         set(value) = prefs.edit().putBoolean(KEY_FACTORY_CALIBRATION, value).apply()
 
+    /**
+     * 1.2.13 (Discussion #81): Recenter follows head tilt, on by default. A recentre with the head more than 15 degrees
+     * up or down puts the windows where it looks; off keeps them on the horizon ([com.hayeco.flipspaces.core.spatial.FusionSettings.recentreFollowsTilt]).
+     */
+    var recentreFollowsTilt: Boolean
+        get() = prefs.getBoolean(KEY_RECENTRE_FOLLOWS_TILT, true)
+        set(value) = prefs.edit().putBoolean(KEY_RECENTRE_FOLLOWS_TILT, value).apply()
+
     /** 0.5.64: the drawn orientation's One Euro filter (Developer); on by default. */
     var drawSmoothing: Boolean
         get() = prefs.getBoolean(KEY_DRAW_SMOOTHING, true)
@@ -711,6 +719,7 @@ class SpaceStore(context: Context) {
         private const val KEY_SIDE_BY_SIDE_FLAT = "side_by_side_flat_123"
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
+        private const val KEY_RECENTRE_FOLLOWS_TILT = "recentre_follows_tilt_1213"
         // 0.5.96: the key keeps its saved name, so the setting carries over.
         private const val KEY_WARP_NO_LSR = "warp_nebula_0532"
         private const val KEY_WARP_REENTER = "warp_reenter_0532"

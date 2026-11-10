@@ -10,7 +10,7 @@ set on the glasses themselves, and what to send when something is wrong.
 | XREAL Aura | Tested | Yes, through its camera | The model the app was built on. |
 | XREAL One | Tested (30 October 2026) | Not yet: possible with the XREAL Eye add-on (help wanted) | Use **Follow mode** with **Stabilizer off**, see below. |
 | XREAL One Pro | Community testing | Not yet: possible with the XREAL Eye add-on (help wanted) | Treated as a One with a 57 degree view. Not run by the project yet. |
-| XREAL One Pro+ (sold as the 1 Pro+) | Community testing | Not yet | Treated as a One Pro (the One's sensor axes). Its head reads about 40 degrees up when level: use the level calibration. See Discussion #81 below. |
+| XREAL One Pro+ (sold as the 1 Pro+) | Community testing | Not yet | Treated as a One Pro (the One's sensor axes). Its tester watched with the head about 40 degrees up; recenter now follows head tilt. See Discussion #81 below. |
 | XREAL 1S | Community testing | No | Treated as a One. Its view is not published, so the One's 50 degrees is used. |
 | VITURE (Beast seen) | Community testing, partly working | No | The Space works head locked. Head tracking isn't supported yet; an experimental reader is off by default. See "VITURE glasses" below. |
 | Other glasses | Help wanted | No | Plain fallbacks; see "Unknown glasses" below. |
@@ -152,6 +152,16 @@ came from (the model's default, picked by hand, or the gravity check) and gravit
 tilt like the One Pro+'s alone (it is 40 degrees, not a quarter turn). It would have caught the first guess's wrong axes
 only on a recentre with the head near level: at the start the glasses were too still to judge, and at the 40-degree
 rests gravity is 51 degrees from that layout's up, inside the 60 that are kept.
+
+A second look at the logs says the 40 degrees was the tester's real head, not a mount: the reading held through 20
+minutes of videos, and leaning back or lying down is how many people watch. So in 1.2.13 a recentre also takes the
+head's pitch as straight ahead when it is more than 15 degrees from level (`FusionSettings.recentreFollowsTilt`, Settings'
+"Recenter follows head tilt", on by default): the recentre's reference turns by the head's yaw and pitch, never its
+roll, so the front window lands in the middle of the view, facing the head and level with it. Within 15 degrees, or with
+the switch off, the horizon stays straight ahead as before. Everything that draws or aims with the head pose (Body
+Anchor, Smooth Follow, Ultrawide's canvas in Steady mode, hand rays, the glasses warp's record) gets the tilted frame
+the same way it got the recentre's yaw. The gravity check reads the sensor's own axes, apart from the reference, so a
+tilted recentre does not move it; the worn check for hand presses reads pitch and roll against gravity too.
 
 ## VITURE glasses
 
