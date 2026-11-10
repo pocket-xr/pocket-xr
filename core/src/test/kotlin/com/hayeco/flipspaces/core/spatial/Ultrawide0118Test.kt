@@ -209,6 +209,26 @@ class Ultrawide0118Test {
         }
     }
 
+    @Test fun aFirstUltrawideDropGoesBackIn() {
+        assertEquals(SteadyMode.Dropped.BACK_IN, SteadyMode.dropped(100_000L, null))
+        assertEquals(SteadyMode.Dropped.BACK_IN, SteadyMode.dropped(100_000L, 100_000L - SteadyMode.SECOND_DROP_MS - 1L))
+    }
+
+    @Test fun aSecondDropSoonAfterLeavesSteadyMode() =
+        assertEquals(SteadyMode.Dropped.LEAVE, SteadyMode.dropped(100_000L, 90_000L))
+
+    @Test fun noSteadyWindowIsWiderThanAScreen() {
+        for (n in 1..PanelLimits.MAX_PANELS) for (p in SteadyArrange.arrange(windows(n), 0f, 0f, 79f, 26f).panels) {
+            assertTrue("$n windows: shape ${PanelDisplaySize.aspect(p)}", PanelDisplaySize.aspect(p) <= SteadyArrange.WIDEST_SHAPE + 0.01f)
+        }
+    }
+
+    @Test fun aLoneSteadyWindowStaysCentred() {
+        val p = SteadyArrange.arrange(windows(1), 30f, 4f, 79f, 26f).panels.single()
+        assertEquals(30f, p.yawDeg, 0.01f)
+        assertTrue("narrower than the canvas: ${p.widthDeg}", p.widthDeg < 79f * 0.7f)
+    }
+
     @Test fun everyWindowAndItsButtonsFitTheCanvas() {
         val viewW = 79f
         val viewH = 26f

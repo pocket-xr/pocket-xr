@@ -40,6 +40,8 @@ object TrackpadMenu {
 
         // The focused window's app.
         TEXT_SIZE(Section.THIS_WINDOW),
+        // 1.3.3: one tap to a common shape ([com.hayeco.flipspaces.core.spatial.WindowShape]).
+        SHAPE(Section.THIS_WINDOW),
         SIDE_BY_SIDE(Section.THIS_WINDOW),
         SIDE_BY_SIDE_FLAT(Section.THIS_WINDOW),
 
@@ -71,6 +73,9 @@ object TrackpadMenu {
         AIR_DISPLAY_MODE(Section.WINDOWS_GLASSES),
 
         HOW_TO(Section.HELP),
+        // 1.3.3: settings to a file and back, to move between the GitHub and Google Play builds.
+        BACKUP_SETTINGS(Section.HELP),
+        RESTORE_SETTINGS(Section.HELP),
         RESET(Section.HELP),
         DEVELOPER(Section.HELP),
         DEVELOPER_CARD(Section.HELP),
@@ -88,6 +93,7 @@ object TrackpadMenu {
         val recording: Boolean = false,
         val controllerMode: GameControllerMode = GameControllerMode.OFF,
         val textSizeShown: Boolean = false,
+        val shapeShown: Boolean = false,
         val sideBySideShown: Boolean = false,
         val sideBySideOn: Boolean = false,
         val windowCount: Int = 0,
@@ -110,6 +116,7 @@ object TrackpadMenu {
         Item.UNLOCK -> s.phoneLocked
         Item.PHONE_HOME, Item.SETTINGS -> true
         Item.TEXT_SIZE -> s.textSizeShown
+        Item.SHAPE -> s.shapeShown
         Item.SIDE_BY_SIDE -> s.sideBySideShown
         Item.SIDE_BY_SIDE_FLAT -> s.sideBySideShown && s.sideBySideOn
         Item.SPACE_TRACKING, Item.LOCK_SCREENS, Item.PRESETS -> true
@@ -125,7 +132,7 @@ object TrackpadMenu {
         Item.GLASSES_CHECK -> s.glassesKnown
         Item.AIR_DISPLAY -> s.airOffered
         Item.AIR_DISPLAY_MODE -> s.airOffered && s.airOn
-        Item.HOW_TO, Item.RESET, Item.DEVELOPER -> true
+        Item.HOW_TO, Item.RESET, Item.DEVELOPER, Item.BACKUP_SETTINGS, Item.RESTORE_SETTINGS -> true
         Item.DEVELOPER_CARD -> s.developerShown
         Item.EXIT -> true
     }

@@ -50,7 +50,7 @@ class TextSizeLockMenuTest {
                     null
                 }
                 m.name in answers -> answers[m.name]
-                m.name == "focusedSideBySide" -> null
+                m.name == "focusedSideBySide" || m.name == "focusedShape" -> null
                 t == java.lang.Boolean.TYPE -> false
                 t == Integer.TYPE -> 0
                 t == java.lang.Float.TYPE -> 0f

@@ -190,6 +190,18 @@ class DebugReceiver : BroadcastReceiver() {
             // 1.3.2: Record and Steady mode from adb, to test a recording across the switches.
             "record" -> com.hayeco.flipspaces.spatial.SpaceSession.recordWanted = intent.getBooleanExtra("on", true)
             "steady" -> com.hayeco.flipspaces.spatial.GlassesDisplayControl.steady(context, intent.getBooleanExtra("on", true))
+            // 1.3.3: Shape and the settings file from adb.
+            "shape" -> com.hayeco.flipspaces.spatial.SpaceSession.send(com.hayeco.flipspaces.spatial.SpaceCommand.Shape(intent.getFloatExtra("ratio", 16f / 9f)))
+            "backup" -> {
+                val f = java.io.File(context.getExternalFilesDir(null), "settings-test.json")
+                val n = runCatching { com.hayeco.flipspaces.SettingsBackup.save(context, android.net.Uri.fromFile(f)) }
+                android.util.Log.i("FlipSpaces/Backup", "debug backup to $f: $n")
+            }
+            "restore" -> {
+                val f = java.io.File(context.getExternalFilesDir(null), "settings-test.json")
+                val n = runCatching { com.hayeco.flipspaces.SettingsBackup.restore(context, android.net.Uri.fromFile(f)) }
+                android.util.Log.i("FlipSpaces/Backup", "debug restore from $f: $n")
+            }
             "pcvr" -> {
                 val tuning = com.hayeco.flipspaces.pcvr.PcVrTuning
                 tuning.zoom = intent.getFloatExtra("zoom", tuning.zoom).coerceIn(1f, 2f)

@@ -79,6 +79,9 @@ sealed interface SpaceCommand {
      */
     data class TextSize(val steps: Int, val seq: Long = 0L) : SpaceCommand
 
+    /** 1.3.3: the focused window to this shape, width over height ([com.hayeco.flipspaces.core.spatial.WindowShape]). */
+    data class Shape(val ratio: Float) : SpaceCommand
+
     /** 0.5.19: the wraparound turned on or off ([SpaceSession.wrap]): the Space wraps or unwraps its windows. */
     data object WrapChanged : SpaceCommand
 
@@ -182,6 +185,9 @@ object SpaceSession {
 
     /** 1.2.3 (issue 58): the focused window's label and whether its app shows Side by side 3D, for the trackpad's Menu. */
     @Volatile var focusedSideBySide: Pair<String, Boolean>? = null
+
+    /** 1.3.3: the focused window's name and shape (width over height), for the Menu's Shape row. */
+    @Volatile var focusedShape: Pair<String, Float>? = null
 
     /**
      * 0.5.37: the trackpad's state as the Control Center shows it (the trackpad publishes it every tick): Spatial Mouse in

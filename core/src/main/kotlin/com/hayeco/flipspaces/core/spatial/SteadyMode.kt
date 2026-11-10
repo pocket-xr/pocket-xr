@@ -40,4 +40,17 @@ object SteadyMode {
     fun managedOn(model: GlassesModel?): Boolean = model == GlassesModel.AURA
 
     private const val SIZE_SAME = 0.005f
+
+    /**
+     * 1.3.3 (a tester: "pressing the action button on the glasses twice exits 'ultrawide mode' which completely screws
+     * things up and is easy to do by accident"): what Pocket XR does when the glasses leave Ultrawide by themselves in
+     * Steady mode. The first time it puts Ultrawide back ([Dropped.BACK_IN]); a second time within [SECOND_DROP_MS]
+     * means the user wants out, so Steady mode ends properly, with 3D and the windows back ([Dropped.LEAVE]).
+     */
+    enum class Dropped { BACK_IN, LEAVE }
+
+    const val SECOND_DROP_MS = 30_000L
+
+    fun dropped(nowMs: Long, lastDropMs: Long?): Dropped =
+        if (lastDropMs != null && nowMs - lastDropMs in 0 until SECOND_DROP_MS) Dropped.LEAVE else Dropped.BACK_IN
 }

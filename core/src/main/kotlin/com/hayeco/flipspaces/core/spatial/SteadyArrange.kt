@@ -23,6 +23,12 @@ object SteadyArrange {
     /** The window shape aimed for, width over height. */
     const val GOOD_SHAPE = 1.4f
 
+    /**
+     * 1.3.3 (a tester: "the windows are super wide now"): no window wider than this, width over height. One window used
+     * to stretch across the whole Ultrawide canvas; now it keeps a screen's shape, centred in its place.
+     */
+    const val WIDEST_SHAPE = 16f / 9f
+
     /** About what a window's buttons take above and below it, degrees. */
     const val BUTTONS_DEG = 3.6f
 
@@ -71,6 +77,11 @@ object SteadyArrange {
                 )
                 // Twice: the buttons' share grows a little as the window shrinks.
                 repeat(2) { p = p.copy(heightDeg = cellH / (1f + WindowControls.aboveShare(p) + WindowControls.belowShare(p))) }
+                // Never wider than a screen's shape: narrower, still centred in its cell.
+                repeat(2) {
+                    val shape = PanelDisplaySize.aspect(p)
+                    if (shape > WIDEST_SHAPE) p = p.copy(widthDeg = p.widthDeg * WIDEST_SHAPE / shape)
+                }
                 // Centred with its buttons: a window with none below sits a little lower in its cell.
                 val above = WindowControls.aboveShare(p)
                 val below = WindowControls.belowShare(p)

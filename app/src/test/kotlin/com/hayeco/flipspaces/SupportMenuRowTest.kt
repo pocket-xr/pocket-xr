@@ -39,7 +39,7 @@ class SupportMenuRowTest {
                 m.name == "toString" -> "test host"
                 // 1.2.3: no window focused, so the Menu has no Text size or Side by side 3D rows (their Pairs are not
                 // the cursor distance's).
-                m.name == "focusedTextSize" || m.name == "focusedSideBySide" -> null
+                m.name == "focusedTextSize" || m.name == "focusedSideBySide" || m.name == "focusedShape" -> null
                 t == java.lang.Boolean.TYPE -> false
                 t == Integer.TYPE -> 0
                 t == java.lang.Float.TYPE -> 0f
