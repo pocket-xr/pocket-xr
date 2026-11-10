@@ -525,6 +525,15 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(KEY_RECENTRE_FOLLOWS_TILT, true)
         set(value) = prefs.edit().putBoolean(KEY_RECENTRE_FOLLOWS_TILT, value).apply()
 
+    /**
+     * 1.4.0 (docs/6DOF-PLAN.md): Steady mode in 6DoF on the XREAL Aura, on by default (Mike: most users would not know to
+     * turn it on). Steady mode then keeps the glasses' Spatial Anchor on, so the wide screen stays put as the head leans
+     * and moves ([com.hayeco.flipspaces.core.spatial.SteadyMode]). Glasses that cannot hold it never see it.
+     */
+    var steadySixDof: Boolean
+        get() = prefs.getBoolean(KEY_STEADY_SIX_DOF, true)
+        set(value) = prefs.edit().putBoolean(KEY_STEADY_SIX_DOF, value).apply()
+
     /** 0.5.64: the drawn orientation's One Euro filter (Developer); on by default. */
     var drawSmoothing: Boolean
         get() = prefs.getBoolean(KEY_DRAW_SMOOTHING, true)
@@ -725,6 +734,7 @@ class SpaceStore(context: Context) {
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
         private const val KEY_RECENTRE_FOLLOWS_TILT = "recentre_follows_tilt_1213"
+        private const val KEY_STEADY_SIX_DOF = "steady_six_dof_140"
         // 0.5.96: the key keeps its saved name, so the setting carries over.
         private const val KEY_WARP_NO_LSR = "warp_nebula_0532"
         private const val KEY_WARP_REENTER = "warp_reenter_0532"

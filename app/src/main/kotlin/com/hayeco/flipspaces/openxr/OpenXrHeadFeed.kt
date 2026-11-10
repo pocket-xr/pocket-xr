@@ -3,6 +3,7 @@ package com.hayeco.flipspaces.openxr
 import android.util.Log
 import com.hayeco.flipspaces.core.spatial.DrawSmoothing
 import com.hayeco.flipspaces.core.spatial.Quat
+import com.hayeco.flipspaces.spatial.HeadPositionFeed
 import com.hayeco.flipspaces.spatial.HeadTracker
 import kotlin.math.atan2
 import kotlin.math.sqrt
@@ -95,6 +96,25 @@ object OpenXrHeadFeed {
                 dz = turn.z * rate
             }
         }
+        // 1.4.0 (docs/6DOF-PLAN.md): with a 6DoF source the game gets the head's position too, with its velocity from two
+        // positions a step apart. A runtime library from before 1.4.0 has no nativePose6: then rotation only, as before.
+        val at = if (pose6) HeadPositionFeed.positionAt(now) else null
+        if (at != null) {
+            val ahead = HeadPositionFeed.positionAt(now + STEP_NS) ?: at
+            val v = (ahead - at) * (1e9f / STEP_NS)
+            val tracked = com.hayeco.flipspaces.core.spatial.SixDof.live
+            try {
+                PocketFeed.nativePose6(now, at.x, at.y, at.z, pose.x, pose.y, pose.z, pose.w, dx, dy, dz,
+                    if (tracked) v.x else 0f, if (tracked) v.y else 0f, if (tracked) v.z else 0f, tracked)
+                return
+            } catch (e: UnsatisfiedLinkError) {
+                pose6 = false
+                Log.w(TAG, "the OpenXR runtime library has no 6DoF head pose (built before 1.4.0): games get rotation only")
+            }
+        }
         PocketFeed.nativePose(now, pose.x, pose.y, pose.z, pose.w, dx, dy, dz)
     }
+
+    /** False once the runtime library turned out to have no [PocketFeed.nativePose6]. */
+    @Volatile private var pose6 = true
 }

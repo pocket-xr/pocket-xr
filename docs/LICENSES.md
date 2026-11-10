@@ -92,5 +92,6 @@ recoloured and resized. Each drawable's header names its symbol.
 
 - Monado's OpenXR runtime and its Android service (`libopenxr_monado.so`, `libmonado-service.so`,
   `monado-ipc.aar`, `monado-auxiliary.aar`), built from https://gitlab.freedesktop.org/monado/monado with Pocket XR's
-  changes (docs/OPENXR.md): Boost Software License 1.0, Copyright Collabora, Ltd. and the Monado contributors. The
+  changes (docs/OPENXR.md; the changes are in `app/src/main/cpp/monado/monado-pocketxr.patch`, with the upstream commit
+  they apply to): Boost Software License 1.0, Copyright Collabora, Ltd. and the Monado contributors. The
   licence text ships inside the app as `assets/licenses/Monado.txt`.

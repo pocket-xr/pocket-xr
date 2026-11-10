@@ -22,7 +22,8 @@ A sub-window is used because Android refuses a Presentation on a display where t
 
 ## Building Monado
 
-The libraries are built from the `pocket-xr` branch of our Monado fork, with the package name baked in:
+The libraries are built from the `pocket-xr` branch of our Monado fork, with the package name baked in. Its changes are
+`app/src/main/cpp/monado/monado-pocketxr.patch`: apply it to the upstream commit named at its top with `git apply`.
 
 ```bash
 ./gradlew --no-daemon -Pandroid.injected.build.abi=arm64-v8a -PxrtAndroidPackage=com.hayeco.flipspaces :src:xrt:targets:openxr_android:assembleOutOfProcessRelease :src:xrt:ipc:assembleRelease :src:xrt:auxiliary:assembleRelease
@@ -36,7 +37,9 @@ The build needs `glslangValidator` from the Vulkan SDK. Then copy:
 
 ## Before a public release
 
-- Publish the Monado fork and pin its commit here. Pocket XR is GPLv3, so the fork is part of the source we must offer.
+- Pocket XR is GPLv3, so the fork is part of the source we must offer. Since 1.4.0 its changes are in
+  `app/src/main/cpp/monado/monado-pocketxr.patch`, with the upstream commit they apply to. Export it again with each
+  rebuild of the libraries.
 - Check the licences of everything Monado pulls in, and add its notices to the app.
 - `app/src/main/jniLibs/` is not exported, so public builds have no runtime libraries. Decide how they ship.
 - Decide who may bind the runtime. Any app can bind it today, and a client can read the head pose.

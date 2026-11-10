@@ -488,6 +488,12 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         return Point(x, y)
     }
 
+    /**
+     * 1.4.0 (docs/6DOF-PLAN.md): the head's position in Space locked (6DoF), set by the renderer each frame; zero in
+     * 3DoF. Every ray starts from it, so the cursor aims from where the eyes are.
+     */
+    @Volatile var eye: Vec3 = Vec3.ZERO
+
     fun ray(head: Quat): Ray = ray(main, head)
 
     /** [hand]'s ray, or null while that hand is not aiming. */
@@ -496,7 +502,8 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
     private fun ray(a: Aim, head: Quat): Ray {
         syncOffset(a, head)
         val origin = a.worldOrigin ?: a.headOrigin?.let { head.rotate(it) } ?: Vec3.ZERO
-        return Ray(origin, head.rotate(Vec3.direction(a.offsetYaw, a.offsetPitch)))
+        val e = eye
+        return Ray(if (e == Vec3.ZERO) origin else origin + e, head.rotate(Vec3.direction(a.offsetYaw, a.offsetPitch)))
     }
 
     /**

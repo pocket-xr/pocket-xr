@@ -463,6 +463,27 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** The head pose of the frame being drawn, for placing panels in front of the gaze. */
     private var head = Quat.IDENTITY
 
+    /**
+     * 1.4.0 (docs/6DOF-PLAN.md): the head's position the frame is drawn from, metres in the Space's axes. Zero except in
+     * Space locked (6DoF) with a 6DoF source live or held ([HeadPositionFeed]); never in Ultrawide or while the glasses
+     * hold the picture, where the glasses place it.
+     */
+    private var headPos = com.hayeco.flipspaces.core.spatial.Vec3.ZERO
+
+    private fun headPositionAt(presentNs: Long, hoverLocked: Boolean): com.hayeco.flipspaces.core.spatial.Vec3 =
+        if (follow.mode != com.hayeco.flipspaces.core.spatial.FollowMode.SPACE_LOCKED || ultrawide || hoverLocked) com.hayeco.flipspaces.core.spatial.Vec3.ZERO
+        else HeadPositionFeed.positionAt(presentNs) ?: com.hayeco.flipspaces.core.spatial.Vec3.ZERO
+
+    /** 1.4.0: the view for a head turned [q] at [pos]: the room moved by -pos, then turned back. Rotation only at zero. */
+    private fun viewOf(q: Quat, pos: com.hayeco.flipspaces.core.spatial.Vec3): Mat4 =
+        if (pos == com.hayeco.flipspaces.core.spatial.Vec3.ZERO) Mat4.rotation(q.conjugate())
+        else Mat4.rotation(q.conjugate()) * Mat4.translation(-pos)
+
+    private fun setHeadPos(pos: com.hayeco.flipspaces.core.spatial.Vec3) {
+        headPos = pos
+        pointer.eye = pos
+    }
+
     /** The panel host generation the open panels' displays belong to; -1 while none is open. */
     @Volatile private var liveGeneration = -1
 
@@ -1118,6 +1139,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         follow.update(tracked, nowMs)
         var head = HeadView.pose(follow.relative(tracked), manualYaw)
         this.head = head
+        setHeadPos(headPositionAt(presentNs, hoverLocked))
         drawnHeads.add(presentNs, head)
         launcher.followHead(Angles.of(head.forward).yawDeg)
         updateHome(nowMs)
@@ -1304,7 +1326,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 // 0.5.59: the eye buffer holds each eye placed over its whole half, through
                 // the widened projection, so the warp below has the strip beyond the moved picture too (0.5.27 to 0.5.58:
                 // the unmoved picture, which the warp then put in a clipped viewport).
-                drawEyes(frustum.projection(), Mat4.rotation(sceneHead.conjugate()), null, sceneHead, hint, frameClockMs)
+                drawEyes(frustum.projection(), viewOf(sceneHead, headPositionAt(scenePresent, hoverLocked).also { setHeadPos(it) }), null, sceneHead, hint, frameClockMs)
                 gpuTimer.end()
                 eyeWarp.sceneSubmitted(slot.index)
                 lateWarp.submitted(slot, sceneHead, scenePresent, System.nanoTime())
@@ -1360,6 +1382,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val trackedNow = if (ultrawide) canvasPose else HeadTracker.renderPose(presentNs)
         head = HeadView.pose(follow.relative(trackedNow), manualYaw)
         this.head = head
+        setHeadPos(headPositionAt(presentNs, hoverLocked))
         drawnHeads.add(presentNs, head)
         // 0.5.21: while the glasses warp, this frame carries its render pose in its top rows.
         // 0.5.25 (a frame whose record does not parse drops the glasses out of scene mode 1): every
@@ -1418,8 +1441,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 warpAgeMs.add((presentNs - src.presentNs) / 1e6)
             }
         } else {
-            val viewBottom = headBottom?.let { Mat4.rotation(it.conjugate()) }
-            val view = Mat4.rotation((headTop ?: head).conjugate())
+            val viewBottom = headBottom?.let { viewOf(it, headPos) }
+            val view = viewOf(headTop ?: head, headPos)
             frameClockMs = presentNs / 1_000_000L
             drawEyes(projection, view, viewBottom, head, hint, frameClockMs)
             gpuTimer.end()
@@ -3558,7 +3581,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      */
     private fun updatePanelRates(nowMs: Long) {
         val video = PlayingMedia.packages
-        val gaze = com.hayeco.flipspaces.core.spatial.Ray(com.hayeco.flipspaces.core.spatial.Vec3.ZERO, head.forward)
+        val gaze = com.hayeco.flipspaces.core.spatial.Ray(headPos, head.forward)
         val held = pointer.heldPanelId
         for (p in panels.values) {
             val id = p.panel.id
@@ -5144,7 +5167,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val c = controls.panel(com.hayeco.flipspaces.core.spatial.ControlCenterLayout.layout(controlState()))
             val t = com.hayeco.flipspaces.core.spatial.PanelCurve.intersect(ray, c)?.t
             // 0.5.71: brought as near as a lifted control, so in 3D it sits on the control that rises under it.
-            if (t != null) return com.hayeco.flipspaces.core.spatial.CursorDepth.point(ray, t, null, ray.at(t).length, layout.panels, defaultM) * (1f - CONTROL_LIFT - 0.004f)
+            // 1.4.0: brought nearer toward the eyes, wherever they are (6DoF).
+            if (t != null) return com.hayeco.flipspaces.core.spatial.CursorDepth.point(ray, t, null, ray.at(t).length, layout.panels, defaultM).let { headPos + (it - headPos) * (1f - CONTROL_LIFT - 0.004f) }
         }
         // 0.5.72: over the open launcher, as near as a hovered icon rises ([LauncherGl]), so in 3D it is never behind one.
         // 0.5.83 (Mike: the dot "wont directly go on" the search input): on what it points at: as near as a risen icon,
@@ -5384,10 +5408,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val local = c.dotPosition() ?: return
         val at = head.rotate(local)
         val dir = at.normalized()
+        // 1.4.0: fixed in front of the eyes wherever the head is (6DoF).
+        val placed = at + headPos
         val right = (dir cross Vec3.UP).let { if (it.length < 1e-6f) Vec3.RIGHT else it.normalized() }
         val up = right cross dir
         val size = at.length * 0.03f
-        drawColor(viewProj * Mat4.basis(at, right, up, -dir, size, size), floatArrayOf(1f, 1f, 1f, 0.95f), circle = true)
+        drawColor(viewProj * Mat4.basis(placed, right, up, -dir, size, size), floatArrayOf(1f, 1f, 1f, 0.95f), circle = true)
         drawColor(viewProj * Mat4.basis(at - dir * 0.001f, right, up, -dir, size * 0.45f, size * 0.45f), floatArrayOf(0.95f, 0.3f, 0.25f, 1f), circle = true)
         val tex = calibrationLabel ?: LabelTexture(1024, 128).also { calibrationLabel = it }
         val lines = listOfNotNull(
@@ -5431,7 +5457,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val right = (dir cross Vec3.UP).let { if (it.length < 1e-6f) Vec3.RIGHT else it.normalized() }
         val up = right cross dir
         tex.set(listOf(shown), Look.GLASS, Look.INK, 40f, centred = true)
-        drawLabel(tex.id, viewProj * Mat4.basis(at, right, up, -dir, 0.42f, 0.04f), 0.95f * fade)
+        drawLabel(tex.id, viewProj * Mat4.basis(at + headPos, right, up, -dir, 0.42f, 0.04f), 0.95f * fade)
     }
 
     private var hintShown: String? = null

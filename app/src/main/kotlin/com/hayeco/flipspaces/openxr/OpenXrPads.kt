@@ -189,7 +189,10 @@ object OpenXrPads {
 
             val q = pad.pose.orientation
             val w = pad.pose.angularVelocity
-            val p = pad.arm.update(q, w.length, head, dt)
+            // 1.4.0: with 6DoF glasses the arm goes where the head goes (docs/6DOF-PLAN.md).
+            val p = pad.arm.update(q, w.length, head, dt).let { arm ->
+                com.hayeco.flipspaces.spatial.HeadPositionFeed.positionAt(stamp.sampleNs)?.let { arm + it } ?: arm
+            }
             val v = pad.arm.velocity
 
             val (sx, sy) = JoyConStick.shape(stickX, stickY)

@@ -61,7 +61,8 @@ object GlassesReportFile {
             calibration = GlassesCalibrationStore.reportLine(context),
             hands = hands,
             timeUtc = utc,
-            tracking = HeadTracker.lastTrackingLine,
+            // 1.4.0: with the 6DoF source, if any (docs/6DOF-PLAN.md).
+            tracking = HeadTracker.lastTrackingLine?.let { "$it | ${HeadPositionFeed.summary()}" },
             // 1.2.8: the report descriptors need USB access, so they come from the newest motion recording.
             hidDescriptors = HidMotionRecorder.newest(context)?.let { f -> runCatching { com.hayeco.flipspaces.core.spatial.HidRecording.descriptorsIn(f.readText()) }.getOrNull() }.orEmpty(),
             // 1.2.13 (Discussion #81): the axis layout, why it is the one, and gravity at the last rest.

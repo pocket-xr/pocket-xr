@@ -1,0 +1,1123 @@
+Pocket XR's changes to Monado (https://gitlab.freedesktop.org/monado/monado), BSL-1.0 like Monado itself.
+Apply to upstream commit ee03722885e777462708841223b60affe6873ac2 with: git apply monado-pocketxr.patch
+Build as in docs/OPENXR.md. These are the sources of the Monado libraries in app/src/main/jniLibs and app/libs/monado.
+
+Commits:
+  05eee8b00 pocketxr: head pose with a position, for 6DoF glasses
+  c865e3f57 pocketxr: each eye's view turned out to the glasses' 3D distance, and the wearer's IPD
+  6dc792619 pocketxr: lock the fake pacer to the display's real vblank
+  ea19c7aaa openxr_android: 16 KB page size support (ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES) for Google Play
+  f0444d4db Add a pocketxr driver for the Pocket XR app
+
+diff --git a/build.gradle b/build.gradle
+index e31a9be77..05cbe6830 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -77,7 +77,7 @@ spotless {
+ 
+ ext {
+     cmake_version = '3.22.1'
+-    ndk_version = '26.3.11579264'
++    ndk_version = '27.0.12077973'
+     // If you update this, must also update .gitlab-ci/config.yml
+     sharedCompileSdk = 35
+     sharedTargetSdk = 31
+diff --git a/src/xrt/auxiliary/util/u_pacing.h b/src/xrt/auxiliary/util/u_pacing.h
+index 5f21bb695..6eeb1dafd 100644
+--- a/src/xrt/auxiliary/util/u_pacing.h
++++ b/src/xrt/auxiliary/util/u_pacing.h
+@@ -749,6 +749,17 @@ u_pc_display_timing_create(int64_t estimated_frame_period_ns,
+ xrt_result_t
+ u_pc_fake_create(int64_t estimated_frame_period_ns, int64_t now_ns, struct u_pacing_compositor **out_upc);
+ 
++/*!
++ * Pocket XR: the display's real vblank, from outside. Android gives the fake pacer no feedback, so on its own it keeps
++ * the phase it started with and a nominal period, and drifts against the display (16.667 against 16.66 ms on XREAL
++ * glasses, about a frame every 30 to 40 s). While a vblank fed here is under half a second old, every fake pacer
++ * predicts from it and its period. Any thread. A period of 0 stops it.
++ *
++ * @ingroup aux_pacing
++ */
++void
++u_pc_fake_external_vblank(int64_t last_vblank_ns, int64_t period_ns);
++
+ /*!
+  * Creates a new application pacing factory helper.
+  *
+diff --git a/src/xrt/auxiliary/util/u_pacing_compositor_fake.c b/src/xrt/auxiliary/util/u_pacing_compositor_fake.c
+index f7589a3e0..16e2ae212 100644
+--- a/src/xrt/auxiliary/util/u_pacing_compositor_fake.c
++++ b/src/xrt/auxiliary/util/u_pacing_compositor_fake.c
+@@ -22,6 +22,7 @@
+ #include <stdio.h>
+ #include <assert.h>
+ #include <math.h>
++#include <stdatomic.h>
+ 
+ DEBUG_GET_ONCE_LOG_OPTION(log_level_fake, "U_PACING_COMPOSITOR_FAKE_LOG", U_LOGGING_INFO)
+ 
+@@ -175,9 +176,48 @@ get_new_frame(struct fake_timing *ft)
+ 	return f;
+ }
+ 
++/*
++ * Pocket XR: the display's real vblank, fed from outside (u_pc_fake_external_vblank).
++ */
++static _Atomic int64_t g_external_vblank_ns = 0;
++static _Atomic int64_t g_external_period_ns = 0;
++static _Atomic int64_t g_external_used = 0;
++
++#define EXTERNAL_VBLANK_MAX_AGE_NS (500 * U_TIME_1MS_IN_NS)
++
++void
++u_pc_fake_external_vblank(int64_t last_vblank_ns, int64_t period_ns)
++{
++	atomic_store(&g_external_period_ns, period_ns);
++	atomic_store(&g_external_vblank_ns, period_ns > 0 ? last_vblank_ns : 0);
++}
++
++//! Takes the fed vblank and period when one is fresh and sane.
++static void
++apply_external_vblank(struct fake_timing *ft, int64_t now_ns)
++{
++	int64_t vblank_ns = atomic_load(&g_external_vblank_ns);
++	int64_t period_ns = atomic_load(&g_external_period_ns);
++	bool fresh = vblank_ns > 0 && now_ns - vblank_ns < EXTERNAL_VBLANK_MAX_AGE_NS;
++	bool sane = period_ns > 2 * U_TIME_1MS_IN_NS && period_ns < 50 * U_TIME_1MS_IN_NS;
++	if (!fresh || !sane) {
++		if (atomic_exchange(&g_external_used, 0) != 0) {
++			U_LOG_I("Pocket XR: no fresh display vblank, the pacer keeps its own clock");
++		}
++		return;
++	}
++	if (atomic_exchange(&g_external_used, 1) == 0) {
++		U_LOG_I("Pocket XR: pacing to the display's real vblank, period %.4fms (was %.4fms)",
++		        time_ns_to_ms_f(period_ns), time_ns_to_ms_f(ft->frame_period_ns));
++	}
++	ft->last_present_time_ns = vblank_ns;
++	ft->frame_period_ns = period_ns;
++}
++
+ static int64_t
+ predict_next_frame_present_time(struct fake_timing *ft, int64_t now_ns)
+ {
++	apply_external_vblank(ft, now_ns);
+ 	int64_t time_needed_ns = ft->comp_time_ns;
+ 	int64_t period_ns = ft->frame_period_ns;
+ 	int64_t predicted_present_time_ns = ft->last_present_time_ns + period_ns;
+diff --git a/src/xrt/compositor/main/comp_window_android.c b/src/xrt/compositor/main/comp_window_android.c
+index 834e42d00..3051ed1f8 100644
+--- a/src/xrt/compositor/main/comp_window_android.c
++++ b/src/xrt/compositor/main/comp_window_android.c
+@@ -193,6 +193,8 @@ comp_window_android_create(struct comp_compositor *c)
+ 	struct comp_window_android *w = U_TYPED_CALLOC(struct comp_window_android);
+ 
+ 	// The display timing code hasn't been tested on Android and may be broken.
++	// Pocket XR: it is on a Galaxy Z Flip 7 (vkGetPastPresentationTimingGOOGLE returns one frozen actual present
++	// time), so the fake pacer stays, locked to the display by u_pc_fake_external_vblank.
+ 	comp_target_swapchain_init_and_set_fnptrs(&w->base, COMP_TARGET_FORCE_FAKE_DISPLAY_TIMING);
+ 
+ 	w->base.base.name = "Android";
+diff --git a/src/xrt/drivers/CMakeLists.txt b/src/xrt/drivers/CMakeLists.txt
+index 5ab60b07d..95161446e 100644
+--- a/src/xrt/drivers/CMakeLists.txt
++++ b/src/xrt/drivers/CMakeLists.txt
+@@ -507,6 +507,9 @@ if(XRT_BUILD_DRIVER_SURVIVE)
+ endif()
+ 
+ if(XRT_BUILD_DRIVER_ANDROID)
++	add_library(drv_pocketxr STATIC pocketxr/pocketxr_hmd.c pocketxr/pocketxr_interface.h)
++	target_link_libraries(drv_pocketxr PRIVATE xrt-interfaces aux_util aux_math)
++
+ 	add_library(
+ 		drv_android STATIC android/android_prober.c android/android_prober.h
+ 				   android/android_sensors.c android/android_sensors.h
+diff --git a/src/xrt/drivers/pocketxr/pocketxr_hmd.c b/src/xrt/drivers/pocketxr/pocketxr_hmd.c
+new file mode 100644
+index 000000000..41f043b89
+--- /dev/null
++++ b/src/xrt/drivers/pocketxr/pocketxr_hmd.c
+@@ -0,0 +1,583 @@
++// Copyright 2026, Pocket XR contributors.
++// SPDX-License-Identifier: BSL-1.0
++/*!
++ * @file
++ * @brief  A head mounted display whose pose and optics are fed in by the Pocket XR app.
++ *
++ * Based on the sample driver. The glasses' own tracking runs in the app, so this device only keeps the poses it is
++ * given and answers from them. There is no lens distortion to undo: the glasses do that themselves.
++ *
++ * @ingroup drv_pocketxr
++ */
++
++#include "os/os_time.h"
++#include "xrt/xrt_defines.h"
++#include "xrt/xrt_device.h"
++#include "xrt/xrt_prober.h"
++
++#include "math/m_api.h"
++#include "math/m_mathinclude.h" // IWYU pragma: keep
++#include "math/m_relation_history.h"
++
++#include "util/u_device.h"
++#include "util/u_distortion_mesh.h"
++#include "util/u_logging.h"
++#include "util/u_misc.h"
++#include "util/u_pacing.h"
++#include "util/u_time.h"
++#include "util/u_visibility_mask.h"
++#include "xrt/xrt_results.h"
++
++#include "pocketxr_interface.h"
++
++#include <pthread.h>
++#include <stdio.h>
++#include <stdlib.h>
++
++struct pocketxr_hmd
++{
++	struct xrt_device base;
++
++	// Has a built-in mutex, so it is thread safe.
++	struct m_relation_history *relation_hist;
++};
++
++struct pocketxr_prober
++{
++	struct xrt_auto_prober base;
++};
++
++static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
++static struct pocketxr_hmd *g_hmd = NULL;
++
++static int32_t g_width_px = 3840;
++static int32_t g_height_px = 1080;
++static float g_refresh_hz = 60.0f;
++static float g_tan_half_x = 0.47f;
++static float g_tan_half_y = 0.27f;
++//! The wearer's IPD, metres; 0 leaves the application's.
++static float g_ipd_m = 0.0f;
++/*!
++ * Each eye's view centre moved outward by this tangent: the glasses' optics angle both eyes in so a picture with no
++ * disparity sits at their 3D distance, not at infinity. Without it every depth is pulled toward that distance.
++ */
++static float g_eye_shift_tan = 0.0f;
++
++static inline struct pocketxr_hmd *
++pocketxr_hmd(struct xrt_device *xdev)
++{
++	return (struct pocketxr_hmd *)xdev;
++}
++
++static void
++pocketxr_hmd_destroy(struct xrt_device *xdev)
++{
++	struct pocketxr_hmd *hmd = pocketxr_hmd(xdev);
++
++	pthread_mutex_lock(&g_lock);
++	if (g_hmd == hmd) {
++		g_hmd = NULL;
++	}
++	pthread_mutex_unlock(&g_lock);
++
++	m_relation_history_destroy(&hmd->relation_hist);
++	u_device_free(&hmd->base);
++}
++
++static xrt_result_t
++pocketxr_hmd_get_tracked_pose(struct xrt_device *xdev,
++                              enum xrt_input_name name,
++                              int64_t at_timestamp_ns,
++                              struct xrt_space_relation *out_relation)
++{
++	struct pocketxr_hmd *hmd = pocketxr_hmd(xdev);
++
++	if (name != XRT_INPUT_GENERIC_HEAD_POSE) {
++		return XRT_ERROR_INPUT_UNSUPPORTED;
++	}
++
++	struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
++	m_relation_history_get(hmd->relation_hist, at_timestamp_ns, &relation);
++
++	if ((relation.relation_flags & XRT_SPACE_RELATION_ORIENTATION_VALID_BIT) != 0) {
++		math_quat_normalize(&relation.pose.orientation);
++	}
++
++	*out_relation = relation;
++	return XRT_SUCCESS;
++}
++
++static xrt_result_t
++pocketxr_hmd_get_view_poses(struct xrt_device *xdev,
++                            const struct xrt_vec3 *default_eye_relation,
++                            int64_t at_timestamp_ns,
++                            enum xrt_view_type view_type,
++                            uint32_t view_count,
++                            struct xrt_space_relation *out_head_relation,
++                            struct xrt_fov *out_fovs,
++                            struct xrt_pose *out_poses)
++{
++	struct xrt_vec3 eyes = *default_eye_relation;
++	pthread_mutex_lock(&g_lock);
++	const float ipd_m = g_ipd_m;
++	pthread_mutex_unlock(&g_lock);
++	if (ipd_m > 0.04f && ipd_m < 0.09f) {
++		eyes.x = ipd_m;
++	}
++	return u_device_get_view_poses(xdev, &eyes, at_timestamp_ns, view_type, view_count, out_head_relation, out_fovs,
++	                               out_poses);
++}
++
++static xrt_result_t
++pocketxr_hmd_get_visibility_mask(struct xrt_device *xdev,
++                                 enum xrt_visibility_mask_type type,
++                                 uint32_t view_index,
++                                 struct xrt_visibility_mask **out_mask)
++{
++	struct xrt_fov fov = xdev->hmd->distortion.fov[view_index];
++	u_visibility_mask_get_default(type, &fov, out_mask);
++	return XRT_SUCCESS;
++}
++
++static struct xrt_device *
++pocketxr_hmd_create(void)
++{
++	enum u_device_alloc_flags flags =
++	    (enum u_device_alloc_flags)(U_DEVICE_ALLOC_HMD | U_DEVICE_ALLOC_TRACKING_NONE);
++
++	struct pocketxr_hmd *hmd = U_DEVICE_ALLOCATE(struct pocketxr_hmd, flags, 1, 0);
++
++	size_t idx = 0;
++	hmd->base.hmd->blend_modes[idx++] = XRT_BLEND_MODE_OPAQUE;
++	hmd->base.hmd->blend_mode_count = idx;
++
++	hmd->base.update_inputs = u_device_noop_update_inputs;
++	hmd->base.get_tracked_pose = pocketxr_hmd_get_tracked_pose;
++	hmd->base.get_view_poses = pocketxr_hmd_get_view_poses;
++	hmd->base.get_visibility_mask = pocketxr_hmd_get_visibility_mask;
++	hmd->base.destroy = pocketxr_hmd_destroy;
++
++	snprintf(hmd->base.str, XRT_DEVICE_NAME_LEN, "Pocket XR glasses");
++	snprintf(hmd->base.serial, XRT_DEVICE_NAME_LEN, "Pocket XR glasses");
++
++	m_relation_history_create(&hmd->relation_hist);
++
++	hmd->base.name = XRT_DEVICE_GENERIC_HMD;
++	hmd->base.device_type = XRT_DEVICE_TYPE_HMD;
++	hmd->base.inputs[0].name = XRT_INPUT_GENERIC_HEAD_POSE;
++	hmd->base.supported.orientation_tracking = true;
++	hmd->base.supported.position_tracking = false;
++
++	pthread_mutex_lock(&g_lock);
++	const int32_t width = g_width_px;
++	const int32_t height = g_height_px;
++	const float refresh = g_refresh_hz;
++	const float tan_x = g_tan_half_x;
++	const float tan_y = g_tan_half_y;
++	const float shift = g_eye_shift_tan;
++	pthread_mutex_unlock(&g_lock);
++
++	hmd->base.hmd->screens[0].nominal_frame_interval_ns = time_s_to_ns(1.0f / refresh);
++	hmd->base.hmd->screens[0].w_pixels = width;
++	hmd->base.hmd->screens[0].h_pixels = height;
++
++	const int32_t eye_w = width / 2;
++	for (uint8_t eye = 0; eye < 2; ++eye) {
++		hmd->base.hmd->views[eye].display.w_pixels = eye_w;
++		hmd->base.hmd->views[eye].display.h_pixels = height;
++		hmd->base.hmd->views[eye].viewport.x_pixels = eye == 0 ? 0 : eye_w;
++		hmd->base.hmd->views[eye].viewport.y_pixels = 0;
++		hmd->base.hmd->views[eye].viewport.w_pixels = eye_w;
++		hmd->base.hmd->views[eye].viewport.h_pixels = height;
++		hmd->base.hmd->views[eye].rot = u_device_rotation_ident;
++
++		// The glasses show each eye's picture turned toward the nose by the shift (the left eye's to the right), so
++		// that eye's view centre turns the same way and a thing at infinity is seen straight ahead.
++		const float out = eye == 0 ? shift : -shift;
++		hmd->base.hmd->distortion.fov[eye].angle_left = -atanf(tan_x - out);
++		hmd->base.hmd->distortion.fov[eye].angle_right = atanf(tan_x + out);
++		hmd->base.hmd->distortion.fov[eye].angle_up = atanf(tan_y);
++		hmd->base.hmd->distortion.fov[eye].angle_down = -atanf(tan_y);
++	}
++
++	u_distortion_mesh_set_none(&hmd->base);
++
++	struct xrt_space_relation identity = XRT_SPACE_RELATION_ZERO;
++	identity.relation_flags = (enum xrt_space_relation_flags)(XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT |
++	                                                          XRT_SPACE_RELATION_ORIENTATION_VALID_BIT);
++	identity.pose.orientation.w = 1.0f;
++	m_relation_history_push(hmd->relation_hist, &identity, os_monotonic_get_ns());
++
++	pthread_mutex_lock(&g_lock);
++	g_hmd = hmd;
++	pthread_mutex_unlock(&g_lock);
++
++	U_LOG_I("Pocket XR glasses: %dx%d at %.1f Hz, eye centres out by tangent %.4f", width, height, refresh, shift);
++	return &hmd->base;
++}
++
++void
++pocketxr_configure(int32_t width_px, int32_t height_px, float refresh_hz, float tan_half_x, float tan_half_y)
++{
++	pthread_mutex_lock(&g_lock);
++	g_width_px = width_px;
++	g_height_px = height_px;
++	g_refresh_hz = refresh_hz;
++	g_tan_half_x = tan_half_x;
++	g_tan_half_y = tan_half_y;
++	pthread_mutex_unlock(&g_lock);
++}
++
++void
++pocketxr_configure_eyes(float ipd_m, float eye_shift_tan)
++{
++	pthread_mutex_lock(&g_lock);
++	g_ipd_m = ipd_m;
++	g_eye_shift_tan = eye_shift_tan;
++	pthread_mutex_unlock(&g_lock);
++}
++
++void
++pocketxr_feed_vblank(int64_t last_vblank_ns, int64_t period_ns)
++{
++	u_pc_fake_external_vblank(last_vblank_ns, period_ns);
++}
++
++void
++pocketxr_feed_pose(int64_t timestamp_ns, float x, float y, float z, float w, float ang_x, float ang_y, float ang_z)
++{
++	struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
++	relation.relation_flags = (enum xrt_space_relation_flags)(XRT_SPACE_RELATION_ORIENTATION_VALID_BIT |
++	                                                          XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT |
++	                                                          XRT_SPACE_RELATION_ANGULAR_VELOCITY_VALID_BIT);
++	relation.pose.orientation = (struct xrt_quat){.x = x, .y = y, .z = z, .w = w};
++	relation.angular_velocity = (struct xrt_vec3){.x = ang_x, .y = ang_y, .z = ang_z};
++
++	pthread_mutex_lock(&g_lock);
++	if (g_hmd != NULL) {
++		m_relation_history_push(g_hmd->relation_hist, &relation, timestamp_ns);
++	}
++	pthread_mutex_unlock(&g_lock);
++}
++
++void
++pocketxr_feed_pose6(int64_t timestamp_ns,
++                    float px,
++                    float py,
++                    float pz,
++                    float x,
++                    float y,
++                    float z,
++                    float w,
++                    float ang_x,
++                    float ang_y,
++                    float ang_z,
++                    float vel_x,
++                    float vel_y,
++                    float vel_z,
++                    int position_tracked)
++{
++	struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
++	uint32_t flags = XRT_SPACE_RELATION_ORIENTATION_VALID_BIT | XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT |
++	                 XRT_SPACE_RELATION_ANGULAR_VELOCITY_VALID_BIT | XRT_SPACE_RELATION_POSITION_VALID_BIT;
++	if (position_tracked) {
++		flags |= XRT_SPACE_RELATION_POSITION_TRACKED_BIT | XRT_SPACE_RELATION_LINEAR_VELOCITY_VALID_BIT;
++		relation.linear_velocity = (struct xrt_vec3){.x = vel_x, .y = vel_y, .z = vel_z};
++	}
++	relation.relation_flags = (enum xrt_space_relation_flags)flags;
++	relation.pose.position = (struct xrt_vec3){.x = px, .y = py, .z = pz};
++	relation.pose.orientation = (struct xrt_quat){.x = x, .y = y, .z = z, .w = w};
++	relation.angular_velocity = (struct xrt_vec3){.x = ang_x, .y = ang_y, .z = ang_z};
++
++	pthread_mutex_lock(&g_lock);
++	if (g_hmd != NULL) {
++		m_relation_history_push(g_hmd->relation_hist, &relation, timestamp_ns);
++	}
++	pthread_mutex_unlock(&g_lock);
++}
++
++/*
++ *
++ * Controllers: two Touch-shaped devices, so games and streaming clients bind them with no extra work.
++ *
++ */
++
++enum pocketxr_input
++{
++	PX_PRIMARY,
++	PX_SECONDARY,
++	PX_MENU,
++	PX_SQUEEZE,
++	PX_TRIGGER,
++	PX_STICK_CLICK,
++	PX_STICK,
++	PX_GRIP,
++	PX_AIM,
++	PX_PRIMARY_TOUCH,
++	PX_SECONDARY_TOUCH,
++	PX_TRIGGER_TOUCH,
++	PX_STICK_TOUCH,
++	PX_THUMBREST_TOUCH,
++	PX_INPUT_COUNT,
++};
++
++#define PX_CONTROLLER_TIMEOUT_NS (2000000000LL)
++
++/*
++ * How far past its newest sample a controller is predicted. Up to PX_PREDICT_FULL_NS the turn rate and speed are used
++ * in full; past it the horizon grows ever more slowly toward PX_PREDICT_FULL_NS + PX_PREDICT_TAIL_NS, so a game that
++ * asks 100 ms ahead does not swing a saber past where the hand stops. A Joy-Con silent for PX_STALE_NS stops being
++ * tracked, so a dropped one does not keep spinning.
++ */
++#define PX_PREDICT_FULL_NS (30000000LL)
++#define PX_PREDICT_TAIL_NS (40000000LL)
++#define PX_STALE_NS (150000000LL)
++
++struct pocketxr_controller
++{
++	struct xrt_device base;
++	struct m_relation_history *relation_hist;
++	int32_t hand;
++
++	// Under g_lock.
++	uint32_t buttons;
++	float trigger;
++	float squeeze;
++	float stick_x;
++	float stick_y;
++	int64_t last_ns;
++};
++
++static struct pocketxr_controller *g_controllers[2] = {NULL, NULL};
++
++static inline struct pocketxr_controller *
++pocketxr_controller(struct xrt_device *xdev)
++{
++	return (struct pocketxr_controller *)xdev;
++}
++
++static void
++pocketxr_controller_destroy(struct xrt_device *xdev)
++{
++	struct pocketxr_controller *c = pocketxr_controller(xdev);
++
++	pthread_mutex_lock(&g_lock);
++	if (g_controllers[c->hand] == c) {
++		g_controllers[c->hand] = NULL;
++	}
++	pthread_mutex_unlock(&g_lock);
++
++	m_relation_history_destroy(&c->relation_hist);
++	u_device_free(&c->base);
++}
++
++static xrt_result_t
++pocketxr_controller_update_inputs(struct xrt_device *xdev)
++{
++	struct pocketxr_controller *c = pocketxr_controller(xdev);
++	const int64_t now = os_monotonic_get_ns();
++
++	pthread_mutex_lock(&g_lock);
++	const bool live = c->last_ns != 0 && now - c->last_ns < PX_CONTROLLER_TIMEOUT_NS;
++	for (uint32_t i = 0; i < PX_INPUT_COUNT; i++) {
++		xdev->inputs[i].active = live;
++		xdev->inputs[i].timestamp = now;
++	}
++	xdev->inputs[PX_PRIMARY].value.boolean = (c->buttons & 1) != 0;
++	xdev->inputs[PX_SECONDARY].value.boolean = (c->buttons & 2) != 0;
++	xdev->inputs[PX_MENU].value.boolean = (c->buttons & 4) != 0;
++	xdev->inputs[PX_STICK_CLICK].value.boolean = (c->buttons & 8) != 0;
++	xdev->inputs[PX_SQUEEZE].value.vec1.x = c->squeeze;
++	xdev->inputs[PX_TRIGGER].value.vec1.x = c->trigger;
++	xdev->inputs[PX_STICK].value.vec2.x = c->stick_x;
++	xdev->inputs[PX_STICK].value.vec2.y = c->stick_y;
++	xdev->inputs[PX_PRIMARY_TOUCH].value.boolean = (c->buttons & 0x10) != 0;
++	xdev->inputs[PX_SECONDARY_TOUCH].value.boolean = (c->buttons & 0x20) != 0;
++	xdev->inputs[PX_TRIGGER_TOUCH].value.boolean = (c->buttons & 0x40) != 0;
++	xdev->inputs[PX_STICK_TOUCH].value.boolean = (c->buttons & 0x80) != 0;
++	xdev->inputs[PX_THUMBREST_TOUCH].value.boolean = (c->buttons & 0x100) != 0;
++	pthread_mutex_unlock(&g_lock);
++
++	return XRT_SUCCESS;
++}
++
++static xrt_result_t
++pocketxr_controller_get_tracked_pose(struct xrt_device *xdev,
++                                     enum xrt_input_name name,
++                                     int64_t at_timestamp_ns,
++                                     struct xrt_space_relation *out_relation)
++{
++	struct pocketxr_controller *c = pocketxr_controller(xdev);
++
++	if (name != XRT_INPUT_TOUCH_GRIP_POSE && name != XRT_INPUT_TOUCH_AIM_POSE) {
++		return XRT_ERROR_INPUT_UNSUPPORTED;
++	}
++
++	pthread_mutex_lock(&g_lock);
++	const int64_t last_ns = c->last_ns;
++	pthread_mutex_unlock(&g_lock);
++
++	int64_t at = at_timestamp_ns;
++	if (last_ns != 0 && at > last_ns + PX_PREDICT_FULL_NS) {
++		const double over = (double)(at - last_ns - PX_PREDICT_FULL_NS);
++		at = last_ns + PX_PREDICT_FULL_NS + (int64_t)(PX_PREDICT_TAIL_NS * (1.0 - exp(-over / PX_PREDICT_TAIL_NS)));
++	}
++
++	struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
++	m_relation_history_get(c->relation_hist, at, &relation);
++
++	if ((relation.relation_flags & XRT_SPACE_RELATION_ORIENTATION_VALID_BIT) != 0) {
++		math_quat_normalize(&relation.pose.orientation);
++	}
++	if (last_ns == 0 || os_monotonic_get_ns() - last_ns > PX_STALE_NS) {
++		relation.relation_flags = (enum xrt_space_relation_flags)(
++		    relation.relation_flags &
++		    ~(XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT | XRT_SPACE_RELATION_POSITION_TRACKED_BIT |
++		      XRT_SPACE_RELATION_ANGULAR_VELOCITY_VALID_BIT | XRT_SPACE_RELATION_LINEAR_VELOCITY_VALID_BIT));
++		relation.angular_velocity = (struct xrt_vec3){0};
++		relation.linear_velocity = (struct xrt_vec3){0};
++	}
++
++	*out_relation = relation;
++	return XRT_SUCCESS;
++}
++
++static xrt_result_t
++pocketxr_controller_set_output(struct xrt_device *xdev,
++                               enum xrt_output_name name,
++                               const struct xrt_output_value *value)
++{
++	// Haptics are not wired up yet.
++	return XRT_SUCCESS;
++}
++
++static struct xrt_device *
++pocketxr_controller_create(int32_t hand)
++{
++	enum u_device_alloc_flags flags = (enum u_device_alloc_flags)(U_DEVICE_ALLOC_TRACKING_NONE);
++	struct pocketxr_controller *c = U_DEVICE_ALLOCATE(struct pocketxr_controller, flags, PX_INPUT_COUNT, 1);
++
++	c->hand = hand;
++	c->base.update_inputs = pocketxr_controller_update_inputs;
++	c->base.get_tracked_pose = pocketxr_controller_get_tracked_pose;
++	c->base.set_output = pocketxr_controller_set_output;
++	c->base.destroy = pocketxr_controller_destroy;
++
++	c->base.name = XRT_DEVICE_TOUCH_CONTROLLER;
++	c->base.device_type = hand == 0 ? XRT_DEVICE_TYPE_LEFT_HAND_CONTROLLER : XRT_DEVICE_TYPE_RIGHT_HAND_CONTROLLER;
++	c->base.supported.orientation_tracking = true;
++	c->base.supported.position_tracking = true;
++
++	snprintf(c->base.str, XRT_DEVICE_NAME_LEN, "Pocket XR %s controller", hand == 0 ? "left" : "right");
++	snprintf(c->base.serial, XRT_DEVICE_NAME_LEN, "Pocket XR %s controller", hand == 0 ? "left" : "right");
++
++	c->base.inputs[PX_PRIMARY].name = hand == 0 ? XRT_INPUT_TOUCH_X_CLICK : XRT_INPUT_TOUCH_A_CLICK;
++	c->base.inputs[PX_SECONDARY].name = hand == 0 ? XRT_INPUT_TOUCH_Y_CLICK : XRT_INPUT_TOUCH_B_CLICK;
++	c->base.inputs[PX_MENU].name = hand == 0 ? XRT_INPUT_TOUCH_MENU_CLICK : XRT_INPUT_TOUCH_SYSTEM_CLICK;
++	c->base.inputs[PX_SQUEEZE].name = XRT_INPUT_TOUCH_SQUEEZE_VALUE;
++	c->base.inputs[PX_TRIGGER].name = XRT_INPUT_TOUCH_TRIGGER_VALUE;
++	c->base.inputs[PX_STICK_CLICK].name = XRT_INPUT_TOUCH_THUMBSTICK_CLICK;
++	c->base.inputs[PX_STICK].name = XRT_INPUT_TOUCH_THUMBSTICK;
++	c->base.inputs[PX_GRIP].name = XRT_INPUT_TOUCH_GRIP_POSE;
++	c->base.inputs[PX_AIM].name = XRT_INPUT_TOUCH_AIM_POSE;
++	c->base.inputs[PX_PRIMARY_TOUCH].name = hand == 0 ? XRT_INPUT_TOUCH_X_TOUCH : XRT_INPUT_TOUCH_A_TOUCH;
++	c->base.inputs[PX_SECONDARY_TOUCH].name = hand == 0 ? XRT_INPUT_TOUCH_Y_TOUCH : XRT_INPUT_TOUCH_B_TOUCH;
++	c->base.inputs[PX_TRIGGER_TOUCH].name = XRT_INPUT_TOUCH_TRIGGER_TOUCH;
++	c->base.inputs[PX_STICK_TOUCH].name = XRT_INPUT_TOUCH_THUMBSTICK_TOUCH;
++	c->base.inputs[PX_THUMBREST_TOUCH].name = XRT_INPUT_TOUCH_THUMBREST_TOUCH;
++	c->base.outputs[0].name = XRT_OUTPUT_NAME_TOUCH_HAPTIC;
++
++	m_relation_history_create(&c->relation_hist);
++
++	pthread_mutex_lock(&g_lock);
++	g_controllers[hand] = c;
++	pthread_mutex_unlock(&g_lock);
++
++	return &c->base;
++}
++
++void
++pocketxr_feed_controller(int32_t hand,
++                         int64_t timestamp_ns,
++                         float px,
++                         float py,
++                         float pz,
++                         float x,
++                         float y,
++                         float z,
++                         float w,
++                         float ang_x,
++                         float ang_y,
++                         float ang_z,
++                         float vel_x,
++                         float vel_y,
++                         float vel_z,
++                         uint32_t buttons,
++                         float trigger,
++                         float squeeze,
++                         float stick_x,
++                         float stick_y)
++{
++	if (hand < 0 || hand > 1) {
++		return;
++	}
++
++	struct xrt_space_relation relation = XRT_SPACE_RELATION_ZERO;
++	relation.relation_flags = (enum xrt_space_relation_flags)(
++	    XRT_SPACE_RELATION_ORIENTATION_VALID_BIT | XRT_SPACE_RELATION_ORIENTATION_TRACKED_BIT |
++	    XRT_SPACE_RELATION_POSITION_VALID_BIT | XRT_SPACE_RELATION_POSITION_TRACKED_BIT |
++	    XRT_SPACE_RELATION_ANGULAR_VELOCITY_VALID_BIT | XRT_SPACE_RELATION_LINEAR_VELOCITY_VALID_BIT);
++	relation.pose.position = (struct xrt_vec3){.x = px, .y = py, .z = pz};
++	relation.linear_velocity = (struct xrt_vec3){.x = vel_x, .y = vel_y, .z = vel_z};
++	relation.pose.orientation = (struct xrt_quat){.x = x, .y = y, .z = z, .w = w};
++	relation.angular_velocity = (struct xrt_vec3){.x = ang_x, .y = ang_y, .z = ang_z};
++
++	pthread_mutex_lock(&g_lock);
++	struct pocketxr_controller *c = g_controllers[hand];
++	if (c != NULL) {
++		m_relation_history_push(c->relation_hist, &relation, timestamp_ns);
++		c->buttons = buttons;
++		c->trigger = trigger;
++		c->squeeze = squeeze;
++		c->stick_x = stick_x;
++		c->stick_y = stick_y;
++		c->last_ns = timestamp_ns;
++	}
++	pthread_mutex_unlock(&g_lock);
++}
++
++static void
++pocketxr_prober_destroy(struct xrt_auto_prober *p)
++{
++	free(p);
++}
++
++static int
++pocketxr_prober_autoprobe(struct xrt_auto_prober *xap,
++                          cJSON *attached_data,
++                          bool no_hmds,
++                          struct xrt_prober *xp,
++                          struct xrt_device **out_xdevs)
++{
++	if (no_hmds) {
++		return 0;
++	}
++	struct xrt_device *xdev = pocketxr_hmd_create();
++	if (xdev == NULL) {
++		return 0;
++	}
++	out_xdevs[0] = xdev;
++	out_xdevs[1] = pocketxr_controller_create(0);
++	out_xdevs[2] = pocketxr_controller_create(1);
++	return 3;
++}
++
++struct xrt_auto_prober *
++pocketxr_create_auto_prober(void)
++{
++	struct pocketxr_prober *p = U_TYPED_CALLOC(struct pocketxr_prober);
++	p->base.name = "Pocket XR";
++	p->base.destroy = pocketxr_prober_destroy;
++	p->base.lelo_dallas_autoprobe = pocketxr_prober_autoprobe;
++	return &p->base;
++}
+diff --git a/src/xrt/drivers/pocketxr/pocketxr_interface.h b/src/xrt/drivers/pocketxr/pocketxr_interface.h
+new file mode 100644
+index 000000000..a3ab3c052
+--- /dev/null
++++ b/src/xrt/drivers/pocketxr/pocketxr_interface.h
+@@ -0,0 +1,124 @@
++// Copyright 2026, Pocket XR contributors.
++// SPDX-License-Identifier: BSL-1.0
++/*!
++ * @file
++ * @brief  A head mounted display whose pose and optics are fed in by the Pocket XR app.
++ * @ingroup drv_pocketxr
++ */
++
++#pragma once
++
++#include <stdint.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++struct xrt_auto_prober;
++
++//! The auto prober that makes the one device.
++struct xrt_auto_prober *
++pocketxr_create_auto_prober(void);
++
++/*!
++ * The display the device reports. Takes effect when the device is made, so call it before the server starts.
++ *
++ * @param width_px   The whole display, both eyes when it is side by side.
++ * @param height_px  The display's height.
++ * @param refresh_hz The display's refresh rate.
++ * @param tan_half_x Tangent of half the horizontal field of view of one eye.
++ * @param tan_half_y Tangent of half the vertical field of view of one eye.
++ */
++void
++pocketxr_configure(int32_t width_px, int32_t height_px, float refresh_hz, float tan_half_x, float tan_half_y);
++
++/*!
++ * The display's latest real vblank, on CLOCK_MONOTONIC, and its measured period, so the compositor's pacer locks to
++ * the display instead of a nominal clock. Any thread. A period of 0 hands the pacer back its own clock.
++ */
++void
++pocketxr_feed_vblank(int64_t last_vblank_ns, int64_t period_ns);
++
++/*!
++ * Before the runtime starts: the wearer's IPD in metres (0 keeps the application's), and how far each eye's view centre
++ * turns outward as a tangent, (IPD / 2) / the glasses' 3D distance, so depth matches the glasses' converged optics.
++ */
++void
++pocketxr_configure_eyes(float ipd_m, float eye_shift_tan);
++
++/*!
++ * One head pose, on CLOCK_MONOTONIC. Any thread. Dropped when no device exists yet.
++ *
++ * @param timestamp_ns When the pose is true.
++ * @param x,y,z,w      The head's orientation, head to world, y up and -z forward.
++ * @param ang_x,ang_y,ang_z Angular velocity in the world frame, radians per second.
++ */
++void
++pocketxr_feed_pose(
++    int64_t timestamp_ns, float x, float y, float z, float w, float ang_x, float ang_y, float ang_z);
++
++/*!
++ * One head pose with a position, from glasses with 6DoF tracking, on CLOCK_MONOTONIC. Any thread. Dropped when no
++ * device exists yet.
++ *
++ * @param timestamp_ns When the pose is true.
++ * @param px,py,pz     The head's position in metres, y up and -z forward, from where tracking started.
++ * @param x,y,z,w      The head's orientation, head to world, y up and -z forward.
++ * @param ang_x,ang_y,ang_z Angular velocity in the world frame, radians per second.
++ * @param vel_x,vel_y,vel_z Linear velocity in the world frame, metres per second.
++ * @param position_tracked 0 while the position is held (tracking unsure), else 1.
++ */
++void
++pocketxr_feed_pose6(int64_t timestamp_ns,
++                    float px,
++                    float py,
++                    float pz,
++                    float x,
++                    float y,
++                    float z,
++                    float w,
++                    float ang_x,
++                    float ang_y,
++                    float ang_z,
++                    float vel_x,
++                    float vel_y,
++                    float vel_z,
++                    int position_tracked);
++
++/*!
++ * One controller state, on CLOCK_MONOTONIC. Any thread. Dropped when no device exists yet.
++ *
++ * @param hand         0 left, 1 right.
++ * @param timestamp_ns When the state is true.
++ * @param px,py,pz     The grip's position in the head's space, metres.
++ * @param x,y,z,w      The grip's orientation, y up and -z forward.
++ * @param ang_x,ang_y,ang_z Angular velocity in the world frame, radians per second.
++ * @param buttons      Bit 0 A or X, bit 1 B or Y, bit 2 menu or system, bit 3 stick click.
++ * @param trigger,squeeze 0 to 1.
++ * @param stick_x,stick_y -1 to 1, up positive.
++ */
++void
++pocketxr_feed_controller(int32_t hand,
++                         int64_t timestamp_ns,
++                         float px,
++                         float py,
++                         float pz,
++                         float x,
++                         float y,
++                         float z,
++                         float w,
++                         float ang_x,
++                         float ang_y,
++                         float ang_z,
++                         float vel_x,
++                         float vel_y,
++                         float vel_z,
++                         uint32_t buttons,
++                         float trigger,
++                         float squeeze,
++                         float stick_x,
++                         float stick_y);
++
++#ifdef __cplusplus
++}
++#endif
+diff --git a/src/xrt/ipc/android/src/main/java/org/freedesktop/monado/ipc/PocketFeed.java b/src/xrt/ipc/android/src/main/java/org/freedesktop/monado/ipc/PocketFeed.java
+new file mode 100644
+index 000000000..478d52c67
+--- /dev/null
++++ b/src/xrt/ipc/android/src/main/java/org/freedesktop/monado/ipc/PocketFeed.java
+@@ -0,0 +1,84 @@
++// Copyright 2026, Pocket XR contributors.
++// SPDX-License-Identifier: BSL-1.0
++package org.freedesktop.monado.ipc;
++
++import androidx.annotation.Keep;
++
++/** The Pocket XR app's way into the pocketxr driver: the display it reports and the head's pose. */
++@Keep
++public final class PocketFeed {
++    static {
++        System.loadLibrary(BuildConfig.SERVICE_LIB_NAME);
++    }
++
++    private PocketFeed() {}
++
++    /** Before the runtime starts: the display, and one eye's field of view as half-angle tangents. */
++    public static native void nativeConfigure(
++            int widthPx, int heightPx, float refreshHz, float tanHalfX, float tanHalfY);
++
++    /**
++     * Before the runtime starts: the wearer's IPD in metres (0 keeps the application's), and each eye's view centre
++     * turned outward by this tangent, (IPD / 2) / the glasses' 3D distance, so depth matches their converged optics.
++     */
++    public static native void nativeConfigureEyes(float ipdM, float eyeShiftTan);
++
++    /**
++     * The display's latest real vblank on System.nanoTime and its measured period, so Monado's pacer locks to the
++     * display. A period of 0 gives the pacer back its own clock.
++     */
++    public static native void nativeVblank(long lastVblankNs, long periodNs);
++
++    /** One head pose on System.nanoTime, head to world, with angular velocity in the world frame. */
++    public static native void nativePose(
++            long timestampNs, float x, float y, float z, float w, float angX, float angY, float angZ);
++
++    /**
++     * One head pose with a position (6DoF glasses), on System.nanoTime: position in metres from where tracking
++     * started, orientation head to world, angular velocity (rad/s) and velocity (m/s) in the world frame. While
++     * [positionTracked] is false the position is held: valid, not tracked.
++     */
++    public static native void nativePose6(
++            long timestampNs,
++            float px,
++            float py,
++            float pz,
++            float x,
++            float y,
++            float z,
++            float w,
++            float angX,
++            float angY,
++            float angZ,
++            float velX,
++            float velY,
++            float velZ,
++            boolean positionTracked);
++
++    /**
++     * One controller state: hand 0 left, 1 right, at the sample's own time. Position in metres, orientation with y up and
++     * -z forward, angular velocity (rad/s) and velocity (m/s) in the world frame. Buttons: 1 primary, 2 secondary,
++     * 4 menu, 8 stick click; touches 0x10 primary, 0x20 secondary, 0x40 trigger, 0x80 stick, 0x100 thumb rest.
++     */
++    public static native void nativeController(
++            int hand,
++            long timestampNs,
++            float px,
++            float py,
++            float pz,
++            float x,
++            float y,
++            float z,
++            float w,
++            float angX,
++            float angY,
++            float angZ,
++            float velX,
++            float velY,
++            float velZ,
++            int buttons,
++            float trigger,
++            float squeeze,
++            float stickX,
++            float stickY);
++}
+diff --git a/src/xrt/targets/common/CMakeLists.txt b/src/xrt/targets/common/CMakeLists.txt
+index f3f46c911..75e36afe0 100644
+--- a/src/xrt/targets/common/CMakeLists.txt
++++ b/src/xrt/targets/common/CMakeLists.txt
+@@ -212,7 +212,7 @@ if(XRT_BUILD_DRIVER_STEAMVR_LIGHTHOUSE)
+ endif()
+ 
+ if(XRT_BUILD_DRIVER_ANDROID)
+-	target_link_libraries(target_lists PRIVATE drv_android)
++	target_link_libraries(target_lists PRIVATE drv_android drv_pocketxr)
+ endif()
+ 
+ if(XRT_BUILD_DRIVER_ILLIXR)
+diff --git a/src/xrt/targets/common/target_lists.c b/src/xrt/targets/common/target_lists.c
+index 78efb9b3b..57e82b66f 100644
+--- a/src/xrt/targets/common/target_lists.c
++++ b/src/xrt/targets/common/target_lists.c
+@@ -66,6 +66,7 @@
+ 
+ #ifdef XRT_BUILD_DRIVER_ANDROID
+ #include "android/android_prober.h"
++#include "pocketxr/pocketxr_interface.h"
+ #endif
+ 
+ #ifdef XRT_BUILD_DRIVER_ILLIXR
+@@ -248,7 +249,7 @@ xrt_auto_prober_create_func_t target_auto_list[] = {
+ #endif
+ 
+ #ifdef XRT_BUILD_DRIVER_ANDROID
+-    android_create_auto_prober,
++    pocketxr_create_auto_prober,
+ #endif
+ 
+ #ifdef XRT_BUILD_DRIVER_ILLIXR
+diff --git a/src/xrt/targets/openxr_android/build.gradle b/src/xrt/targets/openxr_android/build.gradle
+index 97df56626..895274e65 100644
+--- a/src/xrt/targets/openxr_android/build.gradle
++++ b/src/xrt/targets/openxr_android/build.gradle
+@@ -95,7 +95,11 @@ tasks.register('configureEigen', Exec) {
+ 
+     def cmakePath = "${android.sdkDirectory}/cmake/${project.cmake_version}/bin/cmake"
+ 
+-    commandLine cmakePath, eigenSourceDir.absolutePath
++    commandLine cmakePath, "-G", "Ninja",
++        "-DCMAKE_MAKE_PROGRAM=${android.sdkDirectory}/cmake/${project.cmake_version}/bin/ninja.exe",
++        "-DCMAKE_TOOLCHAIN_FILE=${android.sdkDirectory}/ndk/${project.ndk_version}/build/cmake/android.toolchain.cmake",
++        "-DANDROID_ABI=arm64-v8a", "-DBUILD_TESTING=OFF", "-DEIGEN_BUILD_TESTING=OFF",
++        eigenSourceDir.absolutePath
+ }
+ 
+ if (!(new File(project.file(project.eigenCMakeDir), "Eigen3Config.cmake")).exists()) {
+@@ -195,9 +199,12 @@ android {
+         externalNativeBuild {
+             cmake {
+                 arguments "-DEigen3_DIR=${project.eigenCMakeDir}",
++                    "-DXRT_ANDROID_PACKAGE=${project.findProperty('xrtAndroidPackage') ?: 'org.freedesktop.monado.openxr_runtime.out_of_process'}",
+                     "-DANDROID_PLATFORM=${project.sharedMinSdk}",
+                     "-DANDROID_STL=${project.stl}",
+-                    "-DANDROID_ARM_NEON=TRUE"
++                    "-DANDROID_ARM_NEON=TRUE",
++                    // Pocket XR: 16 KB page size support, required by Google Play (NDK 27 links 4 KB by default)
++                    "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+ 
+             }
+             if (project.pythonBinary != null) {
+diff --git a/src/xrt/targets/service-lib/CMakeLists.txt b/src/xrt/targets/service-lib/CMakeLists.txt
+index 25932fab2..02cb1d81c 100644
+--- a/src/xrt/targets/service-lib/CMakeLists.txt
++++ b/src/xrt/targets/service-lib/CMakeLists.txt
+@@ -12,5 +12,6 @@ target_link_libraries(
+ 		comp_main
+ 		target_lists
+ 		target_instance
++		drv_pocketxr
+ 		xrt-external-jni-wrap
+ 	)
+diff --git a/src/xrt/targets/service-lib/service_target.cpp b/src/xrt/targets/service-lib/service_target.cpp
+index 2671c8439..91a93b161 100644
+--- a/src/xrt/targets/service-lib/service_target.cpp
++++ b/src/xrt/targets/service-lib/service_target.cpp
+@@ -8,6 +8,7 @@
+  * @ingroup ipc_android
+  */
+ 
++#include "../../drivers/pocketxr/pocketxr_interface.h"
+ #include "jnipp.h"
+ #include "jni.h"
+ 
+@@ -178,6 +179,91 @@ private:
+ };
+ } // namespace
+ 
++extern "C" JNIEXPORT void JNICALL
++Java_org_freedesktop_monado_ipc_PocketFeed_nativeConfigure(
++    JNIEnv *env, jclass clazz, jint width_px, jint height_px, jfloat refresh_hz, jfloat tan_half_x, jfloat tan_half_y)
++{
++	pocketxr_configure(width_px, height_px, refresh_hz, tan_half_x, tan_half_y);
++}
++
++extern "C" JNIEXPORT void JNICALL
++Java_org_freedesktop_monado_ipc_PocketFeed_nativeConfigureEyes(JNIEnv *env, jclass clazz, jfloat ipd_m, jfloat eye_shift_tan)
++{
++	pocketxr_configure_eyes(ipd_m, eye_shift_tan);
++}
++
++extern "C" JNIEXPORT void JNICALL
++Java_org_freedesktop_monado_ipc_PocketFeed_nativeVblank(JNIEnv *env, jclass clazz, jlong last_vblank_ns, jlong period_ns)
++{
++	pocketxr_feed_vblank(last_vblank_ns, period_ns);
++}
++
++extern "C" JNIEXPORT void JNICALL
++Java_org_freedesktop_monado_ipc_PocketFeed_nativePose(JNIEnv *env,
++                                                      jclass clazz,
++                                                      jlong timestamp_ns,
++                                                      jfloat x,
++                                                      jfloat y,
++                                                      jfloat z,
++                                                      jfloat w,
++                                                      jfloat ang_x,
++                                                      jfloat ang_y,
++                                                      jfloat ang_z)
++{
++	pocketxr_feed_pose(timestamp_ns, x, y, z, w, ang_x, ang_y, ang_z);
++}
++
++extern "C" JNIEXPORT void JNICALL
++Java_org_freedesktop_monado_ipc_PocketFeed_nativePose6(JNIEnv *env,
++                                                       jclass clazz,
++                                                       jlong timestamp_ns,
++                                                       jfloat px,
++                                                       jfloat py,
++                                                       jfloat pz,
++                                                       jfloat x,
++                                                       jfloat y,
++                                                       jfloat z,
++                                                       jfloat w,
++                                                       jfloat ang_x,
++                                                       jfloat ang_y,
++                                                       jfloat ang_z,
++                                                       jfloat vel_x,
++                                                       jfloat vel_y,
++                                                       jfloat vel_z,
++                                                       jboolean position_tracked)
++{
++	pocketxr_feed_pose6(timestamp_ns, px, py, pz, x, y, z, w, ang_x, ang_y, ang_z, vel_x, vel_y, vel_z,
++	                    position_tracked ? 1 : 0);
++}
++
++extern "C" JNIEXPORT void JNICALL
++Java_org_freedesktop_monado_ipc_PocketFeed_nativeController(JNIEnv *env,
++                                                            jclass clazz,
++                                                            jint hand,
++                                                            jlong timestamp_ns,
++                                                            jfloat px,
++                                                            jfloat py,
++                                                            jfloat pz,
++                                                            jfloat x,
++                                                            jfloat y,
++                                                            jfloat z,
++                                                            jfloat w,
++                                                            jfloat ang_x,
++                                                            jfloat ang_y,
++                                                            jfloat ang_z,
++                                                            jfloat vel_x,
++                                                            jfloat vel_y,
++                                                            jfloat vel_z,
++                                                            jint buttons,
++                                                            jfloat trigger,
++                                                            jfloat squeeze,
++                                                            jfloat stick_x,
++                                                            jfloat stick_y)
++{
++	pocketxr_feed_controller(hand, timestamp_ns, px, py, pz, x, y, z, w, ang_x, ang_y, ang_z, vel_x, vel_y, vel_z, (uint32_t)buttons,
++	                         trigger, squeeze, stick_x, stick_y);
++}
++
+ extern "C" JNIEXPORT void JNICALL
+ Java_org_freedesktop_monado_ipc_MonadoImpl_nativeStartServer(JNIEnv *env, jobject thiz, jobject context)
+ {
