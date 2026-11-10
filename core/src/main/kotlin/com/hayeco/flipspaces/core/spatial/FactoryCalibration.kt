@@ -21,6 +21,11 @@ data class FactoryCalibration(
     val modified: String?,
     val gyroMatrix: FloatArray?,
     val displayMount: Quat?,
+    /**
+     * 1.2.13 (Discussion #81, a One Pro+ whose head read 30 to 45 degrees up and whose log said only "no display mount"):
+     * why [displayMount] is null, the key missing or the mount refused with its angle; null when there is a mount.
+     */
+    val mountNote: String? = null,
 ) {
     /** The mount's roll, pitch (as [LevelCalibration] reads them) and twist about up, degrees. */
     fun mountAngles(): Triple<Float, Float, Float>? {
@@ -35,7 +40,7 @@ data class FactoryCalibration(
 
     fun line(): String {
         val g = gyroMatrix?.let { "gyro scale %.4f %.4f %.4f".format(java.util.Locale.ROOT, it[0], it[4], it[8]) } ?: "no gyro matrix"
-        val a = mountAngles()?.let { "display mount roll %.2f pitch %.2f twist %.2f deg".format(java.util.Locale.ROOT, it.first, it.second, it.third) } ?: "no display mount"
+        val a = mountAngles()?.let { "display mount roll %.2f pitch %.2f twist %.2f deg".format(java.util.Locale.ROOT, it.first, it.second, it.third) } ?: ("no display mount" + (mountNote?.let { " ($it)" } ?: ""))
         return "factory calibration of ${serial ?: "unknown glasses"} (version ${version ?: "?"}, ${modified ?: "no date"}): $g, $a"
     }
 
@@ -56,14 +61,23 @@ data class FactoryCalibration(
                 ?.mapNotNull { (it as? Number)?.toFloat() }?.takeIf { it.size == 4 }
             val mount = q?.let { mountFrom(it[3], it[0], it[1], it[2]) }
             if (gyro == null && mount == null) return null
+            val note = when {
+                mount != null -> null
+                q == null -> "the calibration has no display.target_q_left_display"
+                else -> mountRefusal(q[3], q[0], q[1], q[2])
+            }
             return FactoryCalibration(
                 serial = root["FSN"] as? String,
                 version = (root["glasses_version"] as? Number)?.toInt(),
                 modified = root["last_modified_time"] as? String,
                 gyroMatrix = gyro?.toFloatArray(),
                 displayMount = mount,
+                mountNote = note,
             )
         }
+
+        /** The most a display mount may turn from the identity, degrees; a larger one is refused ([mountRefusal] says it). */
+        const val MAX_MOUNT_DEG = 30f
 
         /** A gyro matrix near the identity (each term within 0.05 of it): anything else is not this calibration. */
         private fun plausible(m: List<Float>): Boolean = m.withIndex().all { (i, v) -> kotlin.math.abs(v - if (i % 4 == 0) 1f else 0f) < 0.05f }
@@ -71,9 +85,22 @@ data class FactoryCalibration(
         /**
          * The fusion's mount from the display quaternion (w, x, y, z), Hamilton: its rotation matrix's columns are the
          * display's camera axes in the IMU's frame; the display's right, up (minus camera y) and back (minus camera z)
-         * become the mount's columns. Null unless that is a rotation within 30 deg of the identity.
+         * become the mount's columns. Null unless that is a rotation within [MAX_MOUNT_DEG] of the identity.
          */
-        fun mountFrom(w: Float, x: Float, y: Float, z: Float): Quat? {
+        fun mountFrom(w: Float, x: Float, y: Float, z: Float): Quat? =
+            anyMountFrom(w, x, y, z)?.takeIf { it.angleTo(Quat.IDENTITY) < MAX_MOUNT_DEG }
+
+        /**
+         * 1.2.13 (Discussion #81): why [mountFrom] gave nothing for the display quaternion (w, x, y, z), with the refused
+         * mount's angle, roll and pitch so the next log says whether the glasses' optics sit that steep.
+         */
+        fun mountRefusal(w: Float, x: Float, y: Float, z: Float): String {
+            val m = anyMountFrom(w, x, y, z) ?: return "display.target_q_left_display is not a rotation"
+            val (roll, pitch, _) = FactoryCalibration(null, null, null, null, m).mountAngles()!!
+            return String.format(java.util.Locale.ROOT, "display.target_q_left_display refused: %.1f deg from level, more than %.0f (roll %.1f, pitch %.1f deg)", m.angleTo(Quat.IDENTITY), MAX_MOUNT_DEG, roll, pitch)
+        }
+
+        private fun anyMountFrom(w: Float, x: Float, y: Float, z: Float): Quat? {
             val n = sqrt(w * w + x * x + y * y + z * z)
             if (!(n > 0.5f && n < 1.5f)) return null
             val (qw, qx, qy, qz) = listOf(w / n, x / n, y / n, z / n)
@@ -81,8 +108,7 @@ data class FactoryCalibration(
             val cx = Vec3(1 - 2 * (qy * qy + qz * qz), 2 * (qx * qy + qz * qw), 2 * (qx * qz - qy * qw))
             val cy = Vec3(2 * (qx * qy - qz * qw), 1 - 2 * (qx * qx + qz * qz), 2 * (qy * qz + qx * qw))
             val cz = Vec3(2 * (qx * qz + qy * qw), 2 * (qy * qz - qx * qw), 1 - 2 * (qx * qx + qy * qy))
-            val m = quatFromColumns(cx, -cy, -cz)
-            return m.takeIf { it.angleTo(Quat.IDENTITY) < 30f }
+            return quatFromColumns(cx, -cy, -cz)
         }
 
         /** The rotation whose matrix has columns [a], [b], [c] (each a unit axis). */

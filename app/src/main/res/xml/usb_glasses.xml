@@ -2,7 +2,11 @@
 <!-- XREAL Aura as measured on Mike's Flip 7: vendor 0x3318, product 0x043A. -->
 <!-- 1.1.12: the Air family, whose head tracking needs USB access (IMU on HID): Air 0x0424, Air 2 0x0428,
      Air 2 Pro 0x0432, Air 2 Ultra 0x0426. -->
+<!-- 1.2.12 (Discussion #24): the VITURE Beast XR Glasses, vendor 0x35CA, product 0x1211, whose head tracking needs USB
+     access too. Android drops that access at each unplug; with the Beast here, the plug-in prompt's OK grants it again
+     (and "Always" grants it with no prompt), so tracking comes back by itself after a replug. -->
 <resources>
+    <usb-device vendor-id="13770" product-id="4625" />
     <usb-device vendor-id="13080" product-id="1082" />
     <usb-device vendor-id="13080" product-id="1060" />
     <usb-device vendor-id="13080" product-id="1064" />

@@ -793,6 +793,8 @@ class TrackpadActivity : Activity(), PadHost {
                 shownHold = hold
                 screen.refreshCover()
             }
+            // Unreleased (John Davis): the open Menu follows the focused window.
+            screen.refreshDrawerForFocus()
             if (unlock.tick(now)) unlocked()
             if (screen.locked) screen.lockProgress(unlock.progress(now), unlock.holding)
             while (true) buzz(SpaceSession.haptics.poll() ?: break)
@@ -1205,7 +1207,7 @@ class TrackpadActivity : Activity(), PadHost {
             return
         }
         com.hayeco.flipspaces.spatial.SpaceSession.recordWanted = on
-        screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped: saved to Movies/Pocket XR.")
+        screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped. The glasses say where it was saved.")
     }
 
     /** 1.2.3 (issue 59): Game keys on; for this run of the trackpad, off again when it closes. */
@@ -1293,7 +1295,7 @@ class TrackpadActivity : Activity(), PadHost {
                 }
             }
             com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> {
-                val pkg = SpaceSession.focusedApp?.first
+                val pkg = focusedApp()?.first
                 if (pkg == null || touchSpots.of(pkg).isEmpty()) {
                     spotSetting = true
                     screen.showToast("Set the spots: aim the dot at the game's button, then hold the matching control.")
@@ -1311,7 +1313,7 @@ class TrackpadActivity : Activity(), PadHost {
             com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD ->
                 com.hayeco.flipspaces.spatial.PanelHost.gamepadInput(com.hayeco.flipspaces.core.pointer.UhidGamepad.report(state))
             com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> if (spotSetting) spotHolds(state) else {
-                val (pkg, aspect) = SpaceSession.focusedApp ?: return
+                val (pkg, aspect) = focusedApp() ?: return
                 sendTouches(touchPointers.next(com.hayeco.flipspaces.core.pointer.TouchSpots.touches(state, touchSpots.of(pkg), aspect)))
             }
             com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> Unit
@@ -1356,7 +1358,7 @@ class TrackpadActivity : Activity(), PadHost {
     }
 
     override fun clearTouchSpots() {
-        val pkg = SpaceSession.focusedApp?.first ?: return screen.showToast("Click the game's window first.")
+        val pkg = focusedApp()?.first ?: return screen.showToast("Click the game's window first.")
         touchSpots.clear(pkg)
         com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots = touchSpots.encode()
         screen.showToast("Touch spots cleared for this game.")
@@ -1368,12 +1370,23 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun focusedTextSize(): Pair<String, Int>? = if (SpaceSession.active) SpaceSession.focusedTextSize else null
 
+    /** Unreleased: the Game controller's focused app, only while the Space is up (as the Menu's This window), never one left from a closed Space. */
+    private fun focusedApp(): Pair<String, Float>? = if (SpaceSession.active) SpaceSession.focusedApp else null
+
     override fun textSizeStep(steps: Int) {
         if (!SpaceSession.active) return
-        SpaceSession.send(SpaceCommand.TextSize(steps))
+        // 1.2.7 (Mike: many quick taps kept the windows reloading long after): one tap at a time, the next only once the
+        // Space laid this one out (or 3 s passed); a tap meanwhile is dropped.
+        val seq = textSizeLock.tap(SystemClock.uptimeMillis(), SpaceSession.textSizeSettledSeq) ?: return
+        SpaceSession.send(SpaceCommand.TextSize(steps, seq))
         // The Space takes it on its next frame; the Menu shows the new size a moment later.
         window.decorView.postDelayed({ screen.refreshDrawer() }, TEXT_SIZE_REFRESH_MS)
     }
+
+    /** 1.2.7: the Text size keys, off until the Space says a tap was laid out ([SpaceSession.textSizeSettledSeq]). */
+    private val textSizeLock = com.hayeco.flipspaces.core.spatial.TextSizeLock()
+
+    override fun textSizeBusy(): Boolean = textSizeLock.locked(SystemClock.uptimeMillis(), SpaceSession.textSizeSettledSeq)
 
     override fun returnHome() {
         screen.closeDrawer()

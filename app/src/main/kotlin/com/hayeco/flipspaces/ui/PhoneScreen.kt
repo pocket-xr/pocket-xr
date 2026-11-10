@@ -107,6 +107,7 @@ fun PhoneScreen(
     val updateStatus by com.hayeco.flipspaces.UpdateChecker.status.collectAsState()
     // 1.1.14 (a tester asked for a way to turn head tracking on and off): saved, applied at once.
     var headTracking by remember { mutableStateOf(com.hayeco.flipspaces.spatial.SpaceStore(context).headTracking) }
+    var recentreFollowsTilt by remember { mutableStateOf(com.hayeco.flipspaces.spatial.SpaceStore(context).recentreFollowsTilt) }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -178,6 +179,16 @@ fun PhoneScreen(
                     ) {
                         headTracking = it
                         com.hayeco.flipspaces.spatial.HeadTracker.setEnabled(context, it)
+                    }
+                    RowDivider()
+                    // 1.2.13 (Discussion #81): a recenter lying back or looking down puts the windows where you look.
+                    ToggleRow(
+                        "Recenter follows head tilt",
+                        if (recentreFollowsTilt) "On: recenter puts the windows where you look, up or down" else "Off: recenter keeps the windows on the horizon",
+                        recentreFollowsTilt,
+                    ) {
+                        recentreFollowsTilt = it
+                        com.hayeco.flipspaces.spatial.HeadTracker.setRecentreFollowsTilt(context, it)
                     }
                     RowDivider()
                     // 1.1.16 (issue 12): the settings these glasses need and the head turn check, at any time.

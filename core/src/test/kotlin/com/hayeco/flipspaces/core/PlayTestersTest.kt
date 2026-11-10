@@ -60,7 +60,7 @@ class PlayTestersTest {
 
     @Test
     fun theLinksAndWordsAreMikes() {
-        assertEquals("https://groups.google.com/g/pocketxr-testers", PlayTesters.GROUP_URL)
+        assertEquals("https://groups.google.com/a/mikehaye.com/g/pocketxr-testers", PlayTesters.GROUP_URL)
         assertEquals("https://play.google.com/apps/testing/com.hayeco.flipspaces", PlayTesters.PLAY_URL)
         for (line in listOf(PlayTesters.TITLE, PlayTesters.BODY, PlayTesters.JOIN, PlayTesters.OPEN_PLAY, PlayTesters.NOT_NOW, PlayTesters.ALREADY_JOINED)) {
             assertFalse(line, '—' in line)

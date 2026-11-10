@@ -33,6 +33,27 @@ import com.hayeco.flipspaces.spatial.HeadLive
 /** Facts read once when the screen opens. */
 data class HeadTrackingFacts(val soc: String, val dynamicSensors: List<String>)
 
+/**
+ * 1.2.8 (Discussion #24, VITURE Beast glasses): the card for glasses that aren't XREAL's: the opt-in motion recording, and on
+ * VITURE glasses the experimental reader with its two axis switches.
+ */
+data class OtherGlassesCard(
+    /** The glasses a recording would read ("35CA:1201 "VITURE Beast""), null when none is plugged in. */
+    val glasses: String?,
+    val viture: Boolean,
+    val vitureOn: Boolean,
+    /** 1.2.12: the switch's name ([com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel]): no "Experimental" on the Beast. */
+    val vitureLabel: String,
+    /** 1.2.12: the glasses are a VITURE Beast, where the reader is on by default. */
+    val vitureBeast: Boolean,
+    val vitureAxes: com.hayeco.flipspaces.core.spatial.VitureAxes,
+    val recording: Boolean,
+    val motionLine: String?,
+    val onViture: (Boolean) -> Unit,
+    val onVitureAxes: (com.hayeco.flipspaces.core.spatial.VitureAxes) -> Unit,
+    val onRecord: () -> Unit,
+)
+
 @Composable
 fun HeadTrackingScreen(
     status: HeadTrackingStatus,
@@ -81,6 +102,8 @@ fun HeadTrackingScreen(
     onShare: () -> Unit = {},
     /** 1.1.14: the logs and this screen's text in one zip on an email to Mike ([com.hayeco.flipspaces.SendLogs]). */
     onSendLogs: () -> Unit = {},
+    /** 1.2.8: glasses that aren't XREAL's ([OtherGlassesCard]); null hides the card. */
+    other: OtherGlassesCard? = null,
 ) {
     Scaffold { padding ->
         LazyColumn(
@@ -122,6 +145,7 @@ fun HeadTrackingScreen(
                     }
                 }
             }
+            if (other != null) item { OtherGlasses(other) }
             item {
                 Step(
                     "1. Glasses USB network",
@@ -129,6 +153,7 @@ fun HeadTrackingScreen(
                         is HeadTrackingStatus.NoNetwork -> "Not found."
                         // 1.1.10: these glasses have no USB network for head tracking; nothing is missing.
                         is HeadTrackingStatus.HidGlasses -> "Not used: these glasses send head tracking over USB HID."
+                        is HeadTrackingStatus.VitureNotYet -> "Not used: VITURE glasses have no USB network."
                         HeadTrackingStatus.TurnedOff -> "Not looked for: head tracking is turned off in Settings."
                         HeadTrackingStatus.Searching, HeadTrackingStatus.Off -> "Looking."
                         else -> "Found."
@@ -242,7 +267,7 @@ fun HeadTrackingScreen(
                         Text(
                             "Once per pair of glasses: with the Space on the glasses, tap Check level. A green line appears across the middle of the view. " +
                                 "Look at a level edge at eye height (the horizon, a far shelf or window frame), tilt your head until the line lies on it, hold still, then tap Save level. " +
-                                "The sensor may read up to 40 degrees of pitch (the Aura's sits about 14.5 degrees tilted, a One Pro more) and 10 of roll.",
+                                "The sensor may read up to 50 degrees of pitch (the Aura's sits about 14.5 degrees tilted, a One Pro more, a One Pro+ about 40) and 10 of roll.",
                             style = MaterialTheme.typography.bodySmall,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -276,6 +301,57 @@ fun HeadTrackingScreen(
                         "Protocol: XREAL One family IMU stream, read only. See docs/SPATIAL.md 1.1.",
                     ),
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OtherGlasses(o: OtherGlassesCard) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Glasses that aren't XREAL's", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Record motion for 20 seconds saves what your glasses' motion sensor sends over USB, so support for them can be added. " +
+                    "It asks for USB access, reads for 20 seconds while you move your head, and keeps only the sensor's numbers; " +
+                    "Send logs takes it along. On VITURE glasses it also sends VITURE's documented start command after 5 seconds.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(o.glasses?.let { "Plugged in: $it" } ?: "No glasses other than XREAL's are plugged in.", style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(onClick = o.onRecord, enabled = o.glasses != null && !o.recording && !(o.viture && o.vitureOn)) {
+                Text(if (o.recording) "Recording..." else "Record motion for 20 seconds")
+            }
+            o.motionLine?.let { SelectionContainer { Text(it, style = MaterialTheme.typography.bodySmall) } }
+            if (o.viture) {
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.Switch(checked = o.vitureOn, onCheckedChange = o.onViture)
+                    Text(o.vitureLabel, style = MaterialTheme.typography.bodyMedium)
+                }
+                Text(
+                    if (o.vitureBeast) {
+                        "On by default on the VITURE Beast, and it comes back by itself when you plug the glasses in again. " +
+                            "The sensor axis layout starts at x right, y down, z front, with both switches off."
+                    } else {
+                        "Experimental. It follows a public description of VITURE's newer glasses; your model may not answer. " +
+                            "On the VITURE Beast the sensor axis layout starts at x right, y down, z front, with both switches off. " +
+                            "On other models, if turning your head moves the view the wrong way, try the switches below; they apply at once."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = o.vitureAxes.flipUpDown,
+                        onClick = { o.onVitureAxes(o.vitureAxes.copy(flipUpDown = !o.vitureAxes.flipUpDown)) },
+                        label = { Text("Flip up and down") },
+                        enabled = o.vitureOn,
+                    )
+                    FilterChip(
+                        selected = o.vitureAxes.swapTurnTilt,
+                        onClick = { o.onVitureAxes(o.vitureAxes.copy(swapTurnTilt = !o.vitureAxes.swapTurnTilt)) },
+                        label = { Text("Swap turn and tilt") },
+                        enabled = o.vitureOn,
+                    )
+                }
             }
         }
     }

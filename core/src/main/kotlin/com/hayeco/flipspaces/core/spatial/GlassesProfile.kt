@@ -59,6 +59,14 @@ enum class GlassesModel(
     AURA("XREAL Aura", "aura", tested = true, camera = true, diagonalFovDeg = null),
     ONE("XREAL One", "one", tested = true, camera = false, diagonalFovDeg = 50f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
     ONE_PRO("XREAL One Pro", "onepro", tested = false, camera = false, diagonalFovDeg = 57f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
+    // 1.2.13 (Discussion #81, a One Pro+ on a Galaxy Z Fold 6: "When looking straight ahead it's as if I'm looking
+    // straight up. When I recenter, all of the windows appear straight down"): XREAL's 1 Pro+ (October 2026, the One Pro's
+    // 57 degrees). Its display calls itself "XREAL 1 Pro+" (EDID product 16657) on USB 3318:0444. The tester's Send logs
+    // (1.2.10, which took it for plain XREAL glasses) put gravity on the sensor's -y with the One's layout, so the One's
+    // axes are its axes: a level-ish rest read 0.5, -9.8, 1.5 m/s2. What was wrong was a steady 30 to 45 degrees of
+    // pitch (gravity tipped toward the sensor's +z), a display mount the factory calibration did not give
+    // ([FactoryCalibration.mountNote]), not a quarter turn of the axes.
+    ONE_PRO_PLUS("XREAL One Pro+", "oneproplus", tested = false, camera = false, diagonalFovDeg = 57f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
     ONE_S("XREAL 1S", "1s", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
     // 1.1.0: the One family's axes. Every XREAL with this head tracking link but the Aura has them, and the Aura's axes
     // on a One family model turn the picture upside down (0.5.91).
@@ -67,6 +75,10 @@ enum class GlassesModel(
     // round, the Space facing behind.
     AIR("XREAL Air", "air", tested = false, camera = false, diagonalFovDeg = 46f),
     OTHER_XREAL("XREAL glasses", "xreal", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT),
+    // 1.2.8 (Discussion #24, a VITURE Beast showed as "Unknown glasses"): VITURE's glasses, by their display's name. Their
+    // own settings (axes, screen size) are kept apart from other glasses'. The experimental reader turns its reports into
+    // head axes itself ([VitureAxes]), so the default axes.
+    VITURE("VITURE glasses", "viture", tested = false, camera = false, diagonalFovDeg = null),
     UNKNOWN("Unknown glasses", "unknown", tested = false, camera = false, diagonalFovDeg = null);
 
     /**
@@ -83,6 +95,12 @@ enum class GlassesModel(
      * none, and the One Pro's was never checked, so the level calibration's mount is used there.
      */
     val factoryMountChecked: Boolean get() = this == AURA
+
+    /**
+     * 1.2.8: an XREAL model, whose 3840 x 1080 mode is always their side by side 3D (or an Ultrawide their control link
+     * says). Other glasses' wide mode may be one 32:9 canvas ([WideCanvas]).
+     */
+    val isXreal: Boolean get() = this != VITURE && this != UNKNOWN
 
     /** Whether [tanPerPx1to1] comes from this model's own figure. */
     val fovKnown: Boolean get() = this == AURA || diagonalFovDeg != null
@@ -115,6 +133,13 @@ enum class GlassesModel(
         const val EDID_AURA = "16656"
         const val EDID_ONE = "16641"
 
+        /** 1.2.13 (Discussion #81): the One Pro+'s USB product and EDID product, as its Glasses report showed them. */
+        const val USB_ONE_PRO_PLUS = 0x0444
+        const val EDID_ONE_PRO_PLUS = "16657"
+
+        /** 1.2.13: "One Pro+", "1 Pro+", "One Pro Plus", "1Pro+" and the like. */
+        private val PRO_PLUS = Regex("(one|1) ?pro ?(\\+|plus)")
+
         /** Tan per pixel of a 1920 x 1080 picture whose diagonal spans [diagonalDeg]. */
         fun tanPerPx(diagonalDeg: Float): Float = tan(diagonalDeg * DEG / 2f) / (sqrt(1920f * 1920f + 1080f * 1080f) / 2f)
 
@@ -131,10 +156,14 @@ enum class GlassesModel(
             return when {
                 id?.productId == EDID_AURA || lower == "xreal 1 ultra" || lower.contains("aura") -> AURA
                 id?.productId == EDID_ONE || lower == "xreal one" -> ONE
-                lower.contains("one pro") -> ONE_PRO
+                // 1.2.13: XREAL sells it as the "1 Pro+", and its display says "XREAL 1 Pro+"; the other spellings too.
+                id?.productId == EDID_ONE_PRO_PLUS || PRO_PLUS.containsMatchIn(lower) -> ONE_PRO_PLUS
+                lower.contains("one pro") || lower.contains("1 pro") -> ONE_PRO
                 lower.contains("1s") || lower.contains("one s") -> ONE_S
+                lower.contains("viture") -> VITURE
                 usbProduct == USB_AURA -> AURA
                 usbProduct == USB_ONE -> ONE
+                usbProduct == USB_ONE_PRO_PLUS -> ONE_PRO_PLUS
                 usbProduct?.let(AirImuProtocol::modelName) != null || lower.contains("xreal air") || lower.contains("nreal air") -> AIR
                 lower.contains("xreal") || lower.contains("nreal") || usbProduct != null -> OTHER_XREAL
                 else -> UNKNOWN

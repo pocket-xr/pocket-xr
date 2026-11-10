@@ -21,7 +21,8 @@ class GlassesModel0110Test {
     }
 
     @Test fun onlyTheAuraKeepsTheDefaultAxes() {
-        GlassesModel.entries.filter { it != GlassesModel.AURA && it != GlassesModel.AIR && it != GlassesModel.UNKNOWN }.forEach {
+        // 1.2.13 (Discussion #81): the One Pro+ too, as its tester's logs showed ([Discussion81Test]).
+        GlassesModel.entries.filter { it != GlassesModel.AURA && it != GlassesModel.AIR && it != GlassesModel.VITURE && it != GlassesModel.UNKNOWN }.forEach {
             assertEquals(it.name, AxisMap.XRIGHT_YDOWN_ZFRONT, it.defaultAxes)
         }
         assertEquals(AxisMap.DEFAULT, GlassesModel.AURA.defaultAxes)

@@ -99,16 +99,16 @@ object GlassesSetup {
     /**
      * The family of the glasses: the model, else the USB product on XREAL's vendor id. The One series' network link
      * products ([HeadImuTransport.NETWORK_PRODUCTS]: One Pro 0x0435 and 0x0436, One 0x0437 and 0x0438, 1S 0x043D and
-     * 0x043E) tell the family when the name does not; the model itself is left to [GlassesModel.detect].
+     * 0x043E, One Pro+ 0x0444) tell the family when the name does not; the model itself is left to [GlassesModel.detect].
      */
     fun family(model: GlassesModel?, usbProduct: Int? = null): SetupFamily = when (model) {
-        GlassesModel.ONE, GlassesModel.ONE_PRO, GlassesModel.ONE_S -> SetupFamily.ONE_SERIES
+        GlassesModel.ONE, GlassesModel.ONE_PRO, GlassesModel.ONE_PRO_PLUS, GlassesModel.ONE_S -> SetupFamily.ONE_SERIES
         GlassesModel.AIR -> SetupFamily.AIR
         GlassesModel.AURA -> SetupFamily.AURA
         else -> if (usbProduct in ONE_SERIES_PRODUCTS) SetupFamily.ONE_SERIES else SetupFamily.OTHER
     }
 
-    val ONE_SERIES_PRODUCTS: Set<Int> = setOf(0x0435, 0x0436, 0x0437, 0x0438, 0x043D, 0x043E)
+    val ONE_SERIES_PRODUCTS: Set<Int> = setOf(0x0435, 0x0436, 0x0437, 0x0438, 0x043D, 0x043E, 0x0444)
 
     /** The steps on the glasses for [family]: only the One series has settings of its own that fight the Space. */
     fun steps(family: SetupFamily): List<String> = when (family) {

@@ -7,6 +7,9 @@ import com.hayeco.flipspaces.core.spatial.SpaceLayout
 
 /** Saved Space layout and settings. */
 class SpaceStore(context: Context) {
+    /** 1.2.10: for the USB device list (VITURE defaults by product); the application, never a screen. */
+    private val appContext: Context = context.applicationContext
+
     /**
      * 0.5.9: the glasses' optics for the field of view setting.
      *
@@ -109,9 +112,38 @@ class SpaceStore(context: Context) {
     }
 
     // 0.5.91 (Mike's One: "everything is upside down"): per model, its default until one is picked; the Aura keeps its key.
+    // 1.2.10 (Discussion #24): VITURE glasses' default by the USB product plugged in, so the Beast starts the right way up.
     var axisMap: AxisMap
-        get() = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: model.defaultAxes
-        set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).apply()
+        get() = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: defaultAxes()
+        set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).remove(perModel(KEY_AXES_GRAVITY)).apply()
+
+    /**
+     * 1.2.13 (Discussion #81, glasses whose axes are a quarter or half turn off): the layout the gravity check picked
+     * ([com.hayeco.flipspaces.core.spatial.GravityAxes]), saved per model as a pick on the head tracking screen is, with
+     * its line so the Glasses report says why. A pick by hand afterwards clears the line.
+     */
+    fun setAxesByGravity(axes: AxisMap, line: String) {
+        prefs.edit().putString(perModel(KEY_AXES), axes.name).putString(perModel(KEY_AXES_GRAVITY), line).apply()
+    }
+
+    /** 1.2.13: the model's own default layout, what the gravity check prefers when it fits. */
+    val modelAxes: AxisMap get() = defaultAxes()
+
+    /** 1.2.13: where [axisMap] came from, in words, for the Glasses report. */
+    fun axesFrom(): String {
+        val gravity = prefs.getString(perModel(KEY_AXES_GRAVITY), null)
+        return when {
+            gravity != null -> "set by the gravity check: $gravity"
+            prefs.contains(perModel(KEY_AXES)) -> "picked on the head tracking screen; the ${model.label}'s default is ${defaultAxes().label}"
+            else -> "the ${model.label}'s default"
+        }
+    }
+
+    private fun defaultAxes(): AxisMap {
+        val m = model
+        if (m != com.hayeco.flipspaces.core.spatial.GlassesModel.VITURE) return m.defaultAxes
+        return com.hayeco.flipspaces.core.spatial.VitureDevices.defaultAxes(VitureImuLink.find(appContext)?.productId)
+    }
 
     /** 0.5.95: how many sessions the model's setup hint ([com.hayeco.flipspaces.core.spatial.GlassesModel.setupHint]) was said in. */
     // 1.1.8 (issue 31): a new key, so the hint that now names Follow mode is said again on glasses that heard the old one.
@@ -442,10 +474,56 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(KEY_AUTO_GLASSES_VIEW, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_GLASSES_VIEW, value).apply()
 
+    /**
+     * 1.2.8 (Discussion #24): the experimental VITURE reader ([com.hayeco.flipspaces.core.spatial.VitureImuProtocol]),
+     * off by default: it claims the glasses' HID interface and sends a command no VITURE glasses have taken from Pocket XR yet.
+     *
+     * 1.2.12 (Discussion #24, third report): with nothing saved, on for the VITURE Beast and off on other models
+     * ([com.hayeco.flipspaces.core.spatial.VitureDevices.headTrackingOn]). The switch saves on and off alike, under the
+     * key it always had, so a Beast user who turned it off keeps it off.
+     */
+    var vitureHeadTracking: Boolean
+        get() = com.hayeco.flipspaces.core.spatial.VitureDevices.headTrackingOn(
+            if (prefs.contains(KEY_VITURE_HEAD_TRACKING)) prefs.getBoolean(KEY_VITURE_HEAD_TRACKING, false) else null,
+            vitureProduct,
+        )
+        set(value) = prefs.edit().putBoolean(KEY_VITURE_HEAD_TRACKING, value).apply()
+
+    /**
+     * 1.2.12: the USB product of the VITURE glasses plugged in, else of the last ones seen (null before any), so the
+     * switch keeps the Beast's default and name while they are unplugged.
+     */
+    val vitureProduct: Int?
+        get() {
+            val saved = prefs.getInt(KEY_VITURE_PRODUCT, -1).takeIf { it >= 0 }
+            val now = VitureImuLink.find(appContext)?.productId ?: return saved
+            if (now != saved) prefs.edit().putInt(KEY_VITURE_PRODUCT, now).apply()
+            return now
+        }
+
+    /**
+     * 1.2.8: the VITURE reader's two axis switches ([com.hayeco.flipspaces.core.spatial.VitureAxes]). 1.2.10: until set,
+     * the model's ([com.hayeco.flipspaces.core.spatial.VitureDevices.defaultSwitches]), both off.
+     */
+    var vitureAxes: com.hayeco.flipspaces.core.spatial.VitureAxes
+        get() {
+            val d = com.hayeco.flipspaces.core.spatial.VitureDevices.defaultSwitches(VitureImuLink.find(appContext)?.productId)
+            return com.hayeco.flipspaces.core.spatial.VitureAxes(prefs.getBoolean("viture_flip_up_down", d.flipUpDown), prefs.getBoolean("viture_swap_turn_tilt", d.swapTurnTilt))
+        }
+        set(value) = prefs.edit().putBoolean("viture_flip_up_down", value.flipUpDown).putBoolean("viture_swap_turn_tilt", value.swapTurnTilt).apply()
+
     /** 0.5.65: the glasses' factory gyro matrix and display mount in the fusion (Developer); on by default. */
     var factoryCalibration: Boolean
         get() = prefs.getBoolean(KEY_FACTORY_CALIBRATION, true)
         set(value) = prefs.edit().putBoolean(KEY_FACTORY_CALIBRATION, value).apply()
+
+    /**
+     * 1.2.13 (Discussion #81): Recenter follows head tilt, on by default. A recentre with the head more than 15 degrees
+     * up or down puts the windows where it looks; off keeps them on the horizon ([com.hayeco.flipspaces.core.spatial.FusionSettings.recentreFollowsTilt]).
+     */
+    var recentreFollowsTilt: Boolean
+        get() = prefs.getBoolean(KEY_RECENTRE_FOLLOWS_TILT, true)
+        set(value) = prefs.edit().putBoolean(KEY_RECENTRE_FOLLOWS_TILT, value).apply()
 
     /** 0.5.64: the drawn orientation's One Euro filter (Developer); on by default. */
     var drawSmoothing: Boolean
@@ -637,12 +715,16 @@ class SpaceStore(context: Context) {
         private const val KEY_STILL_LOCK = "still_lock_0532"
         private const val KEY_DRAW_SMOOTHING = "draw_smoothing_0564"
         private const val KEY_HEAD_TRACKING = "head_tracking_1114"
+        // 1.2.8's key, kept so a saved on or off carries over.
+        private const val KEY_VITURE_HEAD_TRACKING = "viture_head_tracking"
+        private const val KEY_VITURE_PRODUCT = "viture_product_1212"
         private const val KEY_TOUCH_SPOTS = "touch_spots_123"
         private const val KEY_AIR_DISPLAY_MODE = "air_display_mode_123"
         private const val KEY_SIDE_BY_SIDE = "side_by_side_123"
         private const val KEY_SIDE_BY_SIDE_FLAT = "side_by_side_flat_123"
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
+        private const val KEY_RECENTRE_FOLLOWS_TILT = "recentre_follows_tilt_1213"
         // 0.5.96: the key keeps its saved name, so the setting carries over.
         private const val KEY_WARP_NO_LSR = "warp_nebula_0532"
         private const val KEY_WARP_REENTER = "warp_reenter_0532"
@@ -680,6 +762,7 @@ class SpaceStore(context: Context) {
         private const val KEY_RECENTS = "launcher_recents"
         private const val KEY_LAYOUT = "layout"
         private const val KEY_AXES = "axes"
+        private const val KEY_AXES_GRAVITY = "axes_gravity"
         private const val KEY_FOV = "fov"
         private const val KEY_SCREEN_2D = "glasses_screen_2d_0526"
         private const val KEY_SCREEN_3D = "glasses_screen_3d_0526"

@@ -2,12 +2,108 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.2.13: XREAL One Pro+ head tracking the right way up
+
+- **XREAL One Pro+ head tracking the right way up.** Thanks to gegonut in GitHub Discussion #81 for the report: on a One
+  Pro+ looking straight ahead showed as looking straight up, and a recentre put every window straight down. Pocket XR
+  now knows the One Pro+ by its name, its display's EDID and its USB id, and treats it as a One Pro. Its Send logs
+  showed the One's sensor axes are right for it and the head read about 40 degrees up when level, a tilt between the
+  sensor and the optics: the level calibration on the head tracking screen now takes up to 50 degrees of pitch (it was
+  40) so it can correct that, and the log now says why the glasses' own calibration gave no tilt. As a safety net on
+  any glasses, when the glasses first sit still and on each recentre, Pocket XR checks which way gravity reads. If
+  it's a quarter or half turn off the axes in use, it picks the axes that match, saves them and logs it, so wrong axes
+  fix themselves. Glasses lying still on a table at the start are left alone. The Glasses report now says the model,
+  what it was told from (the display's name and EDID product, and the USB ids), the axes in use and why, and gravity
+  at the last rest.
+- **Recenter puts the windows where you look, up or down.** Thanks to gegonut again: the logs from Discussion #81 showed
+  his head really was about 40 degrees up for 20 minutes of videos, and each recenter kept the windows on the horizon,
+  40 degrees below his view. Lots of people watch lying back or looking down, so now a recenter with your head more
+  than 15 degrees up or down puts the front window in the middle of your view, facing you and level with it. Nearer
+  level, recenter works as before. It applies to Home hold, the Recenter button and every other recenter, and works
+  with Body Anchor, Smooth Follow and Steady mode. A new switch in Settings, Recenter follows head tilt, is on by
+  default; turn it off to keep the windows on the horizon.
+
+## 1.2.12: VITURE Beast tracking by default, and a mouse on Spatial Mouse
+
+Thanks to the tester in GitHub Discussion #24 for confirming 1.2.10 on the VITURE Beast and for the two things left to
+fix.
+
+- **VITURE head tracking is on by default on the Beast.** No more turning it on at first. Other VITURE models still
+  start with it off. If you turn it off on the Beast, it stays off.
+- **Beast tracking comes back after a replug.** Android drops Pocket XR's USB access to the glasses when they are
+  unplugged, and the access prompt could come up out of sight while the Space opened, so tracking waited until the
+  switch was flipped again. Now Android offers to open Pocket XR when the Beast is plugged in, and its OK gives the
+  access back (tick Always and it won't ask again). If a prompt is still missed, it is asked again when the Space or the
+  head tracking screen opens.
+- **The switch is called VITURE head tracking on the Beast.** It keeps Experimental in its name on other VITURE models.
+  With it off on the Beast, the status says it's turned off instead of saying VITURE isn't supported.
+- **A mouse works on Spatial Mouse.** With the trackpad left on Spatial Mouse, the phone's aim took the pointer back
+  on every move, so a Bluetooth mouse looked dead. Now the mouse wins: while it's moving, it moves the pointer the
+  same as on the other trackpad pages, and clicks land where it points. About a second and a half after it stops, the
+  phone aims again from where the pointer is, with no jump back. Your settings stay as they were.
+
+## 1.2.11: Record works on the Flip7
+
+- **Record works on the Galaxy Z Flip7.** Tapping Record in the Menu did nothing there: the recording stopped a tenth of
+  a second after it started and nothing was saved. Pocket XR asked the phone's graphics for a video surface that didn't
+  match the Space's own, and the Flip7 refuses that. It now picks one that matches. If a recording still can't start,
+  the glasses say so instead of saying nothing.
+
+## 1.2.10: VITURE tracking comes back
+
+Thanks to the tester in GitHub Discussion #24 for a second round of VITURE Beast logs, the motion recording and the
+steps that brought tracking back.
+
+- **VITURE head tracking comes back.** Turning Experimental VITURE head tracking off and on, unplugging and plugging the
+  glasses back in, and the Space restarting all bring tracking back without a force stop. The glasses kept an answer
+  waiting after each stop and took no new start until it was read; Pocket XR now reads it first. It also closes and
+  releases the glasses cleanly when tracking stops.
+- **The USB prompt asks again.** It shows for each plug-in and each time you turn the switch on, if Pocket XR doesn't
+  have access, and asks for the glasses, not the VITURE Microphone they also show as.
+- **The axis switches apply at once.** Flip up and down and Swap turn and tilt change the view straight away, without
+  restarting tracking.
+- **VITURE Beast starts the right way up.** Its sensor axis layout starts at x right, y down, z front with both switches
+  off. That is the same as the setup that worked for the tester (Swap turn and tilt on with x right, y front, z up). A
+  layout you already picked is kept.
+- **Launcher icons in one shape.** Every app icon is drawn in your phone's own icon shape. Icon pack and older icons fill
+  that shape too, instead of sitting in a white circle, and stay as sharp as before.
+
+## 1.2.9: The right testers group
+
+- **The testers card's Join button opens the right group.** It went to a Google Group that didn't exist. It now opens
+  the Pocket XR testers group, so you can join and then take the Play invite.
+
+## 1.2.8: VITURE glasses, a first step
+
+Thanks to the tester in GitHub Discussion #24 for VITURE Beast logs and a clear report.
+
+- **VITURE glasses say so plainly.** Head tracking isn't supported yet on VITURE glasses, and the head tracking screen
+  now says that instead of blaming a missing USB network. The Space works head locked.
+- **Experimental VITURE head tracking.** Off by default, on the head tracking screen. It's untested on VITURE glasses, so
+  your model may not answer. If the view moves the wrong way, try Flip up and down or Swap turn and tilt.
+- **Record motion for 20 seconds.** On the head tracking screen, for glasses that aren't XREAL's. It saves what the
+  glasses' motion sensor sends, and Send logs takes it along, so support for them can be added.
+- **Send logs lists every glasses device.** Not only XREAL's: the USB IDs, interfaces, report descriptors and the display
+  modes Android reports.
+- **No more two copies in 32:9.** On glasses other than XREAL's, the wide 3840 x 1080 mode is one wide screen in 2D, and
+  side by side only with 3D on.
+- **The Depth button tells you what to do.** On glasses Pocket XR can't switch to 3D itself, it says "Turn on 3D in your
+  glasses menu first" on the glasses.
+- **Smoother launcher icons.** Icon edges are smooth with any icon pack, drawn at the glasses' own pixel size.
+
+## 1.2.7: Text size for the window you clicked
 
 - **Help Pocket XR get on Google Play.** The trackpad's Menu has a card asking you to join the Play testers. Tap Join
   for the testers group, then Open Play invite. Installing from Play means uninstalling this copy first, and that resets
   your Pocket XR settings. Not now hides the card for 7 days. I already joined hides it for good. The Play version
   doesn't show it.
+- **Text size shows for the window you clicked.** The Menu's This window now keeps up with the window you focus, by
+  trackpad, mouse, pinch or gaze, even while the Menu is open. The window keeps its focus when the glasses switch
+  between 2D and 3D, and a window you just opened has it too. The same goes for Side by side 3D and the Game
+  controller. Thanks to John Davis for the report.
+- **Text size waits for the window.** After you tap smaller, larger or the reset, the three keys dim and say Resizing
+  until the window in the glasses has redrawn at the new size, 3 seconds at most. Taps while they're dimmed are ignored,
+  so quick taps no longer pile up and keep reloading the window long after you stop.
 
 ## 1.2.6: a lighter Menu
 

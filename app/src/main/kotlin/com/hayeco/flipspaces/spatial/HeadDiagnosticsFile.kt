@@ -8,7 +8,7 @@ import android.util.Log
 import com.hayeco.flipspaces.core.spatial.HeadDiagnosticsText
 import com.hayeco.flipspaces.core.spatial.HeadImuTransport
 import com.hayeco.flipspaces.core.spatial.HeadTrackingStatus
-import com.hayeco.flipspaces.core.spatial.GlassesReport
+import com.hayeco.flipspaces.core.spatial.GlassesVendors
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -27,12 +27,10 @@ object HeadDiagnosticsFile {
         val store = SpaceStore(context)
         val status = HeadTracker.status.value
         val live = HeadTracker.live.value
-        val usb = GlassesUsbList.read(context).filter { it.vendorId == GlassesReport.XREAL_VENDOR }.map { u ->
-            "%04X:%04X \"%s\": %s; head tracking link: %s".format(
-                Locale.ROOT, u.vendorId, u.productId, u.name,
-                u.infos.joinToString(", ") { it.label() }.ifEmpty { "no interfaces listed" },
-                HeadImuTransport.choose(u.vendorId, u.productId, u.infos).label,
-            )
+        // 1.2.8 (Discussion #24: a VITURE Beast's diagnostics said "USB devices from XREAL: none"): every USB device, with
+        // its interfaces' numbers, protocols and endpoints.
+        val usb = GlassesUsbList.read(context).map { u ->
+            GlassesVendors.line(u) + "; head tracking link: " + HeadImuTransport.choose(u.vendorId, u.productId, u.infos).label
         }
         val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).let { "${it.versionName} (${it.longVersionCode})" } }.getOrDefault("?")
         val utc = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
@@ -62,6 +60,7 @@ object HeadDiagnosticsFile {
             soc = soc,
             dynamicSensors = dynamicSensors,
             usb = usb,
+            motion = HidMotionRecorder.newestLine(context),
         ).text()
     }
 

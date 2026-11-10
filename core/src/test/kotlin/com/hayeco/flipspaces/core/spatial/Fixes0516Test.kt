@@ -227,8 +227,10 @@ class Fixes0516Test {
         assertTrue(LevelCalibration.plausible(0.5f, 14.3f))
         assertTrue(LevelCalibration.plausible(0f, -24f))
         assertTrue(!LevelCalibration.plausible(12f, 0f))
-        assertTrue(!LevelCalibration.plausible(0f, 41f))
-        assertEquals("pitch 41.0 degrees is more than 40", LevelCalibration.refusal(0f, 41f))
+        // 1.2.13 (Discussion #81): the One Pro+'s 40-odd degrees fit; past 50 is still a head bent, not the glasses.
+        assertTrue(LevelCalibration.plausible(0f, 46f))
+        assertTrue(!LevelCalibration.plausible(0f, 51f))
+        assertEquals("pitch 51.0 degrees is more than 50", LevelCalibration.refusal(0f, 51f))
         // 1.1.7 (issue 30): a One Pro's steeper frame, either way up.
         assertEquals(null, LevelCalibration.refusal(0f, -30f))
         assertEquals(null, LevelCalibration.refusal(0f, 30f))

@@ -10,7 +10,9 @@ set on the glasses themselves, and what to send when something is wrong.
 | XREAL Aura | Tested | Yes, through its camera | The model the app was built on. |
 | XREAL One | Tested (30 October 2026) | Not yet: possible with the XREAL Eye add-on (help wanted) | Use **Follow mode** with **Stabilizer off**, see below. |
 | XREAL One Pro | Community testing | Not yet: possible with the XREAL Eye add-on (help wanted) | Treated as a One with a 57 degree view. Not run by the project yet. |
+| XREAL One Pro+ (sold as the 1 Pro+) | Community testing | Not yet | Treated as a One Pro (the One's sensor axes). Its tester watched with the head about 40 degrees up; recenter now follows head tilt. See Discussion #81 below. |
 | XREAL 1S | Community testing | No | Treated as a One. Its view is not published, so the One's 50 degrees is used. |
+| VITURE (Beast seen) | Community testing, partly working | No | The Space works head locked. Head tracking isn't supported yet; an experimental reader is off by default. See "VITURE glasses" below. |
 | Other glasses | Help wanted | No | Plain fallbacks; see "Unknown glasses" below. |
 
 The app reads which glasses are plugged in from what they report to Android: the display's name and product id, and
@@ -117,11 +119,207 @@ Its head tracking stream is the same One-family stream as the Aura's, at 1000 re
 wrong way, the head tracking screen has the axis list. The Glasses report and the head attitude log line ("tilt error"
 should stay at a degree or two) help find the right one.
 
+**One Pro+ (1.2.13, Discussion #81).** A tester on a Galaxy Z Fold 6 said looking straight ahead showed as looking
+straight up, a recentre put every window straight down, and Home looked right. Their Send logs (Pocket XR 1.2.10) show:
+
+- The display calls itself "XREAL 1 Pro+", EDID product 16657, and the glasses are USB 3318:0444. 1.2.10 knew neither,
+  so it took them for plain "XREAL glasses" with the One's 50 degrees and the One's axes, "x right, y down, z front".
+  Head tracking came over the USB network (NCM / ECM), the One family's link, at 1000 reports a second.
+- Gravity read on the sensor's -y, so the One's axes are right: about 0.5, -9.8, 1.5 m/s2 with the head near level,
+  9 degrees from those axes' up. "x right, y front, z up" (the first guess, from the words alone) would put that same
+  reading 82 degrees off, close to looking straight down.
+- What was wrong was pitch, not the axes: while a video played, the accelerometer read about -0.1, -7.6, 6.2 (gravity
+  tipped toward the sensor's +z) and the app drew the head 30 to 45 degrees up, about 40 in the middle, for 20 minutes
+  and across 24 recentres. A recentre keeps the head's real pitch, so windows placed at eye level sat that far below
+  the view. That is a display mount, the IMU tilted against the optics. The glasses' factory calibration (version 8)
+  was read but gave "no display mount", and 1.2.10's log does not say whether the key was missing or the mount was
+  refused for being more than 30 degrees.
+
+So the One Pro+ is now told from its name, its EDID product 16657 or its USB product 0x0444, and keeps the One's axes.
+The factory calibration line now says why there is no display mount (the key missing, or the mount refused with its
+angle, roll and pitch), so the next log tells whether the glasses carry their own tilt. Until then the level
+calibration on the head tracking screen corrects it by hand: it now takes up to 50 degrees of pitch (it was 40, which
+refused about half of this tester's readings).
+
+So that wrong axes fix themselves on any glasses (`GravityAxes` in `core/.../spatial/`), the averaged accelerometer is
+checked when the start gate passes and on each steady recentre. If gravity is more than 60 degrees from the axes' up and
+within 25 degrees of another layout's, that layout is picked: the model's own if it fits, else the one the smallest turn
+away (so right stays right). It is saved for the model, the gyro bias is carried over, the fusion starts again on it,
+and a "gravity check" line is logged. At the start, glasses lying still on a table (gyro under the static detector's
+gate) are left alone, since they may lie any way up. A recentre lying flat on your back can pick a layout that makes
+that view level; the next recentre sitting up puts the model's own back. The Glasses report has the layout, where it
+came from (the model's default, picked by hand, or the gravity check) and gravity at the last rest. The check leaves a
+tilt like the One Pro+'s alone (it is 40 degrees, not a quarter turn). It would have caught the first guess's wrong axes
+only on a recentre with the head near level: at the start the glasses were too still to judge, and at the 40-degree
+rests gravity is 51 degrees from that layout's up, inside the 60 that are kept.
+
+A second look at the logs says the 40 degrees was the tester's real head, not a mount: the reading held through 20
+minutes of videos, and leaning back or lying down is how many people watch. So in 1.2.13 a recentre also takes the
+head's pitch as straight ahead when it is more than 15 degrees from level (`FusionSettings.recentreFollowsTilt`, Settings'
+"Recenter follows head tilt", on by default): the recentre's reference turns by the head's yaw and pitch, never its
+roll, so the front window lands in the middle of the view, facing the head and level with it. Within 15 degrees, or with
+the switch off, the horizon stays straight ahead as before. Everything that draws or aims with the head pose (Body
+Anchor, Smooth Follow, Ultrawide's canvas in Steady mode, hand rays, the glasses warp's record) gets the tilted frame
+the same way it got the recentre's yaw. The gravity check reads the sensor's own axes, apart from the reference, so a
+tilted recentre does not move it; the worn check for hand presses reads pitch and roll against gravity too.
+
+## VITURE glasses
+
+Seen once, from a tester's Send logs in GitHub Discussion #24 (a Galaxy Z Flip 7 with VITURE Beast glasses, Pocket XR
+1.2.0 to 1.2.5, November 2026). The tester also has an XREAL One Pro, which worked in the same logs. What the logs showed:
+
+- **The display.** Android names it "VITURE Beast". Its modes, one at a time as the glasses switch: 1920 x 1200 at 120 or
+  60 Hz and 1920 x 1080 at 60 Hz in 2D, and 3840 x 1080 at 60 Hz in the wide modes. The EDID product id changes with the
+  mode: 288 in 2D, 800 in the sessions that showed two copies (the 32:9 ultrawide mode, by the tester's report) and 544 in
+  the session where 3D then worked (the glasses' own 3D). The app now uses that to tell ultrawide from 3D; it is inferred
+  from one log, so any other id falls back to the rule below.
+- **Head tracking.** The app only looked for XREAL's USB network, so every line said "No USB network to the glasses",
+  in both of the tester's anchor modes and in the glasses' own 0DoF follow mode. VITURE glasses have no USB network: their
+  motion sensor is on USB HID, on VITURE's vendor id 0x35CA. The logs had nothing about the glasses' USB device, because
+  Send logs listed XREAL's devices only.
+- **Two copies in 32:9.** Every 3840 x 1080 mode was taken as side by side 3D, and in 2D the Space put the same picture in
+  both halves. On glasses showing that mode as one wide screen, that is two copies side by side.
+- **3D only after the glasses' menu.** The Depth button saved "3D" but the glasses offered no 3840 x 1080 mode, and
+  Pocket XR can only switch XREAL glasses itself, so nothing visible happened.
+- **Icons.** The launcher cut each icon to a circle with a clip that isn't anti-aliased, at a fixed 2 px a dp, so the
+  edges stepped whatever the icon pack.
+- In another app the Beast's tracking worked but its axes were mixed up (up was down, turning left tilted the view).
+
+What the app does now:
+
+- **Head tracking** says plainly that it isn't supported yet on VITURE glasses, and the Space stays head locked. The head
+  tracking screen has **Experimental VITURE head tracking**, off by default. It follows the one public, MIT licensed
+  description of VITURE's newer USB protocol (elasticjava/viture-v2's PROTOCOL.md, measured on a Pro 2): frames start
+  `10 00`, then a message id, a length and a byte sum checksum; message 0x0301 with `02 02` starts the raw gyro and
+  accelerometer stream, which comes back as message 0x7309 (gyro in rad/s and accelerometer in g, as floats). No VITURE
+  SDK or code is used. The write-up does not say which way the sensor's axes point, so the reader takes them as head
+  axes as they are, and two switches turn them: **Flip up and down** (half a turn about the up axis) and **Swap turn and
+  tilt** (a quarter turn about the right axis, the sensor's z as up). Both are whole turns, never mirrors, so the
+  gyro and gravity stay in step. Not run on any VITURE glasses yet; the Beast may not speak this protocol.
+- **Record motion for 20 seconds** on the head tracking screen, for any glasses that aren't XREAL's. It asks for USB
+  access, saves each HID interface's report descriptor and every input report for 20 seconds with its time, and on
+  VITURE glasses sends the start command above after 5 seconds (and the stop at the end). Send logs takes the newest.
+- **The wide mode** on glasses other than XREAL's is one 32:9 canvas, unless 3D is on in Pocket XR (or the Beast's EDID
+  says its 3D mode), when it is side by side.
+- **The Depth button** on glasses Pocket XR can't switch says "Turn on 3D in your glasses menu first" on the glasses
+  when they offer no 3D mode (or are in their ultrawide mode), instead of changing a setting that shows nothing.
+- **Icons** are cut with an anti-aliased circle a pixel inside a transparent edge, baked at their size in the glasses'
+  own pixels, and an older bitmap icon is read at the app's highest density. 1.2.10: in the phone's own icon shape, not
+  a circle, and an older or icon pack bitmap is no longer put on a white disc (see the second report below).
+
+### The second report (Pocket XR 1.2.8)
+
+The same tester ran 1.2.8 with **Experimental VITURE head tracking** on and sent two log bundles, one when tracking
+would not come back and one when it worked, each with a motion recording. The Beast shows Android two devices on
+VITURE's vendor id: the glasses, USB 35CA:1211 "VITURE Beast XR Glasses", whose motion sensor is HID interface 5 (a 40
+byte vendor report descriptor, interrupt IN and OUT of 64 bytes, 119 reports a second), and "VITURE Microphone", USB
+35CA:1102, which has HID interfaces but no motion. A "USB 2.0 Camera", 0C45:6368, is on the glasses too. The control
+link never answered; it is XREAL's and is not expected to.
+
+- **The reader worked.** The protocol above is what the Beast speaks: the start command streamed raw samples from the
+  first try after each plug-in.
+- **It came back only after a replug.** Every start after the first, in the same plug-in, was "not accepted": after the
+  switch was turned off and on, after an axis switch (which restarted the reader) and after the Space restarted. The motion
+  recording made between two such failures shows why. It reads the interface for 5 seconds before it sends the start, and
+  its very first read was `10 00 01 23 01 00 00 00 00`: message 0x2301 with one byte, the glasses' answer to the
+  reader's stop, still unread. Its own start, sent after that read, was accepted and streamed at 120 a second. A second
+  recording, made while the reader held the interface, read nothing. So the Beast takes no new command while an answer
+  of its own is waiting, and the reader sent its start straight after claiming the interface.
+- **After a replug, the microphone.** Android sometimes listed the microphone first. The reader took the first VITURE
+  device, asked for USB access to the microphone (the prompt the tester then answered), opened its interface 2 and waited
+  for reports that never came, so tracking failed silently. When the glasses came first, the prompt was for them and it
+  worked.
+- **The prompt once.** USB access was asked for once per device name for the life of the app, so a replug that kept the
+  name, or a prompt that was dismissed, left the reader waiting with nothing on screen.
+- **Upside down.** With the axes as the sensor sends them, the tracking line's accelerometer at rest and upright read
+  0.04, -9.94, -0.74 m/s2: the reaction to gravity, which points up, lay along the sensor's -y. The Space took y as up,
+  so the view was rolled 180 degrees. Flip up and down turns the sensor about the up axis, so it could not help. What
+  worked was **Swap turn and tilt** on with the sensor axis layout **x right, y front, z up**. Together those two turns
+  take the sensor's (x, y, z) to (x, -y, -z), which is the layout **x right, y down, z front** with both switches off
+  (the XREAL One's layout too). That layout alone, without the swap, would put gravity on the back axis and tip the view
+  a quarter turn.
+
+What changed in the app:
+
+- Commands to the glasses read what the glasses hold first, then the answer after; a refused one is tried again, then on
+  the control pipe; and a start that is refused while samples are already arriving still counts. Closing sends the stop,
+  reads its answer, releases the interface and closes the connection, once. One link holds the glasses at a time.
+- The reader opens the VITURE device that carries the motion sensor, never the microphone.
+- USB access is checked before every open and asked for again on each plug-in, each time the switch is turned on, and
+  after access was lost. A plug-in, an unplug and the prompt's answer each make the reader look again at once.
+- **Flip up and down** and **Swap turn and tilt** apply to the open stream from the next sample; the reader is not
+  restarted.
+- On the VITURE Beast (35CA:1211) the sensor axis layout starts at **x right, y down, z front** with both switches off.
+  A layout or switch you have already picked is kept. Other VITURE models start as before, with the switches there to try.
+- **Icons.** The tester found them sharp, but in mixed shapes: adaptive icons were cut to circles while older and icon
+  pack bitmaps sat at 70 % on a white disc, so a square pack icon showed as a square on white. Now every icon is drawn in
+  the shape the phone gives adaptive icons (its own icon mask). An adaptive icon is cut by it. A bitmap that is already a
+  solid shape (it covers at least 75 % of its own, roughly square, box) is scaled to cover the mask, with its own edge
+  colour in any corner it leaves. A free-form glyph is fitted at two thirds of the mask on a dimmed plate in its own hue,
+  never white: on see-through glasses a dark plate vanishes and a white one glares.
+
+What a next log needs (Send logs with the glasses plugged in, after **Record motion for 20 seconds**): the
+`glasses-report.txt` (the Beast's USB ids, interfaces, endpoints and HID report descriptors), the `motion/` recording
+made while turning the head left, right, up and down and then tilting it, and a note of which glasses mode was on
+(2D, 3D, ultrawide; anchor or 0DoF). With the experimental reader on, the head tracking diagnostics show whether the
+glasses answered it.
+
+### The third report (Pocket XR 1.2.10)
+
+The tester confirmed 1.2.10 on the Beast: right way up the first time, 3D works, icons look right, no Beast problems.
+Two things were left: the switch had to be turned on at first, and after unplugging and plugging the glasses back in he
+had to turn the switch back on each time.
+
+Why the replug needed the switch: the switch itself is saved and nothing in the app turns it off. What stopped was USB
+access. Android drops an app's access to a USB device when it is unplugged, and the Beast was not in Pocket XR's
+plug-in device filter (`usb_glasses.xml`, XREAL's glasses only), so nothing granted it again at the plug-in. The reader
+asked Android's USB prompt once for the new plug-in, at the moment the Space was opening on the glasses (and, on a
+folded Flip, the prompt goes to the inner screen). A prompt that was never seen or got dismissed left the reader waiting
+for an answer with nothing on screen, until turning the switch off and on asked again. No log from 1.2.10 shows this
+directly; it is what the code does, and it fits "flipping the switch back on works every time".
+
+What changed in the app (1.2.12):
+
+- **On by default on the Beast.** With nothing saved, VITURE head tracking is on for USB 35CA:1211 and off on other
+  VITURE models. The switch saves on and off under the key it always had (`viture_head_tracking`), so a Beast user who
+  turns it off keeps it off. The last VITURE model seen is kept, so the switch keeps the Beast's default and name while
+  the glasses are unplugged.
+- **The name.** On the Beast the switch is **VITURE head tracking**; other VITURE models keep **Experimental VITURE
+  head tracking**. With the switch off on the Beast, the status says it is turned off, not that VITURE isn't supported.
+- **Access at the plug-in.** The Beast is in the plug-in device filter, so Android offers "Open Pocket XR" when it is
+  plugged in and its OK grants USB access; ticking "Always" grants it on every plug-in with no prompt (Android shows
+  that box once Pocket XR has the microphone permission, as for XREAL's glasses). The reader leaves that prompt
+  12 s (`UsbAsk.ATTACH_PROMPT_MS`) to be answered before asking with its own, so the two don't stack.
+- **A missed prompt is asked again.** If the reader's own prompt goes unanswered, it is asked once more when a Space or
+  the head tracking screen opens, as turning the switch on did.
+
+### A Bluetooth mouse after an update
+
+The tester also found a Bluetooth mouse seemed broken until he cleared Pocket XR's data after updating to 1.2.10. No
+saved setting changed its key or meaning between 1.2.0 and 1.2.11 in a way that touches the mouse: the mouse code
+(`MouseRoute`, `PhysicalMouse`) is as 1.1.17 left it, the only new saved settings are the VITURE ones, nothing stores a
+mouse or device id, and backup is off, so nothing is restored from an older install. So there is no stale state to move
+on update.
+
+One saved setting did make a mouse look dead, and clearing data reset it: the trackpad's pad type (`trackpad` in the
+trackpad settings) left on **Spatial Mouse**. On that page the phone's aim is sent on every sensor update and set the
+pointer's direction, so a mouse move was overwritten at once: the pointer followed the phone, and clicks landed
+wherever the phone pointed. A fresh install starts on the Vertical Trackpad, where the mouse always worked. This was so
+from mouse support in 1.1.17 up to 1.2.11.
+
+Unreleased: on Spatial Mouse the mouse wins. When a physical mouse moves the pointer (`PointerSignal.MoveBy`),
+`SpatialPointer` notes the time, and for `MOUSE_TAKES_OVER_MS` (1.5 s) after its last move (`mouseTookOver`) the phone's
+aim is left out: the mouse moves the pointer as on the other pages (anchored in the room with Cursor follows head
+off), and clicks land where it points. Clicks and the wheel alone do not take the pointer. When the mouse goes quiet,
+the next phone aim takes its reference from where the pointer is, so the phone turns it on from there with no jump
+back. Holding Home still recentres in front. No saved setting changed: the page stays Spatial Mouse.
+
 ## Unknown glasses
 
 Glasses the app does not know are drawn with the One's view, no camera and the Aura's sensor axes. If their head
 tracking stream answers, head tracking works. If they have no control link, they stay in 2D until switched with their
-own button.
+own button. 1.2.8: their 3840 x 1080 mode is one wide canvas in 2D and side by side in 3D, and the Depth button names
+their menu when Pocket XR can't switch them.
 
 ## Reporting a problem
 
@@ -129,7 +327,11 @@ In the trackpad's Menu, tap **Glasses report**. It saves a text file to
 `Android/data/com.hayeco.flipspaces/files/reports/` and opens the share sheet. Paste it into the GitHub issue. It holds:
 - the model;
 - the display modes;
-- the USB IDs;
+- the USB IDs of every USB device, with each interface's class, protocol and endpoints (1.2.8; up to 1.2.5, XREAL's only);
+- the HID report descriptors, from the newest motion recording;
 - whether head tracking, the control link, 3D and the calibration worked.
+
+**Send logs** (Settings, or the head tracking screen) puts the same Glasses report in its zip, with the newest motion
+recording.
 
 The glasses' serial appears only as its last four characters.

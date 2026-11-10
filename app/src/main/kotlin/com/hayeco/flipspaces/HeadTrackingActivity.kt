@@ -73,7 +73,37 @@ class HeadTrackingActivity : ComponentActivity() {
                 val route by HeadTracker.route.collectAsStateWithLifecycle()
                 val answer by HeadTracker.answer.collectAsStateWithLifecycle()
                 val levelResult by HeadTracker.level.collectAsStateWithLifecycle()
+                val motionLine by com.hayeco.flipspaces.spatial.HidMotionRecorder.line.collectAsStateWithLifecycle()
+                // 1.2.8 (Discussion #24): read again as the status or a setting changes (a plug-in changes the status).
+                val other = (status to settingsVersion).let { _ ->
+                    val pick = com.hayeco.flipspaces.core.spatial.GlassesVendors.recordable(com.hayeco.flipspaces.spatial.GlassesUsbList.read(this))
+                    com.hayeco.flipspaces.ui.OtherGlassesCard(
+                        glasses = pick?.let { "%04X:%04X \"%s\"".format(java.util.Locale.ROOT, it.vendorId, it.productId, it.name) },
+                        viture = pick?.vendorId == com.hayeco.flipspaces.core.spatial.VitureImuProtocol.VENDOR || store.model == com.hayeco.flipspaces.core.spatial.GlassesModel.VITURE,
+                        vitureOn = store.vitureHeadTracking,
+                        vitureLabel = com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel(store.vitureProduct),
+                        vitureBeast = store.vitureProduct == com.hayeco.flipspaces.core.spatial.VitureDevices.BEAST,
+                        vitureAxes = store.vitureAxes,
+                        recording = com.hayeco.flipspaces.spatial.HidMotionRecorder.busy || motionLine?.startsWith("Recording") == true || motionLine?.startsWith("Allow") == true,
+                        motionLine = motionLine ?: com.hayeco.flipspaces.spatial.HidMotionRecorder.newestLine(this)?.let { "Last recording: $it" },
+                        onViture = { on ->
+                            // Off closes the open stream at once and releases the glasses; on asks for USB access if
+                            // it is missing and tries now.
+                            HeadTracker.setVitureEnabled(this, on)
+                            settingsVersion++
+                        },
+                        onVitureAxes = { a ->
+                            // 1.2.10: applied to the open stream as it reads; the reader is not started again.
+                            HeadTracker.setVitureAxes(this, a)
+                            settingsVersion++
+                        },
+                        onRecord = {
+                            if (com.hayeco.flipspaces.spatial.HidMotionRecorder.start(this)) settingsVersion++
+                        },
+                    )
+                }
                 HeadTrackingScreen(
+                    other = other,
                     status = status,
                     live = live,
                     networks = networks,

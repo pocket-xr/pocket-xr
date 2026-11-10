@@ -821,6 +821,12 @@ interface PadHost {
     /** 1.2.3 (issue 57): the focused window's app's text size [steps] steps up or down; 0 puts it back to 100 %. */
     fun textSizeStep(steps: Int)
 
+    /**
+     * 1.2.7: the Text size keys are off, a tap still being laid out in the glasses (at most 3 s,
+     * [com.hayeco.flipspaces.core.spatial.TextSizeLock]); a tap meanwhile is dropped.
+     */
+    fun textSizeBusy(): Boolean
+
     /** 1.1.10: Exit Pocket XR ([AppExit]): the Space, the services and every screen closed. */
     fun exitApp()
 
@@ -2060,12 +2066,28 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     }
 
     /**
+     * Unreleased (John Davis: no Text size in the Menu after clicking a window): the Menu was built once as it opened, so
+     * a window focused while it was open (a hand pinch, the gaze, a mouse, the Space starting again) never showed in This
+     * window. The trackpad asks every tick; the open Menu is built again when the focused window, its text size, its Side
+     * by side 3D or the window count changed since. 1.2.7: and when the Text size keys go off or come back on.
+     */
+    fun refreshDrawerForFocus() {
+        if (drawerOpen && focusInputs() != builtFor) buildDrawer()
+    }
+
+    /** What the open Menu's This window and Arrange were built from ([refreshDrawerForFocus]). */
+    private var builtFor: Any? = null
+
+    private fun focusInputs(): Any = listOf(host.focusedTextSize(), host.focusedSideBySide(), host.windowCount(), host.textSizeBusy())
+
+    /**
      * 1.2.6 (Mike: the Menu "has become congested and feels like too much"): built from [TrackpadMenu], which picks the
      * rows and their order; this only draws them. The wordmark, the Ko-fi pill and the update row, then the quick tiles,
      * This window, the Space, three sections that start closed, and Exit. docs/design/menu-reorganization.md.
      */
     private fun buildDrawer() {
         val c = context
+        builtFor = focusInputs()
         drawerBody.removeAllViews()
         trackpadHeading = null
         // The wordmark: the app's own name at the drawer's top (64 x 14).
@@ -2240,13 +2262,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         return when (item) {
             MenuItem.STEADY, MenuItem.POCKET_MODE, MenuItem.GAME_KEYS, MenuItem.CONTROL_CENTER, MenuItem.RECORD, MenuItem.UNLOCK, MenuItem.PHONE_HOME, MenuItem.SETTINGS, MenuItem.EXIT -> emptyList()
             // 1.2.3 (issue 57): the focused window's text size, remembered for its app.
-            MenuItem.TEXT_SIZE -> host.focusedTextSize()?.let { (label, percent) -> listOf(textSizeRow(label, percent)) }.orEmpty()
+            MenuItem.TEXT_SIZE -> host.focusedTextSize()?.let { (label, percent) -> listOf(textSizeRow(label, percent, host.textSizeBusy()).apply { tag = MENU_TEXT_SIZE }) }.orEmpty()
             // 1.2.3 (issue 58): Side by side 3D for the focused window's app.
             MenuItem.SIDE_BY_SIDE -> host.focusedSideBySide()?.let { (label, on) ->
                 listOf(row(R.drawable.ic_cover_view, "Side by side 3D in $label: ${if (on) "ON" else "OFF"}", tick = on, subtitle = "For a video split into two halves. Each eye sees its half.") {
                     closeDrawer()
                     host.sideBySideChosen(!on)
-                })
+                }.apply { tag = MENU_SIDE_BY_SIDE })
             }.orEmpty()
             // 1.2.3 (issue 58): 2D while moving, offered while the window shows Side by side 3D; off by default.
             MenuItem.SIDE_BY_SIDE_FLAT -> {
@@ -2952,8 +2974,12 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
      * 1.2.3 (issue 57: "a density slider for each window ... remembered per app"): the focused window's text size, with
      * smaller and larger steps and a reset to 100 %. Smaller fits more on the window (a browser's desktop layout), larger
      * makes text easier to read; the window keeps its size and place.
+     *
+     * 1.2.7 (Mike: tapping smaller and larger a lot, the window kept reloading at each size long after): while [busy], a
+     * tap still being laid out in the glasses, the three keys are off and dimmed, with Resizing under them, and a tap
+     * does nothing; they come back once the window drew at its new size, or after 3 s.
      */
-    private fun textSizeRow(label: String, percent: Int): View {
+    private fun textSizeRow(label: String, percent: Int, busy: Boolean = false): View {
         val c = context
         return LinearLayout(c).apply {
             orientation = LinearLayout.VERTICAL
@@ -2963,19 +2989,26 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             val buttons = LinearLayout(c).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
-                fun key(text: String, enabled: Boolean, steps: Int) = c.padText(text, 16f, if (enabled) WHITE else 0xFF666666.toInt(), bold = true).apply {
-                    gravity = Gravity.CENTER
-                    setBackgroundResource(R.drawable.bg_drawer_tile)
-                    isEnabled = enabled
-                    if (enabled) pressLight(this, 14f)
-                    contentDescription = when {
-                        steps < 0 -> "Smaller text"
-                        steps > 0 -> "Larger text"
-                        else -> "Text size back to 100 %"
-                    }
-                    setOnClickListener {
-                        tick(this)
-                        host.textSizeStep(steps)
+                alpha = if (busy) TEXT_SIZE_BUSY_ALPHA else 1f
+                fun key(text: String, usable: Boolean, steps: Int) = (usable && !busy).let { enabled ->
+                    c.padText(text, 16f, if (usable) WHITE else 0xFF666666.toInt(), bold = true).apply {
+                        gravity = Gravity.CENTER
+                        setBackgroundResource(R.drawable.bg_drawer_tile)
+                        isEnabled = enabled
+                        if (enabled) pressLight(this, 14f)
+                        contentDescription = when {
+                            steps < 0 -> "Smaller text"
+                            steps > 0 -> "Larger text"
+                            else -> "Text size back to 100 %"
+                        }
+                        setOnClickListener {
+                            // A tap while the last one is still being laid out is dropped, never queued.
+                            if (host.textSizeBusy()) return@setOnClickListener
+                            tick(this)
+                            host.textSizeStep(steps)
+                            // The keys dim at once, not on the next tick.
+                            refreshDrawerForFocus()
+                        }
                     }
                 }
                 val minus = com.hayeco.flipspaces.core.spatial.AppTextSize.MIN
@@ -2985,6 +3018,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 addView(key("A+", percent < plus, 1), LinearLayout.LayoutParams(0, c.dp(44f), 1f))
             }
             addView(buttons, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(12f) })
+            if (busy) addView(c.padText(TEXT_SIZE_BUSY_LABEL, 12f, TEXT_99).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(6f) })
         }
     }
 
@@ -3302,6 +3336,14 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         const val MENU_PLAY_TESTERS_PLAY = "menu:play-testers:play"
         const val MENU_PLAY_TESTERS_NOT_NOW = "menu:play-testers:not-now"
         const val MENU_PLAY_TESTERS_ALREADY = "menu:play-testers:already"
+
+        /** Unreleased (John Davis): This window's Text size and Side by side 3D rows. */
+        const val MENU_TEXT_SIZE = "menu:text-size"
+
+        /** 1.2.7: under the Text size keys while a tap is still being laid out, the keys dimmed to this. */
+        const val TEXT_SIZE_BUSY_LABEL = "Resizing"
+        const val TEXT_SIZE_BUSY_ALPHA = 0.4f
+        const val MENU_SIDE_BY_SIDE = "menu:side-by-side"
 
         /** 0.5.28: a toast with a one-tap action stays this long. */
         const val ACTION_TOAST_MS = 5000L

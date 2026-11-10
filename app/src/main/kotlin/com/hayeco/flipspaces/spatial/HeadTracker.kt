@@ -37,6 +37,7 @@ import com.hayeco.flipspaces.core.spatial.OneImuProtocol
 import com.hayeco.flipspaces.core.spatial.Quat
 import com.hayeco.flipspaces.core.spatial.RateMeter
 import com.hayeco.flipspaces.core.spatial.Vec3
+import com.hayeco.flipspaces.core.spatial.VitureReconnect
 import com.hayeco.flipspaces.platform.ShizukuBridge
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -239,6 +240,8 @@ object HeadTracker {
     fun acquire(context: Context) {
         graceHandler.removeCallbacks(stopAfterGrace)
         users++
+        // 1.2.12 (Discussion #24): a VITURE USB prompt missed on this plug-in is asked again now a screen is up.
+        synchronized(vitureReconnect) { vitureReconnect.screenOpened() }
         val store = SpaceStore(context)
         settings = fromStore(store, context)
         if (thread?.isAlive == true) return
@@ -274,6 +277,22 @@ object HeadTracker {
                 settings = fromStore(store, context)
                 startThread(context.applicationContext)
             }
+        }
+    }
+
+    /**
+     * 1.2.8: the reader started again for its users, for a setting it reads only when it opens the glasses (the VITURE
+     * reader's axis switches). Nothing happens while it is not running.
+     */
+    @Synchronized
+    fun restart(context: Context, why: String) {
+        if (thread?.isAlive != true) return
+        Log.i(TAG, "head tracking: starting the reader again ($why)")
+        stop()
+        val store = SpaceStore(context)
+        if (users > 0 && store.headTracking) {
+            settings = fromStore(store, context)
+            startThread(context.applicationContext)
         }
     }
 
@@ -518,6 +537,13 @@ object HeadTracker {
 
     private val recentreGate = com.hayeco.flipspaces.core.spatial.RecentreRoute.Debounce()
 
+    /** 1.2.13 (Discussion #81): Settings' Recenter follows head tilt; the fusion takes it for the next recentre. */
+    fun setRecentreFollowsTilt(context: Context, on: Boolean) {
+        SpaceStore(context).recentreFollowsTilt = on
+        Log.i(TAG, "recenter follows head tilt turned ${if (on) "on" else "off"} in Settings")
+        applySettings(context)
+    }
+
     fun applySettings(context: Context) {
         val store = SpaceStore(context)
         val next = fromStore(store, context)
@@ -543,6 +569,7 @@ object HeadTracker {
         val cal = if (store.factoryCalibration) GlassesCalibrationStore.last(context) else null
         return settings.copy(
             axes = store.axisMap, predictSeconds = store.predictMs / 1000f, mountRollDeg = store.mountRollDeg, mountPitchDeg = store.mountPitchDeg,
+            recentreFollowsTilt = store.recentreFollowsTilt,
             factoryMount = cal?.displayMount?.takeIf { store.model.factoryMountChecked }, gyroMatrix = cal?.gyroMatrix,
         )
     }
@@ -643,6 +670,25 @@ object HeadTracker {
             val air = AirImuLink.find(context)
             if (air != null) {
                 if (!streamAir(air, context, fusion, backoff)) return
+                continue
+            }
+            // 1.2.8 (Discussion #24, a VITURE Beast: no head tracking, and the status blamed a missing USB network): VITURE
+            // glasses have no USB network. With the experimental reader on, their HID is read; otherwise the status says
+            // plainly that they are not supported yet, and nothing is opened on them.
+            val viture = VitureImuLink.find(context)
+            val vitureOn = SpaceStore(context).vitureHeadTracking
+            synchronized(vitureReconnect) { vitureReconnect.setEnabled(vitureOn) }
+            if (viture != null) {
+                val store = SpaceStore(context)
+                if (vitureOn) {
+                    if (!streamViture(viture, context, fusion, backoff, store.vitureAxes)) return
+                } else {
+                    val st = HeadTrackingStatus.VitureNotYet(viture.productId)
+                    if (_status.value != st) Log.i(TAG, "head tracking: ${st.summary}")
+                    report(st)
+                    _answer.value = null
+                    if (!waitFor(HID_RECHECK_MS, GlassesNetwork.scan(context).fingerprint, context)) return
+                }
                 continue
             }
             // 1.1.10 (USB 3318:0442 on a Pixel 8a: "No USB network to the glasses ... One UI may not bring up the glasses'
@@ -758,6 +804,87 @@ object HeadTracker {
     /** 1.1.12: the Air glasses USB access was asked for (their device name), so Android's prompt shows once a plug-in. */
     private var askedUsbFor: String? = null
 
+    // ---- 1.2.10 (Discussion #24, second report): the experimental VITURE reader's USB life ----
+
+    /** When the VITURE reader asks for access, opens, keeps reading or lets go. Locked on itself. */
+    private val vitureReconnect = VitureReconnect()
+
+    /** The open VITURE link, for the axis switches; null with none open. */
+    @Volatile private var vitureLink: VitureImuLink? = null
+
+    /** Closes the open VITURE link (the stop, its answer, the interface released) and marks it closed. Reader thread. */
+    private fun closeViture() {
+        val link = synchronized(vitureReconnect) {
+            vitureReconnect.closed()
+            vitureLink.also { vitureLink = null }
+        }
+        runCatching { link?.close() }
+    }
+
+    /**
+     * The head tracking screen's VITURE head tracking switch, saved. On asks for USB access again if it is missing and
+     * tries now; off closes the open stream and releases the glasses. 1.2.12: saved either way, so off stays off and on
+     * stays on through unplugging, the app's restart and updates.
+     */
+    fun setVitureEnabled(context: Context, on: Boolean) {
+        SpaceStore(context).vitureHeadTracking = on
+        Log.i(TAG, "VITURE head tracking ${if (on) "on" else "off"} (the head tracking screen)")
+        synchronized(vitureReconnect) { vitureReconnect.setEnabled(on) }
+        if (on) kick("VITURE head tracking on") else restart(context, "VITURE head tracking off")
+    }
+
+    /**
+     * The VITURE axis switches, saved and applied to the open stream from its next sample: the reader is not stopped
+     * (1.2.8 started it again, and the glasses then refused the start). The fusion starts over in the new axes, as a
+     * new sensor axis layout does.
+     */
+    fun setVitureAxes(context: Context, axes: com.hayeco.flipspaces.core.spatial.VitureAxes) {
+        SpaceStore(context).vitureAxes = axes
+        val live = synchronized(vitureReconnect) {
+            vitureLink?.axes = axes
+            vitureReconnect.axesChanged(axes)
+        }
+        if (live) resetRequested.set(true)
+        Log.i(TAG, "${axes.line()} (the head tracking screen)" + if (live) "; applied to the open stream" else "; taken when the glasses open")
+    }
+
+    private val vitureUsbWatch = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: android.content.Intent) {
+            val device = androidx.core.content.IntentCompat.getParcelableExtra(intent, android.hardware.usb.UsbManager.EXTRA_DEVICE, android.hardware.usb.UsbDevice::class.java) ?: return
+            if (!com.hayeco.flipspaces.core.spatial.VitureImuProtocol.isViture(device.vendorId)) return
+            if (!com.hayeco.flipspaces.core.spatial.VitureDevices.carriesImu(device.productId, device.productName)) return
+            val name = VitureImuLink.glassesName(device)
+            when (intent.action) {
+                android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
+                    synchronized(vitureReconnect) { vitureReconnect.attached(SystemClock.uptimeMillis()) }
+                    kick("$name plugged in on USB")
+                }
+                android.hardware.usb.UsbManager.ACTION_USB_DEVICE_DETACHED -> {
+                    synchronized(vitureReconnect) { vitureReconnect.detached() }
+                    Log.i(TAG, "head tracking: $name unplugged; the reader lets it go and waits for the plug-in")
+                    kick("$name unplugged")
+                }
+                com.hayeco.flipspaces.hands.GlassesUsbAccess.ACTION_PERMISSION -> {
+                    val granted = intent.getBooleanExtra(android.hardware.usb.UsbManager.EXTRA_PERMISSION_GRANTED, false)
+                    Log.i(TAG, "head tracking: USB access for $name ${if (granted) "given" else "not given"} in Android's prompt")
+                    if (granted) kick("USB access given for $name")
+                }
+            }
+        }
+    }
+
+    /** Hears VITURE glasses come and go, and the USB prompt's answer, while the process lives (FlipSpacesApp). */
+    fun registerUsbWatch(context: Context) {
+        val filter = android.content.IntentFilter().apply {
+            addAction(android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED)
+            addAction(android.hardware.usb.UsbManager.ACTION_USB_DEVICE_DETACHED)
+            addAction(com.hayeco.flipspaces.hands.GlassesUsbAccess.ACTION_PERMISSION)
+        }
+        runCatching {
+            androidx.core.content.ContextCompat.registerReceiver(context.applicationContext, vitureUsbWatch, filter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
+        }.onFailure { Log.w(TAG, "VITURE USB watch: ${it.message}") }
+    }
+
     /**
      * 1.1.12: one round on Air family glasses ([AirImuLink]): USB access, the IMU's HID interface, its stream until it
      * ends, then the backoff's wait. False when the tracker was stopped.
@@ -808,6 +935,85 @@ object HeadTracker {
         return waitFor(delay, print, context)
     }
 
+    /**
+     * 1.2.8: one round on VITURE glasses with the experimental reader on ([VitureImuLink]), as [streamAir] does for the Air
+     * family. A round that gets no motion at all says plainly that these glasses are not supported yet.
+     */
+    private fun streamViture(device: android.hardware.usb.UsbDevice, context: Context, fusion: HeadFusion, backoff: HeadRetryBackoff, axes: com.hayeco.flipspaces.core.spatial.VitureAxes): Boolean {
+        val name = VitureImuLink.glassesName(device)
+        val print = GlassesNetwork.scan(context).fingerprint
+        // 1.2.10 (Discussion #24, second report): USB access checked before every open, and asked for again after a
+        // plug-in, the switch turned on or access lost ([VitureReconnect]); 1.2.8 asked once per device name for good.
+        val permitted = VitureImuLink.manager(context).hasPermission(device)
+        val step = synchronized(vitureReconnect) { vitureReconnect.next(VitureReconnect.Device(device.deviceName, permitted), SystemClock.uptimeMillis()) }
+        when (step) {
+            // 1.2.12: Android's "Open Pocket XR" plug-in prompt for the Beast (usb_glasses.xml) grants access with its OK.
+            VitureReconnect.Step.WAIT_FOR_PLUG_IN_PROMPT -> {
+                report(HeadTrackingStatus.UsbPermission(name))
+                return waitFor(1000L, print, context)
+            }
+            VitureReconnect.Step.ASK -> {
+                report(HeadTrackingStatus.UsbPermission(name))
+                Log.i(TAG, "head tracking: $name found on USB without access to it; asking Android (its USB prompt) for the experimental VITURE reader")
+                runCatching { com.hayeco.flipspaces.hands.GlassesUsbAccess.requestPermission(context, device) }
+                    .onFailure { Log.w(TAG, "head tracking: the USB prompt for $name failed: ${it.javaClass.simpleName}: ${it.message}") }
+                return waitFor(1000L, print, context)
+            }
+            VitureReconnect.Step.WAIT_FOR_ANSWER -> {
+                report(HeadTrackingStatus.UsbPermission(name))
+                return waitFor(1000L, print, context)
+            }
+            VitureReconnect.Step.IDLE -> return waitFor(1000L, print, context)
+            // A link left open from an earlier round (it should not be): closed, then the next round opens afresh.
+            VitureReconnect.Step.CLOSE, VitureReconnect.Step.READ -> {
+                closeViture()
+                return true
+            }
+            VitureReconnect.Step.OPEN -> Unit
+        }
+        val link = try {
+            VitureImuLink.open(context, device, axes, READ_TIMEOUT_MS)
+        } catch (e: Exception) {
+            if (Thread.currentThread().isInterrupted) return false
+            val error = "${e.javaClass.simpleName}: ${e.message}"
+            val delay = backoff.nextDelayMs()
+            report(HeadTrackingStatus.UsbFailed(name, error))
+            _attempts.value = listOf("$name over USB HID (experimental VITURE reader): $error")
+            Log.w(TAG, "head tracking: $name over USB HID failed: $error; next try in ${delay / 1000} s")
+            return waitFor(delay, print, context)
+        }
+        synchronized(vitureReconnect) {
+            vitureReconnect.opened(device.deviceName)
+            vitureLink = link
+            // Switches changed while it opened are taken now.
+            link.axes = SpaceStore(context).vitureAxes
+        }
+        _attempts.value = listOf("${link.label}: opened, the raw stream start sent")
+        _route.value = link.label
+        sourceLine = link.label
+        Log.i(TAG, "head tracking route: ${link.label}, the raw stream ${link.startLine}; ${link.axes.line()}")
+        val opened = SystemClock.elapsedRealtime()
+        val streamed = try {
+            stream(link, link.label, fusion)
+        } finally {
+            closeViture()
+            sourceLine = null
+            _route.value = null
+        }
+        Log.i(TAG, "head tracking stream over ${link.label} ended after ${(SystemClock.elapsedRealtime() - opened) / 1000.0} s: ${_status.value.summary}; ${link.clockLine}; ${link.counts}")
+        if (Thread.currentThread().isInterrupted) return false
+        if (streamed) backoff.reset()
+        val delay = backoff.nextDelayMs()
+        if (streamed) {
+            _answer.value = "The stream stopped."
+            report(HeadTrackingStatus.RetryLater("The stream stopped.", (delay / 1000).toInt()))
+        } else {
+            _answer.value = HeadTrackingStatus.VITURE_HINT
+            report(HeadTrackingStatus.VitureNotYet(device.productId, experimentalOn = true))
+        }
+        return waitFor(delay, print, context)
+    }
+
     // ---- 1.1.12: the once a second PocketXR-Tracking line ----
 
     private const val TRACK_TAG = "PocketXR-Tracking"
@@ -826,6 +1032,49 @@ object HeadTracker {
     /** The last line, for the Glasses report. */
     @Volatile var lastTrackingLine: String? = null
         private set
+
+    /** 1.2.13 (Discussion #81): the newest rest's accelerometer (sensor axes) and the gravity check's line, for the Glasses report. */
+    @Volatile var lastRestGravity: Vec3? = null
+        private set
+    @Volatile var lastAxesCheck: String? = null
+        private set
+
+    /** 1.2.13: the axis layout, where it came from and gravity at the last rest, one line for the Glasses report. */
+    fun axesReport(context: Context): String {
+        val store = SpaceStore(context)
+        return com.hayeco.flipspaces.core.spatial.GravityAxes.reportLine(store.axisMap, store.axesFrom(), lastRestGravity, lastAxesCheck)
+    }
+
+    /**
+     * 1.2.13 (Discussion #81, a level head read as looking up; for axes a quarter or half turn off): the fusion's newest rest reading
+     * against the axis layout in use ([com.hayeco.flipspaces.core.spatial.GravityAxes]). When gravity says another layout,
+     * it is saved for the model, the gyro bias is carried over into it, and the fusion starts again on it. Reader thread.
+     */
+    private fun checkAxes(fusion: HeadFusion) {
+        val rest = fusion.takeRestGravity() ?: return
+        val c = appContext ?: return
+        val store = SpaceStore(c)
+        val verdict = com.hayeco.flipspaces.core.spatial.GravityAxes.check(rest, settings.axes, store.modelAxes)
+        lastRestGravity = rest.raw
+        lastAxesCheck = verdict.line
+        Log.i(TAG, verdict.line)
+        val next = verdict.axes ?: return
+        val old = settings.axes
+        fun carry(b: Vec3) = com.hayeco.flipspaces.core.spatial.GravityAxes.carry(b, old, next)
+        val bias = fusion.gyroBias.takeIf { it != Vec3.ZERO }?.let(::carry)
+        val static = fusion.staticBias?.let(::carry)
+        store.setAxesByGravity(next, verdict.line)
+        store.staticGyroBias?.let { store.staticGyroBias = carry(it) }
+        store.wornGyroBias?.let { store.wornGyroBias = carry(it) }
+        settings = settings.copy(axes = next)
+        fusion.settings = settings
+        fusion.reset()
+        bias?.let { fusion.seedBias(it, static) }
+        frameRef = FrameRef(frameRef.epoch + 1, Quat.IDENTITY)
+        history.clear()
+        synchronized(predictor) { predictor.reset() }
+        lastSampleHostNs = 0L
+    }
 
     private val beatTick = object : Runnable {
         override fun run() {
@@ -848,11 +1097,12 @@ object HeadTracker {
     /** The glasses' model from their display and every XREAL device on USB, with whether Pocket XR may use it. */
     private fun glassesSeen(c: Context): String {
         val manager = AirImuLink.manager(c)
-        val usb = runCatching { manager.deviceList.values.filter { com.hayeco.flipspaces.core.hands.GlassesUsb.isXreal(it.vendorId) } }.getOrDefault(emptyList())
-        val devices = if (usb.isEmpty()) "no XREAL device on USB" else usb.joinToString(", ") { d ->
+        // 1.2.8 (Discussion #24): VITURE's devices too; their line said "no XREAL device on USB" and nothing more.
+        val usb = runCatching { manager.deviceList.values.filter { com.hayeco.flipspaces.core.spatial.GlassesVendors.name(it.vendorId) != null } }.getOrDefault(emptyList())
+        val devices = if (usb.isEmpty()) "no XREAL or VITURE device on USB" else usb.joinToString(", ") { d ->
             val air = AirImuProtocol.isAir(d.vendorId, d.productId)
             "%s USB %04X:%04X%s, USB access %s".format(
-                java.util.Locale.ROOT, AirImuProtocol.modelName(d.productId) ?: d.productName ?: "XREAL", d.vendorId, d.productId,
+                java.util.Locale.ROOT, (if (air) AirImuProtocol.modelName(d.productId) else null) ?: d.productName ?: com.hayeco.flipspaces.core.spatial.GlassesVendors.name(d.vendorId), d.vendorId, d.productId,
                 if (air) " (Air family, IMU on HID interface ${AirImuProtocol.imuInterface(d.productId)})" else "",
                 if (runCatching { manager.hasPermission(d) }.getOrDefault(false)) "yes" else "no",
             )
@@ -1121,6 +1371,8 @@ object HeadTracker {
                     fusion.lastLearnLine?.let { if (it != loggedLearn) { loggedLearn = it; Log.i(TAG, it) } }
                     // 0.5.16: the start gate's result the moment it passes, and which way.
                     fusion.takeStartGateEvent()?.let { Log.i(TAG, it) }
+                    // 1.2.13 (Discussion #81): the start's gravity checks the axis layout.
+                    checkAxes(fusion)
                     // 0.5.16: the old saved bias confirmed: it is the static bias
                     // from now on, saved so the next session starts seeded.
                     fusion.oldBiasConfirmedLine?.let { line ->
@@ -1148,7 +1400,8 @@ object HeadTracker {
                     val wornNow = SystemClock.uptimeMillis()
                     if (wornNow - lastWornMs >= 100L) {
                         lastWornMs = wornNow
-                        val (_, pitch, roll) = fused.last().orientation.yawPitchRoll()
+                        // 1.2.13: against gravity, so a recentre that followed a tilted head does not hide or fake a tilt.
+                        val (pitch, roll) = fusion.levelPitchRoll()
                         com.hayeco.flipspaces.core.hands.PhoneHandling.shared.glasses(roll, pitch, fusion.isStatic, wornNow)
                     }
                     val nowStill = SystemClock.elapsedRealtime()
@@ -1234,6 +1487,8 @@ object HeadTracker {
                 val turn = (fusion.pose().orientation * before.conjugate()).normalized()
                 frameRef = frameRef.copy(jump = (turn * frameRef.jump).normalized())
                 restartPrediction(fusion)
+                // 1.2.13 (Discussion #81): a steady recentre is a head looking ahead, so its gravity checks the layout.
+                checkAxes(fusion)
             }
             val silentS = (nowMs - lastImuMs) / 1000
             if (silentS >= NO_REPORT_SECONDS) {

@@ -118,7 +118,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- Offers Pocket XR when the XREAL glasses are plugged in; accepting grants USB
+            <!-- Offers Pocket XR when the XREAL glasses (1.2.12: or the VITURE Beast) are plugged in; accepting grants USB
                  access to them (still needs the camera permission for the UVC camera). -->
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />

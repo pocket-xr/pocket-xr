@@ -5,7 +5,7 @@
 <h1 align="center">Pocket XR</h1>
 
 <p align="center">
-  <b>A spatial desktop for XREAL glasses, run from your Android phone.</b><br>
+  <b>A spatial desktop for AR glasses, run from your Android phone.</b><br>
   Free, open source, no ads, no accounts.
 </p>
 
@@ -20,7 +20,7 @@
   <a href="https://github.com/pocket-xr/pocket-xr/releases/latest"><b>Download</b></a> ·
   <a href="https://youtu.be/H8dBKm-I6zw"><b>Watch the demo</b></a> ·
   <a href="#setup">Setup</a> ·
-  <a href="#supported-glasses">Glasses</a> ·
+  <a href="#supported-glasses-and-phones">Glasses and phones</a> ·
   <a href="https://github.com/pocket-xr/pocket-xr/discussions">Discussions</a> ·
   <a href="https://github.com/pocket-xr/pocket-xr/issues/11">Roadmap</a>
 </p>
@@ -29,13 +29,67 @@
 
 <p align="center"><a href="https://youtu.be/H8dBKm-I6zw">▶ Watch the full demo video (46 s)</a></p>
 
-Pocket XR turns a phone and a pair of XREAL glasses into a multi-window workspace. Your apps float around you as
+Pocket XR turns a phone and a pair of AR glasses into a multi-window workspace. It started on XREAL glasses, and
+thanks to community testers it now runs on more XREAL models and on VITURE's Beast too. Your apps float around you as
 windows you can move, resize, curve and push back. Head tracking keeps them in place as you look around, and the
 phone becomes a trackpad, a Spatial Mouse you point, or you use your hands.
 
 > [!NOTE]
-> Pocket XR is a community project. It is not made by or affiliated with XREAL. Thanks to XREAL for approving its
-> release.
+> Pocket XR is a community project. It is not made by or affiliated with XREAL or VITURE. Thanks to XREAL for
+> approving its release.
+
+## Supported glasses and phones
+
+This list only says what someone has actually seen working. Thanks to everyone who tested and posted.
+
+### Glasses
+
+**Tested by Mike**
+
+| Glasses | Head tracking | Hand tracking | Notes |
+| --- | --- | --- | --- |
+| XREAL Aura | Yes | Yes, through its camera | The glasses Pocket XR was built on. |
+| XREAL One | Yes | Not yet: possible with the XREAL Eye add-on (help wanted) | Use **Follow mode** with **Stabilizer off** ([Setup](#set-up-your-glasses)). |
+
+**Confirmed by community testers**
+
+| Glasses | Tested by | Head tracking | Notes |
+| --- | --- | --- | --- |
+| XREAL One Pro | @thejoeba (Retroid Pocket Nova, Galaxy S24+), @Tayohka (Galaxy Z Flip 7) | Yes | Follow mode, Stabilizer off. thejoeba: "this has become my primary xr app". |
+| XREAL 1S | @WhiteNoise (XREAL Beam Pro) | Yes | Works once the glasses are set up as in [Setup](#set-up-your-glasses). |
+| VITURE Beast | @Tayohka (Galaxy Z Flip 7) | Yes, on by default since 1.2.12 | 3D works once it's on in the glasses' menu. 32:9 ultrawide works as one wide screen. |
+| XREAL Air 2 | @ctdf (OnePlus 15) | Yes, since 1.1.12 | Windows work. A level horizon fix (1.2.3) is waiting on a retest. Pocket XR can't switch the Air to 3D by itself yet ([#54](https://github.com/pocket-xr/pocket-xr/issues/54)). |
+
+**Early or experimental support**
+
+| Glasses | Where it stands |
+| --- | --- |
+| XREAL One Pro+ | @gegonut ran it on a Galaxy Z Fold 6. Windows showed, but after a recenter they sat below the view. 1.2.13 recognises the One Pro+, and recenter now follows head tilt, so windows land where you look even lying back. A retest by @gegonut is pending ([Discussion #81](https://github.com/pocket-xr/pocket-xr/discussions/81)). |
+| XREAL Air, Air 2 Pro, Air 2 Ultra | Same head tracking as the Air 2 since 1.1.12. No tester yet. |
+| Other VITURE glasses | Not tried yet. Experimental VITURE head tracking is on the head tracking screen, off by default ([Discussion #24](https://github.com/pocket-xr/pocket-xr/discussions/24)). |
+| Other glasses | Help wanted. Windows are drawn with plain fallbacks; head tracking works only if they send it the way a known model does. |
+
+Hand tracking works on the XREAL Aura only for now. Details and settings for each model:
+[docs/GLASSES.md](docs/GLASSES.md).
+
+### Phones
+
+Pocket XR needs a phone or handheld whose USB-C port carries video (DisplayPort alt mode), running Android 11 or
+later. These are known to work:
+
+| Phone | Tested by | Notes |
+| --- | --- | --- |
+| Samsung Galaxy Z Flip 7 | Mike, @Tayohka | The phone Pocket XR is developed on. The trackpad also works on the cover screen with the phone closed. Hand tracking runs on the Exynos 2500's NPU (GitHub builds; the Play build uses the GPU). |
+| Samsung Galaxy Z Fold 6 | @gegonut | With the XREAL One Pro+. |
+| Samsung Galaxy S24+ | @thejoeba | Android 16, with the XREAL One Pro. |
+| Samsung Galaxy S20 FE | John Davis | Android 11, with the XREAL One. Runs since 1.1.1. Head tracking over its second USB link came in 1.1.9 and is waiting on a retest ([findings](docs/findings-john-s20fe-android11.md)). Chrome opens one window at a time on Android 11. |
+| OnePlus 15 | @ctdf | With the XREAL Air 2. OnePlus keeps three-finger swipes for itself, so open the Control Center from the Menu. |
+| Retroid Pocket Nova | @thejoeba | Android 13 handheld, with the XREAL One Pro. Starts on the Horizontal Trackpad. |
+| XREAL Beam Pro | @WhiteNoise | With the XREAL 1S. Close XREAL's own spatial view before opening the Space. |
+
+Other phones with video out should work. Own glasses or a phone not marked as confirmed? A Glasses report helps a lot
+(Menu, then Pocket XR Settings, then Advanced, then Glasses report). Post it in
+[Discussions](https://github.com/pocket-xr/pocket-xr/discussions) or [the testers issue](https://github.com/pocket-xr/pocket-xr/issues/12).
 
 ## What it does
 
@@ -47,7 +101,7 @@ phone becomes a trackpad, a Spatial Mouse you point, or you use your hands.
   at its bottom right corner.
 - **All windows at once.** Hold both hands up, or use Adjust all, to move, push, pull or resize every window together.
 - **Head tracking.** Windows stay where you put them as you turn your head. It reads the glasses' own motion sensor
-  at 1000 Hz, paced to the glasses' display. This is 3DoF (turning, not walking around); 6DoF is open for the
+  (1000 times a second on XREAL's One family and the Aura), paced to the glasses' display. This is 3DoF (turning, not walking around); 6DoF is open for the
   community to build (see below).
 - **3D side by side.** Each eye gets its own view, so windows sit at a real depth. Pocket XR switches the glasses
   into 3D by itself where they allow it.
@@ -61,20 +115,6 @@ phone becomes a trackpad, a Spatial Mouse you point, or you use your hands.
 - **An app launcher, a Control Center** (arrange layouts, presets, Wi-Fi, Bluetooth, quick settings) and **Wide
   view**, which gives phone-shaped apps a landscape screen.
 
-## Supported glasses
-
-| Glasses | Status | Hand tracking |
-| --- | --- | --- |
-| XREAL Aura | Tested | Yes |
-| XREAL One | Tested | Not yet: possible with the XREAL Eye add-on (help wanted). Use **Follow mode** (not Anchor) with **Stabilizer off** in the glasses' menu ([Setup](#set-up-your-glasses)). |
-| XREAL One Pro | Community testing | Not yet: possible with the XREAL Eye add-on (help wanted) |
-| XREAL 1S | Community testing | No |
-| XREAL Air, Air 2, Air 2 Pro, Air 2 Ultra | Community testing: head tracking since 1.1.12, not yet tested by the project | No |
-| Other glasses | Help wanted | No |
-
-Details, settings for each model and how to report your glasses: [docs/GLASSES.md](docs/GLASSES.md). If you own a
-model marked "Community testing", a Glasses report from the app helps a lot (Menu, then Pocket XR Settings, then Advanced, then Glasses report).
-
 ## Where the community can take it
 
 I wanted to get 1.0 into people's hands rather than wait until everything was done, so some big pieces are left open
@@ -83,16 +123,11 @@ on purpose. These are the ones I'm most excited to see the community build:
 - **6DoF tracking.** Pocket XR follows your head turning (3DoF) today. With the cameras on the XREAL Aura and the
   XREAL Eye, 6DoF is possible, so you could lean in and walk around your windows.
 - **Hand tracking on the One and One Pro**, through the XREAL Eye camera add-on.
-- **More glasses and phones.** Testing and Glasses reports from models other than the Aura, the One and the Galaxy Z
-  Flip 7.
+- **More glasses and phones.** Testing and Glasses reports from anything under "Early or experimental support", and
+  from glasses and phones not on the list yet.
 
 The [Roadmap](https://github.com/pocket-xr/pocket-xr/issues/11) has the full list, and
 [the testers issue](https://github.com/pocket-xr/pocket-xr/issues/12) is the easiest place to start.
-
-## Supported phones
-
-Pocket XR needs a phone whose USB-C port carries video (DisplayPort alt mode) and runs Android 11 or later. It is
-developed on a **Samsung Galaxy Z Flip 7** with One UI. Other phones with video out should work; report what you find.
 
 ## Setup
 
@@ -126,6 +161,7 @@ Pocket XR, or the windows move twice.
      twice goes back.
 - **XREAL Air, Air 2, Air 2 Pro and Air 2 Ultra:** nothing to set on the glasses.
 - **XREAL Aura:** nothing to set; Pocket XR sets the Aura's display itself.
+- **VITURE Beast:** nothing to set. For 3D, turn it on in the glasses' menu first, then use the Depth button.
 - **On a Beam Pro:** XREAL's own spatial view can also turn the picture with your head. Close it, then open the Space
   from Pocket XR. The Beam Pro may switch One series glasses back to Anchor, so check Follow again if windows misbehave.
 - **XREAL's app on a phone** (Nebula and the like) does no harm while closed. If it is open, close it from Recents
@@ -173,7 +209,7 @@ which the block does not cover, or turn off "Scan apps with Play Protect" in the
 Pocket XR needs 12 testers in its Google Play test for 14 days before it can go public on Play. If you'd like to
 help, it takes two taps:
 
-1. Join the testers group: [groups.google.com/g/pocketxr-testers](https://groups.google.com/g/pocketxr-testers).
+1. Join the testers group: [groups.google.com/a/mikehaye.com/g/pocketxr-testers](https://groups.google.com/a/mikehaye.com/g/pocketxr-testers).
 2. Open the Play invite and tap Become a tester:
    [play.google.com/apps/testing/com.hayeco.flipspaces](https://play.google.com/apps/testing/com.hayeco.flipspaces).
 
@@ -229,8 +265,8 @@ project is run is in [GOVERNANCE.md](GOVERNANCE.md).
 Pocket XR is made by **Mike Haye**, an XREAL supporter since the original Nreal Air, as a free project for everyone who
 loves these glasses. I built it for myself with my Aura glasses and the references I could find, then developed it
 with Claude, an AI assistant, to the point where the community can run with it. It is written from scratch, and XREAL
-has approved its release; it is not made by or affiliated with XREAL. "XREAL" and the glasses'
-names are XREAL's trademarks, used here only to say what the app works with.
+has approved its release; it is not made by or affiliated with XREAL or VITURE. "XREAL", "VITURE" and the glasses'
+names are their makers' trademarks, used here only to say what the app works with.
 
 - **Need something built?** I'm available for XR and Android work: connect@mikehaye.com.
 

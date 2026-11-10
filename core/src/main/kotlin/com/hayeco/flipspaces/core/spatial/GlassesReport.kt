@@ -22,6 +22,13 @@ data class GlassesReport(
     val timeUtc: String,
     /** 1.1.12: the newest PocketXR-Tracking line ([TrackingBeat]), null before one. */
     val tracking: String? = null,
+    /** 1.2.8: the HID report descriptors from the newest motion recording ([HidRecording]), one line an interface. */
+    val hidDescriptors: List<String> = emptyList(),
+    /**
+     * 1.2.13 (Discussion #81): the head tracking axis layout in use, where it came from, and gravity at the last rest
+     * ([GravityAxes.reportLine]); null when the app has not read the glasses' motion yet.
+     */
+    val headAxes: String? = null,
 ) {
     data class Display(val name: String, val productId: String?, val modes: List<String>, val current: String)
     /**
@@ -48,6 +55,9 @@ data class GlassesReport(
         appendLine("Made $timeUtc (UTC), Pocket XR $appVersion, $phone, Android $android")
         appendLine()
         appendLine("Model: ${model.line()}")
+        // 1.2.13 (Discussion #81): what the model was told from, and the head axes with gravity, in one place.
+        appendLine("Detected from: ${detectedFrom()}")
+        appendLine("Head axes: ${headAxes ?: "not known yet (no motion read from the glasses)"}")
         // 0.5.95: a setting the glasses themselves need, so a tester checks it before reporting a problem.
         model.setupHint?.let { appendLine("Check on the glasses: $it") }
         appendLine()
@@ -57,14 +67,21 @@ data class GlassesReport(
             appendLine("- \"${d.name}\"${d.productId?.let { " (EDID product $it)" } ?: ""}: now ${d.current}; modes ${d.modes.joinToString(", ")}")
         }
         appendLine()
-        appendLine("USB devices from XREAL:")
-        val xreal = usb.filter { it.vendorId == XREAL_VENDOR }
-        if (xreal.isEmpty()) appendLine("- none")
-        xreal.forEach { u ->
-            appendLine("- %04X:%04X \"%s\": %s".format(java.util.Locale.ROOT, u.vendorId, u.productId, u.name, u.infos.joinToString(", ") { it.label() }.ifEmpty { "no interfaces listed" }))
+        // 1.2.8 (Discussion #24: a VITURE Beast's report said "USB devices from XREAL: none" and nothing else): every USB
+        // device Android lists, the glasses makers named, so glasses of any make show up with their interfaces.
+        appendLine("USB devices (every one Android lists):")
+        if (usb.isEmpty()) appendLine("- none")
+        usb.forEach { u ->
+            appendLine("- %04X:%04X \"%s\": %s".format(java.util.Locale.ROOT, u.vendorId, u.productId, u.name, u.infos.joinToString(", ") { it.label() }.ifEmpty { "no interfaces listed" }) +
+                (GlassesVendors.name(u.vendorId)?.let { " [$it glasses]" } ?: ""))
+            if (u.infos.any { it.endpoints.isNotEmpty() || it.id >= 0 }) appendLine("  Interfaces: " + u.infos.joinToString(", ") { it.detail() })
             // 1.1.10: how these glasses carry head tracking, so a report from HID glasses says so at once.
             appendLine("  Head tracking link: ${HeadImuTransport.choose(u.vendorId, u.productId, u.infos).label}")
         }
+        appendLine()
+        appendLine("HID report descriptors:")
+        if (hidDescriptors.isEmpty()) appendLine("- not read (they need USB access: Record motion for 20 seconds on the head tracking screen reads them)")
+        hidDescriptors.forEach { appendLine("- $it") }
         appendLine()
         appendLine("What worked:")
         appendLine("- Head tracking: ${if (headTrackingWorks) "yes" else "no"} ($headTracking)")
@@ -75,6 +92,15 @@ data class GlassesReport(
         appendLine("- EDID index: ${edidIndex ?: "not read"}")
         appendLine("- Factory calibration: $calibration")
         appendLine("- Hand tracking: $hands")
+    }
+
+    /** 1.2.13: the display's name and EDID product, and the glasses' USB ids, that [model] was read from. */
+    fun detectedFrom(): String {
+        val shown = displays.joinToString("; ") { d -> "display \"${d.name}\"" + (d.productId?.takeIf { it.isNotEmpty() }?.let { " (EDID product $it)" } ?: " (no EDID product)") }
+            .ifEmpty { "no glasses display" }
+        val glassesUsb = usb.filter { it.vendorId == XREAL_VENDOR || GlassesVendors.name(it.vendorId) != null }
+        val ids = glassesUsb.joinToString("; ") { "USB %04X:%04X".format(java.util.Locale.ROOT, it.vendorId, it.productId) }.ifEmpty { "no glasses on USB" }
+        return "$shown; $ids"
     }
 
     companion object {
