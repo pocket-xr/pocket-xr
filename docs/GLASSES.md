@@ -10,7 +10,7 @@ set on the glasses themselves, and what to send when something is wrong.
 | XREAL Aura | Tested | Yes, through its camera | The model the app was built on. |
 | XREAL One | Tested (30 October 2026) | Not yet: possible with the XREAL Eye add-on (help wanted) | Use **Follow mode** with **Stabilizer off**, see below. |
 | XREAL One Pro | Community testing | Not yet: possible with the XREAL Eye add-on (help wanted) | Treated as a One with a 57 degree view. Not run by the project yet. |
-| XREAL One Pro+ (sold as the 1 Pro+) | Community testing | Not yet | Its own sensor axes, "x right, y front, z up" (Discussion #81, inferred from the report, not a log). Otherwise treated as a One Pro. |
+| XREAL One Pro+ (sold as the 1 Pro+) | Community testing | Not yet | Treated as a One Pro (the One's sensor axes). Its head reads about 40 degrees up when level: use the level calibration. See Discussion #81 below. |
 | XREAL 1S | Community testing | No | Treated as a One. Its view is not published, so the One's 50 degrees is used. |
 | VITURE (Beast seen) | Community testing, partly working | No | The Space works head locked. Head tracking isn't supported yet; an experimental reader is off by default. See "VITURE glasses" below. |
 | Other glasses | Help wanted | No | Plain fallbacks; see "Unknown glasses" below. |
@@ -119,11 +119,27 @@ Its head tracking stream is the same One-family stream as the Aura's, at 1000 re
 wrong way, the head tracking screen has the axis list. The Glasses report and the head attitude log line ("tilt error"
 should stay at a degree or two) help find the right one.
 
-**One Pro+ and the gravity check (1.2.13, Discussion #81).** On a One Pro+ (with a Galaxy Z Fold 6) the One's axes
-showed a level head as one looking straight up, and a recentre put every window straight down: gravity read along the
-sensor's z, which the One's axes take for front and back. The One Pro+ is told from its display's name ("One Pro+",
-"1 Pro+" or "Pro Plus"); its USB product id is not published yet, so the Glasses report's USB line will say it. Its
-axes, "x right, y front, z up", are inferred from the report, not from a log.
+**One Pro+ (1.2.13, Discussion #81).** A tester on a Galaxy Z Fold 6 said looking straight ahead showed as looking
+straight up, a recentre put every window straight down, and Home looked right. Their Send logs (Pocket XR 1.2.10) show:
+
+- The display calls itself "XREAL 1 Pro+", EDID product 16657, and the glasses are USB 3318:0444. 1.2.10 knew neither,
+  so it took them for plain "XREAL glasses" with the One's 50 degrees and the One's axes, "x right, y down, z front".
+  Head tracking came over the USB network (NCM / ECM), the One family's link, at 1000 reports a second.
+- Gravity read on the sensor's -y, so the One's axes are right: about 0.5, -9.8, 1.5 m/s2 with the head near level,
+  9 degrees from those axes' up. "x right, y front, z up" (the first guess, from the words alone) would put that same
+  reading 82 degrees off, close to looking straight down.
+- What was wrong was pitch, not the axes: while a video played, the accelerometer read about -0.1, -7.6, 6.2 (gravity
+  tipped toward the sensor's +z) and the app drew the head 30 to 45 degrees up, about 40 in the middle, for 20 minutes
+  and across 24 recentres. A recentre keeps the head's real pitch, so windows placed at eye level sat that far below
+  the view. That is a display mount, the IMU tilted against the optics. The glasses' factory calibration (version 8)
+  was read but gave "no display mount", and 1.2.10's log does not say whether the key was missing or the mount was
+  refused for being more than 30 degrees.
+
+So the One Pro+ is now told from its name, its EDID product 16657 or its USB product 0x0444, and keeps the One's axes.
+The factory calibration line now says why there is no display mount (the key missing, or the mount refused with its
+angle, roll and pitch), so the next log tells whether the glasses carry their own tilt. Until then the level
+calibration on the head tracking screen corrects it by hand: it now takes up to 50 degrees of pitch (it was 40, which
+refused about half of this tester's readings).
 
 So that wrong axes fix themselves on any glasses (`GravityAxes` in `core/.../spatial/`), the averaged accelerometer is
 checked when the start gate passes and on each steady recentre. If gravity is more than 60 degrees from the axes' up and
@@ -132,7 +148,10 @@ away (so right stays right). It is saved for the model, the gyro bias is carried
 and a "gravity check" line is logged. At the start, glasses lying still on a table (gyro under the static detector's
 gate) are left alone, since they may lie any way up. A recentre lying flat on your back can pick a layout that makes
 that view level; the next recentre sitting up puts the model's own back. The Glasses report has the layout, where it
-came from (the model's default, picked by hand, or the gravity check) and gravity at the last rest.
+came from (the model's default, picked by hand, or the gravity check) and gravity at the last rest. The check leaves a
+tilt like the One Pro+'s alone (it is 40 degrees, not a quarter turn). It would have caught the first guess's wrong axes
+only on a recentre with the head near level: at the start the glasses were too still to judge, and at the 40-degree
+rests gravity is 51 degrees from that layout's up, inside the 60 that are kept.
 
 ## VITURE glasses
 

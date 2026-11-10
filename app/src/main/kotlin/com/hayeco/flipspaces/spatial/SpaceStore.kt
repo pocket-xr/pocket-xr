@@ -118,7 +118,7 @@ class SpaceStore(context: Context) {
         set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).remove(perModel(KEY_AXES_GRAVITY)).apply()
 
     /**
-     * 1.2.13 (Discussion #81, a One Pro+ whose pitch was a quarter turn off): the layout the gravity check picked
+     * 1.2.13 (Discussion #81, glasses whose axes are a quarter or half turn off): the layout the gravity check picked
      * ([com.hayeco.flipspaces.core.spatial.GravityAxes]), saved per model as a pick on the head tracking screen is, with
      * its line so the Glasses report says why. A pick by hand afterwards clears the line.
      */

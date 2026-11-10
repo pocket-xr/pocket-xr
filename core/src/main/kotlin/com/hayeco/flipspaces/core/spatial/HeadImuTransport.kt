@@ -92,7 +92,7 @@ object HeadImuTransport {
         0x0437, 0x0438, // One
         0x0439, 0x043A, // Aura
         0x043D, 0x043E, // 1S
-        0x0443, 0x0444, // not named, network link
+        0x0443, 0x0444, // One Pro+ (0x0444 seen, Discussion #81)
     )
 
     /** Product ids whose IMU is on USB HID: the Air family, and Helen / Helen Pro. */

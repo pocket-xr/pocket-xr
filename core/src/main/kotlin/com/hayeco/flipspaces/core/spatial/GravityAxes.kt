@@ -4,10 +4,12 @@ import java.util.Locale
 import kotlin.math.acos
 
 /**
- * 1.2.13 (Discussion #81, gegonut's XREAL One Pro+ on a Galaxy Z Fold 6: "When looking straight ahead it's as if I'm
- * looking straight up. When I recenter, all of the windows appear straight down"): a pitch off by exactly 90 degrees is
- * gravity on the sensor axis the layout takes for front or back. Every layout the app had for an XREAL model puts gravity
- * on the sensor's y, so a pair whose sensor reads it along z could not come out right.
+ * 1.2.13 (Discussion #81, an XREAL One Pro+ on a Galaxy Z Fold 6: "When looking straight ahead it's as if I'm
+ * looking straight up. When I recenter, all of the windows appear straight down"): a pitch off by exactly 90 degrees
+ * would be gravity on the sensor axis the layout takes for front or back. The tester's logs showed it was not that: the
+ * One's layout was right and the pitch was 30 to 45 degrees off, a display mount ([FactoryCalibration.mountNote],
+ * [LevelCalibration]), which this check leaves alone by design. It stays as the net for glasses whose axes are a quarter
+ * or half turn off.
  *
  * The safety net: at rest, at the start and on each recentre, the averaged accelerometer in the sensor's own axes is
  * checked against the layout in use. When gravity is far from that layout's up and close to another layout's, that
@@ -19,7 +21,10 @@ object GravityAxes {
     /** Gravity within about 25 degrees of a layout's up fits it ([AxisMap.suggest] uses the same). */
     const val FIT_COS = 0.9f
 
-    /** The layout in use is kept while gravity is within 60 degrees of its up (a head looking down or up a little). */
+    /**
+     * The layout in use is kept while gravity is within 60 degrees of its up (a head looking down or up a little, or a
+     * display mount as steep as the One Pro+'s 30 to 45 degrees).
+     */
     const val KEEP_COS = 0.5f
 
     /** A mean this far from 1 g (share) is not gravity alone: nothing is judged. */

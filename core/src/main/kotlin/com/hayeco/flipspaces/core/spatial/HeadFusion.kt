@@ -24,10 +24,9 @@ enum class AxisMap(val label: String, private val ix: Int, private val sx: Float
     XLEFT_YDOWN_ZBACK("x left, y down, z back", 0, -1f, 1, -1f, 2, 1f),
 
     /**
-     * 1.2.13 (Discussion #81, an XREAL One Pro+: looking straight ahead read as looking straight up, its sensor's z up, so
-     * [XRIGHT_ZUP_YFRONT]): the One's layout turned the other quarter about the side axis, gravity's reaction along the
-     * sensor's -z. With [XUP_YLEFT_ZBACK] every direction gravity can read along has a layout, so the gravity check
-     * ([GravityAxes]) always has one to pick.
+     * 1.2.13 (Discussion #81): the One's layout turned a quarter about the side axis, gravity's reaction along the
+     * sensor's -z ([XRIGHT_ZUP_YFRONT] is the other quarter). With [XUP_YLEFT_ZBACK] every direction gravity can read
+     * along has a layout, so the gravity check ([GravityAxes]) always has one to pick.
      */
     XRIGHT_ZDOWN_YBACK("x right, y back, z down", 0, 1f, 2, -1f, 1, 1f),
     XUP_YLEFT_ZBACK("x up, y left, z back", 1, -1f, 0, 1f, 2, 1f),
