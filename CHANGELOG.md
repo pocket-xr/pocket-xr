@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.4.3: PC VR from Steady mode, and no more upside down
+
+- **PC VR from Steady mode.** Opening PC VR in Steady mode showed SteamVR as two pictures side by side, because Steady
+  mode's wide screen shows the game's two eyes as one flat picture. Now Pocket XR leaves Steady mode first, waits for
+  the glasses to switch to 3D, then opens PC VR, and turns Steady mode back on when you leave PC VR. Other OpenXR games
+  start from their own apps, so there the glasses say to turn Steady mode off first.
+- **Steady mode is never upside down.** If the glasses lay upside down when they reconnected, the wide screen could
+  come back upside down until you pressed Recentre. It now only takes which way you face, not how the glasses are tilted.
+
 ## 1.4.2: Steady mode comes back after unplugging
 
 - **Steady mode survives a replug.** Unplugging the glasses in Steady mode and plugging them back in used to bring

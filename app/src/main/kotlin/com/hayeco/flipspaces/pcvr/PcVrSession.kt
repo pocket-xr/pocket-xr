@@ -52,6 +52,18 @@ object PcVrSession {
     /** PC VR started hand tracking (it wasn't running), so it stops it when it closes. */
     private var handsStartedHere = false
 
+    /**
+     * 1.4.3 (Mike, 10 November 2026: SteamVR "with 2 screens side by side" in Steady mode): PC VR is side by side 3D, and
+     * Steady mode's Ultrawide shows that as one flat canvas. Leaving Ultrawide re-plugs the glasses' display, which would
+     * close PC VR's window, so Steady mode is left first, PC VR opens once the glasses are back in 3D, and Steady mode comes
+     * back when PC VR closes.
+     */
+    private var steadyBack = false
+    private var steadyWaitSinceMs = 0L
+    private var threeDSinceMs = 0L
+    private const val STEADY_WAIT_MS = 40_000L
+    private const val THREE_D_SETTLE_MS = 2_000L
+
     val isOpen: Boolean get() = layer != null
 
     /** What the PC helper is doing for this PC VR session, for the loading card; null before it starts. */
@@ -103,6 +115,22 @@ object PcVrSession {
     /** The launcher's PC VR tile. */
     fun open(why: String) {
         main.post {
+            val control = com.hayeco.flipspaces.spatial.GlassesDisplayControl
+            if (layer == null && AlvrBridge.available && (control.steadyActive || control.steadyChanging)) {
+                val ctx = SpaceActivity.forGame()?.applicationContext
+                if (ctx == null) {
+                    Log.w(TAG, "PC VR: no Space on the glasses to open over")
+                    return@post
+                }
+                Log.i(TAG, "PC VR: Steady mode is on; leaving it first, as PC VR needs the glasses in 3D")
+                com.hayeco.flipspaces.spatial.GlassesNotice.post("Leaving Steady mode for PC VR, which needs 3D. It comes back when you leave PC VR", 8_000L)
+                control.steady(ctx, false)
+                steadyBack = true
+                steadyWaitSinceMs = SystemClock.elapsedRealtime()
+                threeDSinceMs = 0L
+                main.postDelayed({ openWhenThreeD(why) }, 500L)
+                return@post
+            }
             if (layer != null || !AlvrBridge.available) {
                 if (!AlvrBridge.available) Log.w(TAG, "PC VR: the ALVR library is not in this build")
                 return@post
@@ -198,6 +226,30 @@ object PcVrSession {
         }
     }
 
+    /** 1.4.3: PC VR waits until Steady mode is off and the glasses have held 3D for a moment, then opens. */
+    private fun openWhenThreeD(why: String) {
+        val control = com.hayeco.flipspaces.spatial.GlassesDisplayControl
+        val now = SystemClock.elapsedRealtime()
+        val ready = !control.steadyChanging && !control.steadyActive && SpaceActivity.forGame() != null && control.stereoState == 1
+        if (ready) {
+            if (threeDSinceMs == 0L) threeDSinceMs = now
+            if (now - threeDSinceMs >= THREE_D_SETTLE_MS) {
+                Log.i(TAG, "PC VR: Steady mode is off and the glasses are in 3D; opening")
+                open(why)
+                return
+            }
+        } else {
+            threeDSinceMs = 0L
+        }
+        if (now - steadyWaitSinceMs > STEADY_WAIT_MS) {
+            Log.w(TAG, "PC VR: the glasses did not get to 3D within ${STEADY_WAIT_MS / 1000} s of leaving Steady mode; not opened")
+            com.hayeco.flipspaces.spatial.GlassesNotice.post("PC VR could not start: the glasses did not switch to 3D. Turn Steady mode off and try again", 8_000L)
+            steadyBack = false
+            return
+        }
+        main.postDelayed({ openWhenThreeD(why) }, 500L)
+    }
+
     /** Back to the Space, its windows where they were. */
     /** [now]: no portal, at once (the Space itself is closing). */
     fun close(why: String, now: Boolean = false) {
@@ -243,6 +295,15 @@ object PcVrSession {
             leaveProgress = 0f
             changed.toList().forEach { it(false) }
             Log.i(TAG, "PC VR closed, the Space is back: $why")
+            // 1.4.3: Steady mode was left for PC VR; it comes back now.
+            if (steadyBack) {
+                steadyBack = false
+                val ctx = SpaceActivity.forGame()?.applicationContext
+                if (ctx != null) main.postDelayed({
+                    Log.i(TAG, "PC VR closed: Steady mode back on, as it was before PC VR")
+                    com.hayeco.flipspaces.spatial.GlassesDisplayControl.steady(ctx, true)
+                }, 1_500L)
+            }
         }
     }
 

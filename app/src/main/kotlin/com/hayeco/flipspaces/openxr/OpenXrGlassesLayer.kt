@@ -118,6 +118,12 @@ object OpenXrGlassesLayer {
             OpenXrPads.start(host.context)
             PanelHost.joyCons(true)
             Log.i(TAG, "a game owns the glasses")
+            // 1.4.3: a game is side by side 3D; Steady mode's Ultrawide shows it as one flat canvas, and leaving it now would
+            // re-plug the display and close the game's window. Say so instead.
+            if (com.hayeco.flipspaces.spatial.GlassesDisplayControl.steadyActive) {
+                com.hayeco.flipspaces.spatial.GlassesNotice.post("Games need 3D: leave the game, turn Steady mode off, then start it again", 10_000L)
+                Log.i(TAG, "a game started in Steady mode: told to turn Steady mode off first")
+            }
         }
     }
 

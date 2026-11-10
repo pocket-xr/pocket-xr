@@ -195,6 +195,12 @@ object GlassesDisplayControl {
     /** The trackpad's key and the launcher's button: the change asked for, else what the glasses say. */
     val steadyOn: Boolean get() = steadyWant ?: (link != null && commands.ultrawide == 1)
 
+    /** 1.4.3: Steady mode is on, or on its way, through a re-plug too (for PC VR, which needs 3D). */
+    val steadyActive: Boolean get() = steadyWant == true || (steadyWant == null && (steadyHeld || (link != null && commands.ultrawide == 1)))
+
+    /** 1.4.3: a Steady mode change is under way. */
+    val steadyChanging: Boolean get() = steadyWant != null
+
     fun steady(context: Context, on: Boolean) {
         app = context.applicationContext
         steadyWant = on
