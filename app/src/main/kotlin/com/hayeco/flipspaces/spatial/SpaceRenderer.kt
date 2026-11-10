@@ -935,7 +935,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         com.hayeco.flipspaces.hands.HandFeed.resize()
     }
 
-    /** The head pose when a hand frame was taken, for hand rays in world space; null without head tracking. */
     /**
      * 1.2.5: the head each frame was drawn with, by its present time. Hand rays placed in the room with it move exactly
      * as the windows do; the raw history they used before wobbles a little against the drawn pose, which a still head
@@ -970,7 +969,57 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     private val directSmooth = HashMap<com.hayeco.flipspaces.core.pointer.HandSide, DirectAimSmoother>()
 
+    /**
+     * While a game has the glasses: the glasses' real refresh for Monado's pacer ([com.hayeco.flipspaces.core.spatial.VblankLock]).
+     * The Space draws one pixel a refresh under the game, only to learn when each was shown.
+     */
+    @Volatile private var gameClock: com.hayeco.flipspaces.core.spatial.VblankLock? = null
+    private var gameClockLoggedMs = 0L
+    private var gameClockFed = 0L
+
+    private var gameClockLastNs = 0L
+
+    private fun drawGameClockFrame(lock: com.hayeco.flipspaces.core.spatial.VblankLock) {
+        // The hidden Space's swaps don't wait for the refresh (it ran about 170 a second): one frame a refresh is enough.
+        val period = if (lock.periodNs > 0L) lock.periodNs else if (displayPeriodNs > 0L) displayPeriodNs else 16_666_667L
+        val waitNs = gameClockLastNs + period - 1_000_000L - System.nanoTime()
+        if (waitNs > 0L) Thread.sleep(waitNs / 1_000_000L, (waitNs % 1_000_000L).toInt())
+        gameClockLastNs = System.nanoTime()
+        frameTimes.pollShown { lock.add(it) }
+        if (!feedGameClock) {
+            if (gameClockFed != 0L) org.freedesktop.monado.ipc.PocketFeed.nativeVblank(0L, 0L)
+            gameClockFed = 0L
+        } else if (lock.periodNs > 0L) {
+            org.freedesktop.monado.ipc.PocketFeed.nativeVblank(lock.lastNs, lock.periodNs)
+            gameClockFed++
+        }
+        GLES30.glEnable(GLES30.GL_SCISSOR_TEST)
+        GLES30.glScissor(0, 0, 1, 1)
+        GLES30.glClearColor(0f, 0f, 0f, 1f)
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+        GLES30.glDisable(GLES30.GL_SCISSOR_TEST)
+        frameTimes.beforeSwap(null)
+        val nowMs = SystemClock.uptimeMillis()
+        if (nowMs - gameClockLoggedMs >= 10_000L) {
+            gameClockLoggedMs = nowMs
+            Log.i(tag, "game clock: the glasses' refresh %.4f ms, fed to Monado %d times; %d shown times off a refresh; %s".format(
+                java.util.Locale.ROOT, lock.periodNs / 1e6, gameClockFed, lock.rejected, frameTimes.line()))
+        }
+    }
+
+    companion object GameClockSwitch {
+        /** Debug: the game clock's feed to Monado on or off, for an A/B with the pacer's own clock. */
+        @Volatile var feedGameClock = true
+
+        /** The glasses' 3D distance the Space draws for, metres, for a game's eye views ([com.hayeco.flipspaces.openxr.OpenXrRuntimeService]). */
+        @Volatile var screenDistanceM: Float = com.hayeco.flipspaces.core.spatial.ScreenDistance.DEFAULT_M
+    }
+
     override fun onDrawFrame(gl: GL10?) {
+        gameClock?.let {
+            drawGameClockFrame(it)
+            return
+        }
         val start = System.nanoTime()
         val nowMs = SystemClock.uptimeMillis()
         // 0.5.25: the glasses' delay for this mode, the 60 Hz scan's half added in side by side.
@@ -1130,7 +1179,13 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 applyViewport(viewport, force = true)
             }
             steadyWindows()
-            val trayButtons = com.hayeco.flipspaces.core.spatial.LauncherButton.values().filter { it != com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY || com.hayeco.flipspaces.core.spatial.SteadyMode.offeredOn(store.model) }
+            val trayButtons = com.hayeco.flipspaces.core.spatial.LauncherButton.values().filter {
+                when (it) {
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY -> com.hayeco.flipspaces.core.spatial.SteadyMode.offeredOn(store.model)
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.PC_VR -> com.hayeco.flipspaces.pcvr.AlvrBridge.available
+                    else -> true
+                }
+            }
             if (xr.buttons != trayButtons) xr.buttons = trayButtons
             GlassesDisplayControl.configure(context, spaceUp = true, turnDuty = store.turnDuty, picture32by9 = StereoLayout.isSbsMode(viewport.surfaceWidth, viewport.surfaceHeight))
             // 0.5.36: the trackpad cursor anchored in the room or following the head (the trackpad's chip).
@@ -1650,6 +1705,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.29: each eye centred for the glasses' 3D distance, in their 3D mode only.
         // 0.5.59 (fix 3): only a distance seen this session, else 4 m, and no screen centre offset.
         val distanceM = com.hayeco.flipspaces.core.spatial.ScreenDistance.inUse(distanceSeenM)
+        screenDistanceM = distanceM
         val fix = if (store.distanceFix && stereo == StereoMode.SIDE_BY_SIDE && eyes.size > 1) {
             com.hayeco.flipspaces.core.spatial.ScreenDistance.correction(store.ipdMm, distanceM, store.screen(true).sizeFactor, com.hayeco.flipspaces.core.spatial.ScreenDistance.inUseFrom(distanceSeenM), store.model.tanPerPx1to1)
         } else null
@@ -2438,6 +2494,36 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * panel per 150 ms while the size keeps changing, each after the app drew at the size before.
      * The binder calls run on PanelHost's own thread, never this one.
      */
+    /**
+     * GL thread. A game has the glasses: each window's display is left with no surface, so Android turns it off and its
+     * app stops as it would with the phone's screen off (video pauses, nothing draws), and the heat and GPU go to the
+     * game. After the game each display gets its surface back and the app carries on where it was. Before, every
+     * window kept drawing behind the game, to readers nobody read.
+     */
+    fun panelsForGame(paused: Boolean) {
+        if (paused) {
+            val nominal = if (displayPeriodNs > 0L) displayPeriodNs else 16_666_667L
+            gameClock = com.hayeco.flipspaces.core.spatial.VblankLock(nominal)
+            gameClockFed = 0L
+            gameClockLoggedMs = 0L
+        } else if (gameClock != null) {
+            gameClock = null
+            // Monado's pacer goes back to its own clock.
+            runCatching { org.freedesktop.monado.ipc.PocketFeed.nativeVblank(0L, 0L) }
+        }
+        var n = 0
+        for (p in panels.values) {
+            val display = p.displayId ?: continue
+            n++
+            if (paused) {
+                PanelHost.clearSurface(display) { err -> if (err != null) Log.w(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: not paused for the game: $err") }
+            } else {
+                PanelHost.setSurface(display, p.surface) { err -> if (err != null) problem = "Back from the game ${p.panel.label}: $err" }
+            }
+        }
+        Log.i(PANEL_TAG, if (paused) "$n windows paused for the game (their displays off)" else "$n windows back from the game")
+    }
+
     private fun resizeDisplays(nowMs: Long) {
         for ((id, size) in resizeGate.due(nowMs) { panels[it]?.drewAtSize ?: true }) {
             val p = panels[id] ?: continue
@@ -3667,6 +3753,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 0.5.25: what the launcher asks for: an app into a window where it was, a button, App Info, a pin. */
     private fun launcherActions(actions: List<com.hayeco.flipspaces.core.spatial.XrLauncherAction>) {
         for (action in actions) when (action) {
+            // The PC VR tile: the stream over the Space, not an app in a window.
+            is com.hayeco.flipspaces.core.spatial.XrLauncherAction.Launch if com.hayeco.flipspaces.pcvr.PcVrSession.isTile(action.app) -> {
+                pickForPanel = null
+                logLauncher("PC VR tile")
+                com.hayeco.flipspaces.pcvr.PcVrSession.open("the launcher's PC VR tile")
+            }
             is com.hayeco.flipspaces.core.spatial.XrLauncherAction.Launch -> pickForPanel?.let { id ->
                 // 0.5.85: the launcher was opened by a window's Switch app (All apps): the app goes into that window.
                 pickForPanel = null
@@ -3699,6 +3791,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             is com.hayeco.flipspaces.core.spatial.XrLauncherAction.Button -> {
                 Log.i(tag, "launcher: the ${action.button.label} button")
                 when (action.button) {
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.PC_VR -> {
+                        pickForPanel = null
+                        com.hayeco.flipspaces.pcvr.PcVrSession.open("the launcher's PC VR button")
+                    }
                     com.hayeco.flipspaces.core.spatial.LauncherButton.RECENTRE -> recentre()
                     com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY -> GlassesDisplayControl.steady(context, !GlassesDisplayControl.steadyOn)
                     com.hayeco.flipspaces.core.spatial.LauncherButton.VIEW -> SpaceActivity.alive()?.let { a -> a.runOnUiThread { a.switchView("the launcher's 3D / 2D button") } }
@@ -3837,6 +3933,16 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 is SpaceCommand.LauncherApps -> {
                     launcher.setApps(c.apps)
                     xr.setApps(c.apps)
+                    // PC VR pinned once, at the front, for everyone; unpinning it later is their choice.
+                    // PC VR is a built-in button now, not an app tile: a tile pinned by earlier test builds is taken out.
+                    val oldTile = com.hayeco.flipspaces.pcvr.PcVrSession.tile(context.packageName).key
+                    if (oldTile in store.favourites) {
+                        val keys = store.favourites.filter { it != oldTile }
+                        store.favourites = keys
+                        launcher.setFavourites(keys)
+                        xr.setPinned(keys)
+                        Log.i(tag, "launcher: the old PC VR tile unpinned (PC VR is a built-in button now)")
+                    }
                     // Pinned once, for someone with none; emptying the row later is their choice.
                     if (!store.pinsSeeded && c.apps.isNotEmpty()) {
                         store.pinsSeeded = true

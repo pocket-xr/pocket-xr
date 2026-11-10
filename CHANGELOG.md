@@ -2,6 +2,30 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.3.0: PC VR
+
+- **PC VR.** Play SteamVR games from your Windows PC on your glasses. Tap **PC VR**, the first button in the Space's
+  launcher, and the Space fades into SteamVR Home. The picture streams over Wi-Fi and Pocket XR draws it with the
+  Space's own head tracking, so there is no second app to install on the phone. A small dot on the button shows how
+  your PC is: green when SteamVR is ready, amber while it starts. To go back to your Space, hold Home or Capture on a
+  Joy-Con for 2 seconds, or tap "Back to your Space" on the phone.
+- **The Pocket XR PC helper.** A small Windows app, on the
+  [PC helper releases](https://github.com/pocket-xr/pocket-xr/releases?q=pc-helper&expanded=true). Unzip it and run
+  PocketXrPcHelper.exe once. It installs the PC side of the stream (ALVR's streamer, the version Pocket XR speaks),
+  sets it up with SteamVR, asks once to let SteamVR through Windows Firewall, and starts with Windows. After that, tap
+  PC VR on your glasses and the helper starts SteamVR for you. The first time, the PC asks whether your phone may
+  start SteamVR. You need Steam and SteamVR on the PC. The helper isn't code signed yet, so Windows may say it
+  protected your PC: choose More info, then Run anyway.
+- **Joy-Cons as your controllers.** Pair Nintendo Switch Joy-Cons with the phone and they are your two hands in
+  SteamVR, with sticks, buttons and triggers. Press Home to recentre.
+- **Your hands as controllers**, on glasses with a camera (the XREAL Aura): point to aim and pinch to pull the trigger.
+  A Joy-Con you pick up takes over from that hand.
+- **A loading scene** while the PC connects, a quiet pause screen if the stream stops, and the sound plays on the phone
+  or whatever it is connected to.
+- **Help make it great.** PC VR is tested on the XREAL Aura with a Galaxy Z Flip 7 and a Windows 11 PC. Every other
+  combination of glasses, phone, PC and Wi-Fi needs testers: please share how it runs in GitHub Discussions.
+- **For developers:** Pocket XR also runs as an OpenXR runtime for Android OpenXR apps (Monado, docs/OPENXR.md).
+
 ## 1.2.13: XREAL One Pro+ head tracking the right way up
 
 - **XREAL One Pro+ head tracking the right way up.** Thanks to gegonut in GitHub Discussion #81 for the report: on a One

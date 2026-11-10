@@ -28,7 +28,7 @@ internal class SpaceWatchdog(
             if (!running) return
             val now = SystemClock.uptimeMillis()
             val last = lastFrameMs()
-            val action = guard.tick(now, last, SpaceSession.active)
+            val action = guard.tick(now, last, SpaceSession.active && !SpaceSession.gameOwnsGlasses)
             val gap = now - last
             when (action) {
                 FrameStallGuard.Action.SHED -> {

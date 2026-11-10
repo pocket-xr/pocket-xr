@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- A headset seen from the front: the visor, two lenses, and the strap at the sides. -->
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M33,42h42a8,8 0,0 1,8 8v12a8,8 0,0 1,-8 8h-10c-3,0 -5,-1.5 -6.5,-4l-2.2,-3.6c-0.9,-1.5 -2.1,-2.2 -3.3,-2.2s-2.4,0.7 -3.3,2.2l-2.2,3.6c-1.5,2.5 -3.5,4 -6.5,4h-8a8,8 0,0 1,-8 -8v-12a8,8 0,0 1,8 -8z" />
+    <path android:fillColor="#FF0E2150" android:pathData="M40,56m-5.5,0a5.5,5.5 0,1 1,11 0a5.5,5.5 0,1 1,-11 0" />
+    <path android:fillColor="#FF0E2150" android:pathData="M68,56m-5.5,0a5.5,5.5 0,1 1,11 0a5.5,5.5 0,1 1,-11 0" />
+    <path android:fillColor="#B3FFFFFF" android:pathData="M21,51h4v10h-4a2,2 0,0 1,-2 -2v-6a2,2 0,0 1,2 -2z" />
+    <path android:fillColor="#B3FFFFFF" android:pathData="M83,51h4a2,2 0,0 1,2 2v6a2,2 0,0 1,-2 2h-4z" />
+</vector>

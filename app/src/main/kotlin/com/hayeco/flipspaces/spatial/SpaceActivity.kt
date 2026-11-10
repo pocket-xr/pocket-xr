@@ -331,18 +331,50 @@ class SpaceActivity : Activity() {
         reportDisplaySize()
     }
 
+    /** The window an OpenXR game's sub-window attaches to: wherever the Space is drawn now. */
+    fun gameHostWindow(): android.view.Window? = presentation?.window ?: window
+
+    /** An OpenXR game owns the glasses: the Space stops drawing under its window, and picks up again after it. */
+    fun pauseForGame(paused: Boolean) {
+        // The Space keeps a frame a refresh while a game runs, one pixel, to give Monado the glasses' real refresh
+        // ([SpaceRenderer.panelsForGame]); its own drawing stops.
+        view.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+        // Nothing reads the vsyncs while the Space draws nothing: 3.5 % of a core on the glasses (7 November 2026).
+        if (paused) vsync?.stop() else vsync?.start()
+        // The GL thread still takes queued events while it draws nothing.
+        view.queueEvent { renderer.panelsForGame(paused) }
+    }
+
     /** The launcher's app list, read off the main thread and handed to the GL thread. */
     private fun loadApps() {
         val installed = InstalledApps(this)
         Thread {
-            val apps = runCatching { AppCatalog.prepare(installed.load(), packageName) }.getOrDefault(emptyList())
-            SpaceSession.send(SpaceCommand.LauncherApps(apps))
+            val found = runCatching { AppCatalog.prepare(installed.load(), packageName) }.getOrDefault(emptyList())
+            foundApps = found
+            sendApps()
         }.start()
+    }
+
+    @Volatile private var foundApps: List<com.hayeco.flipspaces.core.AppEntry> = emptyList()
+    @Volatile private var pcVrLabel = com.hayeco.flipspaces.pcvr.PcVrTileStatus.TILE
+
+    /** PC VR first, where the stream can be built in, named with how the PC is ([com.hayeco.flipspaces.pcvr.PcVrTileStatus]). */
+    private fun sendApps() {
+        val found = foundApps
+        SpaceSession.send(SpaceCommand.LauncherApps(found))
+    }
+
+    private val pcVrStatus by lazy {
+        com.hayeco.flipspaces.pcvr.PcVrTileStatus(this) { label ->
+            pcVrLabel = label
+            if (foundApps.isNotEmpty()) sendApps()
+        }
     }
 
     override fun onResume() {
         super.onResume()
         fillDisplay()
+        if (com.hayeco.flipspaces.pcvr.AlvrBridge.available) pcVrStatus.start()
     }
 
     /**
@@ -1139,6 +1171,8 @@ class SpaceActivity : Activity() {
     }
 
     override fun onDestroy() {
+        if (com.hayeco.flipspaces.pcvr.AlvrBridge.available) pcVrStatus.stop()
+        com.hayeco.flipspaces.pcvr.PcVrSession.close("the Space closed", now = true)
         PanelHost.onReady -= coverOnReady
         GlassesWarp.recheckChrome = null
         GlassesWarp.chromeOverRecord = false
@@ -1354,6 +1388,9 @@ class SpaceActivity : Activity() {
 
         /** The Space if it is alive on any display (0.4.3: after an unplug, Android may have moved it to the phone). */
         fun alive(): SpaceActivity? = current?.get()?.takeIf { !it.isFinishing && !it.isDestroyed }
+
+        /** The Space an OpenXR game can draw over: one that is open on the glasses, not on the phone. */
+        fun forGame(): SpaceActivity? = alive()?.takeIf { (it.display?.displayId ?: Display.DEFAULT_DISPLAY) != Display.DEFAULT_DISPLAY }
     }
 }
 

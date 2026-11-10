@@ -306,6 +306,13 @@ class HeadPredictor(
     var turnSpeed = 0f
         private set
 
+    /**
+     * Off while a game has the glasses: the tremor fit's learning was a quarter of the head thread at 1000 samples a
+     * second (7 November 2026), and a game asks only a few milliseconds ahead. The weights already learned are kept
+     * and still used; the steady, speeding and bending turn rules hold as always.
+     */
+    @Volatile var learning = true
+
     /** 0.5.20: ms of steady stream since the last restart, for [LEARN_AFTER_MS]. */
     private var streamMs = 0f
 
@@ -409,7 +416,7 @@ class HeadPredictor(
         // 0.5.20: nothing is learned while the glasses lie still (the gyro is only noise then, and
         // weights fitted to noise, a long average, would serve the next head turn badly), nor in a
         // stream's first half second, before the lying still rule has measured it.
-        tremor?.add(hostNs, omega, learnNow = stillWeight < 0.5f && streamMs >= LEARN_AFTER_MS)
+        tremor?.add(hostNs, omega, learnNow = learning && stillWeight < 0.5f && streamMs >= LEARN_AFTER_MS)
         if (stillBlend && tremor != null && prev != null && dtMs > 0f && dtMs <= 100f) blendStep(omega, hostNs, dtMs)
         orientation = q
         sampleNs = hostNs

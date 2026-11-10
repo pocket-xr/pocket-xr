@@ -112,6 +112,12 @@ Other phones with video out should work. Own glasses or a phone not marked as co
   it (unless Lock screens is on). A hardware keyboard types into the window you last clicked.
 - **Hand tracking**, on glasses with a camera: point, pinch and drag, with each hand separately. It works on the
   XREAL Aura today. The One and One Pro can get it through the XREAL Eye camera add-on, which is next (help wanted).
+- **Two ways to arrange your windows.** The Space is yours to arrange: put windows all around you, at the depth
+  you like, and save layouts. **Steady mode** is for reading and working: the windows line up in a row in front of you
+  and the picture stays completely still (XREAL Aura and One series).
+- **PC VR** (new in 1.3.0). Tap PC VR in the launcher and play SteamVR games from your Windows PC on your glasses, with
+  Joy-Cons or your hands as controllers. You need the [Pocket XR PC helper](https://github.com/pocket-xr/pocket-xr/releases?q=pc-helper&expanded=true) on the PC once. It
+  is new, so testers are very welcome (see the [changelog](CHANGELOG.md)).
 - **An app launcher, a Control Center** (arrange layouts, presets, Wi-Fi, Bluetooth, quick settings) and **Wide
   view**, which gives phone-shaped apps a landscape screen.
 

@@ -131,6 +131,11 @@ internal class LauncherGl(private val context: Context) {
                     val hov = buttonLooks.getOrPut(item.key) { LookTween() }.at(lit, nowMs)
                     val lift = Look.DEPTH_HOVER * 2f * hov
                     if (hov > 0.01f) glow(lifted(viewProj, at.model(p.rect.scaled(ICON_GLOW), s), lift), Look.INK, a * ICON_GLOW_ALPHA * hov, rowFix)
+                    // PC VR: a soft blue glow that slowly breathes behind it, so it reads as Pocket XR's own doorway.
+                    if (item.button == LauncherButton.PC_VR) {
+                        val breath = 0.5f + 0.5f * kotlin.math.sin(nowMs * (2.0 * Math.PI / PcVrButtonLook.PC_VR_BREATH_MS)).toFloat()
+                        glow(lifted(viewProj, at.model(p.rect.scaled(PcVrButtonLook.PC_VR_GLOW_SCALE), s), lift), PcVrButtonLook.PC_VR_GLOW, a * (PcVrButtonLook.PC_VR_GLOW_MIN + PcVrButtonLook.PC_VR_GLOW_RANGE * breath), rowFix)
+                    }
                     texture(lifted(viewProj, at.model(p.rect, s), lift), buttonTexture(item.button, viewLabel), a, rowFix)
                     if (hov > 0.01f) color(lifted(viewProj, at.model(p.rect, s), lift), Color.WHITE, a * BUTTON_HOVER_ALPHA * hov, p.rect.w / 2f, p.rect, rowFix)
                 }
@@ -593,7 +598,8 @@ internal class LauncherGl(private val context: Context) {
     /** A round button, 94 dp: the dark surface at 0.75, a 2 dp gradient rim, a white glyph in 32 dp padding. */
     private fun buttonTexture(b: LauncherButton, viewLabel: String): Int {
         val still = if (GlassesDisplayControl.steadyOn) "On" else "Off"
-        return baked("button:${b.name}:$viewLabel:$still", LauncherGrid.BUTTON, LauncherGrid.BUTTON) { c, px ->
+        val pcvr = com.hayeco.flipspaces.pcvr.PcVrTileStatus.state
+        return baked("button:${b.name}:$viewLabel:$still:$pcvr", LauncherGrid.BUTTON, LauncherGrid.BUTTON) { c, px ->
             val sz = LauncherGrid.BUTTON * px
             val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(191, 0x1D, 0x20, 0x24) }
             c.drawCircle(sz / 2f, sz / 2f, sz / 2f - px, fill)
@@ -611,6 +617,19 @@ internal class LauncherGl(private val context: Context) {
                 LauncherButton.VIEW -> g.twoWords("Depth", viewLabel, regular)
                 LauncherButton.NOTIFICATIONS -> g.bell()
                 LauncherButton.CONTROLS -> g.sliders()
+                LauncherButton.PC_VR -> {
+                    g.headset()
+                    // How the PC is: a small dot at the top right, green when SteamVR is ready, amber while it starts.
+                    val dot = when (pcvr) {
+                        com.hayeco.flipspaces.pcvr.PcVrTileStatus.State.READY -> Color.rgb(0x5B, 0xD9, 0x8B)
+                        com.hayeco.flipspaces.pcvr.PcVrTileStatus.State.STARTING -> Color.rgb(0xF2, 0xB8, 0x4B)
+                        else -> null
+                    }
+                    if (dot != null) {
+                        val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = dot }
+                        c.drawCircle(sz * 0.74f, sz * 0.26f, 6f * px, p)
+                    }
+                }
             }
         }
     }
@@ -712,6 +731,15 @@ internal class LauncherGl(private val context: Context) {
     }
 
     /** A white glyph in a [box] px square centred on ([cx], [cy]). */
+    private object PcVrButtonLook {
+        /** PC VR's breathing glow: one slow breath, a soft blue, low and never gone. */
+        const val PC_VR_BREATH_MS = 3_200.0
+        const val PC_VR_GLOW_SCALE = 1.55f
+        const val PC_VR_GLOW_MIN = 0.10f
+        const val PC_VR_GLOW_RANGE = 0.14f
+        val PC_VR_GLOW = Color.rgb(0x4C, 0x8D, 0xFF)
+    }
+
     private class Glyph(val c: Canvas, val cx: Float, val cy: Float, val box: Float) {
         private val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
@@ -766,6 +794,28 @@ internal class LauncherGl(private val context: Context) {
         }
 
         /** 0.5.46, Notifications: a bell with its clapper. */
+        /** A headset seen from the front: the visor with two lenses, and the strap at the sides. */
+        fun headset() {
+            val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+            val w = box
+            val h = box * 0.5f
+            val r = h * 0.3f
+            c.drawRoundRect(cx - w / 2f + w * 0.1f, cy - h / 2f, cx + w / 2f - w * 0.1f, cy + h / 2f, r, r, fill)
+            val cut = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(0x1D, 0x20, 0x24) }
+            c.drawCircle(cx - w * 0.17f, cy, h * 0.22f, cut)
+            c.drawCircle(cx + w * 0.17f, cy, h * 0.22f, cut)
+            val nose = android.graphics.Path().apply {
+                moveTo(cx - w * 0.07f, cy + h / 2f)
+                lineTo(cx, cy + h * 0.18f)
+                lineTo(cx + w * 0.07f, cy + h / 2f)
+                close()
+            }
+            c.drawPath(nose, cut)
+            val strap = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(180, 255, 255, 255) }
+            c.drawRoundRect(cx - w / 2f, cy - h * 0.2f, cx - w / 2f + w * 0.1f, cy + h * 0.2f, 2f, 2f, strap)
+            c.drawRoundRect(cx + w / 2f - w * 0.1f, cy - h * 0.2f, cx + w / 2f, cy + h * 0.2f, 2f, 2f, strap)
+        }
+
         fun bell() {
             val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 style = Paint.Style.STROKE

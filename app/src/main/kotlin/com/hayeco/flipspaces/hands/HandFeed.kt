@@ -186,6 +186,8 @@ object HandFeed {
         }
         SpaceSession.hands = update.hands
         SpaceSession.handsCapturedAtMs = capturedAtMs
+        // PC VR: the hands go to SteamVR as well, with the Space's own ray and pinch.
+        if (com.hayeco.flipspaces.pcvr.PcVrSession.isOpen) com.hayeco.flipspaces.pcvr.PcVrHands.store(frame, capturedAtMs, update.hands)
         // Only on a change: an unchanged "no hand" posted every frame redrew the pointer overlay
         // 25 times a second for nothing.
         if (update.status != lastStatus) {

@@ -13,11 +13,14 @@ android {
     val playBuild = (findProperty("pocketxr.play") as String?) == "true"
 
     defaultConfig {
-        applicationId = "com.hayeco.flipspaces"
+        // The private test copy (-Ppocketxr.dev=true), beside the real app, debug signed. See docs/OPENXR-PLAN.md.
+        applicationId = if (findProperty("pocketxr.dev") == "true") "com.hayeco.flipspaces.dev" else "com.hayeco.flipspaces"
+        // Its own name on the phone, so it is never mistaken for the real app.
+        resValue("string", "app_label", if (findProperty("pocketxr.dev") == "true") "Pocket XR Test" else "Pocket XR")
         minSdk = 30
         targetSdk = 36
-        versionCode = 165
-        versionName = "1.2.13"
+        versionCode = 166
+        versionName = "1.3.0"
         // The Flip 7 is arm64; MediaPipe's native code for other ABIs only adds size.
         ndk { abiFilters += "arm64-v8a" }
         // 1.0.1: the Google Play build (-Ppocketxr.play=true) hides the Ko-fi row (1.1.15: atop the trackpad's Menu), as Play's payments
@@ -111,6 +114,7 @@ android {
         aidl = true
         // 1.0.1: BuildConfig.PLAY_BUILD (above).
         buildConfig = true
+        resValues = true
     }
 
     // 1.0.1: the unit tests check BuildConfig.PLAY_BUILD against the build that was asked for.
@@ -141,6 +145,9 @@ android {
 
 dependencies {
     implementation(project(":core"))
+
+    // OpenXR: the Java side of Monado, built from the pocket-xr branch of our Monado fork (docs/OPENXR.md).
+    implementation(files("libs/monado/monado-ipc.aar", "libs/monado/monado-auxiliary.aar"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

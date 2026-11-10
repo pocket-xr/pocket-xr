@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Debug builds only (0.3.6): hand replay and open commands for emulator testing without the
      glasses. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Lets the open command start the Spaces home or the Space from a broadcast while the app
          is in the background (granted with adb shell appops, never asked for). -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- PC VR proof: ALVR finds the PC streamer by mDNS on Wi-Fi. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <!-- 1.2.1: the add-on's one-tap install (AddonInstaller), as in a GitHub release (src/selfinstall). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
@@ -21,6 +26,7 @@
                 <action android:name="com.hayeco.flipspaces.debug.REPLAY_STOP" />
                 <action android:name="com.hayeco.flipspaces.debug.REPLAY_DUMP" />
                 <action android:name="com.hayeco.flipspaces.debug.OPEN" />
+                <action android:name="com.hayeco.flipspaces.debug.RIG" />
                 <action android:name="com.hayeco.flipspaces.debug.STALL" />
                 <action android:name="com.hayeco.flipspaces.debug.ADD_APP" />
                 <action android:name="com.hayeco.flipspaces.debug.UPDATE_TEST" />
@@ -31,6 +37,23 @@
         <activity
             android:name=".hands.NpuSelfTestActivity"
             android:exported="true"
+            android:permission="android.permission.DUMP" />
+        <!-- Lets the Space open on the rig's own virtual display. -->
+        <activity
+            android:name=".spatial.SpaceActivity"
+            android:allowEmbedded="true"
+            tools:node="merge" />
+        <activity
+            android:name=".debug.PcVrTestActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|density|uiMode|keyboard|keyboardHidden|navigation|fontScale"
+            android:permission="android.permission.DUMP" />
+        <activity
+            android:name=".debug.GameRigActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|density|uiMode|keyboard|keyboardHidden|navigation|fontScale"
             android:permission="android.permission.DUMP" />
     </application>
 </manifest>

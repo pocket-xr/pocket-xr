@@ -466,6 +466,23 @@ object HeadTracker {
         }
     }
 
+    /**
+     * The pose at [presentNs] for an OpenXR game: predicted as for [renderPose], without the smoothing and the still
+     * lock that keep windows steady. A game needs the head as it is, and those would add lag.
+     */
+    fun gamePose(presentNs: Long): Quat? {
+        val sampleNs = lastSampleHostNs
+        val since = if (sampleNs == 0L) Long.MAX_VALUE else (System.nanoTime() - sampleNs) / 1_000_000L
+        val q = synchronized(predictor) {
+            when (HeadHold.use(since, predictor.orientation != null)) {
+                HeadHold.Use.PREDICT -> predictor.predict(presentNs)
+                HeadHold.Use.HOLD -> predictor.orientation
+                HeadHold.Use.NONE -> null
+            }
+        }
+        return HeadView.usable(q)
+    }
+
     /** 0.5.64: the drawn orientation's One Euro filter ([com.hayeco.flipspaces.core.spatial.DrawSmoothing]). */
     private val drawSmoothing = com.hayeco.flipspaces.core.spatial.DrawSmoothing()
 
@@ -1333,6 +1350,11 @@ object HeadTracker {
                     // 0.5.10: every report on the phone's clock from the glasses' own timestamps
                     // ([ImuClock]), not from when its read arrived, so bursts do not shake the pose.
                     val arrivedNs = System.nanoTime()
+                    val learn = !SpaceSession.gameOwnsGlasses
+                    if (predictor.learning != learn) {
+                        predictor.learning = learn
+                        Log.i(TAG, if (learn) "head predictor: learning again" else "head predictor: learning paused while a game has the glasses")
+                    }
                     for (pi in 0 until fused.size) {
                         val p = fused[pi]
                         if (!HeadView.isUsable(p.orientation)) continue

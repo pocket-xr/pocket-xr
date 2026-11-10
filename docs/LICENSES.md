@@ -17,6 +17,13 @@ in this repository.
   runs MediaPipe on the GPU or CPU. The official GitHub release APK includes them (docs/RELEASE.md); the Google Play
   build does not.
 
+## ALVR (PC VR)
+
+- ALVR's client library (`alvr_client_core`, built from https://github.com/alvr-org/ALVR at nightly 21.0.0-dev14,
+  with Pocket XR's small patch in `app/src/main/cpp/alvr/alvr-pocketxr.patch`): MIT License, Copyright (c) 2018-2019
+  polygraphene, Copyright (c) 2020-2024 alvr-org. The licence text ships inside the app as
+  `assets/licenses/ALVR.txt`. The PC helper's bundle includes ALVR's streamer for Windows with its own `licenses` folder.
+
 ## Fonts (0.5.68)
 
 - Inter 4.1, Copyright (c) 2016 The Inter Project Authors, https://github.com/rsms/inter, under the SIL Open Font
@@ -80,3 +87,10 @@ https://github.com/Genymobile/scrcpy); its code was read, not copied.
 licensed under the Apache License 2.0 (https://github.com/google/material-design-icons, LICENSE). They were redrawn as
 Android vector drawables from Google's own `symbols/android/<name>/materialsymbolsrounded/<name>_24px.xml` files,
 recoloured and resized. Each drawable's header names its symbol.
+
+## Monado (OpenXR runtime)
+
+- Monado's OpenXR runtime and its Android service (`libopenxr_monado.so`, `libmonado-service.so`,
+  `monado-ipc.aar`, `monado-auxiliary.aar`), built from https://gitlab.freedesktop.org/monado/monado with Pocket XR's
+  changes (docs/OPENXR.md): Boost Software License 1.0, Copyright Collabora, Ltd. and the Monado contributors. The
+  licence text ships inside the app as `assets/licenses/Monado.txt`.

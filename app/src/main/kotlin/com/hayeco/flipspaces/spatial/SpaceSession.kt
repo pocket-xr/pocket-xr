@@ -263,6 +263,12 @@ object SpaceSession {
     @Volatile var stalled: Boolean = false
         internal set
 
+    /**
+     * An OpenXR game has the glasses and the Space stops drawing on purpose. The watchdog then expects no frames (before,
+     * every game start was taken for a stall and closed the windows after 4 s), and the hand model rests.
+     */
+    @Volatile var gameOwnsGlasses: Boolean = false
+
     /** 0.5.3, debug builds: the render thread sleeps this long once at its next frame (a stall for the watchdog). */
     @Volatile var debugStallMs: Long = 0L
 

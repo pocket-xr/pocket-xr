@@ -277,7 +277,10 @@ class PadControlsTest {
         // The command: the launcher activity started again on its display with its task cleared.
         val cmd = PanelDisplays.refreshCommand(7, "tv.twitch.android.app", "tv.twitch.android.feature.LaunchActivity")
         assertEquals(listOf("am", "start", "--user", "current", "--display", "7"), cmd.take(6))
-        assertEquals("0x10008000", cmd[cmd.indexOf("-f") + 1])
+        assertEquals("0x10808000", cmd[cmd.indexOf("-f") + 1])
+        // Kept out of the phone's recent apps, like every window.
+        val launch = PanelDisplays.launchCommand(7, "tv.twitch.android.app", "tv.twitch.android.feature.LaunchActivity")
+        assertTrue(launch[launch.indexOf("-f") + 1].removePrefix("0x").toLong(16) and 0x00800000L != 0L)
         assertTrue("no force stop", "-S" !in cmd)
     }
 

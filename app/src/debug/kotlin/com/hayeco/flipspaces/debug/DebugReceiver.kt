@@ -46,6 +46,7 @@ class DebugReceiver : BroadcastReceiver() {
                 ACTION_STOP -> HandReplayPlayer.stop()
                 ACTION_DUMP -> dump(context, intent)
                 ACTION_OPEN -> open(context, intent)
+                ACTION_RIG -> GameRigActivity.running?.command(intent) ?: rigless(context, intent)
                 ACTION_ADD_APP -> addApp(context, intent)
                 ACTION_STALL -> com.hayeco.flipspaces.spatial.SpaceSession.debugStallMs = (number(intent, "ms")?.toLong() ?: 6_000L).coerceIn(0L, 60_000L)
                 // 0.5.101: the update check against another repository's latest release ("url"; none: back to Pocket XR's).
@@ -161,12 +162,85 @@ class DebugReceiver : BroadcastReceiver() {
         else -> null
     }
 
+    /**
+     * Commands that work on the real glasses with no rig: "wearer" puts the rig's turning head in place of the glasses'
+     * (`--ef yaw --ef hz`), "nowearer" gives the glasses back, "smooth" (`--ez on`) the game head's smoothing, and "arm"
+     * (`--ef x --ef y --ef z`) moves both Joy-Con hands.
+     */
+    private fun rigless(context: Context, intent: Intent) {
+        when (intent.getStringExtra("do")) {
+            "wearer" -> {
+                val yaw = intent.getFloatExtra("yaw", 30f)
+                val hz = intent.getFloatExtra("hz", 0.25f)
+                val start = System.nanoTime()
+                com.hayeco.flipspaces.openxr.OpenXrHeadFeed.testPose = { now ->
+                    val half = yaw * kotlin.math.sin(2.0 * Math.PI * hz * (now - start) / 1e9) * Math.PI / 360.0
+                    com.hayeco.flipspaces.core.spatial.Quat(kotlin.math.cos(half).toFloat(), 0f, kotlin.math.sin(half).toFloat(), 0f)
+                }
+                Log.i(TAG, "test wearer on the glasses: $yaw degrees each way at $hz Hz")
+            }
+            "nowearer" -> {
+                com.hayeco.flipspaces.openxr.OpenXrHeadFeed.testPose = null
+                Log.i(TAG, "the glasses' own head again")
+            }
+            "smooth" -> {
+                com.hayeco.flipspaces.openxr.OpenXrHeadFeed.smooth = intent.getBooleanExtra("on", true)
+                Log.i(TAG, "game head smoothing ${if (com.hayeco.flipspaces.openxr.OpenXrHeadFeed.smooth) "on" else "off"}")
+            }
+            "pcvr" -> {
+                val tuning = com.hayeco.flipspaces.pcvr.PcVrTuning
+                tuning.zoom = intent.getFloatExtra("zoom", tuning.zoom).coerceIn(1f, 2f)
+                tuning.operatingRate = intent.getIntExtra("rate", tuning.operatingRate)
+                tuning.direct = intent.getBooleanExtra("direct", tuning.direct)
+                if (intent.hasExtra("hands")) {
+                    if (intent.getBooleanExtra("hands", true)) com.hayeco.flipspaces.hands.HandTrackingService.start(context)
+                    else com.hayeco.flipspaces.hands.HandInputManager.stopHands(context)
+                    Log.i(TAG, "PC VR test: hands ${if (intent.getBooleanExtra("hands", true)) "on" else "off"}")
+                }
+                tuning.aimPitchDeg = intent.getFloatExtra("aimpitch", tuning.aimPitchDeg)
+                tuning.aimYawDeg = intent.getFloatExtra("aimyaw", tuning.aimYawDeg)
+                tuning.controllerForwardM = intent.getFloatExtra("forward", tuning.controllerForwardM)
+                Log.i(TAG, "PC VR hand aim: pitch ${tuning.aimPitchDeg}, yaw ${tuning.aimYawDeg}, forward offset ${tuning.controllerForwardM} m")
+                Log.i(TAG, "PC VR zoom asked: ${tuning.zoom}")
+                // As the launcher's tile does: `--ez open true` opens PC VR over the Space, false closes it.
+                if (intent.hasExtra("open")) {
+                    if (intent.getBooleanExtra("open", true)) com.hayeco.flipspaces.pcvr.PcVrSession.open("the debug command")
+                    else com.hayeco.flipspaces.pcvr.PcVrSession.close("the debug command")
+                }
+            }
+            "handaim" -> {
+                // The direct hand cursor (1.2.5) on or off, and its filter, live.
+                val t = com.hayeco.flipspaces.spatial.DirectAimTuning
+                t.on = intent.getBooleanExtra("direct", t.on)
+                t.minCutoffHz = intent.getFloatExtra("cutoff", t.minCutoffHz)
+                t.beta = intent.getFloatExtra("beta", t.beta)
+                t.glideMs = intent.getFloatExtra("glide", t.glideMs)
+                t.speedFloorDegS = intent.getFloatExtra("floor", t.speedFloorDegS)
+                Log.i(TAG, "Space hand cursor: ${if (t.on) "direct" else "the eased aim"}, cut-off ${t.minCutoffHz} Hz, beta ${t.beta}, floor ${t.speedFloorDegS} deg/s, glide ${t.glideMs} ms")
+            }
+            "gameclock" -> {
+                com.hayeco.flipspaces.spatial.SpaceRenderer.feedGameClock = intent.getBooleanExtra("on", true)
+                Log.i(TAG, "game clock to Monado ${if (com.hayeco.flipspaces.spatial.SpaceRenderer.feedGameClock) "on" else "off"}")
+            }
+            "arm" -> {
+                val now = com.hayeco.flipspaces.openxr.OpenXrPads.armOffset(context)
+                val offset = com.hayeco.flipspaces.core.spatial.Vec3(
+                    intent.getFloatExtra("x", now.x), intent.getFloatExtra("y", now.y), intent.getFloatExtra("z", now.z),
+                )
+                com.hayeco.flipspaces.openxr.OpenXrPads.setArmOffset(context, offset)
+                if (intent.hasExtra("spread")) com.hayeco.flipspaces.openxr.OpenXrPads.setArmSpread(context, intent.getFloatExtra("spread", 1f))
+            }
+            else -> Log.w(TAG, "no game rig is running")
+        }
+    }
+
     companion object {
         private const val TAG = HandReplayPlayer.TAG
         const val ACTION_REPLAY = "com.hayeco.flipspaces.debug.REPLAY"
         const val ACTION_STOP = "com.hayeco.flipspaces.debug.REPLAY_STOP"
         const val ACTION_DUMP = "com.hayeco.flipspaces.debug.REPLAY_DUMP"
         const val ACTION_OPEN = "com.hayeco.flipspaces.debug.OPEN"
+        const val ACTION_RIG = "com.hayeco.flipspaces.debug.RIG"
         const val ACTION_STALL = "com.hayeco.flipspaces.debug.STALL"
         const val ACTION_ADD_APP = "com.hayeco.flipspaces.debug.ADD_APP"
         const val ACTION_UPDATE_TEST = "com.hayeco.flipspaces.debug.UPDATE_TEST"

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher's PC VR tile: a headset on a deep blue that glows toward the bottom, like the loading scene's horizon. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_pcvr_tile_bg" />
+    <foreground android:drawable="@drawable/ic_pcvr_tile_fg" />
+</adaptive-icon>

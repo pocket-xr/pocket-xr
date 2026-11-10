@@ -468,6 +468,7 @@ object GlassesCameraProvider {
         val square = ViewCanvas()
         var lastPreview = 0L
         var pausedForStall = false
+        var pausedForGame = false
         // 0.5.24: the palm search is on the runner's CPU landmarker now (no hand up, the Space drawing).
         var searchingOnCpu = false
         Log.i(TAG, "MediaPipe thresholds: ${runner.thresholds.describe()}; views ${cycle.views.joinToString { it.label }}, hand crop ${cycle.roi != null}, input up to $MAX_INPUT_SIDE px, ${runner.numHands} hand${if (runner.numHands == 1) "" else "s"}")
@@ -496,6 +497,24 @@ object GlassesCameraProvider {
             if (pausedForStall) {
                 pausedForStall = false
                 Log.i(TAG, "Hand tracking resumed: the Space draws again")
+            }
+            // A game has the glasses: no hand is drawn or pressed there, so the model rests and the heat goes to the game.
+            // PC VR is the exception: its hands go to SteamVR (8 November 2026: pinching did nothing there).
+            // PC VR with both Joy-Cons in hand needs no hands either: about 0.6 W (9 November 2026, measured as the
+            // phone's charge current with the hand model on and off). Setting one down wakes it.
+            if (SpaceSession.gameOwnsGlasses && (!com.hayeco.flipspaces.pcvr.PcVrSession.isOpen || com.hayeco.flipspaces.openxr.OpenXrPads.bothHeld())) {
+                if (!pausedForGame) {
+                    pausedForGame = true
+                    Log.i(TAG, "Hand model paused: a game has the glasses")
+                }
+                item.recycle()
+                tracking.dropped()
+                continue
+            }
+            if (pausedForGame) {
+                pausedForGame = false
+                HandFeed.reset()
+                Log.i(TAG, "Hand model running again: the game closed")
             }
             // 0.5.18: from severe heat an empty picture is searched 10 times a second.
             val nowHeat = SystemClock.uptimeMillis()

@@ -153,7 +153,7 @@ enum class ShellOutcome {
  */
 object PanelDisplayFilter {
     fun isOwnPanel(displayId: Int, name: String?, reportedIds: Collection<Int>): Boolean =
-        displayId in reportedIds || name?.startsWith(PanelDisplays.NAME_PREFIX) == true
+        displayId in reportedIds || PanelDisplays.isPanelName(name)
 }
 
 /**
