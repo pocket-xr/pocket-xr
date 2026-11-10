@@ -117,9 +117,18 @@ in the room.
 This explains an older result: Spatial Anchor made Pocket XR's normal tracking worse, because the glasses and Pocket
 XR both moved the picture. It also gives the Aura a cheap 6DoF mode, built like Steady mode: Pocket XR draws a fixed
 picture with no head motion, and the glasses hold it in the room in 6DoF. The cost is the same as Steady mode's:
-windows live in the glasses' one canvas, not all around. Still to try: Spatial Anchor on with Pocket XR's head
-tracking off, in the normal Space and in Ultrawide; whether 3D side by side keeps its depth; how far the glasses let
-the head move before the picture drifts or resets.
+windows live in the glasses' one canvas, not all around. 
+
+Tried in the Pocket XR Space the same day:
+
+- **With 3D on, it does not work.** When the Space opened, the glasses were in 3D side by side and Pocket XR read
+  Spatial Anchor as off. The picture was plain 3DoF.
+- **In 2D it works "great"** (Mike): Pocket XR's 3D off, the glasses' Full SBS off, Spatial Anchor on, Pocket XR's
+  Head tracking off. The windows stay in place in the room as the head leans and steps aside. The picture is the
+  glasses' normal 16:9 screen, so it is smaller than Steady mode's Ultrawide.
+
+Still to try: Spatial Anchor with Ultrawide (Steady mode turns Spatial Anchor off, so set Ultrawide in the glasses'
+menu); how far the head can move before the picture drifts or resets.
 
 ### 2.3 XREAL One and One Pro with the XREAL Eye
 
