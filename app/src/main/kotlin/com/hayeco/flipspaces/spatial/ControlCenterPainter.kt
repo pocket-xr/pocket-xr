@@ -114,7 +114,7 @@ internal object ControlCenterPainter {
                 }
                 val fg = if (selected) Color.rgb(18, 20, 28) else white(0.9f * dim)
                 centred(c, item.mode.label, cx, cy - 2f, 26f, fg)
-                centred(c, if (item.mode == FollowMode.SPACE_LOCKED) "6DoF, not on these glasses" else item.mode.dof, cx, cy + 26f, 19f, if (selected) Color.argb(160, 18, 20, 28) else white(0.5f * dim), regular)
+                centred(c, if (item.mode == FollowMode.SPACE_LOCKED && !item.mode.available) "6DoF, not on these glasses" else item.mode.dof, cx, cy + 26f, 19f, if (selected) Color.argb(160, 18, 20, 28) else white(0.5f * dim), regular)
             }
             is ControlItem.Arrange -> {
                 fill.color = if (hot) ACCENT else white(0.08f)

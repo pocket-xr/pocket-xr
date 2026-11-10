@@ -476,13 +476,16 @@ class ReticleAnim {
 
 /**
  * 0.5.17: the Space's tracking modes: follow the head smoothly, stay put around the body, or be
- * locked to the room. Pocket XR has the glasses' 3 degrees of freedom only, so Space locked (6DoF, SLAM) is shown
- * disabled.
+ * locked to the room. Most glasses give 3 degrees of freedom only, so Space locked (6DoF) is shown disabled.
+ * 1.4.0: Space locked is available while a 6DoF source is live ([SixDof]); it draws with the head's position as well
+ * as its turn. Otherwise it is Body Anchor.
  */
-enum class FollowMode(val label: String, val dof: String, val available: Boolean) {
+enum class FollowMode(val label: String, val dof: String, private val always: Boolean) {
     SMOOTH_FOLLOW("Smooth Follow", "0DoF", true),
     BODY_ANCHOR("Body Anchor", "3DoF", true),
-    SPACE_LOCKED("Space locked", "6DoF", false),
+    SPACE_LOCKED("Space locked", "6DoF", false);
+
+    val available: Boolean get() = always || SixDof.live
 }
 
 /**

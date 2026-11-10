@@ -529,6 +529,8 @@ object HeadTracker {
         val ok = synchronized(recentreGate) { recentreGate.accept(SystemClock.uptimeMillis()) }
         if (ok) {
             recentreRequested.set(true)
+            // 1.4.0: the head's position starts again from here too (6DoF sources only).
+            HeadPositionFeed.recentre()
             synchronized(restLock) { restLock.free() }
             synchronized(drawSmoothing) { drawSmoothing.free() }
         }

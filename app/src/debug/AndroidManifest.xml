@@ -26,6 +26,8 @@
                 <action android:name="com.hayeco.flipspaces.debug.STALL" />
                 <action android:name="com.hayeco.flipspaces.debug.ADD_APP" />
                 <action android:name="com.hayeco.flipspaces.debug.UPDATE_TEST" />
+                <action android:name="com.hayeco.flipspaces.debug.POSITION" />
+                <action android:name="com.hayeco.flipspaces.debug.POSITION_STOP" />
             </intent-filter>
         </receiver>
 
