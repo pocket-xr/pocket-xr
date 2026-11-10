@@ -118,7 +118,13 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
     private val recorder = com.hayeco.flipspaces.spatial.SpaceRecorder(context, "PC VR")
 
     /** PC VR is closing: it lets go of the recording, which the Space picks up. GL thread. */
-    fun releaseRecording() = recorder.release()
+    fun releaseRecording() {
+        // The frames PC VR still draws while it closes stay out, so the Space can take the recording back.
+        recordingClosed = true
+        recorder.release()
+    }
+
+    @Volatile private var recordingClosed = false
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         surfaceW = width
@@ -179,8 +185,10 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
         }
         drawPortal(now)
         // 1.3.1: PC VR in the Space's recording, the left eye as the Space records it ([SpaceRecorder]).
-        recorder.wanted = com.hayeco.flipspaces.spatial.SpaceSession.recordWanted
-        recorder.frame(0, 0, surfaceW / 2, surfaceH)
+        if (!recordingClosed) {
+            recorder.wanted = com.hayeco.flipspaces.spatial.SpaceSession.recordWanted
+            recorder.frame(0, 0, surfaceW / 2, surfaceH)
+        }
         drawn++
         val nowMs = SystemClock.uptimeMillis()
         if (nowMs - lastLogMs >= 2_000L) {

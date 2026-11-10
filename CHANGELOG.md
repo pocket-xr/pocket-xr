@@ -2,12 +2,18 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## 1.3.1: PC VR opens, and Record keeps going
+## 1.3.2: Record keeps going, really
+
+- **Record keeps going** when you turn Steady mode on or off and when you open or leave PC VR, in one video with PC VR
+  in it. 1.3.1 tried, but on the Galaxy Z Flip 7 the phone's graphics driver kept the video encoder reserved for the
+  Space that had closed, so the new one couldn't continue it. Now the recording has its own connection to the encoder
+  for the whole video, and each part of Pocket XR that draws gets a fresh input of its own.
+
+## 1.3.1: PC VR opens
 
 - **PC VR opens.** In 1.3.0 tapping PC VR closed Pocket XR: the release was missing the Wi-Fi permission PC VR uses to
   find your PC. It's in now, and Pocket XR no longer closes if that permission is ever missing.
-- **Record keeps going** when you turn Steady mode on or off and when you open or leave PC VR. It all ends up in one
-  video, PC VR included. A recording ends when you press Record again, or 10 seconds after the Space closes.
+- **Record keeps going** when you turn Steady mode on or off and when you open or leave PC VR (fixed for real in 1.3.2).
 
 ## 1.3.0: PC VR
 

@@ -8,12 +8,17 @@ import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.net.Uri
 import android.opengl.EGL14
+import android.graphics.SurfaceTexture
 import android.opengl.EGLConfig
+import android.opengl.EGLContext
+import android.opengl.EGLDisplay
+import android.opengl.GLES11Ext
 import android.opengl.EGLExt
 import android.opengl.EGLSurface
 import android.opengl.GLES30
 import android.os.Build
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import android.os.SystemClock
 import android.provider.MediaStore
@@ -24,6 +29,8 @@ import com.hayeco.flipspaces.core.spatial.RecordSurface
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * 0.5.99 (Mike: "is there no way to record using the xreal glasses recording like how i do when using the aura puck";
@@ -37,9 +44,9 @@ import java.util.Locale
  * 1.3.1 (Mike: "when i click the PC VR button, or if i click the Steady mode, the switching causes the recording to
  * cancel"): the video file ([RecordingFile]) belongs to the process, not to a renderer. Steady mode switching the glasses
  * between 2D and 3D recreates the Space, and PC VR draws with its own renderer; each renderer has one [SpaceRecorder],
- * which only holds its EGL surface on the encoder. One renderer feeds the file at a time: a renderer that stops
- * drawing ([detach]) lets the next one connect, and a file nobody feeds for [RecordingFile.ORPHAN_MS] is finished and
- * kept. Every EGL call is on the owning renderer's thread.
+ * which only holds its EGL surface on its own feed into the file. One renderer feeds at a time: a renderer that stops
+ * drawing ([detach]) lets the next one join, and a file nobody feeds for [RecordingFile.ORPHAN_MS] is finished and
+ * kept. The renderer's EGL calls are on its own thread.
  */
 class SpaceRecorder(private val context: Context, private val who: String) {
     private val tag = "FlipSpaces/Record"
@@ -47,8 +54,9 @@ class SpaceRecorder(private val context: Context, private val who: String) {
     /** Asked for by the Control Center or the Menu ([SpaceSession.recordWanted]); acted on in [frame]. */
     @Volatile var wanted = false
 
+    /** This renderer's EGL surface on its feed ([RecordingFile.newFeed]), and the feed's id and video. */
     private var encoderSurface: EGLSurface? = null
-    /** The [RecordingFile.generation] [encoderSurface] belongs to. */
+    private var feedId = 0L
     private var surfaceGeneration = 0L
     private var frameNo = 0L
     private var nextTryFrame = 0L
@@ -70,20 +78,27 @@ class SpaceRecorder(private val context: Context, private val who: String) {
             return false
         }
         if (!RecordingFile.open && !RecordingFile.start(context)) return false
+        // Another renderer took over (it joined while this one was away): this one lets go.
+        if (encoderSurface != null && !RecordingFile.isCurrent(feedId)) detach()
         if (encoderSurface == null) {
-            // Another renderer may still be connected to the encoder for a frame or two: try again shortly.
-            if (frameNo < nextTryFrame) return true
-            val input = RecordingFile.input ?: return false
-            encoderSurface = runCatching { encoderSurface(EGL14.eglGetCurrentDisplay(), input) }
-                .onFailure {
-                    nextTryFrame = frameNo + RETRY_FRAMES
-                    if (RecordingFile.failedAttach(who, it.message)) {
-                        wanted = false
-                        SpaceSession.recordWanted = false
-                    }
-                }.getOrNull() ?: return true
+            // One renderer feeds at a time: this one joins when nobody does (the other let go).
+            if (RecordingFile.feeding || frameNo < nextTryFrame) return false
+            Log.i(tag, "$who joins the recording")
+            val (id, surface) = RecordingFile.newFeed(who) ?: run {
+                Log.w(tag, "$who: no recording feed yet")
+                nextTryFrame = frameNo + RETRY_FRAMES
+                return false
+            }
+            val made = runCatching { encoderSurface(EGL14.eglGetCurrentDisplay(), surface) }
+                .onFailure { Log.w(tag, "$who: no EGL surface on its recording feed: ${it.message}") }.getOrNull()
+            if (made == null) {
+                RecordingFile.detached(who, id)
+                nextTryFrame = frameNo + RETRY_FRAMES
+                return false
+            }
+            encoderSurface = made
+            feedId = id
             surfaceGeneration = RecordingFile.generation
-            RecordingFile.attached(who)
         }
         val enc = encoderSurface ?: return false
         if (frameNo % 2L != 0L) return true
@@ -91,7 +106,7 @@ class SpaceRecorder(private val context: Context, private val who: String) {
         val window = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW)
         val ctx = EGL14.eglGetCurrentContext()
         if (!EGL14.eglMakeCurrent(display, enc, window, ctx)) {
-            Log.w(tag, "$who: the encoder's surface could not be made current (EGL 0x${Integer.toHexString(EGL14.eglGetError())}); connecting again")
+            Log.w(tag, "$who: its recording feed could not be made current (EGL 0x${Integer.toHexString(EGL14.eglGetError())}); joining again")
             detach()
             return true
         }
@@ -101,7 +116,6 @@ class SpaceRecorder(private val context: Context, private val who: String) {
         EGLExt.eglPresentationTimeANDROID(display, enc, System.nanoTime())
         EGL14.eglSwapBuffers(display, enc)
         EGL14.eglMakeCurrent(display, window, window, ctx)
-        RecordingFile.frames++
         return true
     }
 
@@ -113,8 +127,9 @@ class SpaceRecorder(private val context: Context, private val who: String) {
         encoderSurface?.let {
             EGL14.eglDestroySurface(EGL14.eglGetCurrentDisplay(), it)
             encoderSurface = null
-            if (surfaceGeneration == RecordingFile.generation) RecordingFile.detached(who)
+            if (surfaceGeneration == RecordingFile.generation) RecordingFile.detached(who, feedId)
         }
+        feedId = 0L
         nextTryFrame = 0
     }
 
@@ -122,6 +137,7 @@ class SpaceRecorder(private val context: Context, private val who: String) {
     private fun dropStale() {
         encoderSurface?.let { EGL14.eglDestroySurface(EGL14.eglGetCurrentDisplay(), it) }
         encoderSurface = null
+        feedId = 0L
     }
 
     /** The renderer is going away (or the GL context with it): it lets go, and the file waits for the next. Render thread. */
@@ -206,10 +222,15 @@ class SpaceRecorder(private val context: Context, private val who: String) {
 }
 
 /**
- * 1.3.1: the video being recorded, for the whole process: the encoder, its input surface, the MP4 and the thread that
- * writes it. The renderers feed it through their [SpaceRecorder]; it outlives them, so a Space that is recreated (Steady
- * mode) or PC VR opening carries on in the same video. Finished by the Record button, or when no renderer has fed it
- * for [ORPHAN_MS] (the Space closed).
+ * 1.3.1: the video being recorded, for the whole process: the encoder, the MP4 and the thread that writes it. The
+ * renderers feed it through their [SpaceRecorder]; it outlives them, so a Space that is recreated (Steady mode) or PC VR
+ * opening carries on in the same video. Finished by the Record button, or when no renderer has fed it for [ORPHAN_MS]
+ * (the Space closed).
+ *
+ * 1.3.2 (1.3.1 still stopped at Steady mode: the Flip 7's driver kept the encoder's input reserved for the Space that
+ * had gone, EGL 0x3003 for the new one): the encoder's input belongs to this object's own GL thread, connected once for
+ * the whole video. Each renderer that joins gets a fresh input of its own ([newFeed], a SurfaceTexture), which nothing
+ * was ever connected to; the GL thread copies the newest feed's frames into the encoder.
  */
 object RecordingFile {
     private const val TAG = "FlipSpaces/Record"
@@ -221,23 +242,25 @@ object RecordingFile {
     /** Nobody feeding for this long (the Space and PC VR both gone): the video is finished and kept. */
     const val ORPHAN_MS = 10_000L
 
-    /** A renderer that can't connect for this long gives up the recording. */
-    private const val ATTACH_GIVE_UP_MS = 5_000L
+    /** How long a renderer waits for the GL thread to make its feed. */
+    private const val FEED_WAIT_MS = 1_000L
+
+    /** EGL_ANDROID_recordable. */
+    private const val EGL_RECORDABLE_ANDROID = 0x3142
 
     private val lock = Any()
     private val main = Handler(Looper.getMainLooper())
 
     @Volatile var open = false
         private set
-    @Volatile var input: Surface? = null
-        private set
     @Volatile var frames = 0L
 
-    /** Counts videos, so a renderer knows its surface belongs to one already finished. */
+    /** Counts videos, so a renderer knows its feed belongs to one already finished. */
     @Volatile var generation = 0L
         private set
 
     private var codec: MediaCodec? = null
+    private var input: Surface? = null
     private var muxer: MediaMuxer? = null
     private var uri: Uri? = null
     private var resolverContext: Context? = null
@@ -246,8 +269,21 @@ object RecordingFile {
     @Volatile private var samples = 0L
     private var startNs = 0L
     private var feeder: String? = null
-    private var failingSinceMs = 0L
     private val orphaned = Runnable { finish("nothing drew into it for ${ORPHAN_MS / 1000} s (the Space closed)") }
+
+    // The GL thread, its EGL and the feeds (GL thread only, except where said).
+    private var glThread: HandlerThread? = null
+    private var gl: Handler? = null
+    private var eglDisplay: EGLDisplay = EGL14.EGL_NO_DISPLAY
+    private var eglContext: EGLContext = EGL14.EGL_NO_CONTEXT
+    private var eglEncoder: EGLSurface = EGL14.EGL_NO_SURFACE
+    private var program = 0
+    private var quad = 0
+    private val matrix = FloatArray(16)
+    private class Feed(val id: Long, val who: String, val texture: Int, val st: SurfaceTexture, val surface: Surface)
+    private val feeds = mutableMapOf<Long, Feed>()
+    @Volatile private var currentFeed = 0L
+    private var nextFeedId = 1L
 
     /** Opens a new video. False when it could not, said on the glasses. Any thread. */
     fun start(context: Context): Boolean = synchronized(lock) {
@@ -262,8 +298,16 @@ object RecordingFile {
             // 1.2.11: each part kept as it is made, so a start that fails part way releases them and deletes the entry.
             val c = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also { codec = it }
             c.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            input = c.createInputSurface()
+            val enc = c.createInputSurface().also { input = it }
             c.start()
+
+            // The GL thread, connected to the encoder for the whole video.
+            val t = HandlerThread("space-record-gl").apply { start() }
+            glThread = t
+            val h = Handler(t.looper)
+            gl = h
+            val setUp = onGl(h) { setUpGl(enc) } ?: error("the recording's GL thread did not start")
+            setUp.getOrThrow()
 
             val app = context.applicationContext.also { resolverContext = it }
             val name = "PocketXR_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ROOT).format(Date()) + ".mp4"
@@ -285,14 +329,14 @@ object RecordingFile {
             samples = 0
             idleAfterStop = 0
             feeder = null
-            failingSinceMs = 0L
+            currentFeed = 0L
             startNs = SystemClock.elapsedRealtimeNanos()
             draining = true
             drainThread = Thread({ drain(c, m) }, "space-record").apply { start() }
             generation++
             open = true
             SpaceSession.recording = true
-            // Until a renderer connects, it counts as unfed.
+            // Until a renderer joins, it counts as unfed.
             main.postDelayed(orphaned, ORPHAN_MS)
             Log.i(TAG, "recording the left eye to Movies/Pocket XR/$name: ${WIDTH}x$HEIGHT at $FPS fps, ${BIT_RATE / 1_000_000} Mbit/s")
             true
@@ -305,51 +349,176 @@ object RecordingFile {
         }
     }
 
-    /** A renderer connected its EGL surface: it feeds the video now. */
-    fun attached(who: String) = synchronized(lock) {
-        main.removeCallbacks(orphaned)
-        failingSinceMs = 0L
-        val before = feeder
-        feeder = who
-        Log.i(TAG, if (before == null) "$who records" else "$who records now, after $before")
+    /**
+     * A fresh input for [who] to draw its frames into, newest first: from now on its frames are the video's. Null when
+     * the recording isn't open or the GL thread didn't answer. Any thread (a renderer's).
+     */
+    fun newFeed(who: String): Pair<Long, Surface>? {
+        val h = synchronized(lock) { if (!open) return null; gl } ?: return null
+        val made = onGl(h) {
+            val t = IntArray(1)
+            GLES30.glGenTextures(1, t, 0)
+            GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, t[0])
+            GLES30.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES30.GL_TEXTURE_MIN_FILTER, GLES30.GL_LINEAR)
+            GLES30.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
+            val st = SurfaceTexture(t[0]).apply { setDefaultBufferSize(WIDTH, HEIGHT) }
+            val id = nextFeedId++
+            val feed = Feed(id, who, t[0], st, Surface(st))
+            st.setOnFrameAvailableListener({ onFrame(feed) }, gl)
+            feeds[id] = feed
+            currentFeed = id
+            id to feed.surface
+        }?.getOrNull() ?: return null
+        synchronized(lock) {
+            main.removeCallbacks(orphaned)
+            val before = feeder
+            feeder = who
+            Log.i(TAG, if (before == null) "$who records" else "$who records now, after $before")
+        }
+        return made
     }
 
-    /** A renderer let go. With nobody feeding, the video waits [ORPHAN_MS] for the next before it is finished. */
-    fun detached(who: String) = synchronized(lock) {
-        if (feeder == who) feeder = null
-        if (open && feeder == null) {
+    /** [who] stopped drawing into feed [id]. With nobody feeding, the video waits [ORPHAN_MS] for the next. Any thread. */
+    fun detached(who: String, id: Long) {
+        val h = synchronized(lock) { gl } ?: return
+        h.post {
+            feeds.remove(id)?.let { f ->
+                runCatching { f.surface.release() }
+                runCatching { f.st.release() }
+                GLES30.glDeleteTextures(1, intArrayOf(f.texture), 0)
+            }
+        }
+        synchronized(lock) {
+            if (!open || currentFeed != id) return
+            currentFeed = 0L
+            feeder = null
             main.removeCallbacks(orphaned)
             main.postDelayed(orphaned, ORPHAN_MS)
             Log.i(TAG, "$who stopped feeding the recording; it waits up to ${ORPHAN_MS / 1000} s for the next")
         }
     }
 
-    /**
-     * A renderer could not connect. While another one feeds, that is expected (it is about to let go); alone for
-     * [ATTACH_GIVE_UP_MS], the recording ends. True when it ended.
-     */
-    fun failedAttach(who: String, why: String?): Boolean {
-        val give = synchronized(lock) {
-            if (feeder != null) return false
-            val now = SystemClock.elapsedRealtime()
-            if (failingSinceMs == 0L) failingSinceMs = now
-            Log.w(TAG, "$who could not connect to the encoder yet: $why")
-            now - failingSinceMs >= ATTACH_GIVE_UP_MS
-        }
-        if (give) finish("$who could not connect to the encoder: $why")
-        return give
+    /** Whether a renderer feeds the video now. */
+    val feeding: Boolean get() = currentFeed != 0L
+
+    /** Whether feed [id] is the one the video shows (the newest). */
+    fun isCurrent(id: Long): Boolean = currentFeed == id
+
+    /** A frame in a feed (GL thread): taken always, so its renderer never waits; copied only from the newest feed. */
+    private fun onFrame(feed: Feed) {
+        if (feeds[feed.id] !== feed) return
+        runCatching { feed.st.updateTexImage() }.onFailure { return }
+        if (feed.id != currentFeed || !open) return
+        feed.st.getTransformMatrix(matrix)
+        GLES30.glViewport(0, 0, WIDTH, HEIGHT)
+        GLES30.glUseProgram(program)
+        GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
+        GLES30.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, feed.texture)
+        GLES30.glUniformMatrix4fv(GLES30.glGetUniformLocation(program, "tex"), 1, false, matrix, 0)
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, quad)
+        GLES30.glEnableVertexAttribArray(0)
+        GLES30.glVertexAttribPointer(0, 2, GLES30.GL_FLOAT, false, 8, 0)
+        GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
+        val ts = feed.st.timestamp
+        EGLExt.eglPresentationTimeANDROID(eglDisplay, eglEncoder, if (ts > 0L) ts else System.nanoTime())
+        EGL14.eglSwapBuffers(eglDisplay, eglEncoder)
+        frames++
     }
 
-    /** Ends the video and keeps it when it has frames. Any thread, after every renderer let go of the encoder. */
+    private fun setUpGl(enc: Surface) {
+        eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
+        val version = IntArray(2)
+        check(EGL14.eglInitialize(eglDisplay, version, 0, version, 1)) { "no EGL display" }
+        val configs = arrayOfNulls<EGLConfig>(1)
+        val n = IntArray(1)
+        val attribs = intArrayOf(
+            EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8, EGL14.EGL_BLUE_SIZE, 8,
+            EGL14.EGL_RENDERABLE_TYPE, EGLExt.EGL_OPENGL_ES3_BIT_KHR,
+            EGL_RECORDABLE_ANDROID, 1,
+            EGL14.EGL_NONE,
+        )
+        check(EGL14.eglChooseConfig(eglDisplay, attribs, 0, configs, 0, 1, n, 0) && n[0] > 0) { "no recordable EGL config" }
+        val config = configs[0]!!
+        eglContext = EGL14.eglCreateContext(eglDisplay, config, EGL14.EGL_NO_CONTEXT, intArrayOf(EGL14.EGL_CONTEXT_CLIENT_VERSION, 3, EGL14.EGL_NONE), 0)
+        check(eglContext != EGL14.EGL_NO_CONTEXT) { "no EGL context (EGL 0x${Integer.toHexString(EGL14.eglGetError())})" }
+        eglEncoder = EGL14.eglCreateWindowSurface(eglDisplay, config, enc, intArrayOf(EGL14.EGL_NONE), 0)
+        check(eglEncoder != EGL14.EGL_NO_SURFACE) { "no surface on the encoder (EGL 0x${Integer.toHexString(EGL14.eglGetError())})" }
+        check(EGL14.eglMakeCurrent(eglDisplay, eglEncoder, eglEncoder, eglContext)) { "the encoder's surface is not current (EGL 0x${Integer.toHexString(EGL14.eglGetError())})" }
+        program = link(
+            "#version 300 es\nlayout(location = 0) in vec2 pos;\nuniform mat4 tex;\nout vec2 uv;\nvoid main() { uv = (tex * vec4(pos * 0.5 + 0.5, 0.0, 1.0)).xy; gl_Position = vec4(pos, 0.0, 1.0); }\n",
+            "#version 300 es\n#extension GL_OES_EGL_image_external_essl3 : require\nprecision mediump float;\nuniform samplerExternalOES frame;\nin vec2 uv;\nout vec4 color;\nvoid main() { color = vec4(texture(frame, uv).rgb, 1.0); }\n",
+        )
+        val verts = floatArrayOf(-1f, -1f, 1f, -1f, -1f, 1f, 1f, 1f)
+        val buf = java.nio.ByteBuffer.allocateDirect(verts.size * 4).order(java.nio.ByteOrder.nativeOrder()).asFloatBuffer().put(verts).position(0)
+        val ids = IntArray(1)
+        GLES30.glGenBuffers(1, ids, 0)
+        quad = ids[0]
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, quad)
+        GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER, verts.size * 4, buf, GLES30.GL_STATIC_DRAW)
+        Log.i(TAG, "the recording's GL thread is connected to the encoder")
+    }
+
+    private fun tearDownGl() {
+        for (f in feeds.values) {
+            runCatching { f.surface.release() }
+            runCatching { f.st.release() }
+        }
+        feeds.clear()
+        currentFeed = 0L
+        if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
+            EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
+            if (eglEncoder != EGL14.EGL_NO_SURFACE) EGL14.eglDestroySurface(eglDisplay, eglEncoder)
+            if (eglContext != EGL14.EGL_NO_CONTEXT) EGL14.eglDestroyContext(eglDisplay, eglContext)
+            // The display is the process's, shared with the Space: never terminated here.
+        }
+        eglEncoder = EGL14.EGL_NO_SURFACE
+        eglContext = EGL14.EGL_NO_CONTEXT
+        eglDisplay = EGL14.EGL_NO_DISPLAY
+        program = 0
+        quad = 0
+    }
+
+    private fun link(vs: String, fs: String): Int {
+        fun shader(type: Int, src: String): Int = GLES30.glCreateShader(type).also {
+            GLES30.glShaderSource(it, src)
+            GLES30.glCompileShader(it)
+            val ok = IntArray(1)
+            GLES30.glGetShaderiv(it, GLES30.GL_COMPILE_STATUS, ok, 0)
+            check(ok[0] != 0) { "recording shader: ${GLES30.glGetShaderInfoLog(it)}" }
+        }
+        val p = GLES30.glCreateProgram()
+        GLES30.glAttachShader(p, shader(GLES30.GL_VERTEX_SHADER, vs))
+        GLES30.glAttachShader(p, shader(GLES30.GL_FRAGMENT_SHADER, fs))
+        GLES30.glLinkProgram(p)
+        GLES30.glUseProgram(p)
+        GLES30.glUniform1i(GLES30.glGetUniformLocation(p, "frame"), 0)
+        return p
+    }
+
+    /** Runs [work] on the GL thread and waits for it. Null when it didn't answer in time. */
+    private fun <T> onGl(h: Handler, work: () -> T): Result<T>? {
+        if (Looper.myLooper() == h.looper) return runCatching(work)
+        var result: Result<T>? = null
+        val done = CountDownLatch(1)
+        if (!h.post { result = runCatching(work); done.countDown() }) return null
+        if (!done.await(FEED_WAIT_MS, TimeUnit.MILLISECONDS)) return null
+        return result
+    }
+
+    /** Ends the video and keeps it when it has frames. Any thread. */
     fun finish(why: String) {
         val c: MediaCodec
+        val h: Handler?
         synchronized(lock) {
             if (!open) return
             open = false
             main.removeCallbacks(orphaned)
             c = codec ?: return
+            h = gl
         }
         val secs = (SystemClock.elapsedRealtimeNanos() - startNs) / 1e9
+        // The GL thread lets go of the feeds and the encoder first.
+        h?.let { onGl(it) { tearDownGl() } }
         c.runCatching { signalEndOfInputStream() }
         draining = false
         drainThread?.join(3000)
@@ -357,7 +526,7 @@ object RecordingFile {
             // 1.1.5: kept only when the encoder wrote video into the file; frames drawn alone left a 0 byte file "saved".
             val kept = samples > 0
             cleanUp(keep = kept)
-            Log.i(TAG, "recording $why: %.1f s, %d frames drawn, %d samples written%s".format(Locale.ROOT, secs, frames, samples, if (kept) ", saved to Movies/Pocket XR" else ", nothing saved"))
+            Log.i(TAG, "recording $why: %.1f s, %d frames, %d samples written%s".format(Locale.ROOT, secs, frames, samples, if (kept) ", saved to Movies/Pocket XR" else ", nothing saved"))
             feeder = null
             SpaceSession.recordWanted = false
             SpaceSession.recording = false
@@ -367,6 +536,10 @@ object RecordingFile {
 
     private fun cleanUp(keep: Boolean) {
         open = false
+        gl?.let { h -> onGl(h) { tearDownGl() } }
+        glThread?.quitSafely()
+        glThread = null
+        gl = null
         runCatching { codec?.stop() }
         runCatching { codec?.release() }
         codec = null
