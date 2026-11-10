@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.3.1: PC VR opens, and Record keeps going
+
+- **PC VR opens.** In 1.3.0 tapping PC VR closed Pocket XR: the release was missing the Wi-Fi permission PC VR uses to
+  find your PC. It's in now, and Pocket XR no longer closes if that permission is ever missing.
+- **Record keeps going** when you turn Steady mode on or off and when you open or leave PC VR. It all ends up in one
+  video, PC VR included. A recording ends when you press Record again, or 10 seconds after the Space closes.
+
 ## 1.3.0: PC VR
 
 - **PC VR.** Play SteamVR games from your Windows PC on your glasses. Tap **PC VR**, the first button in the Space's
