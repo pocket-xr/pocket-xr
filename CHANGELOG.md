@@ -2,6 +2,12 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.3.4: fewer doubled-up controls
+
+- **One place for each Space control.** Thanks to the tester who said there are "multiple ways to do the same thing".
+  Tracking mode, Snap windows and Cursor follows head are now only in the Control Center on the glasses, not in the
+  phone's Menu as well. Arrange and window presets stay in both, since they're handy from the phone.
+
 ## 1.3.3: keep your settings, window shapes, and a steadier Steady mode
 
 - **Save and restore your settings.** In the trackpad's Menu, under Help and more: **Save settings to a file** and

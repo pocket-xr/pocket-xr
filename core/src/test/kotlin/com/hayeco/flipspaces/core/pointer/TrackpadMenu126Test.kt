@@ -60,9 +60,15 @@ class TrackpadMenu126Test {
             assertFalse("$gone", gone in items)
         }
         // Settings stay, so they can be set before the Space opens.
-        for (kept in listOf(Item.PHONE_HOME, Item.SETTINGS, Item.SPACE_TRACKING, Item.LOCK_SCREENS, Item.PRESETS, Item.CURSOR_SPEED, Item.SNAP_WINDOWS, Item.NEW_WINDOWS_CURVE, Item.HOW_TO, Item.RESET, Item.DEVELOPER)) {
+        for (kept in listOf(Item.PHONE_HOME, Item.SETTINGS, Item.LOCK_SCREENS, Item.PRESETS, Item.CURSOR_SPEED, Item.NEW_WINDOWS_CURVE, Item.HOW_TO, Item.RESET, Item.DEVELOPER)) {
             assertTrue("$kept", kept in items)
         }
+    }
+
+    @Test
+    fun theControlCentersSpaceControlsAreNotRepeatedInTheMenu() {
+        val everything = State(spaceActive = true, windowCount = 3, textSizeShown = true, shapeShown = true, sideBySideShown = true)
+        for (item in TrackpadMenu.CONTROL_CENTER_ONLY) assertFalse("$item", item in TrackpadMenu.items(everything))
     }
 
     @Test
