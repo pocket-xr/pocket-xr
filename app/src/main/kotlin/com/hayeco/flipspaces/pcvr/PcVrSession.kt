@@ -32,6 +32,11 @@ object PcVrSession {
      * is long and shown: after [HOLD_SHOWN_MS] the game dims into the loading room with a ring filling up.
      */
     private const val HOLD_TO_LEAVE_MS = 2_000L
+
+    /** How long closing waits for PC VR's GL thread to let go of a recording (it draws every refresh). */
+    private const val RELEASE_WAIT_MS = 300L
+
+    private var renderer: PcVrRenderer? = null
     private const val HOLD_SHOWN_MS = 300L
     /** The phone's screen goes dark this long after PC VR opens or after the last touch on it. */
     private const val PHONE_DARK_AFTER_MS = 8_000L
@@ -110,8 +115,11 @@ object PcVrSession {
                 return@post
             }
             // ALVR finds the PC streamer by mDNS, which needs multicast on Wi-Fi.
-            multicast = space.applicationContext.getSystemService(WifiManager::class.java)
-                ?.createMulticastLock("pocketxr-pcvr")?.apply { setReferenceCounted(false); acquire() }
+            // 1.3.1: guarded; 1.3.0's release build lacked the permission and this crashed the app.
+            multicast = runCatching {
+                space.applicationContext.getSystemService(WifiManager::class.java)
+                    ?.createMulticastLock("pocketxr-pcvr")?.apply { setReferenceCounted(false); acquire() }
+            }.onFailure { Log.w(TAG, "PC VR: no Wi-Fi multicast lock, finding the PC may be slower: ${it.message}") }.getOrNull()
             val (vw, vh) = AlvrBridge.viewSize(PcVrRenderer.MARGIN)
             // ALVR asks this activity for the microphone permission at start, if it isn't granted yet.
             // Always 60: a different rate makes ALVR restart SteamVR, and the game with it (8 November 2026, a heat mode
@@ -135,7 +143,7 @@ object PcVrSession {
                 // See-through, for the portal: the Space shows around the opening circle while it grows.
                 setEGLConfigChooser(8, 8, 8, 8, 0, 0)
                 holder.setFormat(PixelFormat.TRANSLUCENT)
-                setRenderer(PcVrRenderer(space, pads))
+                setRenderer(PcVrRenderer(space, pads).also { renderer = it })
                 renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
             }
             val root = FrameLayout(host.context).apply {
@@ -211,6 +219,16 @@ object PcVrSession {
     private fun finishClose(why: String) {
         run {
             if (layer == null) return
+            // 1.3.1: PC VR lets go of a recording first, on its GL thread, so the Space carries on in the same video.
+            val r = renderer
+            gl?.let { v ->
+                if (r != null) {
+                    val done = java.util.concurrent.CountDownLatch(1)
+                    v.queueEvent { r.releaseRecording(); done.countDown() }
+                    done.await(RELEASE_WAIT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
+                }
+            }
+            renderer = null
             gl?.onPause()
             layer?.let { v -> runCatching { layerManager?.removeView(v) } }
             layer = null

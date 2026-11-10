@@ -751,7 +751,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private val snapshot = SpaceCapture(context)
 
     /** 0.5.99: the Space records itself (the left eye, to an MP4), when asked ([SpaceSession.recordWanted]). */
-    private val recorder = SpaceRecorder(context)
+    private val recorder = SpaceRecorder(context, "the Space")
 
     // ---- 0.5.26 (Mike: "everything is a bit choppy"): the frame's pacing ----
 
@@ -2501,6 +2501,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * window kept drawing behind the game, to readers nobody read.
      */
     fun panelsForGame(paused: Boolean) {
+        // 1.3.1: a game (PC VR) draws now; the Space lets go of the recording so the game's renderer can feed it.
+        if (paused) recorder.detach()
         if (paused) {
             val nominal = if (displayPeriodNs > 0L) displayPeriodNs else 16_666_667L
             gameClock = com.hayeco.flipspaces.core.spatial.VblankLock(nominal)
