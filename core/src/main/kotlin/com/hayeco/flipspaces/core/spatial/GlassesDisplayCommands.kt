@@ -153,11 +153,11 @@ class GlassesDisplayCommands(private val io: Io) {
      * One beat of a Steady mode change: at most one set each [STILL_RETRY_MS], so each is read back before the next goes
      * out and the display's re-plug has time to pass. Answers the step the glasses are on.
      */
-    fun steady(on: Boolean, nowMs: Long, sixDof: Boolean = false): SteadyMode.Step {
+    fun steady(on: Boolean, nowMs: Long, sixDof: Boolean = false, appAnchor: Boolean = true): SteadyMode.Step {
         // Past its tries, Spatial Anchor counts as set the way this change wants it, so the change can finish.
         val anchorWanted = if (on && sixDof) 1 else 0
         val anchor = if (anchorTries >= ANCHOR_TRIES) anchorWanted else spatialAnchor
-        val step = SteadyMode.next(on, SteadyMode.Glasses(stereo, ultrawide, anchor, screenSize, screenSizeMax), sixDof)
+        val step = SteadyMode.next(on, SteadyMode.Glasses(stereo, ultrawide, anchor, screenSize, screenSizeMax), sixDof, appAnchor)
         if (nowMs - settingsAskedMs >= STILL_READ_MS) {
             settingsAskedMs = nowMs
             rpc(ControlWire::stereoGet, "2D / 3D state read (10273)")

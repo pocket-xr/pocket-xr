@@ -60,6 +60,8 @@ data class GlassesReport(
         appendLine("Head axes: ${headAxes ?: "not known yet (no motion read from the glasses)"}")
         // 0.5.95: a setting the glasses themselves need, so a tester checks it before reporting a problem.
         model.setupHint?.let { appendLine("Check on the glasses: $it") }
+        // 1.4.1: whether the One series' XREAL Eye was seen, for Steady mode in 6DoF testers.
+        XrealEye.reportLine(model, usb)?.let { appendLine(it) }
         appendLine()
         appendLine("Displays (not the phone's own):")
         if (displays.isEmpty()) appendLine("- none: Android shows no glasses display")

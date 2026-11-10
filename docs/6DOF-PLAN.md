@@ -148,6 +148,11 @@ before the picture drifts or resets.
   S phones) is the only documented way to get the pose, and it does not fit Pocket XR (see `docs/HAND-TRACKING.md`).
 - The Eye's video goes over vendor USB, so route 3 is closed too.
 
+**Built in 1.4.1 (untested):** Steady mode in 6DoF is offered on the One series when the Eye is seen (a camera on the
+glasses' USB, `XrealEye`). Pocket XR sets up the wide canvas and leaves the glasses' anchor alone; the glasses tell the
+user to turn on 6DoF in their menu. Next, from a tester's logs: confirm the Eye detection, whether 6DoF holds with
+Ultrawide, and which setting XREAL's own app sends for 6DoF, so Pocket XR can turn it on itself.
+
 What Pocket XR can do: treat it like Steady mode. Pocket XR draws a fixed canvas with no head motion, and the glasses
 anchor it with 6DoF. Windows stay in one canvas, but leaning in and moving work. Mostly a docs and settings job.
 
