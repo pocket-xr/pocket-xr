@@ -1,6 +1,7 @@
 # 6DoF head tracking: research and plan
 
-Status: research only, written 10 November 2026. Nothing here is built yet.
+Status: written 10 November 2026. Step 1 (section 5) is built and was checked on the Aura the same day; the rest is
+not built yet.
 
 Today Pocket XR is 3DoF. It reads the glasses' motion sensor and turns the windows as the head turns. 6DoF adds
 position: lean in to read, step to the side, walk around a window. A tester asked for it on the VITURE Luma Ultra
@@ -175,6 +176,18 @@ To keep clear of the 1.3.3 work in progress, this stays out of `SteadyArrange.kt
 
 **Step 1: the pose plumbing (testable now, no new glasses).** Section 3, with the replay source. The Space and
 OpenXR games move with a scripted position. Nothing changes for 3DoF users.
+
+Done on 10 November 2026. On the Flip 7 with the Aura, a debug build's scripted path moved the launcher about 30 cm
+closer and back in Space locked, and the lost tracking path froze and then glided back with no jump (Mike, wearing the
+glasses). Not done yet: the near limit for windows closer than about 25 cm, the phone's tracking mode list offering
+Space locked without a restart, lining a real source's axes up with Pocket XR's recenter (with Step 2), and an OpenXR
+game run with a position. To try it on a debug build:
+
+```
+adb shell am broadcast -a com.hayeco.flipspaces.debug.POSITION --es scenario lean --ei repeat 3 --ez lock true
+```
+
+The scenarios are `sway`, `lean`, `square` and `lost`. `lock` holds the Space in Space locked while the path plays.
 
 **Step 2: the first real 6DoF source.** Whichever unblocks first:
 

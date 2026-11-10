@@ -56,12 +56,8 @@ class DebugReceiver : BroadcastReceiver() {
                     val scenario = com.hayeco.flipspaces.core.spatial.PositionScenario.named(name)
                     if (scenario == null) Log.w(TAG, "No position scenario \"$name\": ${com.hayeco.flipspaces.core.spatial.PositionScenario.entries.joinToString { it.name.lowercase() }}")
                     else {
-                        PositionReplayPlayer.play(scenario, number(intent, "repeat")?.toInt() ?: 1)
-                        // --ez lock true: the Space switches to Space locked (6DoF) too, for this session only.
-                        if (intent.getBooleanExtra("lock", false)) {
-                            SpaceSession.follow = com.hayeco.flipspaces.core.spatial.FollowMode.SPACE_LOCKED
-                            Log.i(TAG, "tracking mode: Space locked (6DoF), from the position replay")
-                        }
+                        // --ez lock true: the Space is held in Space locked (6DoF) while the replay plays, for this session only.
+                        PositionReplayPlayer.play(scenario, number(intent, "repeat")?.toInt() ?: 1, intent.getBooleanExtra("lock", false))
                     }
                 }
                 ACTION_POSITION_STOP -> PositionReplayPlayer.stop()
