@@ -1,6 +1,6 @@
 # PC VR in the Space: step 1, one app and a PC VR tile
 
-Private until Mike says otherwise. Written 8 November 2026.
+Written 8 November 2026; public from 1.3.0 (9 November 2026).
 
 ## Goal
 

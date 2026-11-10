@@ -114,7 +114,7 @@ class PcVrLoading {
         if (key == cardKey) return
         cardKey = key
         val (title, line) = when (phase) {
-            Phase.FINDING_PC -> words ?: if (slow) "Still looking for your PC" to "Check that ALVR is open and both are on the same Wi-Fi."
+            Phase.FINDING_PC -> words ?: if (slow) "Still looking for your PC" to "Check the Pocket XR PC helper is running and both are on the same Wi-Fi."
             else "Connecting to your PC" to "This takes a few seconds."
             Phase.STARTING -> "Starting SteamVR" to "Almost there."
             Phase.RECONNECTING -> "Reconnecting to your PC" to "Your game keeps running."
