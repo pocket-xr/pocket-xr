@@ -126,8 +126,9 @@ Other phones with video out should work. Own glasses or a phone not marked as co
 I wanted to get 1.0 into people's hands rather than wait until everything was done, so some big pieces are left open
 on purpose. These are the ones I'm most excited to see the community build:
 
-- **6DoF tracking.** Pocket XR follows your head turning (3DoF) today. With the cameras on the XREAL Aura and the
-  XREAL Eye, 6DoF is possible, so you could lean in and walk around your windows.
+- **6DoF tracking.** Pocket XR follows your head turning (3DoF), and on the XREAL Aura Steady mode holds in 6DoF
+  (1.4.0). 6DoF all around you, on more glasses, is open: docs/6DOF-PLAN.md says where a head position can come from
+  on each pair, and the app already carries one through the Space.
 - **Hand tracking on the One and One Pro**, through the XREAL Eye camera add-on.
 - **More glasses and phones.** Testing and Glasses reports from anything under "Early or experimental support", and
   from glasses and phones not on the list yet.

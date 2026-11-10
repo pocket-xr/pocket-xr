@@ -163,7 +163,7 @@ object GlassesDisplayControl {
     @Volatile private var steadyWant: Boolean? = null
 
     /**
-     * 1.4.0: this Steady mode is the 6DoF kind (Settings' Steady mode in 6DoF, on the Aura): Spatial Anchor goes on with
+     * 1.4.0: this Steady mode is the 6DoF kind (Settings' Steady mode in 6DoF, on by default on the Aura): Spatial Anchor goes on with
      * it, and stays on. Taken when Steady mode is turned on, kept until it is turned off.
      */
     @Volatile private var steadySixDof = false

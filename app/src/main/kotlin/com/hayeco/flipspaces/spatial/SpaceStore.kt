@@ -526,11 +526,12 @@ class SpaceStore(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_RECENTRE_FOLLOWS_TILT, value).apply()
 
     /**
-     * 1.4.0 (docs/6DOF-PLAN.md): Steady mode in 6DoF on the XREAL Aura, off by default. Steady mode then keeps the glasses'
-     * Spatial Anchor on, so the wide screen stays put as the head leans and moves ([com.hayeco.flipspaces.core.spatial.SteadyMode]).
+     * 1.4.0 (docs/6DOF-PLAN.md): Steady mode in 6DoF on the XREAL Aura, on by default (Mike: most users would not know to
+     * turn it on). Steady mode then keeps the glasses' Spatial Anchor on, so the wide screen stays put as the head leans
+     * and moves ([com.hayeco.flipspaces.core.spatial.SteadyMode]). Glasses that cannot hold it never see it.
      */
     var steadySixDof: Boolean
-        get() = prefs.getBoolean(KEY_STEADY_SIX_DOF, false)
+        get() = prefs.getBoolean(KEY_STEADY_SIX_DOF, true)
         set(value) = prefs.edit().putBoolean(KEY_STEADY_SIX_DOF, value).apply()
 
     /** 0.5.64: the drawn orientation's One Euro filter (Developer); on by default. */

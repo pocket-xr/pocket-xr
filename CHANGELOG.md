@@ -2,6 +2,19 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.4.0: Steady mode in 6DoF on the XREAL Aura
+
+- **Lean in and walk around your windows.** On the XREAL Aura, Steady mode now holds the wide screen in place in the
+  room as you move, not only as you turn (6DoF). Lean in to read, step to the side, and the windows stay where they
+  are. The Aura's own Spatial Anchor does the tracking with its cameras; Pocket XR turns it on with Steady mode and off
+  again when you leave. It's on by default. To get the 3DoF Steady mode back, turn off **Steady mode in 6DoF** in
+  Settings. It needs 2D, so Steady mode stays flat as before.
+- **Steady mode no longer turns off Spatial Anchor behind your back.** Turning on Ultrawide in the glasses' own menu
+  used to switch Spatial Anchor off as the Space opened again.
+- **For developers:** the start of 6DoF head tracking for glasses that give a head position: Space locked (6DoF)
+  turns on while one is live, OpenXR games get the position, and debug builds have a scripted head path for testing.
+  The plan, per glasses, is in docs/6DOF-PLAN.md. Pocket XR's changes to Monado are now in the repository as a patch.
+
 ## 1.3.4: fewer doubled-up controls
 
 - **One place for each Space control.** Thanks to the tester who said there are "multiple ways to do the same thing".

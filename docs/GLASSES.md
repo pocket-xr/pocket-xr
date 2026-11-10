@@ -91,6 +91,13 @@ firmware restarts the picture), recentring through a turn (steppy), recentring a
 late), a firmer still lock (a catch at the start of a turn, and a picture frozen on the display is not fixed to the room),
 Spatial Anchor with a smoothed head (worse), and sliding windows in at the canvas edge (the windows you look at move).
 
+**On the Aura, Steady mode holds in 6DoF** (1.4.0): the canvas stays in place as you lean in and walk around, not only
+as you turn. The Aura's own Spatial Anchor tracks your head's position with its cameras and holds the picture, so
+Steady mode turns it on (last, after Ultrawide and the screen size) and off again when you leave (first, before
+Ultrawide). It needs 2D: in 3D side by side the Aura holds only turns. It's on by default; **Steady mode in 6DoF** in
+Settings turns it off, for the 3DoF Steady mode above with Spatial Anchor off. Found and checked on 10 November 2026; see
+docs/6DOF-PLAN.md.
+
 Steady mode is tested on the Aura only. It should work on the One, One Pro and 1S, but hasn't been tried on them: please open an issue if it doesn't. There it reads and changes those glasses' settings only once you tap it.
 
 ### 3D mode
