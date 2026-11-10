@@ -1151,6 +1151,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 1.2.3 (issue 58): 2D while moving, from the head's turn and the cursor shown in the last frame.
         sideBySideFlat = sideBySideFlatOn && sideBySideMotion.update(HeadTracker.turnSpeedDegS, headCursorAlpha > 0.02f, SystemClock.uptimeMillis())
         SpaceSession.focusedSideBySide = focused?.let { it.label to sideBySide.isOn(it.packageName) }
+        SpaceSession.focusedShape = focused?.let { it.label to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
         // 0.5.32: the head's turn speed to the glasses' duty on turns (it sends nothing unless its switch is on).
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
         // 0.5.32: the open windows, for the Menu's Arrange layouts by count.
@@ -3230,6 +3231,25 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     /**
+     * 1.3.3 (a tester: resizing "a bit clunky... Maybe some preset aspect ratios would be good?"): the trackpad Menu's
+     * Shape for the focused window, about as big as it was. Not while Lock screens holds the windows.
+     */
+    private fun shapeChosen(ratio: Float) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        if (store.windowsLocked) {
+            showNotice(p, "Lock screens is on", SystemClock.uptimeMillis())
+            return
+        }
+        val next = com.hayeco.flipspaces.core.spatial.WindowShape.shaped(p.panel, ratio)
+        val name = com.hayeco.flipspaces.core.spatial.WindowShape.current(ratio)?.label ?: "%.2f".format(java.util.Locale.ROOT, ratio)
+        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: shape $name, %.1f by %.1f degrees (was %.1f by %.1f)".format(
+            java.util.Locale.ROOT, next.widthDeg, next.heightDeg, p.panel.widthDeg, p.panel.heightDeg))
+        showNotice(p, "Shape $name", SystemClock.uptimeMillis())
+        setLayout(layout.replace(next), commit = true)
+        shapeSoon(p, SHAPE_AFTER_TOGGLE_MS)
+    }
+
+    /**
      * 1.2.3 (issue 58): the trackpad Menu's Side by side 3D for the focused window's app, remembered for it. The picture
      * itself is untouched; only the eyes' halves change ([com.hayeco.flipspaces.core.spatial.SideBySide]).
      */
@@ -3972,6 +3992,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 is SpaceCommand.PadTouches -> padTouches(c.events)
                 SpaceCommand.FocusWindow -> focusedPanelId?.let { panels[it] }?.displayId?.let { PanelHost.focus(it, "the Game controller's gamepad") }
                 is SpaceCommand.SideBySide -> sideBySideChosen(c.on)
+                is SpaceCommand.Shape -> shapeChosen(c.ratio)
                 is SpaceCommand.SideBySideFlat -> {
                     sideBySideFlatOn = c.on
                     store.sideBySideFlat = c.on

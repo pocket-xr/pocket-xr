@@ -114,7 +114,7 @@ class TrackpadMenu126Test {
         // Everything at once: each item shows somewhere, so no feature fell out of the Menu.
         val all = State(
             spaceActive = true, phoneLocked = true, steadyOffered = true, gameKeysOn = true, recording = true,
-            controllerMode = GameControllerMode.TOUCH, textSizeShown = true, sideBySideShown = true, sideBySideOn = true,
+            controllerMode = GameControllerMode.TOUCH, textSizeShown = true, shapeShown = true, sideBySideShown = true, sideBySideOn = true,
             windowCount = 2, glassesKnown = true, airOffered = true, airOn = true, directionApplies = true, developerShown = true,
         )
         val open = TrackpadMenu.items(all)

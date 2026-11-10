@@ -220,7 +220,14 @@ help, it takes two taps:
    [play.google.com/apps/testing/com.hayeco.flipspaces](https://play.google.com/apps/testing/com.hayeco.flipspaces).
 
 Then install Pocket XR from Play. You'll need to uninstall the copy you have first, as the Play version is signed with
-a different key. That resets your Pocket XR settings. The trackpad's Menu has a card with both links.
+a different key. To keep your settings (since 1.3.3):
+
+1. In the trackpad's Menu, open **Help and more** and tap **Save settings to a file**. Save it in Downloads or Drive.
+2. Uninstall Pocket XR and install it from Play.
+3. In the new copy's Menu, tap **Restore settings from a file** and pick the file. Pocket XR closes; open it again.
+
+Your layouts, presets, glasses, hands and trackpad settings come along. Pairing with the PC helper for PC VR is the
+only thing to do again. The trackpad's Menu has a card with both links.
 
 ## Updates
 

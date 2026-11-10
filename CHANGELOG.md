@@ -2,6 +2,21 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.3.3: keep your settings, window shapes, and a steadier Steady mode
+
+- **Save and restore your settings.** In the trackpad's Menu, under Help and more: **Save settings to a file** and
+  **Restore settings from a file**. Your layouts, presets, glasses, hands, trackpad and Joy-Con settings in one file,
+  so you can move to the Google Play version (which needs an uninstall) or a new phone without setting everything up
+  again. Thanks to the tester who asked. The PC helper's pairing stays on the phone; pairing again is one tap.
+- **Window shapes.** A new Shape row under This window in the Menu gives the window you're using a common shape in one
+  tap: 16:9, 3:2, 4:3, 1:1 or 9:16 (phone). It keeps about the same size, so it doesn't jump bigger or smaller.
+- **Steady mode windows keep a screen's shape.** Going into Steady mode, a window no longer stretches across the whole
+  Ultrawide view: none is wider than 16:9, and each stays centred in its place. Thanks to the tester who said they
+  were "super wide".
+- **Ultrawide comes back by itself.** Pressing the glasses' button twice by accident left Ultrawide and broke Steady
+  mode. Now Pocket XR puts Ultrawide back. Press it twice again within 30 seconds and Steady mode ends properly, with
+  3D and your windows as they were.
+
 ## 1.3.2: Record keeps going, really
 
 - **Record keeps going** when you turn Steady mode on or off and when you open or leave PC VR, in one video with PC VR

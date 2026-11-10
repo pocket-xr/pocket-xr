@@ -977,6 +977,61 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun focusedSideBySide(): Pair<String, Boolean>? = if (SpaceSession.active) SpaceSession.focusedSideBySide else null
 
+    override fun focusedShape(): Pair<String, Float>? = if (SpaceSession.active) SpaceSession.focusedShape else null
+
+    override fun shapeChosen(ratio: Float) {
+        if (SpaceSession.active) SpaceSession.send(SpaceCommand.Shape(ratio))
+    }
+
+    // 1.3.3: Save settings to a file and Restore settings from one, through Android's file picker ([SettingsBackup]).
+    override fun backupSettings() {
+        val pick = android.content.Intent(android.content.Intent.ACTION_CREATE_DOCUMENT)
+            .addCategory(android.content.Intent.CATEGORY_OPENABLE)
+            .setType(SettingsBackup.MIME)
+            .putExtra(android.content.Intent.EXTRA_TITLE, SettingsBackup.fileName())
+        runCatching { startActivityForResult(pick, PICK_BACKUP) }.onFailure { toast("No file picker on this phone") }
+    }
+
+    override fun restoreSettings() {
+        val pick = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT)
+            .addCategory(android.content.Intent.CATEGORY_OPENABLE)
+            .setType("*/*")
+        runCatching { startActivityForResult(pick, PICK_RESTORE) }.onFailure { toast("No file picker on this phone") }
+    }
+
+    @Deprecated("Activity results, for the settings file picker")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        val uri = data?.data
+        if (resultCode != RESULT_OK || uri == null) return
+        when (requestCode) {
+            PICK_BACKUP -> runCatching { SettingsBackup.save(this, uri) }
+                .onSuccess { toast("Settings saved. Keep the file to restore them later.") }
+                .onFailure { toast("Settings not saved: ${it.message}") }
+            PICK_RESTORE -> {
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("Restore settings?")
+                    .setMessage("Your settings on this phone are replaced by the ones in the file. Pocket XR then closes so they take effect; open it again.")
+                    .setPositiveButton("Restore") { _, _ ->
+                        runCatching { SettingsBackup.restore(this, uri) }
+                            .onSuccess {
+                                toast("Settings restored. Open Pocket XR again.")
+                                // Closed at once, so nothing still running writes its old settings over the restored ones.
+                                window.decorView.postDelayed({
+                                    finishAffinity()
+                                    android.os.Process.killProcess(android.os.Process.myPid())
+                                }, RESTORE_CLOSE_MS)
+                            }
+                            .onFailure { toast(it.message ?: "Settings not restored") }
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+        }
+    }
+
+    private fun toast(text: String) = android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_LONG).show()
+
     override fun sideBySideChosen(on: Boolean) {
         if (SpaceSession.active) SpaceSession.send(SpaceCommand.SideBySide(on))
     }
@@ -2034,6 +2089,9 @@ class TrackpadActivity : Activity(), PadHost {
 
         /** 1.2.3 (issue 57): the Menu reads the new text size back this long after a step. */
         private const val TEXT_SIZE_REFRESH_MS = 200L
+        private const val PICK_BACKUP = 41
+        private const val PICK_RESTORE = 42
+        private const val RESTORE_CLOSE_MS = 1_500L
 
         /** 0.5.19: a touch or tick that keeps the UI thread this long is logged. */
         private const val SLOW_UI_MS = 8L
