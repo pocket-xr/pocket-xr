@@ -97,6 +97,18 @@ class HeadPositionTest {
     }
 
     @Test
+    fun resetStartsTheCountsAgain() {
+        val t = PositionTrack()
+        t.push(PositionSample(0L, Vec3.ZERO))
+        t.push(PositionSample(10 * ms, Vec3.ZERO, stable = false))
+        t.push(PositionSample(20 * ms, Vec3.ZERO))
+        t.reset()
+        assertEquals(0, t.unsure)
+        assertEquals(0, t.resumes)
+        assertNull(t.positionAt(20 * ms))
+    }
+
+    @Test
     fun liveThenStaleThenGone() {
         val t = PositionTrack(staleMs = 500L, dropMs = 2_000L)
         t.push(PositionSample(0L, Vec3.ZERO))

@@ -38,7 +38,8 @@ import java.io.File
  * - ADD_APP (1.1.1): opens `--es pkg <package>`'s launcher activity as a window in the Space, as the launcher does, so
  *   panels can be tested on an emulator without aiming pinches at the launcher.
  * - POSITION (1.4.0): plays a scripted head position (`--es scenario sway|lean|square|lost`, `--ei repeat <n>`) as a
- *   6DoF source, so Space locked (6DoF) can be tested without 6DoF glasses. POSITION_STOP stops it.
+ *   6DoF source, so Space locked (6DoF) can be tested without 6DoF glasses. `--ez lock true` also switches the Space to
+ *   Space locked for this session. POSITION_STOP stops it.
  */
 class DebugReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -54,7 +55,14 @@ class DebugReceiver : BroadcastReceiver() {
                     val name = intent.getStringExtra("scenario") ?: "sway"
                     val scenario = com.hayeco.flipspaces.core.spatial.PositionScenario.named(name)
                     if (scenario == null) Log.w(TAG, "No position scenario \"$name\": ${com.hayeco.flipspaces.core.spatial.PositionScenario.entries.joinToString { it.name.lowercase() }}")
-                    else PositionReplayPlayer.play(scenario, number(intent, "repeat")?.toInt() ?: 1)
+                    else {
+                        PositionReplayPlayer.play(scenario, number(intent, "repeat")?.toInt() ?: 1)
+                        // --ez lock true: the Space switches to Space locked (6DoF) too, for this session only.
+                        if (intent.getBooleanExtra("lock", false)) {
+                            SpaceSession.follow = com.hayeco.flipspaces.core.spatial.FollowMode.SPACE_LOCKED
+                            Log.i(TAG, "tracking mode: Space locked (6DoF), from the position replay")
+                        }
+                    }
                 }
                 ACTION_POSITION_STOP -> PositionReplayPlayer.stop()
                 ACTION_STALL -> com.hayeco.flipspaces.spatial.SpaceSession.debugStallMs = (number(intent, "ms")?.toLong() ?: 6_000L).coerceIn(0L, 60_000L)

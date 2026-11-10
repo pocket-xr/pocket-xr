@@ -125,6 +125,8 @@ class PositionTrack(
         holding = false
         velocity = Vec3.ZERO
         prevRaw = null
+        resumes = 0
+        unsure = 0
     }
 
     private fun output(tNs: Long, predict: Boolean): Vec3? {
