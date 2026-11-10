@@ -83,19 +83,20 @@ What we have measured on Mike's Aura:
   needs for calibration, with no calibration step for the user.
 - **Pocket XR already reads the Aura's motion sensor** over its USB network at a high rate, with the factory gyro
   and accelerometer calibration.
-- **One standard USB camera (UVC) shows up on the phone.** Hand tracking uses it. Which of the three cameras it is,
-  and which picture formats it offers, has not been written down yet.
+- **One standard USB camera (UVC) shows up on the phone, and it is the colour camera only.** Read on 10 November 2026
+  (Hands, Developer, Read camera formats): one streaming interface with HEVC (2016x1512, 1920x1080, 1080x1920,
+  1920x1920, 2880x1600 at 30 fps, 4032x3024 at 15 fps) and MJPEG (1920x1080, 1080x1920 at 30 fps). 2016x1512 is the
+  colour camera's size in the factory calibration. There is no grey 640x512 picture, so the tracking cameras are not
+  offered as a standard camera. Hand tracking uses the MJPEG 1920x1080 stream.
 - **No way to read the glasses' own head pose has been found.** The Steady mode work showed this: when the glasses
   hold the picture, the phone gets no live pose back. So route 1 is closed on the Aura for now.
 
-So the Aura route is **route 3: Pocket XR runs VIO on the phone**, and it rests on one open question:
+So the Aura route is **route 3: Pocket XR runs VIO on the phone**, and the open question "can the phone read the
+two grey tracking cameras?" now has its answer: **not as a standard camera.** That leaves:
 
-> **Can the phone read the two grey tracking cameras?**
-
-- If the standard USB camera offers the grey cameras (for example as a second format), the path is open, with no
-  vendor commands.
-- If it offers only the colour camera, a single colour camera can still work (mono VIO), but worse: rolling
-  shutter, a narrower view, auto exposure, and no hardware time link to the motion sensor.
+- **Mono VIO on the colour camera.** Possible with what the phone already reads, but worse than stereo: rolling
+  shutter, a narrower view, auto exposure, MJPEG or HEVC decode on every frame, and no hardware time link to the
+  motion sensor. OpenVINS does mono; Basalt does not.
 - The grey cameras may be reachable some other way. We would only use a way we have seen XREAL's own app use on the
   wire (as with 3D switching, command 10274). No guessed command ids.
 
