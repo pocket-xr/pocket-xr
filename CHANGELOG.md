@@ -16,8 +16,10 @@ fix.
   head tracking screen opens.
 - **The switch is called VITURE head tracking on the Beast.** It keeps Experimental in its name on other VITURE models.
   With it off on the Beast, the status says it's turned off instead of saying VITURE isn't supported.
-- **A Bluetooth mouse that seems dead.** Nothing an update leaves behind breaks the mouse. If the trackpad was left on
-  Spatial Mouse, the phone's aim moves the pointer instead of the mouse; switch to the Vertical Trackpad.
+- **A mouse works on Spatial Mouse.** With the trackpad left on Spatial Mouse, the phone's aim took the pointer back
+  on every move, so a Bluetooth mouse looked dead. Now the mouse wins: while it's moving, it moves the pointer the
+  same as on the other trackpad pages, and clicks land where it points. About a second and a half after it stops, the
+  phone aims again from where the pointer is, with no jump back. Your settings stay as they were.
 
 ## 1.2.11: Record works on the Flip7
 

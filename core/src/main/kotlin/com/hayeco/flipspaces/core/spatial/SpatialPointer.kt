@@ -512,8 +512,26 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         if (!anchoredCursor(a)) clampOffset(a)
     }
 
-    /** 0.5.41: the trackpad's cursor anchored in the room ([cursorFollowsHead] off, not Spatial Mouse). */
-    private fun anchoredCursor(a: Aim): Boolean = a === main && !cursorFollowsHead && padMode != PadMode.SPATIAL_MOUSE
+    /** 0.5.41: the trackpad's cursor anchored in the room ([cursorFollowsHead] off, not Spatial Mouse while the phone aims). */
+    private fun anchoredCursor(a: Aim): Boolean = a === main && !cursorFollowsHead && !phoneAims
+
+    /**
+     * Unreleased (a tester's Bluetooth mouse looked dead): on Spatial Mouse the phone's aim set the pointer on every sensor
+     * update, so a mouse move was overwritten at once. Now a physical mouse wins: for [MOUSE_TAKES_OVER_MS] after it moved
+     * ([mouseMovedMs]) the phone's aim is left out and the mouse moves the pointer as on the other pages; after, the phone
+     * aims again from where the pointer is ([mouseRefFromPointer]), with no jump back.
+     */
+    val mouseTookOver: Boolean
+        get() = padMode == PadMode.SPATIAL_MOUSE && mouseMovedMs != Long.MIN_VALUE && clockMs - mouseMovedMs < MOUSE_TAKES_OVER_MS
+
+    /** Spatial Mouse, and the phone aims (no mouse moved lately, [mouseTookOver]). */
+    private val phoneAims: Boolean get() = padMode == PadMode.SPATIAL_MOUSE && !mouseTookOver
+
+    /** The render clock when a physical mouse last moved the pointer ([PointerSignal.MoveBy]). */
+    private var mouseMovedMs = Long.MIN_VALUE
+
+    /** The next phone aim takes its reference from where the pointer is, not the head's forward (the mouse moved it). */
+    private var mouseRefFromPointer = false
 
     /** 0.5.41: [a]'s offset is outside the view now. */
     private fun outsideView(a: Aim): Boolean =
@@ -648,7 +666,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
 
     /** 0.5.36: with [cursorFollowsHead] off, the trackpad cursor's head relative aim fixed in the room as it is now. */
     private fun anchorIfFixed(head: Quat) {
-        if (cursorFollowsHead || padMode == PadMode.SPATIAL_MOUSE) return
+        if (cursorFollowsHead || phoneAims) return
         main.worldAim = head.rotate(Vec3.direction(main.offsetYaw, main.offsetPitch))
         main.worldOrigin = null
         main.headOrigin = null
@@ -1077,6 +1095,13 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                 handle(hand, signal.signal, head, layout, panelPixels, headAt, out, signal.origin, signal.dir)
             }
             is PointerSignal.MoveBy -> {
+                // Unreleased: on Spatial Mouse a mouse's move takes the pointer from the phone for a while ([mouseTookOver]).
+                if (padMode == PadMode.SPATIAL_MOUSE && (signal.dx != 0f || signal.dy != 0f)) {
+                    mouseMovedMs = clockMs
+                    mouseRef = null
+                    mouseRefFromPointer = true
+                    laserPinnedSinceMs = Long.MIN_VALUE
+                }
                 // The trackpad nudges relative to the head, from wherever the ray is now.
                 syncOffset(main, head)
                 val wasOutside = outsideView(main)
@@ -1215,6 +1240,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                 HomeEvent.LONG_PRESS -> {
                     centre()
                     mouseRef = null
+                    mouseRefFromPointer = false
                     laserPinnedSinceMs = Long.MIN_VALUE
                     out += SpaceAction.Note("Home held 1 s: the cursor is recentred in front")
                     follow(main, ray(main, head), layout, out)
@@ -1224,6 +1250,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                 if (padMode != s.mode) {
                     padMode = s.mode
                     mouseRef = null
+                    mouseRefFromPointer = false
                     aimHeld = false
                     if (s.mode != PadMode.SPATIAL_MOUSE) centre()
                 }
@@ -1724,6 +1751,8 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         if (!s.yawDeg.isFinite() || !s.pitchDeg.isFinite()) return
         val last = lastPhoneAim
         lastPhoneAim = Pair(s.yawDeg, s.pitchDeg)
+        // Unreleased: a physical mouse moved lately; it has the pointer, and the phone's aim is left out.
+        if (mouseTookOver) return
         // 1.1.10 (issue 35): while one finger scrolls, the phone's turn slides the reference instead of the dot, so the
         // dot stays on what it scrolls and, after, moves on from there with the phone (no jump).
         mouseRef?.let { r ->
@@ -1732,7 +1761,11 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                 mouseRef = r.copy(phoneYaw = py, phonePitch = pp)
             }
         }
-        var ref = mouseRef ?: Angles.of(head.forward).let { MouseRef(s.yawDeg, s.pitchDeg, it.yawDeg, it.pitchDeg) }.also { mouseRef = it }
+        // After the mouse had the pointer, the phone's reference is where the pointer is now, so it picks up from there.
+        val from = if (mouseRefFromPointer) ray(main, head).dir else head.forward
+        if (mouseRef == null && mouseRefFromPointer) (main.grab as? Holding)?.mouseOffset = null
+        mouseRefFromPointer = false
+        var ref = mouseRef ?: Angles.of(from).let { MouseRef(s.yawDeg, s.pitchDeg, it.yawDeg, it.pitchDeg) }.also { mouseRef = it }
         var yaw = wrapDegrees(ref.headYaw + wrapDegrees(s.yawDeg - ref.phoneYaw))
         var pitch = (ref.headPitch + s.pitchDeg - ref.phonePitch).coerceIn(-89f, 89f)
         main.worldAim = Vec3.direction(yaw, pitch)
@@ -2561,3 +2594,6 @@ private const val HOVER_STEP = 0.0008f
 
 /** 0.5.32: how long the Spatial Mouse dot stays pinned at the view's edge before the glasses say how to recentre it. */
 private const val LASER_LOST_MS = 2_000L
+
+/** Unreleased: how long after a physical mouse's last move Spatial Mouse leaves the pointer to it ([SpatialPointer.mouseTookOver]). */
+const val MOUSE_TAKES_OVER_MS = 1_500L

@@ -256,12 +256,18 @@ saved setting changed its key or meaning between 1.2.0 and 1.2.11 in a way that 
 mouse or device id, and backup is off, so nothing is restored from an older install. So there is no stale state to move
 on update.
 
-One saved setting does make a mouse look dead, and clearing data resets it: the trackpad's pad type (`trackpad` in the
-trackpad settings) left on **Spatial Mouse**. On that page the phone's aim is sent on every sensor update and sets the
-pointer's direction, so a mouse move is overwritten at once: the pointer follows the phone, and clicks land wherever
-the phone points. A fresh install starts on the Vertical Trackpad, where the mouse works. This has been so since mouse
-support came in 1.1.17; it is a choice the user made, so it is not reset on update. If someone reports a dead mouse,
-ask which trackpad page they were on, and try the Vertical Trackpad first.
+One saved setting did make a mouse look dead, and clearing data reset it: the trackpad's pad type (`trackpad` in the
+trackpad settings) left on **Spatial Mouse**. On that page the phone's aim is sent on every sensor update and set the
+pointer's direction, so a mouse move was overwritten at once: the pointer followed the phone, and clicks landed
+wherever the phone pointed. A fresh install starts on the Vertical Trackpad, where the mouse always worked. This was so
+from mouse support in 1.1.17 up to 1.2.11.
+
+Unreleased: on Spatial Mouse the mouse wins. When a physical mouse moves the pointer (`PointerSignal.MoveBy`),
+`SpatialPointer` notes the time, and for `MOUSE_TAKES_OVER_MS` (1.5 s) after its last move (`mouseTookOver`) the phone's
+aim is left out: the mouse moves the pointer as on the other pages (anchored in the room with Cursor follows head
+off), and clicks land where it points. Clicks and the wheel alone do not take the pointer. When the mouse goes quiet,
+the next phone aim takes its reference from where the pointer is, so the phone turns it on from there with no jump
+back. Holding Home still recentres in front. No saved setting changed: the page stays Spatial Mouse.
 
 ## Unknown glasses
 
