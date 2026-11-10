@@ -187,6 +187,9 @@ class DebugReceiver : BroadcastReceiver() {
                 com.hayeco.flipspaces.openxr.OpenXrHeadFeed.smooth = intent.getBooleanExtra("on", true)
                 Log.i(TAG, "game head smoothing ${if (com.hayeco.flipspaces.openxr.OpenXrHeadFeed.smooth) "on" else "off"}")
             }
+            // 1.3.2: Record and Steady mode from adb, to test a recording across the switches.
+            "record" -> com.hayeco.flipspaces.spatial.SpaceSession.recordWanted = intent.getBooleanExtra("on", true)
+            "steady" -> com.hayeco.flipspaces.spatial.GlassesDisplayControl.steady(context, intent.getBooleanExtra("on", true))
             "pcvr" -> {
                 val tuning = com.hayeco.flipspaces.pcvr.PcVrTuning
                 tuning.zoom = intent.getFloatExtra("zoom", tuning.zoom).coerceIn(1f, 2f)
