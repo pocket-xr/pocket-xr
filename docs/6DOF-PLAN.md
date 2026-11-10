@@ -25,7 +25,7 @@ somewhere. There are three places the tracking can run:
 | Glasses | Cameras for tracking | Best source | Licence | Can we test? |
 | --- | --- | --- | --- | --- |
 | VITURE Luma Ultra | Two grey tracking cameras plus a front camera | Route 1: VITURE's own SDK returns a 6DoF pose on Android | SDK is closed. Terms not published | Only through a tester |
-| XREAL Aura | Two grey fisheye tracking cameras plus a colour camera | Route 3 (Pocket XR runs VIO), if the phone can read the grey cameras | Our own code plus open source VIO | Yes, Mike has an Aura |
+| XREAL Aura | Two grey fisheye tracking cameras plus a colour camera | Route 2: the glasses' own Spatial Anchor tracks in 6DoF (checked). Route 3 only on the colour camera | Nothing to license | Yes, Mike has an Aura |
 | XREAL One / One Pro with XREAL Eye | One colour camera (the Eye) | Route 2: the glasses' own 6DoF anchor | Nothing to license | Only through a tester |
 | VITURE Beast, Luma, Luma Pro, Pro | No tracking cameras | None. 3DoF only | | |
 | XREAL One, One Pro, 1S without the Eye; Air family | None (the Air 2 Ultra has two, reachable only through XREAL's Unity SDK) | None. 3DoF only | | |
@@ -109,8 +109,17 @@ calibration.
 Costs to measure: CPU, heat and battery on the Flip 7 while it also drives the glasses display. Basalt runs two
 640 x 512 cameras in real time on laptop class CPUs. A phone is tighter.
 
-Does the Aura have a 6DoF anchor of its own in its menu (route 2), like the One with the Eye? Mike can check this on
-his glasses in two minutes. If it does, route 2 works on the Aura too, as a cheap first step.
+**The Aura has a 6DoF anchor of its own (route 2).** Checked by Mike on 10 November 2026: with the glasses' own
+**Spatial Anchor** setting on and the plain DeX screen showing, leaning in made the screen bigger. The glasses track
+position themselves (with their own tracking cameras, which the phone cannot read) and hold the whole picture in place
+in the room.
+
+This explains an older result: Spatial Anchor made Pocket XR's normal tracking worse, because the glasses and Pocket
+XR both moved the picture. It also gives the Aura a cheap 6DoF mode, built like Steady mode: Pocket XR draws a fixed
+picture with no head motion, and the glasses hold it in the room in 6DoF. The cost is the same as Steady mode's:
+windows live in the glasses' one canvas, not all around. Still to try: Spatial Anchor on with Pocket XR's head
+tracking off, in the normal Space and in Ultrawide; whether 3D side by side keeps its depth; how far the glasses let
+the head move before the picture drifts or resets.
 
 ### 2.3 XREAL One and One Pro with the XREAL Eye
 
