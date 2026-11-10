@@ -178,6 +178,9 @@ object GlassesDisplayControl {
     fun steady(context: Context, on: Boolean) {
         app = context.applicationContext
         steadyWant = on
+        // The user's own change: a drop seen after this is the glasses' own.
+        if (!on) steadyHeld = false
+        lastUltrawide = null
         steadyUsed = true
         auraLink = true
         steadyStartedMs = SystemClock.elapsedRealtime()
@@ -190,6 +193,11 @@ object GlassesDisplayControl {
     }
 
     private fun auraOn(): Boolean = app?.let { com.hayeco.flipspaces.core.spatial.SteadyMode.managedOn(SpaceStore(it).model) } == true
+
+    /** 1.3.3: Steady mode is on and done, so Ultrawide going off without Pocket XR asking is the glasses' button. */
+    @Volatile private var steadyHeld = false
+    private var lastUltrawide: Int? = null
+    private var lastDropMs: Long? = null
 
     /** Steady mode was used this run: other glasses then have their settings read too, so they come back from it properly. */
     @Volatile private var steadyUsed = false
@@ -378,15 +386,37 @@ object GlassesDisplayControl {
                             val step = commands.steady(on, now)
                             if (step == com.hayeco.flipspaces.core.spatial.SteadyMode.Step.DONE) {
                                 steadyWant = null
+                                steadyHeld = on
                                 Log.i(TAG, "Steady mode ${if (on) "on" else "off"}: done (Ultrawide ${commands.ultrawide}, screen size ${commands.screenSize}, Spatial Anchor ${commands.spatialAnchor})")
                             } else if (commands.stillTries > GlassesDisplayCommands.STILL_TRIES || now - steadyStartedMs > STEADY_GIVE_UP_MS) {
                                 steadyWant = null
+                                steadyHeld = false
                                 // Back to the usual view on glasses that would not go.
                                 stereoAsked = false
                                 if (on) app?.let { requestStereo(it, true) }
                                 Log.i(TAG, "Steady mode ${if (on) "on" else "off"}: gave up at step $step")
                             }
                         }
+                        // 1.3.3: Ultrawide went off without Pocket XR asking (the glasses' button pressed twice): back in once, and
+                        // out properly if it happens again soon ([com.hayeco.flipspaces.core.spatial.SteadyMode.dropped]).
+                        val uw = commands.ultrawide
+                        if (steadyWant == null && steadyHeld && lastUltrawide == 1 && uw == 0) {
+                            val what = com.hayeco.flipspaces.core.spatial.SteadyMode.dropped(now, lastDropMs)
+                            lastDropMs = now
+                            steadyStartedMs = SystemClock.elapsedRealtime()
+                            commands.steadyStart()
+                            if (what == com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.BACK_IN) {
+                                steadyWant = true
+                                Log.i(TAG, "Steady mode: the glasses left Ultrawide by themselves (their button?); putting it back")
+                            } else {
+                                steadyWant = false
+                                steadyHeld = false
+                                stereoWant = null
+                                stereoAsked = false
+                                Log.i(TAG, "Steady mode: the glasses left Ultrawide again within ${com.hayeco.flipspaces.core.spatial.SteadyMode.SECOND_DROP_MS / 1000} s; ending Steady mode properly")
+                            }
+                        }
+                        if (uw != null) lastUltrawide = uw
                         // 1.1.0: the hover duty test follows its switch (off puts the glasses back in follow).
                         if (hoverTestApplied != hoverTestWanted) {
                             hoverTestApplied = hoverTestWanted

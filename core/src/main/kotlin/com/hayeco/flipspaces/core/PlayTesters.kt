@@ -11,7 +11,7 @@ object PlayTesters {
     const val PLAY_URL = "https://play.google.com/apps/testing/com.hayeco.flipspaces"
 
     const val TITLE = "Help Pocket XR get on Google Play"
-    const val BODY = "Join the testers in two taps. You'll need to uninstall this copy before installing from Play, and that resets your Pocket XR settings."
+    const val BODY = "Join the testers in two taps. You'll need to uninstall this copy before installing from Play: first save your settings (Help and more, Save settings to a file), then restore them in the Play version."
     const val JOIN = "Join"
     const val OPEN_PLAY = "Open Play invite"
     const val NOT_NOW = "Not now"

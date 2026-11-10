@@ -712,6 +712,16 @@ interface PadHost {
     /** 1.2.3 (issue 58): the focused window's label and whether its app shows Side by side 3D, or null with none focused. */
     fun focusedSideBySide(): Pair<String, Boolean>?
 
+    /** 1.3.3: the focused window's name and shape, for the Shape row; null without one. */
+    fun focusedShape(): Pair<String, Float>?
+
+    fun shapeChosen(ratio: Float)
+
+    /** 1.3.3: Save settings to a file, and Restore settings from one. */
+    fun backupSettings()
+
+    fun restoreSettings()
+
     /** 1.2.3 (issue 58): Side by side 3D on or off for the focused window's app. */
     fun sideBySideChosen(on: Boolean)
 
@@ -2158,6 +2168,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             recording = host.recordingGlasses(),
             controllerMode = host.controllerMode(),
             textSizeShown = host.focusedTextSize() != null,
+            shapeShown = host.focusedShape() != null,
             sideBySideShown = sideBySide != null,
             sideBySideOn = sideBySide?.second == true,
             windowCount = host.windowCount(),
@@ -2262,6 +2273,14 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         return when (item) {
             MenuItem.STEADY, MenuItem.POCKET_MODE, MenuItem.GAME_KEYS, MenuItem.CONTROL_CENTER, MenuItem.RECORD, MenuItem.UNLOCK, MenuItem.PHONE_HOME, MenuItem.SETTINGS, MenuItem.EXIT -> emptyList()
             // 1.2.3 (issue 57): the focused window's text size, remembered for its app.
+            MenuItem.SHAPE -> host.focusedShape()?.let { (label, aspect) ->
+                val presets = com.hayeco.flipspaces.core.spatial.WindowShape.Preset.entries
+                val now = com.hayeco.flipspaces.core.spatial.WindowShape.current(aspect)
+                listOf(segmented(R.drawable.ic_cover_resize, "Shape of $label", presets.map { it.label to it.small }, presets.indexOf(now)) { i ->
+                    host.shapeChosen(presets[i].ratio)
+                    postDelayed({ buildDrawer() }, SHAPE_REFRESH_MS)
+                })
+            }.orEmpty()
             MenuItem.TEXT_SIZE -> host.focusedTextSize()?.let { (label, percent) -> listOf(textSizeRow(label, percent, host.textSizeBusy()).apply { tag = MENU_TEXT_SIZE }) }.orEmpty()
             // 1.2.3 (issue 58): Side by side 3D for the focused window's app.
             MenuItem.SIDE_BY_SIDE -> host.focusedSideBySide()?.let { (label, on) ->
@@ -2462,6 +2481,14 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 showIntro(host.introPages())
             })
             // 0.5.101 (Mike: each settings screen needs "a way to reset to Pocket XR default settings"): asks first.
+            MenuItem.BACKUP_SETTINGS -> listOf(row(R.drawable.ic_usage_intro, "Save settings to a file", subtitle = "Your layouts, glasses and trackpad settings, to move to the Google Play version or a new phone") {
+                closeDrawer()
+                host.backupSettings()
+            })
+            MenuItem.RESTORE_SETTINGS -> listOf(row(R.drawable.ic_usage_intro, "Restore settings from a file", subtitle = "From a file you saved. Pocket XR restarts.") {
+                closeDrawer()
+                host.restoreSettings()
+            })
             MenuItem.RESET -> listOf(row(R.drawable.ic_follow_mode, "Reset these settings to Pocket XR defaults") {
                 android.app.AlertDialog.Builder(c, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                     .setTitle("Reset trackpad settings?")
@@ -3339,6 +3366,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
         /** Unreleased (John Davis): This window's Text size and Side by side 3D rows. */
         const val MENU_TEXT_SIZE = "menu:text-size"
+        const val SHAPE_REFRESH_MS = 300L
 
         /** 1.2.7: under the Text size keys while a tap is still being laid out, the keys dimmed to this. */
         const val TEXT_SIZE_BUSY_LABEL = "Resizing"

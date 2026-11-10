@@ -15,7 +15,7 @@ object TrackpadMenu {
     enum class Section(val title: String?, val summary: String, val opensByDefault: Boolean, val collapsible: Boolean) {
         QUICK(null, "", true, false),
         THIS_WINDOW("This window", "", true, false),
-        SPACE("Space", "Tracking, Lock screens, Arrange, presets", true, true),
+        SPACE("Space", "Lock screens, Arrange, presets", true, true),
         TRACKPAD("Trackpad and controls", "Speeds, scrolling, cursor, game controller", false, true),
         WINDOWS_GLASSES("Windows and glasses", "Snap, new instances, curve, glasses check", false, true),
         HELP("Help and more", "How to use, reset, developer settings", false, true),
@@ -40,6 +40,8 @@ object TrackpadMenu {
 
         // The focused window's app.
         TEXT_SIZE(Section.THIS_WINDOW),
+        // 1.3.3: one tap to a common shape ([com.hayeco.flipspaces.core.spatial.WindowShape]).
+        SHAPE(Section.THIS_WINDOW),
         SIDE_BY_SIDE(Section.THIS_WINDOW),
         SIDE_BY_SIDE_FLAT(Section.THIS_WINDOW),
 
@@ -71,12 +73,18 @@ object TrackpadMenu {
         AIR_DISPLAY_MODE(Section.WINDOWS_GLASSES),
 
         HOW_TO(Section.HELP),
+        // 1.3.3: settings to a file and back, to move between the GitHub and Google Play builds.
+        BACKUP_SETTINGS(Section.HELP),
+        RESTORE_SETTINGS(Section.HELP),
         RESET(Section.HELP),
         DEVELOPER(Section.HELP),
         DEVELOPER_CARD(Section.HELP),
 
         EXIT(Section.END),
     }
+
+    /** 1.3.4: the Space's own controls that only the Control Center on the glasses shows. */
+    val CONTROL_CENTER_ONLY = setOf(Item.SPACE_TRACKING, Item.SNAP_WINDOWS, Item.CURSOR_FOLLOWS_HEAD)
 
     /** What the Menu needs to know to choose its rows. */
     data class State(
@@ -88,6 +96,7 @@ object TrackpadMenu {
         val recording: Boolean = false,
         val controllerMode: GameControllerMode = GameControllerMode.OFF,
         val textSizeShown: Boolean = false,
+        val shapeShown: Boolean = false,
         val sideBySideShown: Boolean = false,
         val sideBySideOn: Boolean = false,
         val windowCount: Int = 0,
@@ -110,22 +119,27 @@ object TrackpadMenu {
         Item.UNLOCK -> s.phoneLocked
         Item.PHONE_HOME, Item.SETTINGS -> true
         Item.TEXT_SIZE -> s.textSizeShown
+        Item.SHAPE -> s.shapeShown
         Item.SIDE_BY_SIDE -> s.sideBySideShown
         Item.SIDE_BY_SIDE_FLAT -> s.sideBySideShown && s.sideBySideOn
-        Item.SPACE_TRACKING, Item.LOCK_SCREENS, Item.PRESETS -> true
+        // 1.3.4 (a tester: "a lot of redundancy in the menus / UIs (ie multiple ways to do the same thing)"): Tracking,
+        // Snap windows and Cursor follows head are the Control Center's on the glasses, so the Menu leaves them out.
+        // Arrange and presets stay in both (Mike). [CONTROL_CENTER_ONLY] keeps the list; their rows stay in the app.
+        Item.SPACE_TRACKING, Item.SNAP_WINDOWS, Item.CURSOR_FOLLOWS_HEAD -> false
+        Item.LOCK_SCREENS, Item.PRESETS -> true
         Item.ARRANGE, Item.ADJUST_ALL -> s.windowCount > 0
         Item.CURSOR_SPEED, Item.SCROLL_SPEED, Item.STRIP_SPEED, Item.ONE_FINGER_SCROLL -> true
         Item.STRIP_SIDE -> !s.cover
         Item.COVER_BUTTONS_SIDE, Item.COVER_STRIP_SIDE -> s.cover
         Item.SIDEWAYS_DIRECTION -> !s.cover && s.directionApplies
-        Item.CURSOR_FOLLOWS_HEAD, Item.KEEPS_SCREEN_ON -> true
+        Item.KEEPS_SCREEN_ON -> true
         Item.GAME_CONTROLLER -> !s.cover && (s.spaceActive || s.controllerMode != GameControllerMode.OFF)
         Item.TOUCH_SPOTS, Item.CLEAR_TOUCH_SPOTS -> !s.cover && s.controllerMode == GameControllerMode.TOUCH
-        Item.SNAP_WINDOWS, Item.NEW_INSTANCE, Item.NEW_WINDOWS_CURVE -> true
+        Item.NEW_INSTANCE, Item.NEW_WINDOWS_CURVE -> true
         Item.GLASSES_CHECK -> s.glassesKnown
         Item.AIR_DISPLAY -> s.airOffered
         Item.AIR_DISPLAY_MODE -> s.airOffered && s.airOn
-        Item.HOW_TO, Item.RESET, Item.DEVELOPER -> true
+        Item.HOW_TO, Item.RESET, Item.DEVELOPER, Item.BACKUP_SETTINGS, Item.RESTORE_SETTINGS -> true
         Item.DEVELOPER_CARD -> s.developerShown
         Item.EXIT -> true
     }
