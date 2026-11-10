@@ -42,6 +42,10 @@ data class OtherGlassesCard(
     val glasses: String?,
     val viture: Boolean,
     val vitureOn: Boolean,
+    /** 1.2.12: the switch's name ([com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel]): no "Experimental" on the Beast. */
+    val vitureLabel: String,
+    /** 1.2.12: the glasses are a VITURE Beast, where the reader is on by default. */
+    val vitureBeast: Boolean,
     val vitureAxes: com.hayeco.flipspaces.core.spatial.VitureAxes,
     val recording: Boolean,
     val motionLine: String?,
@@ -314,19 +318,24 @@ private fun OtherGlasses(o: OtherGlassesCard) {
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(o.glasses?.let { "Plugged in: $it" } ?: "No glasses other than XREAL's are plugged in.", style = MaterialTheme.typography.bodyMedium)
-            OutlinedButton(onClick = o.onRecord, enabled = o.glasses != null && !o.recording && !o.vitureOn) {
+            OutlinedButton(onClick = o.onRecord, enabled = o.glasses != null && !o.recording && !(o.viture && o.vitureOn)) {
                 Text(if (o.recording) "Recording..." else "Record motion for 20 seconds")
             }
             o.motionLine?.let { SelectionContainer { Text(it, style = MaterialTheme.typography.bodySmall) } }
             if (o.viture) {
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     androidx.compose.material3.Switch(checked = o.vitureOn, onCheckedChange = o.onViture)
-                    Text("Experimental VITURE head tracking", style = MaterialTheme.typography.bodyMedium)
+                    Text(o.vitureLabel, style = MaterialTheme.typography.bodyMedium)
                 }
                 Text(
-                    "Experimental. It follows a public description of VITURE's newer glasses; your model may not answer. " +
-                        "On the VITURE Beast the sensor axis layout starts at x right, y down, z front, with both switches off. " +
-                        "On other models, if turning your head moves the view the wrong way, try the switches below; they apply at once.",
+                    if (o.vitureBeast) {
+                        "On by default on the VITURE Beast, and it comes back by itself when you plug the glasses in again. " +
+                            "The sensor axis layout starts at x right, y down, z front, with both switches off."
+                    } else {
+                        "Experimental. It follows a public description of VITURE's newer glasses; your model may not answer. " +
+                            "On the VITURE Beast the sensor axis layout starts at x right, y down, z front, with both switches off. " +
+                            "On other models, if turning your head moves the view the wrong way, try the switches below; they apply at once."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

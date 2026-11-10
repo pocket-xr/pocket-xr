@@ -51,11 +51,16 @@ sealed interface HeadTrackingStatus {
      * have no USB network; their motion sensor is on USB HID in VITURE's own protocol. Said plainly, with what to try.
      */
     data class VitureNotYet(val productId: Int, val experimentalOn: Boolean = false) : HeadTrackingStatus {
-        override val summary =
+        // 1.2.12: the Beast is read by default; with its switch turned off, the status says so rather than "not supported".
+        override val summary = if (productId == VitureDevices.BEAST && !experimentalOn) {
+            "VITURE head tracking is turned off for the VITURE Beast (USB %04X:%04X), so the Space stays in front of you and turns with your head. ".format(java.util.Locale.ROOT, VitureImuProtocol.VENDOR, productId) +
+                "Turn on VITURE head tracking on the head tracking screen to look around the Space."
+        } else {
             "Head tracking isn't supported yet on VITURE glasses (USB %04X:%04X). The Space stays in front of you and turns with your head. ".format(java.util.Locale.ROOT, VitureImuProtocol.VENDOR, productId) +
                 if (experimentalOn) "The experimental VITURE reader is on but got no motion from these glasses. " +
                     "Record motion for 20 seconds on the head tracking screen and send logs, so they can be added."
                 else "You can try the experimental VITURE reader on the head tracking screen, or record motion for 20 seconds there and send logs."
+        }
     }
 
     data class Connecting(val network: String) : HeadTrackingStatus {

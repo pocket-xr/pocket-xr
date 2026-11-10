@@ -81,6 +81,8 @@ class HeadTrackingActivity : ComponentActivity() {
                         glasses = pick?.let { "%04X:%04X \"%s\"".format(java.util.Locale.ROOT, it.vendorId, it.productId, it.name) },
                         viture = pick?.vendorId == com.hayeco.flipspaces.core.spatial.VitureImuProtocol.VENDOR || store.model == com.hayeco.flipspaces.core.spatial.GlassesModel.VITURE,
                         vitureOn = store.vitureHeadTracking,
+                        vitureLabel = com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel(store.vitureProduct),
+                        vitureBeast = store.vitureProduct == com.hayeco.flipspaces.core.spatial.VitureDevices.BEAST,
                         vitureAxes = store.vitureAxes,
                         recording = com.hayeco.flipspaces.spatial.HidMotionRecorder.busy || motionLine?.startsWith("Recording") == true || motionLine?.startsWith("Allow") == true,
                         motionLine = motionLine ?: com.hayeco.flipspaces.spatial.HidMotionRecorder.newestLine(this)?.let { "Last recording: $it" },

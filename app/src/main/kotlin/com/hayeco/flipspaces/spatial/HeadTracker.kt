@@ -240,6 +240,8 @@ object HeadTracker {
     fun acquire(context: Context) {
         graceHandler.removeCallbacks(stopAfterGrace)
         users++
+        // 1.2.12 (Discussion #24): a VITURE USB prompt missed on this plug-in is asked again now a screen is up.
+        synchronized(vitureReconnect) { vitureReconnect.screenOpened() }
         val store = SpaceStore(context)
         settings = fromStore(store, context)
         if (thread?.isAlive == true) return
@@ -795,14 +797,15 @@ object HeadTracker {
     }
 
     /**
-     * The head tracking screen's Experimental VITURE head tracking switch, saved. On asks for USB access again if it is
-     * missing and tries now; off closes the open stream and releases the glasses.
+     * The head tracking screen's VITURE head tracking switch, saved. On asks for USB access again if it is missing and
+     * tries now; off closes the open stream and releases the glasses. 1.2.12: saved either way, so off stays off and on
+     * stays on through unplugging, the app's restart and updates.
      */
     fun setVitureEnabled(context: Context, on: Boolean) {
         SpaceStore(context).vitureHeadTracking = on
-        Log.i(TAG, "experimental VITURE head tracking ${if (on) "on" else "off"} (the head tracking screen)")
+        Log.i(TAG, "VITURE head tracking ${if (on) "on" else "off"} (the head tracking screen)")
         synchronized(vitureReconnect) { vitureReconnect.setEnabled(on) }
-        if (on) kick("Experimental VITURE head tracking on") else restart(context, "Experimental VITURE head tracking off")
+        if (on) kick("VITURE head tracking on") else restart(context, "VITURE head tracking off")
     }
 
     /**
@@ -828,7 +831,7 @@ object HeadTracker {
             val name = VitureImuLink.glassesName(device)
             when (intent.action) {
                 android.hardware.usb.UsbManager.ACTION_USB_DEVICE_ATTACHED -> {
-                    synchronized(vitureReconnect) { vitureReconnect.attached() }
+                    synchronized(vitureReconnect) { vitureReconnect.attached(SystemClock.uptimeMillis()) }
                     kick("$name plugged in on USB")
                 }
                 android.hardware.usb.UsbManager.ACTION_USB_DEVICE_DETACHED -> {
@@ -917,8 +920,13 @@ object HeadTracker {
         // 1.2.10 (Discussion #24, second report): USB access checked before every open, and asked for again after a
         // plug-in, the switch turned on or access lost ([VitureReconnect]); 1.2.8 asked once per device name for good.
         val permitted = VitureImuLink.manager(context).hasPermission(device)
-        val step = synchronized(vitureReconnect) { vitureReconnect.next(VitureReconnect.Device(device.deviceName, permitted)) }
+        val step = synchronized(vitureReconnect) { vitureReconnect.next(VitureReconnect.Device(device.deviceName, permitted), SystemClock.uptimeMillis()) }
         when (step) {
+            // 1.2.12: Android's "Open Pocket XR" plug-in prompt for the Beast (usb_glasses.xml) grants access with its OK.
+            VitureReconnect.Step.WAIT_FOR_PLUG_IN_PROMPT -> {
+                report(HeadTrackingStatus.UsbPermission(name))
+                return waitFor(1000L, print, context)
+            }
             VitureReconnect.Step.ASK -> {
                 report(HeadTrackingStatus.UsbPermission(name))
                 Log.i(TAG, "head tracking: $name found on USB without access to it; asking Android (its USB prompt) for the experimental VITURE reader")

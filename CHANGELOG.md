@@ -2,6 +2,23 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+Thanks to the tester in GitHub Discussion #24 for confirming 1.2.10 on the VITURE Beast and for the two things left to
+fix.
+
+- **VITURE head tracking is on by default on the Beast.** No more turning it on at first. Other VITURE models still
+  start with it off. If you turn it off on the Beast, it stays off.
+- **Beast tracking comes back after a replug.** Android drops Pocket XR's USB access to the glasses when they are
+  unplugged, and the access prompt could come up out of sight while the Space opened, so tracking waited until the
+  switch was flipped again. Now Android offers to open Pocket XR when the Beast is plugged in, and its OK gives the
+  access back (tick Always and it won't ask again). If a prompt is still missed, it is asked again when the Space or the
+  head tracking screen opens.
+- **The switch is called VITURE head tracking on the Beast.** It keeps Experimental in its name on other VITURE models.
+  With it off on the Beast, the status says it's turned off instead of saying VITURE isn't supported.
+- **A Bluetooth mouse that seems dead.** Nothing an update leaves behind breaks the mouse. If the trackpad was left on
+  Spatial Mouse, the phone's aim moves the pointer instead of the mouse; switch to the Vertical Trackpad.
+
 ## 1.2.11: Record works on the Flip7
 
 - **Record works on the Galaxy Z Flip7.** Tapping Record in the Menu did nothing there: the recording stopped a tenth of

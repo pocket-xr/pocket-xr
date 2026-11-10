@@ -41,6 +41,19 @@ object VitureDevices {
 
     /** The two switches VITURE glasses start with: both off, the Beast's included (its layout does the turning). */
     fun defaultSwitches(@Suppress("UNUSED_PARAMETER") productId: Int?): VitureAxes = VitureAxes()
+
+    /**
+     * 1.2.12 (Discussion #24, third report: 1.2.10 worked on the Beast, "other than having to turn the feature on at
+     * first"): VITURE head tracking with nothing saved. On for the Beast, which the tester has run since 1.2.8; off on
+     * other VITURE models, where the reader is still a first try.
+     */
+    fun headTrackingByDefault(productId: Int?): Boolean = productId == BEAST
+
+    /** The VITURE head tracking switch: the [saved] one when the user set it (on or off), else the model's default. */
+    fun headTrackingOn(saved: Boolean?, productId: Int?): Boolean = saved ?: headTrackingByDefault(productId)
+
+    /** The switch's name: plain on the Beast, still marked Experimental on other VITURE models. */
+    fun switchLabel(productId: Int?): String = if (productId == BEAST) "VITURE head tracking" else "Experimental VITURE head tracking"
 }
 
 /**
@@ -69,6 +82,9 @@ class VitureReconnect {
         /** Access was asked for on this plug-in: wait for the answer, without asking again. */
         WAIT_FOR_ANSWER,
 
+        /** 1.2.12: just plugged in: Android's "Open Pocket XR" plug-in prompt, whose OK grants access, goes first. */
+        WAIT_FOR_PLUG_IN_PROMPT,
+
         /** Open the glasses and start the stream. */
         OPEN,
 
@@ -93,20 +109,42 @@ class VitureReconnect {
     var axes: VitureAxes = VitureAxes()
         private set
 
-    /** The Experimental VITURE head tracking switch. Turned on, the prompt may be asked again. */
+    /** The VITURE head tracking switch. Turned on, the prompt may be asked again, at once. */
     fun setEnabled(on: Boolean) {
-        if (on && !enabled) askedFor = null
+        if (on && !enabled) {
+            askedFor = null
+            attachedAtMs = null
+        }
         enabled = on
     }
 
-    /** USB_DEVICE_ATTACHED for VITURE glasses: a new plug-in, so access is asked for again. */
-    fun attached() {
+    /** 1.2.12: when the glasses were last plugged in (uptime ms), while the plug-in prompt may still be answered; else null. */
+    var attachedAtMs: Long? = null
+        private set
+
+    /**
+     * USB_DEVICE_ATTACHED for VITURE glasses at [nowMs] (uptime): a new plug-in, so access is asked for again. 1.2.12: not
+     * before Android's own plug-in prompt has had [com.hayeco.flipspaces.core.hands.UsbAsk.ATTACH_PROMPT_MS] to be answered,
+     * so the two prompts don't stack. Null [nowMs]: no wait.
+     */
+    fun attached(nowMs: Long? = null) {
         askedFor = null
+        attachedAtMs = nowMs
     }
 
     /** USB_DEVICE_DETACHED: Android drops the access with the device. */
     fun detached() {
         askedFor = null
+        attachedAtMs = null
+    }
+
+    /**
+     * 1.2.12 (Discussion #24, third report: after a replug the tester flipped the switch back on to get tracking): a
+     * Space or the head tracking screen opened. A prompt asked on this plug-in but never answered (it came up while the
+     * Space opened on the glasses, or on the folded phone's inner screen) is asked once more, as the switch did.
+     */
+    fun screenOpened() {
+        if (openOn == null) askedFor = null
     }
 
     /** New axis switches. True when a link is open, which takes them as it reads; nothing reopens either way. */
@@ -115,13 +153,15 @@ class VitureReconnect {
         return openOn != null
     }
 
-    /** What to do now for [device] (null with no VITURE glasses on USB). */
-    fun next(device: Device?): Step {
+    /** What to do now for [device] (null with no VITURE glasses on USB), at [nowMs] (uptime). */
+    fun next(device: Device?, nowMs: Long = 0L): Step {
         val open = openOn
         if (open != null && (!enabled || device == null || device.name != open || !device.permitted)) return Step.CLOSE
         if (!enabled || device == null) return Step.IDLE
         if (!device.permitted) {
             if (askedFor == device.name) return Step.WAIT_FOR_ANSWER
+            val at = attachedAtMs
+            if (at != null && nowMs - at < com.hayeco.flipspaces.core.hands.UsbAsk.ATTACH_PROMPT_MS) return Step.WAIT_FOR_PLUG_IN_PROMPT
             askedFor = device.name
             return Step.ASK
         }
@@ -132,6 +172,7 @@ class VitureReconnect {
     fun opened(name: String) {
         openOn = name
         askedFor = null
+        attachedAtMs = null
     }
 
     /** The link was closed (or failed to open). */

@@ -219,6 +219,50 @@ made while turning the head left, right, up and down and then tilting it, and a 
 (2D, 3D, ultrawide; anchor or 0DoF). With the experimental reader on, the head tracking diagnostics show whether the
 glasses answered it.
 
+### The third report (Pocket XR 1.2.10)
+
+The tester confirmed 1.2.10 on the Beast: right way up the first time, 3D works, icons look right, no Beast problems.
+Two things were left: the switch had to be turned on at first, and after unplugging and plugging the glasses back in he
+had to turn the switch back on each time.
+
+Why the replug needed the switch: the switch itself is saved and nothing in the app turns it off. What stopped was USB
+access. Android drops an app's access to a USB device when it is unplugged, and the Beast was not in Pocket XR's
+plug-in device filter (`usb_glasses.xml`, XREAL's glasses only), so nothing granted it again at the plug-in. The reader
+asked Android's USB prompt once for the new plug-in, at the moment the Space was opening on the glasses (and, on a
+folded Flip, the prompt goes to the inner screen). A prompt that was never seen or got dismissed left the reader waiting
+for an answer with nothing on screen, until turning the switch off and on asked again. No log from 1.2.10 shows this
+directly; it is what the code does, and it fits "flipping the switch back on works every time".
+
+What changed in the app (1.2.12):
+
+- **On by default on the Beast.** With nothing saved, VITURE head tracking is on for USB 35CA:1211 and off on other
+  VITURE models. The switch saves on and off under the key it always had (`viture_head_tracking`), so a Beast user who
+  turns it off keeps it off. The last VITURE model seen is kept, so the switch keeps the Beast's default and name while
+  the glasses are unplugged.
+- **The name.** On the Beast the switch is **VITURE head tracking**; other VITURE models keep **Experimental VITURE
+  head tracking**. With the switch off on the Beast, the status says it is turned off, not that VITURE isn't supported.
+- **Access at the plug-in.** The Beast is in the plug-in device filter, so Android offers "Open Pocket XR" when it is
+  plugged in and its OK grants USB access; ticking "Always" grants it on every plug-in with no prompt (Android shows
+  that box once Pocket XR has the microphone permission, as for XREAL's glasses). The reader leaves that prompt
+  12 s (`UsbAsk.ATTACH_PROMPT_MS`) to be answered before asking with its own, so the two don't stack.
+- **A missed prompt is asked again.** If the reader's own prompt goes unanswered, it is asked once more when a Space or
+  the head tracking screen opens, as turning the switch on did.
+
+### A Bluetooth mouse after an update
+
+The tester also found a Bluetooth mouse seemed broken until he cleared Pocket XR's data after updating to 1.2.10. No
+saved setting changed its key or meaning between 1.2.0 and 1.2.11 in a way that touches the mouse: the mouse code
+(`MouseRoute`, `PhysicalMouse`) is as 1.1.17 left it, the only new saved settings are the VITURE ones, nothing stores a
+mouse or device id, and backup is off, so nothing is restored from an older install. So there is no stale state to move
+on update.
+
+One saved setting does make a mouse look dead, and clearing data resets it: the trackpad's pad type (`trackpad` in the
+trackpad settings) left on **Spatial Mouse**. On that page the phone's aim is sent on every sensor update and sets the
+pointer's direction, so a mouse move is overwritten at once: the pointer follows the phone, and clicks land wherever
+the phone points. A fresh install starts on the Vertical Trackpad, where the mouse works. This has been so since mouse
+support came in 1.1.17; it is a choice the user made, so it is not reset on update. If someone reports a dead mouse,
+ask which trackpad page they were on, and try the Vertical Trackpad first.
+
 ## Unknown glasses
 
 Glasses the app does not know are drawn with the One's view, no camera and the Aura's sensor axes. If their head

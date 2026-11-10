@@ -68,9 +68,12 @@ object HidMotionRecorder {
 
     private fun record(context: Context) {
         val store = SpaceStore(context)
-        if (store.vitureHeadTracking) return fail("turn off Experimental VITURE head tracking first; it holds the glasses' motion sensor")
         val listed = GlassesUsbList.read(context)
         val pick = GlassesVendors.recordable(listed) ?: return fail("no glasses other than XREAL's on USB (XREAL glasses have their own reader)")
+        // 1.2.12: only VITURE glasses are held by the reader (it is on by default on the Beast).
+        if (com.hayeco.flipspaces.core.spatial.VitureImuProtocol.isViture(pick.vendorId) && store.vitureHeadTracking) {
+            return fail("turn off ${com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel(pick.productId)} first; it holds the glasses' motion sensor")
+        }
         val manager = VitureImuLink.manager(context)
         val device: UsbDevice = manager.deviceList.values.firstOrNull { it.vendorId == pick.vendorId && it.productId == pick.productId }
             ?: return fail("the glasses went away")
