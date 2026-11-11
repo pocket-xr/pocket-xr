@@ -8,6 +8,10 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   mode's wide screen shows the game's two eyes as one flat picture. Now Pocket XR leaves Steady mode first, waits for
   the glasses to switch to 3D, then opens PC VR, and turns Steady mode back on when you leave PC VR. Other OpenXR games
   start from their own apps, so there the glasses say to turn Steady mode off first.
+- **Plugging in gives you the normal Space again.** The glasses could come up in 2D and in their own anchor mode, so the
+  Space was flat and held by the glasses instead of following your head. When the glasses were slow to switch,
+  Pocket XR took it as a no and stopped asking for 3D and follow mode, even after you plugged them in again. Now each
+  plug-in, and each new connection to the glasses, asks again as needed (never in Steady mode).
 - **Steady mode is never upside down.** If the glasses lay upside down when they reconnected, the wide screen could
   come back upside down until you pressed Recentre. It now only takes which way you face, not how the glasses are tilted.
 
