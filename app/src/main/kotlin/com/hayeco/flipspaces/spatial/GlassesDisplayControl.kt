@@ -195,6 +195,12 @@ object GlassesDisplayControl {
     /** The trackpad's key and the launcher's button: the change asked for, else what the glasses say. */
     val steadyOn: Boolean get() = steadyWant ?: (link != null && commands.ultrawide == 1)
 
+    /** 1.4.3: Steady mode is on, or on its way, through a re-plug too (for PC VR, which needs 3D). */
+    val steadyActive: Boolean get() = steadyWant == true || (steadyWant == null && (steadyHeld || (link != null && commands.ultrawide == 1)))
+
+    /** 1.4.3: a Steady mode change is under way. */
+    val steadyChanging: Boolean get() = steadyWant != null
+
     fun steady(context: Context, on: Boolean) {
         app = context.applicationContext
         steadyWant = on
@@ -243,7 +249,18 @@ object GlassesDisplayControl {
         this.spaceUp = spaceUp
         this.turnDutyOn = turnDuty
         if (spaceUp) {
-            spaceSeenMs = SystemClock.elapsedRealtime()
+            val nowMs = SystemClock.elapsedRealtime()
+            // 1.4.3 (Mike, 10 November 2026: plugged in to 2D and the glasses' own anchor mode): a Space back after
+            // [NEW_PLUG_MS] is a new plug-in, so what the last one gave up on is tried again. A 3D read back too soon had
+            // counted as a refusal, and with it 3D was never asked for after the re-plug; the follow tries had run out too.
+            if (nowMs - spaceSeenMs >= NEW_PLUG_MS && (stereoRefused != null || stereoAsked)) {
+                stereoRefused = null
+                stereoWant = null
+                stereoAsked = false
+                synchronized(lock) { commands.followReset() }
+                Log.i(TAG, "a new plug-in: 3D and follow are asked for again as needed")
+            }
+            spaceSeenMs = nowMs
             if (pictureWide != picture32by9) {
                 pictureWide = picture32by9
                 stereoReadWanted = true
@@ -543,7 +560,14 @@ object GlassesDisplayControl {
         linkOpenedMs = SystemClock.elapsedRealtime()
         auraLink = auraOn() || steadyUsed
         Log.i(TAG, "display control link open ($how)")
-        synchronized(lock) { commands.linkOpened(menuSettings = auraLink) }
+        synchronized(lock) {
+            commands.linkOpened(menuSettings = auraLink)
+            // 1.4.3 (Mike, 10 November 2026: plugged in and the glasses were in their own anchor mode, in 3D): hover left from
+            // Steady mode was not taken back by three follows while the glasses were still switching, and later links never
+            // tried again, as the tries were only reset by a new plug-in's 3D ask. Each link gets its tries; follow is still
+            // never sent in Ultrawide or while Steady mode is held.
+            commands.followReset()
+        }
         read(opened)
     }
 
