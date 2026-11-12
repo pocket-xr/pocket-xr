@@ -32,7 +32,7 @@ internal class GameKeysView(context: Context, private val keys: List<GameKey>, p
     }
 
     init {
-        contentDescription = keys.joinToString(", ") { it.label }
+        contentDescription = keys.joinToString(", ") { it.text }
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -40,7 +40,7 @@ internal class GameKeysView(context: Context, private val keys: List<GameKey>, p
         for (k in keys) {
             rect.set(k.x * width + gap, k.y * height + gap, (k.x + k.w) * width - gap, (k.y + k.h) * height - gap)
             canvas.drawRoundRect(rect, radius, radius, if (k in held) lit else fill)
-            canvas.drawText(k.label, rect.centerX(), rect.centerY() - (text.ascent() + text.descent()) / 2f, text)
+            canvas.drawText(k.text, rect.centerX(), rect.centerY() - (text.ascent() + text.descent()) / 2f, text)
         }
     }
 

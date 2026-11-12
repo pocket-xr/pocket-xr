@@ -1165,4 +1165,25 @@
     <string name="spatial_warp_drop">Desactivado: las gafas salieron del modo warp%1$s%2$s. No fue el Menú ni el interruptor: salen solas, y entonces el warp se desactiva para que vuelva la imagen.</string>
     <string name="spatial_viture_switch">Seguimiento de cabeza VITURE</string>
     <string name="spatial_viture_switch_experimental">Seguimiento de cabeza VITURE experimental</string>
+    <string name="core_cover_menu">Menú</string>
+    <string name="core_cover_keyboard">Teclado</string>
+    <string name="core_cover_back">Atrás</string>
+    <string name="core_cover_home">Inicio</string>
+    <string name="core_cover_recentre">Recentrar</string>
+    <string name="core_cover_move">Mover</string>
+    <string name="core_cover_resize">Tamaño</string>
+    <string name="core_cover_further">Más lejos</string>
+    <string name="core_cover_closer">Más cerca</string>
+    <string name="core_cover_curve">Curva</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">Listo</string>
+    <string name="spatial_axes_xright_yup_zback">x derecha, y arriba, z detrás</string>
+    <string name="spatial_axes_xright_ydown_zfront">x derecha, y abajo, z delante</string>
+    <string name="spatial_axes_xright_zup_yfront">x derecha, y delante, z arriba</string>
+    <string name="spatial_axes_xfront_yleft_zup">x delante, y izquierda, z arriba</string>
+    <string name="spatial_axes_xleft_yup_zfront">x izquierda, y arriba, z delante</string>
+    <string name="spatial_axes_xdown_yright_zback">x abajo, y derecha, z detrás</string>
+    <string name="spatial_axes_xleft_ydown_zback">x izquierda, y abajo, z detrás</string>
+    <string name="spatial_axes_xright_zdown_yback">x derecha, y detrás, z abajo</string>
+    <string name="spatial_axes_xup_yleft_zback">x arriba, y izquierda, z detrás</string>
 </resources>

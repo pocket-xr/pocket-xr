@@ -1165,4 +1165,25 @@
     <string name="spatial_warp_drop">Desligado: os óculos saíram do modo de distorção%1$s%2$s. Não foi o Menu nem a chave: eles saem sozinhos, e a distorção então desliga para a imagem voltar.</string>
     <string name="spatial_viture_switch">Rastreamento de cabeça VITURE</string>
     <string name="spatial_viture_switch_experimental">Rastreamento de cabeça VITURE experimental</string>
+    <string name="core_cover_menu">Menu</string>
+    <string name="core_cover_keyboard">Teclado</string>
+    <string name="core_cover_back">Voltar</string>
+    <string name="core_cover_home">Início</string>
+    <string name="core_cover_recentre">Recentralizar</string>
+    <string name="core_cover_move">Mover</string>
+    <string name="core_cover_resize">Tamanho</string>
+    <string name="core_cover_further">Afastar</string>
+    <string name="core_cover_closer">Aproximar</string>
+    <string name="core_cover_curve">Curvar</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">Concluído</string>
+    <string name="spatial_axes_xright_yup_zback">x direita, y cima, z trás</string>
+    <string name="spatial_axes_xright_ydown_zfront">x direita, y baixo, z frente</string>
+    <string name="spatial_axes_xright_zup_yfront">x direita, y frente, z cima</string>
+    <string name="spatial_axes_xfront_yleft_zup">x frente, y esquerda, z cima</string>
+    <string name="spatial_axes_xleft_yup_zfront">x esquerda, y cima, z frente</string>
+    <string name="spatial_axes_xdown_yright_zback">x baixo, y direita, z trás</string>
+    <string name="spatial_axes_xleft_ydown_zback">x esquerda, y baixo, z trás</string>
+    <string name="spatial_axes_xright_zdown_yback">x direita, y trás, z baixo</string>
+    <string name="spatial_axes_xup_yleft_zback">x cima, y esquerda, z trás</string>
 </resources>

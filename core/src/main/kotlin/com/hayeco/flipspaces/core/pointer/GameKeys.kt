@@ -14,6 +14,9 @@ import com.hayeco.flipspaces.core.UiText
  */
 data class GameKey(val label: String, val keyCode: Int, val x: Float, val y: Float, val w: Float, val h: Float) {
     fun contains(px: Float, py: Float): Boolean = px >= x && px < x + w && py >= y && py < y + h
+
+    /** The key's cap as shown: the keyboard's own key names stay, the way out (Done) is in the phone's language. */
+    val text: String get() = if (keyCode == GameKeyLayout.EXIT) UiText.get("core_game_keys_done", label) else label
 }
 
 /** A key going down or up. */

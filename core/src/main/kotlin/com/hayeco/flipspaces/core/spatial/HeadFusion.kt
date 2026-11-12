@@ -50,6 +50,9 @@ enum class AxisMap(val label: String, private val ix: Int, private val sx: Float
         else -> v.z
     }
 
+    /** The axes as shown on the head tracking screen, in the phone's language; [label] stays the English for the log. */
+    val text: String get() = com.hayeco.flipspaces.core.UiText.get("spatial_axes_" + name.lowercase(), label)
+
     companion object {
         val DEFAULT = XRIGHT_YUP_ZBACK
 

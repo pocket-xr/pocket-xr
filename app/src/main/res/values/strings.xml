@@ -1503,4 +1503,28 @@
     <string name="spatial_warp_drop">Off: the glasses dropped out of warp mode%1$s%2$s. Not the Menu or the switch: they leave it by themselves, and the warp then turns off so the picture comes back.</string>
     <string name="spatial_viture_switch">VITURE head tracking</string>
     <string name="spatial_viture_switch_experimental">Experimental VITURE head tracking</string>
+    <!-- The cover screen's and portrait trackpad's buttons (core CoverButton). -->
+    <string name="core_cover_menu">Menu</string>
+    <string name="core_cover_keyboard">Keyboard</string>
+    <string name="core_cover_back">Back</string>
+    <string name="core_cover_home">Home</string>
+    <string name="core_cover_recentre">Recentre</string>
+    <string name="core_cover_move">Move</string>
+    <string name="core_cover_resize">Resize</string>
+    <string name="core_cover_further">Further</string>
+    <string name="core_cover_closer">Closer</string>
+    <string name="core_cover_curve">Curve</string>
+    <string name="core_cover_steady">Steady</string>
+    <!-- The Game keys key that turns Game keys off. -->
+    <string name="core_game_keys_done">Done</string>
+    <!-- Head tracking screen: which way each of the glasses' sensor axes points. -->
+    <string name="spatial_axes_xright_yup_zback">x right, y up, z back</string>
+    <string name="spatial_axes_xright_ydown_zfront">x right, y down, z front</string>
+    <string name="spatial_axes_xright_zup_yfront">x right, y front, z up</string>
+    <string name="spatial_axes_xfront_yleft_zup">x front, y left, z up</string>
+    <string name="spatial_axes_xleft_yup_zfront">x left, y up, z front</string>
+    <string name="spatial_axes_xdown_yright_zback">x down, y right, z back</string>
+    <string name="spatial_axes_xleft_ydown_zback">x left, y down, z back</string>
+    <string name="spatial_axes_xright_zdown_yback">x right, y back, z down</string>
+    <string name="spatial_axes_xup_yleft_zback">x up, y left, z back</string>
 </resources>

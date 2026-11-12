@@ -1158,4 +1158,25 @@
     <string name="spatial_warp_drop">Aus: die Brille hat den Warp-Modus verlassen%1$s%2$s. Nicht das Menü oder der Schalter: sie verlässt ihn von selbst, und der Warp schaltet sich dann aus, damit das Bild zurückkommt.</string>
     <string name="spatial_viture_switch">VITURE-Kopf-Tracking</string>
     <string name="spatial_viture_switch_experimental">Experimentelles VITURE-Kopf-Tracking</string>
+    <string name="core_cover_menu">Menü</string>
+    <string name="core_cover_keyboard">Tastatur</string>
+    <string name="core_cover_back">Zurück</string>
+    <string name="core_cover_home">Home</string>
+    <string name="core_cover_recentre">Zentrieren</string>
+    <string name="core_cover_move">Bewegen</string>
+    <string name="core_cover_resize">Größe</string>
+    <string name="core_cover_further">Weiter weg</string>
+    <string name="core_cover_closer">Näher</string>
+    <string name="core_cover_curve">Krümmung</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">Fertig</string>
+    <string name="spatial_axes_xright_yup_zback">x rechts, y oben, z hinten</string>
+    <string name="spatial_axes_xright_ydown_zfront">x rechts, y unten, z vorn</string>
+    <string name="spatial_axes_xright_zup_yfront">x rechts, y vorn, z oben</string>
+    <string name="spatial_axes_xfront_yleft_zup">x vorn, y links, z oben</string>
+    <string name="spatial_axes_xleft_yup_zfront">x links, y oben, z vorn</string>
+    <string name="spatial_axes_xdown_yright_zback">x unten, y rechts, z hinten</string>
+    <string name="spatial_axes_xleft_ydown_zback">x links, y unten, z hinten</string>
+    <string name="spatial_axes_xright_zdown_yback">x rechts, y hinten, z unten</string>
+    <string name="spatial_axes_xup_yleft_zback">x oben, y links, z hinten</string>
 </resources>

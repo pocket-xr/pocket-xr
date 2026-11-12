@@ -1151,4 +1151,25 @@
     <string name="spatial_warp_drop">オフ: グラスがワープモードから外れました%1$s%2$s。メニューやスイッチによるものではありません: グラスが自ら外れたため、映像が戻るようワープをオフにしました。</string>
     <string name="spatial_viture_switch">VITURE ヘッドトラッキング</string>
     <string name="spatial_viture_switch_experimental">VITURE ヘッドトラッキング（試験運用）</string>
+    <string name="core_cover_menu">メニュー</string>
+    <string name="core_cover_keyboard">キーボード</string>
+    <string name="core_cover_back">戻る</string>
+    <string name="core_cover_home">ホーム</string>
+    <string name="core_cover_recentre">リセンター</string>
+    <string name="core_cover_move">移動</string>
+    <string name="core_cover_resize">サイズ</string>
+    <string name="core_cover_further">遠く</string>
+    <string name="core_cover_closer">近く</string>
+    <string name="core_cover_curve">カーブ</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">完了</string>
+    <string name="spatial_axes_xright_yup_zback">x右、y上、z後ろ</string>
+    <string name="spatial_axes_xright_ydown_zfront">x右、y下、z前</string>
+    <string name="spatial_axes_xright_zup_yfront">x右、y前、z上</string>
+    <string name="spatial_axes_xfront_yleft_zup">x前、y左、z上</string>
+    <string name="spatial_axes_xleft_yup_zfront">x左、y上、z前</string>
+    <string name="spatial_axes_xdown_yright_zback">x下、y右、z後ろ</string>
+    <string name="spatial_axes_xleft_ydown_zback">x左、y下、z後ろ</string>
+    <string name="spatial_axes_xright_zdown_yback">x右、y後ろ、z下</string>
+    <string name="spatial_axes_xup_yleft_zback">x上、y左、z後ろ</string>
 </resources>

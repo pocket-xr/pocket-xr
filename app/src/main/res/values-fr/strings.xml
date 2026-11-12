@@ -1165,4 +1165,25 @@
     <string name="spatial_warp_drop">Désactivée : les lunettes ont quitté le mode déformation%1$s%2$s. Ce n\'est ni le Menu ni l\'interrupteur : elles le quittent d\'elles-mêmes, et la déformation se désactive alors pour que l\'image revienne.</string>
     <string name="spatial_viture_switch">Suivi de la tête VITURE</string>
     <string name="spatial_viture_switch_experimental">Suivi de la tête VITURE expérimental</string>
+    <string name="core_cover_menu">Menu</string>
+    <string name="core_cover_keyboard">Clavier</string>
+    <string name="core_cover_back">Retour</string>
+    <string name="core_cover_home">Accueil</string>
+    <string name="core_cover_recentre">Recentrer</string>
+    <string name="core_cover_move">Déplacer</string>
+    <string name="core_cover_resize">Taille</string>
+    <string name="core_cover_further">Éloigner</string>
+    <string name="core_cover_closer">Rapprocher</string>
+    <string name="core_cover_curve">Courbure</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">OK</string>
+    <string name="spatial_axes_xright_yup_zback">x droite, y haut, z arrière</string>
+    <string name="spatial_axes_xright_ydown_zfront">x droite, y bas, z avant</string>
+    <string name="spatial_axes_xright_zup_yfront">x droite, y avant, z haut</string>
+    <string name="spatial_axes_xfront_yleft_zup">x avant, y gauche, z haut</string>
+    <string name="spatial_axes_xleft_yup_zfront">x gauche, y haut, z avant</string>
+    <string name="spatial_axes_xdown_yright_zback">x bas, y droite, z arrière</string>
+    <string name="spatial_axes_xleft_ydown_zback">x gauche, y bas, z arrière</string>
+    <string name="spatial_axes_xright_zdown_yback">x droite, y arrière, z bas</string>
+    <string name="spatial_axes_xup_yleft_zback">x haut, y gauche, z arrière</string>
 </resources>

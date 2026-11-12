@@ -985,7 +985,7 @@ internal class CoverKey(
     private val onSlide: ((Float, com.hayeco.flipspaces.core.pointer.Phase) -> Unit)? = null,
 ) : LinearLayout(context) {
     private val label = TextView(context).apply {
-        text = button.label
+        text = button.text
         setTextColor(TEXT_B3)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, CoverLayoutMath.LABEL_SP)
         includeFontPadding = false
@@ -1003,7 +1003,7 @@ internal class CoverKey(
         setPadding(p, 0, p, 0)
         addView(ImageView(context).apply { setImageResource(iconRes) }, LayoutParams(context.dp(24f), context.dp(24f)))
         addView(label, LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, context.dp(14f)).apply { topMargin = context.dp(4f) })
-        contentDescription = button.label
+        contentDescription = button.text
         isClickable = true
         // An accessibility click is a press and a release.
         setOnClickListener {

@@ -1172,4 +1172,25 @@
     <string name="spatial_warp_drop">Выкл.: очки вышли из режима коррекции%1$s%2$s. Это не Меню и не переключатель: они выходят из него сами, и тогда коррекция выключается, чтобы изображение вернулось.</string>
     <string name="spatial_viture_switch">Отслеживание головы VITURE</string>
     <string name="spatial_viture_switch_experimental">Экспериментальное отслеживание головы VITURE</string>
+    <string name="core_cover_menu">Меню</string>
+    <string name="core_cover_keyboard">Клавиатура</string>
+    <string name="core_cover_back">Назад</string>
+    <string name="core_cover_home">Домой</string>
+    <string name="core_cover_recentre">Центрировать</string>
+    <string name="core_cover_move">Двигать</string>
+    <string name="core_cover_resize">Размер</string>
+    <string name="core_cover_further">Дальше</string>
+    <string name="core_cover_closer">Ближе</string>
+    <string name="core_cover_curve">Изгиб</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">Готово</string>
+    <string name="spatial_axes_xright_yup_zback">x вправо, y вверх, z назад</string>
+    <string name="spatial_axes_xright_ydown_zfront">x вправо, y вниз, z вперёд</string>
+    <string name="spatial_axes_xright_zup_yfront">x вправо, y вперёд, z вверх</string>
+    <string name="spatial_axes_xfront_yleft_zup">x вперёд, y влево, z вверх</string>
+    <string name="spatial_axes_xleft_yup_zfront">x влево, y вверх, z вперёд</string>
+    <string name="spatial_axes_xdown_yright_zback">x вниз, y вправо, z назад</string>
+    <string name="spatial_axes_xleft_ydown_zback">x влево, y вниз, z назад</string>
+    <string name="spatial_axes_xright_zdown_yback">x вправо, y назад, z вниз</string>
+    <string name="spatial_axes_xup_yleft_zback">x вверх, y влево, z назад</string>
 </resources>

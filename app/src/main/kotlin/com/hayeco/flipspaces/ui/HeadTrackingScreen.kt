@@ -228,7 +228,7 @@ fun HeadTrackingScreen(
                         @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             AxisMap.entries.forEach { m ->
-                                FilterChip(selected = axes == m, onClick = { onAxes(m) }, label = { Text(m.label) })
+                                FilterChip(selected = axes == m, onClick = { onAxes(m) }, label = { Text(m.text) })
                             }
                         }
                         Text(stringResource(R.string.head_display_delay, predictMs), style = MaterialTheme.typography.bodyMedium)

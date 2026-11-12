@@ -1165,4 +1165,25 @@
     <string name="spatial_warp_drop">Off: gli occhiali sono usciti dalla modalità warp%1$s%2$s. Non è stato il Menu né l\'interruttore: ne escono da soli, e allora il warp si disattiva perché l\'immagine torni.</string>
     <string name="spatial_viture_switch">Tracciamento della testa VITURE</string>
     <string name="spatial_viture_switch_experimental">Tracciamento della testa VITURE sperimentale</string>
+    <string name="core_cover_menu">Menu</string>
+    <string name="core_cover_keyboard">Tastiera</string>
+    <string name="core_cover_back">Indietro</string>
+    <string name="core_cover_home">Home</string>
+    <string name="core_cover_recentre">Ricentra</string>
+    <string name="core_cover_move">Sposta</string>
+    <string name="core_cover_resize">Dimensioni</string>
+    <string name="core_cover_further">Allontana</string>
+    <string name="core_cover_closer">Avvicina</string>
+    <string name="core_cover_curve">Curva</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">Fine</string>
+    <string name="spatial_axes_xright_yup_zback">x destra, y su, z dietro</string>
+    <string name="spatial_axes_xright_ydown_zfront">x destra, y giù, z avanti</string>
+    <string name="spatial_axes_xright_zup_yfront">x destra, y avanti, z su</string>
+    <string name="spatial_axes_xfront_yleft_zup">x avanti, y sinistra, z su</string>
+    <string name="spatial_axes_xleft_yup_zfront">x sinistra, y su, z avanti</string>
+    <string name="spatial_axes_xdown_yright_zback">x giù, y destra, z dietro</string>
+    <string name="spatial_axes_xleft_ydown_zback">x sinistra, y giù, z dietro</string>
+    <string name="spatial_axes_xright_zdown_yback">x destra, y dietro, z giù</string>
+    <string name="spatial_axes_xup_yleft_zback">x su, y sinistra, z dietro</string>
 </resources>

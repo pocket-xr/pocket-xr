@@ -1151,4 +1151,25 @@
     <string name="spatial_warp_drop">关：眼镜退出了画面校正模式%1$s%2$s。不是“菜单”或开关造成的：是眼镜自己退出的，随后画面校正会关闭，让画面恢复。</string>
     <string name="spatial_viture_switch">VITURE 头部追踪</string>
     <string name="spatial_viture_switch_experimental">实验性 VITURE 头部追踪</string>
+    <string name="core_cover_menu">菜单</string>
+    <string name="core_cover_keyboard">键盘</string>
+    <string name="core_cover_back">返回</string>
+    <string name="core_cover_home">主页</string>
+    <string name="core_cover_recentre">重新居中</string>
+    <string name="core_cover_move">移动</string>
+    <string name="core_cover_resize">大小</string>
+    <string name="core_cover_further">推远</string>
+    <string name="core_cover_closer">拉近</string>
+    <string name="core_cover_curve">曲度</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">完成</string>
+    <string name="spatial_axes_xright_yup_zback">x右，y上，z后</string>
+    <string name="spatial_axes_xright_ydown_zfront">x右，y下，z前</string>
+    <string name="spatial_axes_xright_zup_yfront">x右，y前，z上</string>
+    <string name="spatial_axes_xfront_yleft_zup">x前，y左，z上</string>
+    <string name="spatial_axes_xleft_yup_zfront">x左，y上，z前</string>
+    <string name="spatial_axes_xdown_yright_zback">x下，y右，z后</string>
+    <string name="spatial_axes_xleft_ydown_zback">x左，y下，z后</string>
+    <string name="spatial_axes_xright_zdown_yback">x右，y后，z下</string>
+    <string name="spatial_axes_xup_yleft_zback">x上，y左，z后</string>
 </resources>

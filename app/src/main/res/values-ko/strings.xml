@@ -1151,4 +1151,25 @@
     <string name="spatial_warp_drop">꺼짐: 글래스가 워프 모드에서 벗어났어요%1$s%2$s. 메뉴나 스위치 때문이 아니라 글래스가 스스로 벗어난 거예요. 화면이 돌아오도록 워프가 꺼져요.</string>
     <string name="spatial_viture_switch">VITURE 헤드 트래킹</string>
     <string name="spatial_viture_switch_experimental">실험용 VITURE 헤드 트래킹</string>
+    <string name="core_cover_menu">메뉴</string>
+    <string name="core_cover_keyboard">키보드</string>
+    <string name="core_cover_back">뒤로</string>
+    <string name="core_cover_home">홈</string>
+    <string name="core_cover_recentre">중앙 맞추기</string>
+    <string name="core_cover_move">이동</string>
+    <string name="core_cover_resize">크기</string>
+    <string name="core_cover_further">멀리</string>
+    <string name="core_cover_closer">가까이</string>
+    <string name="core_cover_curve">곡률</string>
+    <string name="core_cover_steady">Steady</string>
+    <string name="core_game_keys_done">완료</string>
+    <string name="spatial_axes_xright_yup_zback">x 오른쪽, y 위, z 뒤</string>
+    <string name="spatial_axes_xright_ydown_zfront">x 오른쪽, y 아래, z 앞</string>
+    <string name="spatial_axes_xright_zup_yfront">x 오른쪽, y 앞, z 위</string>
+    <string name="spatial_axes_xfront_yleft_zup">x 앞, y 왼쪽, z 위</string>
+    <string name="spatial_axes_xleft_yup_zfront">x 왼쪽, y 위, z 앞</string>
+    <string name="spatial_axes_xdown_yright_zback">x 아래, y 오른쪽, z 뒤</string>
+    <string name="spatial_axes_xleft_ydown_zback">x 왼쪽, y 아래, z 뒤</string>
+    <string name="spatial_axes_xright_zdown_yback">x 오른쪽, y 뒤, z 아래</string>
+    <string name="spatial_axes_xup_yleft_zback">x 위, y 왼쪽, z 뒤</string>
 </resources>
