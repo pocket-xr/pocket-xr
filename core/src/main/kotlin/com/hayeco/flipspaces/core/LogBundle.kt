@@ -175,13 +175,11 @@ class BtNames(known: Collection<String> = emptyList()) {
  */
 object LogBundle {
     const val EMAIL = CrashReport.EMAIL
-    const val BUTTON = "Send logs to Mike"
+    val BUTTON: String get() = UiText.get("core_send_logs", "Send logs to Mike")
 
     /** The one line under the button: what goes, and that the user sends it. */
-    const val WHAT_IS_SENT =
-        "Emails Mike one zip of Pocket XR's logs and head tracking diagnostics, with your app version, phone, Android version " +
-            "and glasses. Emails, account, Wi-Fi and Bluetooth device names and IP addresses are taken out. Nothing goes until " +
-            "you tap send."
+    val WHAT_IS_SENT: String
+        get() = UiText.get("core_send_logs_what", "Emails Mike one zip of Pocket XR's logs and head tracking diagnostics, with your app version, phone, Android version and glasses. Emails, account, Wi-Fi and Bluetooth device names and IP addresses are taken out. Nothing goes until you tap send.")
 
     /** The zip's size at most, so it fits an email (Gmail takes 25 MB); older log files are left out past it. */
     const val MAX_ZIP_BYTES = 18L * 1024 * 1024
@@ -289,7 +287,7 @@ object LogBundle {
     }
 
     fun about(info: Info, included: List<String>, leftOut: List<String>, extras: List<String> = emptyList()): String = buildString {
-        appendLine("Pocket XR logs, sent with $BUTTON")
+        appendLine("Pocket XR logs, sent with Send logs to Mike")
         append(facts(info))
         if (extras.isNotEmpty()) appendLine("Also: " + extras.joinToString(", "))
         appendLine("Log files: " + included.ifEmpty { listOf("none on the phone") }.joinToString(", "))

@@ -958,7 +958,7 @@ class SpaceActivity : Activity() {
         PointerHub.pressDexFullScreen(id) { result ->
             Log.i(MODE_TAG, "DeX full screen for the Space on display $id ($why), press ${dexPlan.tried(id)} of ${dexPlan.maxTries}: $result")
             // 0.5.10: nothing else may press DeX's button; say so once on the phone, with the way to turn it on.
-            if (result.contains(PointerHub.SERVICE_OFF)) AccessibilityPrompt.showOnce(this, "DeX's taskbar and title bar stay on the glasses")
+            if (result.contains(PointerHub.SERVICE_OFF)) AccessibilityPrompt.showOnce(this, getString(com.hayeco.flipspaces.R.string.panel_dex_chrome_stays))
             main.removeCallbacks(checkDexFullScreen)
             main.postDelayed(checkDexFullScreen, dexPlan.checkAfterMs)
         }

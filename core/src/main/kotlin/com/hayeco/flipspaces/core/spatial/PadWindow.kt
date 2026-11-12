@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import com.hayeco.flipspaces.core.pointer.SwipeDirection
 import kotlin.math.abs
 import kotlin.math.asin
@@ -293,23 +294,27 @@ class PanelTween(val from: SpacePanel, val to: SpacePanel, val startMs: Long, va
 }
 
 /** The arrange actions, used instead of snapping: Collect (side by side) and a circle layout. */
-enum class ArrangeKind(val label: String) {
-    COLLECT("Arrange"),
-    CIRCLE("Circle"),
+enum class ArrangeKind(private val key: String, private val english: String) {
+    COLLECT("spatial_arrange_kind_arrange", "Arrange"),
+    CIRCLE("spatial_arrange_kind_circle", "Circle"),
 
     // 0.5.32: the Menu's layouts by window count ([ArrangeLayouts.forCount]).
-    CENTER("Center"),
-    THEATER("Theater"),
-    SIDE_BY_SIDE("Side by side"),
-    MAIN_SIDE("Main + side"),
-    STACKED("Stacked"),
-    ACROSS("Across"),
-    GRID("Grid"),
-    MAIN_STRIP("Main + strip"),
-    WRAPAROUND("All around"),
+    CENTER("spatial_arrange_center", "Center"),
+    THEATER("spatial_arrange_kind_theater", "Theater"),
+    SIDE_BY_SIDE("spatial_arrange_side_by_side", "Side by side"),
+    MAIN_SIDE("spatial_arrange_main_side", "Main + side"),
+    STACKED("spatial_arrange_stacked", "Stacked"),
+    ACROSS("spatial_arrange_kind_across", "Across"),
+    GRID("spatial_arrange_grid", "Grid"),
+    MAIN_STRIP("spatial_arrange_kind_main_strip", "Main + strip"),
+    WRAPAROUND("spatial_arrange_kind_all_around", "All around"),
 
     /** 0.5.88: not a layout: every window held together, to push, pull, resize and turn as one ([SpatialPointer.holdAll]). */
-    ADJUST_ALL("Adjust all"),
+    ADJUST_ALL("spatial_arrange_kind_adjust_all", "Adjust all"),
+    ;
+
+    /** The layout's name as shown, in the phone's language. */
+    val label: String get() = UiText.get(key, english)
 }
 
 /**
@@ -480,10 +485,13 @@ class ReticleAnim {
  * 1.4.0: Space locked is available while a 6DoF source is live ([SixDof]); it draws with the head's position as well
  * as its turn. Otherwise it is Body Anchor.
  */
-enum class FollowMode(val label: String, val dof: String, private val always: Boolean) {
-    SMOOTH_FOLLOW("Smooth Follow", "0DoF", true),
-    BODY_ANCHOR("Body Anchor", "3DoF", true),
-    SPACE_LOCKED("Space locked", "6DoF", false);
+enum class FollowMode(private val key: String, private val english: String, val dof: String, private val always: Boolean) {
+    SMOOTH_FOLLOW("spatial_follow_smooth", "Smooth Follow", "0DoF", true),
+    BODY_ANCHOR("spatial_follow_body_anchor", "Body Anchor", "3DoF", true),
+    SPACE_LOCKED("spatial_follow_space_locked", "Space locked", "6DoF", false);
+
+    /** The mode's name as shown, in the phone's language. */
+    val label: String get() = UiText.get(key, english)
 
     val available: Boolean get() = always || SixDof.live
 }

@@ -22,8 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.spatial.AxisMap
 import com.hayeco.flipspaces.core.spatial.HeadTrackingStatus
 import com.hayeco.flipspaces.core.spatial.OneImuProtocol
@@ -111,7 +113,7 @@ fun HeadTrackingScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Text("Glasses head tracking", style = MaterialTheme.typography.headlineSmall) }
+            item { Text(stringResource(R.string.head_title), style = MaterialTheme.typography.headlineSmall) }
             item {
                 val ok = status is HeadTrackingStatus.Streaming
                 Card(
@@ -121,24 +123,24 @@ fun HeadTrackingScreen(
                     ),
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(if (ok) "Head tracking works" else "Head tracking not running", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(if (ok) R.string.head_works else R.string.head_not_running), style = MaterialTheme.typography.titleMedium)
                         SelectionContainer { Text(status.summary, style = MaterialTheme.typography.bodyMedium) }
-                        if (route != null) Text("Route: $route", style = MaterialTheme.typography.bodyMedium)
+                        if (route != null) Text(stringResource(R.string.head_route, route), style = MaterialTheme.typography.bodyMedium)
                         if (!ok && answer != null) Text(answer, style = MaterialTheme.typography.bodyMedium)
                         if (!ok) {
                             Text(
-                                "Without it the Space still works: panels stay in front of you (head locked) and the trackpad turns the view.",
+                                stringResource(R.string.head_without_it),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = onRecentre, enabled = ok) { Text("Recentre") }
-                            OutlinedButton(onClick = onRetry) { Text("Try again") }
+                            OutlinedButton(onClick = onRecentre, enabled = ok) { Text(stringResource(R.string.head_recentre)) }
+                            OutlinedButton(onClick = onRetry) { Text(stringResource(R.string.head_try_again)) }
                         }
                         // 1.1.10 (a tester could copy only the start of one line): everything on this screen, in full.
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = onCopyAll) { Text("Copy all") }
-                            OutlinedButton(onClick = onShare) { Text("Share") }
+                            Button(onClick = onCopyAll) { Text(stringResource(R.string.head_copy_all)) }
+                            OutlinedButton(onClick = onShare) { Text(stringResource(R.string.head_share)) }
                         }
                         OutlinedButton(onClick = onSendLogs) { Text(com.hayeco.flipspaces.core.LogBundle.BUTTON) }
                         Text(com.hayeco.flipspaces.core.LogBundle.WHAT_IS_SENT, style = MaterialTheme.typography.bodySmall)
@@ -148,34 +150,36 @@ fun HeadTrackingScreen(
             if (other != null) item { OtherGlasses(other) }
             item {
                 Step(
-                    "1. Glasses USB network",
-                    when (status) {
-                        is HeadTrackingStatus.NoNetwork -> "Not found."
-                        // 1.1.10: these glasses have no USB network for head tracking; nothing is missing.
-                        is HeadTrackingStatus.HidGlasses -> "Not used: these glasses send head tracking over USB HID."
-                        is HeadTrackingStatus.VitureNotYet -> "Not used: VITURE glasses have no USB network."
-                        HeadTrackingStatus.TurnedOff -> "Not looked for: head tracking is turned off in Settings."
-                        HeadTrackingStatus.Searching, HeadTrackingStatus.Off -> "Looking."
-                        else -> "Found."
-                    },
-                    networks.ifEmpty { listOf("Nothing listed yet.") } +
-                        listOf("USB Ethernet (eth0, eth1) through Shizuku:") +
-                        ethernet.ifEmpty { listOf("Not needed or not tried yet.") },
+                    stringResource(R.string.head_step_network),
+                    stringResource(
+                        when (status) {
+                            is HeadTrackingStatus.NoNetwork -> R.string.head_net_not_found
+                            // 1.1.10: these glasses have no USB network for head tracking; nothing is missing.
+                            is HeadTrackingStatus.HidGlasses -> R.string.head_net_hid
+                            is HeadTrackingStatus.VitureNotYet -> R.string.head_net_viture
+                            HeadTrackingStatus.TurnedOff -> R.string.head_net_turned_off
+                            HeadTrackingStatus.Searching, HeadTrackingStatus.Off -> R.string.head_net_looking
+                            else -> R.string.head_net_found
+                        },
+                    ),
+                    networks.ifEmpty { listOf(stringResource(R.string.head_nothing_listed)) } +
+                        listOf(stringResource(R.string.head_usb_ethernet)) +
+                        ethernet.ifEmpty { listOf(stringResource(R.string.head_not_needed)) },
                 )
             }
             item {
                 Step(
                     "2. TCP ${OneImuProtocol.HOST}:${OneImuProtocol.STREAM_PORT}",
-                    listOfNotNull(answer, connectResult).joinToString("\n").ifEmpty { "Not tried yet." },
-                    listOf("Routes, in the order tried (the app's own socket, then the Shizuku shell helper):") +
-                        attempts.ifEmpty { listOf("None tried yet.") },
+                    listOfNotNull(answer, connectResult).joinToString("\n").ifEmpty { stringResource(R.string.head_not_tried) },
+                    listOf(stringResource(R.string.head_routes_order)) +
+                        attempts.ifEmpty { listOf(stringResource(R.string.head_none_tried)) },
                 )
             }
             item {
                 val counts = live?.counts
                 Step(
-                    "3. Sensor reports",
-                    if (live == null) "None yet." else "%.0f IMU reports a second".format(live.rateHz),
+                    stringResource(R.string.head_step_reports),
+                    if (live == null) stringResource(R.string.head_none_yet) else stringResource(R.string.head_reports_rate, live.rateHz),
                     if (counts == null) emptyList() else listOf(
                         "${counts.imu} IMU, ${counts.magnetometer} magnetometer, ${counts.unknownType} unknown type, " +
                             "${counts.badLength} other length, ${counts.droppedBytes} bytes skipped of ${counts.bytes}",
@@ -185,9 +189,9 @@ fun HeadTrackingScreen(
             item {
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("4. Live orientation", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.head_step_orientation), style = MaterialTheme.typography.titleMedium)
                         if (live == null) {
-                            Text("No pose yet.", style = MaterialTheme.typography.bodyMedium)
+                            Text(stringResource(R.string.head_no_pose), style = MaterialTheme.typography.bodyMedium)
                         } else {
                             Text(
                                 "yaw %+7.1f   pitch %+6.1f   roll %+6.1f".format(live.yaw, live.pitch, live.roll),
@@ -195,7 +199,7 @@ fun HeadTrackingScreen(
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
-                                "Turn right: yaw goes up. Look up: pitch goes up. Tilt right ear down: roll goes up. If not, pick another axis layout below.",
+                                stringResource(R.string.head_turn_hint),
                                 style = MaterialTheme.typography.bodySmall,
                             )
                             Mono("gyro rad/s   ${fmt(live.gyro)}${if (live.still) "   (still)" else ""}")
@@ -204,7 +208,7 @@ fun HeadTrackingScreen(
                             val suggested = AxisMap.suggest(live.rawAccel)
                             if (live.still && suggested.isNotEmpty() && axes !in suggested) {
                                 Text(
-                                    "Gravity is not on this layout's up axis. Layouts that fit: ${suggested.joinToString { it.label }}.",
+                                    stringResource(R.string.head_gravity_wrong, suggested.joinToString { it.label }),
                                     color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.bodySmall,
                                 )
@@ -216,9 +220,9 @@ fun HeadTrackingScreen(
             item {
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Sensor axis layout", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.head_axis_layout), style = MaterialTheme.typography.titleMedium)
                         Text(
-                            "XREAL does not document the axes. Keep the glasses still and level; the right layout puts gravity on up.",
+                            stringResource(R.string.head_axis_hint),
                             style = MaterialTheme.typography.bodySmall,
                         )
                         @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -227,29 +231,27 @@ fun HeadTrackingScreen(
                                 FilterChip(selected = axes == m, onClick = { onAxes(m) }, label = { Text(m.label) })
                             }
                         }
-                        Text("Glasses display delay: $predictMs ms (added to the measured two frames the pose is predicted ahead; it no longer delays the frame itself)", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.head_display_delay, predictMs), style = MaterialTheme.typography.bodyMedium)
                         Slider(
                             value = predictMs.toFloat(),
                             onValueChange = { onPredict(it.toInt()) },
                             valueRange = 0f..40f,
                         )
                         Text(
-                            if (delayCalibrated) "Calibrated on these glasses" else "Not calibrated: 8 ms is a guess",
+                            stringResource(if (delayCalibrated) R.string.head_delay_calibrated else R.string.head_delay_not_calibrated),
                             style = MaterialTheme.typography.bodySmall,
                         )
                         Text(
-                            "Calibrate it: with the Space on the glasses, tap Check delay. A thin line appears fixed in the room. " +
-                                "Turn your head gently left and right and move the slider until the line stays put, then tap Save run. " +
-                                "Move the slider to one end before each run. Three runs within 1 ms of each other set the delay for these glasses.",
+                            stringResource(R.string.head_delay_howto),
                             style = MaterialTheme.typography.bodySmall,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { onDelayCheck(!delayCheck) }) { Text(if (delayCheck) "Stop check" else "Check delay") }
-                            OutlinedButton(onClick = onSaveRun, enabled = delayCheck) { Text("Save run") }
-                            TextButton(onClick = onClearRuns) { Text("Clear runs") }
+                            Button(onClick = { onDelayCheck(!delayCheck) }) { Text(stringResource(if (delayCheck) R.string.head_stop_check else R.string.head_check_delay)) }
+                            OutlinedButton(onClick = onSaveRun, enabled = delayCheck) { Text(stringResource(R.string.head_save_run)) }
+                            TextButton(onClick = onClearRuns) { Text(stringResource(R.string.head_clear_runs)) }
                         }
                         if (delayRuns.isNotEmpty()) {
-                            Text("Runs: " + delayRuns.joinToString { "%.0f ms".format(it) }, style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.head_runs, delayRuns.joinToString { "%.0f ms".format(it) }), style = MaterialTheme.typography.bodySmall)
                         }
                         timing?.let { SelectionContainer { Text(it, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace) } }
                     }
@@ -258,34 +260,31 @@ fun HeadTrackingScreen(
             item {
                 Card(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Level", style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.head_level), style = MaterialTheme.typography.titleMedium)
                         Text(
-                            if (levelCalibrated) "Calibrated: the glasses' sensor reads roll %.2f, pitch %.2f degrees when the picture is level.".format(mountRollDeg, mountPitchDeg)
-                            else "Not calibrated: the sensor is taken as level with the picture.",
+                            if (levelCalibrated) stringResource(R.string.head_level_calibrated, mountRollDeg, mountPitchDeg)
+                            else stringResource(R.string.head_level_not_calibrated),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
-                            "Once per pair of glasses: with the Space on the glasses, tap Check level. A green line appears across the middle of the view. " +
-                                "Look at a level edge at eye height (the horizon, a far shelf or window frame), tilt your head until the line lies on it, hold still, then tap Save level. " +
-                                "The sensor may read up to 50 degrees of pitch (the Aura's sits about 14.5 degrees tilted, a One Pro more, a One Pro+ about 40) and 10 of roll.",
+                            stringResource(R.string.head_level_howto),
                             style = MaterialTheme.typography.bodySmall,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { onLevelCheck(!levelCheck) }) { Text(if (levelCheck) "Stop level" else "Check level") }
-                            OutlinedButton(onClick = onSaveLevel, enabled = levelCheck) { Text("Save level") }
-                            TextButton(onClick = onClearLevel, enabled = levelCalibrated) { Text("Clear") }
+                            Button(onClick = { onLevelCheck(!levelCheck) }) { Text(stringResource(if (levelCheck) R.string.head_stop_level else R.string.head_check_level)) }
+                            OutlinedButton(onClick = onSaveLevel, enabled = levelCheck) { Text(stringResource(R.string.head_save_level)) }
+                            TextButton(onClick = onClearLevel, enabled = levelCalibrated) { Text(stringResource(R.string.head_clear)) }
                         }
                         levelResult?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                        Text("Per-row pose (each row of the picture drawn for the moment it lights)", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.head_row_pose), style = MaterialTheme.typography.bodyMedium)
                         @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(selected = rowPose2d, onClick = { onRowPose(false, !rowPose2d) }, label = { Text("In 2D") })
-                            FilterChip(selected = rowPoseSbs, onClick = { onRowPose(true, !rowPoseSbs) }, label = { Text("In 3D side by side") })
-                            FilterChip(selected = lateWarpSbs, onClick = { onLateWarp(!lateWarpSbs) }, label = { Text("Late warp in 3D") })
+                            FilterChip(selected = rowPose2d, onClick = { onRowPose(false, !rowPose2d) }, label = { Text(stringResource(R.string.head_in_2d)) })
+                            FilterChip(selected = rowPoseSbs, onClick = { onRowPose(true, !rowPoseSbs) }, label = { Text(stringResource(R.string.head_in_3d_sbs)) })
+                            FilterChip(selected = lateWarpSbs, onClick = { onLateWarp(!lateWarpSbs) }, label = { Text(stringResource(R.string.head_late_warp)) })
                         }
                         Text(
-                            "On in 3D since 0.5.25, with the 60 Hz row model: if the picture tilts during head turns in 3D, turn it off there. " +
-                                "Late warp in 3D draws the Space early and turns it by the newest head pose just before each frame is due, so a slow frame no longer jumps.",
+                            stringResource(R.string.head_row_pose_hint),
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -293,12 +292,14 @@ fun HeadTrackingScreen(
             }
             item {
                 Step(
-                    "Other checks",
-                    "Chip: ${facts.soc}",
+                    stringResource(R.string.head_other_checks),
+                    stringResource(R.string.head_chip, facts.soc),
                     listOf(
-                        "Dynamic sensors (an Android head tracker would show here): " +
-                            facts.dynamicSensors.ifEmpty { listOf("none") }.joinToString("; "),
-                        "Protocol: XREAL One family IMU stream, read only. See docs/SPATIAL.md 1.1.",
+                        stringResource(
+                            R.string.head_dynamic_sensors,
+                            facts.dynamicSensors.ifEmpty { listOf(stringResource(R.string.head_none)) }.joinToString("; "),
+                        ),
+                        stringResource(R.string.head_protocol),
                     ),
                 )
             }
@@ -310,16 +311,14 @@ fun HeadTrackingScreen(
 private fun OtherGlasses(o: OtherGlassesCard) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Glasses that aren't XREAL's", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.head_other_title), style = MaterialTheme.typography.titleMedium)
             Text(
-                "Record motion for 20 seconds saves what your glasses' motion sensor sends over USB, so support for them can be added. " +
-                    "It asks for USB access, reads for 20 seconds while you move your head, and keeps only the sensor's numbers; " +
-                    "Send logs takes it along. On VITURE glasses it also sends VITURE's documented start command after 5 seconds.",
+                stringResource(R.string.head_other_explain),
                 style = MaterialTheme.typography.bodySmall,
             )
-            Text(o.glasses?.let { "Plugged in: $it" } ?: "No glasses other than XREAL's are plugged in.", style = MaterialTheme.typography.bodyMedium)
+            Text(o.glasses?.let { stringResource(R.string.head_plugged_in, it) } ?: stringResource(R.string.head_no_other_glasses), style = MaterialTheme.typography.bodyMedium)
             OutlinedButton(onClick = o.onRecord, enabled = o.glasses != null && !o.recording && !(o.viture && o.vitureOn)) {
-                Text(if (o.recording) "Recording..." else "Record motion for 20 seconds")
+                Text(stringResource(if (o.recording) R.string.head_recording else R.string.head_record_20s))
             }
             o.motionLine?.let { SelectionContainer { Text(it, style = MaterialTheme.typography.bodySmall) } }
             if (o.viture) {
@@ -328,27 +327,20 @@ private fun OtherGlasses(o: OtherGlassesCard) {
                     Text(o.vitureLabel, style = MaterialTheme.typography.bodyMedium)
                 }
                 Text(
-                    if (o.vitureBeast) {
-                        "On by default on the VITURE Beast, and it comes back by itself when you plug the glasses in again. " +
-                            "The sensor axis layout starts at x right, y down, z front, with both switches off."
-                    } else {
-                        "Experimental. It follows a public description of VITURE's newer glasses; your model may not answer. " +
-                            "On the VITURE Beast the sensor axis layout starts at x right, y down, z front, with both switches off. " +
-                            "On other models, if turning your head moves the view the wrong way, try the switches below; they apply at once."
-                    },
+                    stringResource(if (o.vitureBeast) R.string.head_viture_beast_note else R.string.head_viture_experimental_note),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = o.vitureAxes.flipUpDown,
                         onClick = { o.onVitureAxes(o.vitureAxes.copy(flipUpDown = !o.vitureAxes.flipUpDown)) },
-                        label = { Text("Flip up and down") },
+                        label = { Text(stringResource(R.string.head_flip_up_down)) },
                         enabled = o.vitureOn,
                     )
                     FilterChip(
                         selected = o.vitureAxes.swapTurnTilt,
                         onClick = { o.onVitureAxes(o.vitureAxes.copy(swapTurnTilt = !o.vitureAxes.swapTurnTilt)) },
-                        label = { Text("Swap turn and tilt") },
+                        label = { Text(stringResource(R.string.head_swap_turn_tilt)) },
                         enabled = o.vitureOn,
                     )
                 }

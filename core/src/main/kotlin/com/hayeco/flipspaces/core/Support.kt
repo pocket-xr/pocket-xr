@@ -10,11 +10,11 @@ object Support {
     const val KO_FI_URL = "https://ko-fi.com/mikehaye"
 
     /** The row's line, and the quiet name of where it goes at its end. */
-    const val LABEL = "Buy me a beer"
+    val LABEL: String get() = UiText.get("core_support_label", "Buy me a beer")
     const val WHERE = "Ko-fi"
 
     /** What TalkBack reads for the row. */
-    const val DESCRIPTION = "Buy me a beer on Ko-fi. Opens ko-fi.com in the browser."
+    val DESCRIPTION: String get() = UiText.get("core_support_description", "Buy me a beer on Ko-fi. Opens ko-fi.com in the browser.")
 
     /**
      * 1.2.6 (Mike: the pill in the Pocket XR blue at a reduced opacity, not its own colour): the accent ([Look.ACCENT], the

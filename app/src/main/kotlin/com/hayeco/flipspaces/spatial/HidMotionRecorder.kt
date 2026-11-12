@@ -5,6 +5,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbInterface
 import android.os.SystemClock
 import android.util.Log
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.spatial.GlassesVendors
 import com.hayeco.flipspaces.core.spatial.HidRecording
 import com.hayeco.flipspaces.core.spatial.VitureImuProtocol
@@ -40,6 +41,15 @@ object HidMotionRecorder {
 
     val busy: Boolean get() = running?.isAlive == true
 
+    /** The current [line] says the recording is under way (asking for USB access or reading); false once it is saved or failed. */
+    @Volatile var inProgress: Boolean = false
+        private set
+
+    private fun show(text: String, progress: Boolean) {
+        inProgress = progress
+        _line.value = text
+    }
+
     fun dir(context: Context): File = File(context.getExternalFilesDir(null) ?: context.filesDir, "motion")
 
     /** The newest recording, null when none was made. */
@@ -62,30 +72,30 @@ object HidMotionRecorder {
     }
 
     private fun fail(why: String) {
-        _line.value = "Not recorded: $why"
+        show(com.hayeco.flipspaces.FlipSpacesApp.text(R.string.head_motion_not_recorded, why), progress = false)
         Log.w(TAG, "motion recording: not recorded: $why")
     }
 
     private fun record(context: Context) {
         val store = SpaceStore(context)
         val listed = GlassesUsbList.read(context)
-        val pick = GlassesVendors.recordable(listed) ?: return fail("no glasses other than XREAL's on USB (XREAL glasses have their own reader)")
+        val pick = GlassesVendors.recordable(listed) ?: return fail(context.getString(R.string.head_motion_no_glasses))
         // 1.2.12: only VITURE glasses are held by the reader (it is on by default on the Beast).
         if (com.hayeco.flipspaces.core.spatial.VitureImuProtocol.isViture(pick.vendorId) && store.vitureHeadTracking) {
-            return fail("turn off ${com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel(pick.productId)} first; it holds the glasses' motion sensor")
+            return fail(context.getString(R.string.head_motion_turn_off_first, com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel(pick.productId)))
         }
         val manager = VitureImuLink.manager(context)
         val device: UsbDevice = manager.deviceList.values.firstOrNull { it.vendorId == pick.vendorId && it.productId == pick.productId }
-            ?: return fail("the glasses went away")
+            ?: return fail(context.getString(R.string.head_motion_gone))
         val name = "%04X:%04X \"%s\"".format(Locale.ROOT, device.vendorId, device.productId, device.productName.orEmpty())
         if (!manager.hasPermission(device)) {
-            _line.value = "Allow Pocket XR in Android's USB prompt for $name..."
+            show(context.getString(R.string.head_motion_allow, name), progress = true)
             com.hayeco.flipspaces.hands.GlassesUsbAccess.requestPermission(context, device)
             val until = SystemClock.elapsedRealtime() + ACCESS_WAIT_MS
             while (!manager.hasPermission(device) && SystemClock.elapsedRealtime() < until) Thread.sleep(250)
-            if (!manager.hasPermission(device)) return fail("USB access for $name was not given")
+            if (!manager.hasPermission(device)) return fail(context.getString(R.string.head_motion_no_access, name))
         }
-        val connection = manager.openDevice(device) ?: return fail("Android would not open $name")
+        val connection = manager.openDevice(device) ?: return fail(context.getString(R.string.head_motion_not_open, name))
         val viture = VitureImuProtocol.isViture(device.vendorId)
         val hids = (0 until device.interfaceCount).map { device.getInterface(it) }.filter { it.interfaceClass == android.hardware.usb.UsbConstants.USB_CLASS_HID }
         val claimed = mutableListOf<UsbInterface>()
@@ -129,7 +139,7 @@ object HidMotionRecorder {
                     val ok = VitureImuLink.send(connection, commandIf, VitureImuProtocol.startRaw(), 1000)
                     sent += System.nanoTime() to "VITURE raw IMU stream start (0x0301, 02 02) on interface ${commandIf.id}: ${if (ok) "accepted" else "not accepted"}"
                 }
-                _line.value = "Recording motion from $name: ${HidRecording.SECONDS - s / 4} s left. Move your head slowly: left, right, up, down, then tilt."
+                show(context.getString(R.string.head_motion_recording, name, HidRecording.SECONDS - s / 4), progress = true)
                 Thread.sleep(250)
             }
         } finally {
@@ -152,7 +162,7 @@ object HidMotionRecorder {
         val file = File(dir, PREFIX + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.ROOT).format(Date()) + ".txt")
         file.writeText(text)
         val summary = HidRecording.summary(kept, (end - start) / 1e9)
-        _line.value = "Saved ${file.name}: $summary. Send logs takes it along. If the glasses' own buttons act up, unplug them and plug them in again."
+        show(context.getString(R.string.head_motion_saved, file.name, summary), progress = false)
         Log.i(TAG, "motion recording saved: ${file.name}: $summary; descriptors: ${descriptors.joinToString("; ") { HidRecording.descriptorLine(it).take(80) }}")
     }
 }

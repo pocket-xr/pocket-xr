@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 0.5.6: how long the head tracker waits before trying the glasses' IMU port again. Mike's 0.5.5
  * log had a try every 3 s for as long as the Space was up, each one a new Shizuku `app_process`
@@ -81,12 +83,11 @@ object GlassesReach {
      */
     fun explain(error: String): String? = when {
         noAnswer(error) ->
-            "The glasses do not answer on ${OneImuProtocol.HOST} port ${OneImuProtocol.STREAM_PORT}: the connection went out and nothing came back. " +
-                "This firmware may not serve the XREAL One head tracking stream. The Space stays head locked."
+            UiText.format("spatial_reach_no_answer", "The glasses do not answer on %1\$s port %2\$s: the connection went out and nothing came back. This firmware may not serve the XREAL One head tracking stream. The Space stays head locked.", OneImuProtocol.HOST, OneImuProtocol.STREAM_PORT.toString())
         refused(error) ->
-            "The glasses refused port ${OneImuProtocol.STREAM_PORT}: they are there but do not serve the head tracking stream on it. The Space stays head locked."
+            UiText.format("spatial_reach_refused", "The glasses refused port %1\$s: they are there but do not serve the head tracking stream on it. The Space stays head locked.", OneImuProtocol.STREAM_PORT.toString())
         noRoute(error) ->
-            "No route to ${OneImuProtocol.HOST} on this network; it is not tried again until the glasses' network changes."
+            UiText.format("spatial_reach_no_route", "No route to %1\$s on this network; it is not tried again until the glasses' network changes.", OneImuProtocol.HOST)
         else -> null
     }
 

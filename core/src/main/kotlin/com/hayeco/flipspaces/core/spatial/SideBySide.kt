@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 1.2.3 (issue 58: "A 3D video that is already split into two halves plays in Pocket XR as two flat pictures next to each
  * other"): Side by side 3D for a window. Pocket XR already draws every window once for each eye, so with it on the left
@@ -21,10 +23,10 @@ object SideBySide {
         return if (right) floatArrayOf(mid, uv[1], uv[2], uv[3]) else floatArrayOf(uv[0], uv[1], mid, uv[3])
     }
 
-    const val ON_NOTICE = "Side by side 3D: each eye sees its half"
-    const val MONO_NOTICE = "Side by side 3D: switch the glasses to 3D to see depth"
-    const val SWITCHING_NOTICE = "Side by side 3D: switching the glasses to 3D"
-    const val OFF_NOTICE = "Side by side 3D off"
+    val ON_NOTICE: String get() = UiText.get("spatial_sbs_on_notice", "Side by side 3D: each eye sees its half")
+    val MONO_NOTICE: String get() = UiText.get("spatial_sbs_mono_notice", "Side by side 3D: switch the glasses to 3D to see depth")
+    val SWITCHING_NOTICE: String get() = UiText.get("spatial_sbs_switching_notice", "Side by side 3D: switching the glasses to 3D")
+    val OFF_NOTICE: String get() = UiText.get("spatial_sbs_off_notice", "Side by side 3D off")
 }
 
 /** 1.2.3 (issue 58): the apps whose windows show [SideBySide], one package a line. */

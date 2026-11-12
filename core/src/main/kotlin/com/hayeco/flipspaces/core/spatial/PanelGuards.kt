@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 0.4.2 fixes from the 0.4.1 emulator test, as plain Kotlin: where mouse events may land on a
  * panel's display, when a panel's app has closed, when Back would close it, which display keeps
@@ -125,12 +127,12 @@ object SingleWindowApp {
 /** 1.1.10: the Menu's switch for a second window of an app already open ([SingleWindowApp.card]). */
 object NewInstanceSwitch {
     /** The switch's name, as the Menu row and the card say it. */
-    const val NAME = "Open a new instance"
+    val NAME: String get() = UiText.get("spatial_new_instance_name", "Open a new instance")
 
-    const val LABEL = "$NAME if the app is already running"
+    val LABEL: String get() = UiText.get("spatial_new_instance_label", "Open a new instance if the app is already running")
 
     /** The Menu row's quieter line under [LABEL]. */
-    const val SUBTITLE = "Lets you open two windows of the same app, like two Chrome windows"
+    val SUBTITLE: String get() = UiText.get("spatial_new_instance_subtitle", "Lets you open two windows of the same app, like two Chrome windows")
 }
 
 /** What the `<` button or a three finger swipe does on a panel (0.4.2). */
@@ -232,11 +234,11 @@ sealed interface PanelCard {
      * 0.5.19 (a game crashed natively 10 s after each launch and its panel just went to "App closed"): [crash] says how it ended when its exit record was a crash or ANR.
      */
     data class AppClosed(val label: String, val crash: String? = null) : PanelCard {
-        override val lines = listOfNotNull(label, if (crash != null) "The app closed: it crashed" else "App closed", crash)
+        override val lines = listOfNotNull(label, if (crash != null) UiText.get("spatial_card_app_crashed", "The app closed: it crashed") else UiText.get("spatial_card_app_closed", "App closed"), crash)
         override val v0 = 0f
         override val buttons = listOf(
-            CardButton(CardAction.REOPEN, "Reopen", 0.29f, 0.60f, 0.49f, 0.72f, primary = true),
-            CardButton(CardAction.CLOSE_PANEL, "Close", 0.51f, 0.60f, 0.71f, 0.72f, danger = true),
+            CardButton(CardAction.REOPEN, UiText.get("spatial_card_reopen", "Reopen"), 0.29f, 0.60f, 0.49f, 0.72f, primary = true),
+            CardButton(CardAction.CLOSE_PANEL, UiText.get("spatial_card_close", "Close"), 0.51f, 0.60f, 0.71f, 0.72f, danger = true),
         )
         override val detail: String? get() = lines.drop(1).joinToString("  ·  ").ifEmpty { null }
         override val titleV = 0.38f
@@ -251,10 +253,13 @@ sealed interface PanelCard {
      * back and empty the other, so the card says what happened and offers one button, to close this window.
      */
     data class MovedToNewerWindow(val label: String) : PanelCard {
-        override val lines = listOf("$label can only show one window on this phone.", "It moved to your newest window.")
+        override val lines = listOf(
+            UiText.format("spatial_card_one_window_only", "%1\$s can only show one window on this phone.", label),
+            UiText.get("spatial_card_moved_newest", "It moved to your newest window."),
+        )
         override val v0 = 0f
         override val buttons = listOf(
-            CardButton(CardAction.CLOSE_PANEL, "Close this window", 0.33f, 0.60f, 0.67f, 0.72f, primary = true),
+            CardButton(CardAction.CLOSE_PANEL, UiText.get("spatial_card_close_this_window", "Close this window"), 0.33f, 0.60f, 0.67f, 0.72f, primary = true),
         )
         override val titleV = 0.38f
         override val titleH = 0.085f
@@ -270,11 +275,14 @@ sealed interface PanelCard {
      * one task. The card names the switch, and Turn on and reopen turns it on and opens the app here as a new instance.
      */
     data class MovedSwitchOff(val label: String) : PanelCard {
-        override val lines = listOf("$label moved to your newer window.", "To keep both, turn on ${NewInstanceSwitch.NAME}.")
+        override val lines = listOf(
+            UiText.format("spatial_card_moved_newer", "%1\$s moved to your newer window.", label),
+            UiText.format("spatial_card_keep_both", "To keep both, turn on %1\$s.", NewInstanceSwitch.NAME),
+        )
         override val v0 = 0f
         override val buttons = listOf(
-            CardButton(CardAction.TURN_ON_AND_REOPEN, "Turn on and reopen", 0.21f, 0.60f, 0.49f, 0.72f, primary = true),
-            CardButton(CardAction.CLOSE_PANEL, "Close this window", 0.51f, 0.60f, 0.79f, 0.72f, danger = true),
+            CardButton(CardAction.TURN_ON_AND_REOPEN, UiText.get("spatial_card_turn_on_reopen", "Turn on and reopen"), 0.21f, 0.60f, 0.49f, 0.72f, primary = true),
+            CardButton(CardAction.CLOSE_PANEL, UiText.get("spatial_card_close_this_window", "Close this window"), 0.51f, 0.60f, 0.79f, 0.72f, danger = true),
         )
         override val titleV = 0.38f
         override val titleH = 0.085f
@@ -302,11 +310,11 @@ sealed interface PanelCard {
      * All apps and Cancel. [aspect] is the window's width over its height, so the tiles come out square.
      */
     data class SwitchApp(val label: String, val apps: List<com.hayeco.flipspaces.core.AppEntry>, val aspect: Float) : PanelCard {
-        override val lines = listOf("Switch app")
+        override val lines = listOf(UiText.get("spatial_card_switch_app", "Switch app"))
         override val v0 = 0.1f
         override val box = floatArrayOf(0.1f, 0.1f, 0.9f, 0.92f)
-        override val title = "Switch app"
-        override val detail: String? = if (apps.isEmpty()) "No apps pinned. Pin apps in the launcher, or pick from All apps." else "Pinned apps, or pick from All apps"
+        override val title = UiText.get("spatial_card_switch_app", "Switch app")
+        override val detail: String? = if (apps.isEmpty()) UiText.get("spatial_card_no_apps_pinned", "No apps pinned. Pin apps in the launcher, or pick from All apps.") else UiText.get("spatial_card_pinned_or_all", "Pinned apps, or pick from All apps")
         override val titleV = 0.2f
         override val titleH = 0.07f
         override val detailV = 0.28f
@@ -333,8 +341,8 @@ sealed interface PanelCard {
                 CardButton(CardAction.SWITCH_TO, app.label, u0, v0, u0 + tileU, v0 + tileV, app = app)
             }
             tiles + listOf(
-                CardButton(CardAction.ALL_APPS, "All apps", 0.26f, 0.79f, 0.49f, 0.88f, primary = true),
-                CardButton(CardAction.KEEP, "Cancel", 0.51f, 0.79f, 0.74f, 0.88f),
+                CardButton(CardAction.ALL_APPS, UiText.get("spatial_card_all_apps", "All apps"), 0.26f, 0.79f, 0.49f, 0.88f, primary = true),
+                CardButton(CardAction.KEEP, UiText.get("spatial_card_cancel", "Cancel"), 0.51f, 0.79f, 0.74f, 0.88f),
             )
         }
 
@@ -345,14 +353,14 @@ sealed interface PanelCard {
     }
 
     data class AskBack(val label: String) : PanelCard {
-        override val lines = listOf("Back would close $label.")
+        override val lines = listOf(UiText.format("spatial_card_back_would_close_line", "Back would close %1\$s.", label))
         override val v0 = 0.56f
         override val box = floatArrayOf(0.2f, 0.56f, 0.8f, 0.95f)
-        override val title = "Back would close $label"
-        override val detail = "Go back anyway, or close this window?"
+        override val title = UiText.format("spatial_card_back_would_close", "Back would close %1\$s", label)
+        override val detail = UiText.get("spatial_card_back_anyway_question", "Go back anyway, or close this window?")
         override val buttons = listOf(
-            CardButton(CardAction.BACK_ANYWAY, "Go back", 0.24f, 0.80f, 0.49f, 0.91f),
-            CardButton(CardAction.CLOSE_PANEL, "Close window", 0.51f, 0.80f, 0.76f, 0.91f, danger = true),
+            CardButton(CardAction.BACK_ANYWAY, UiText.get("spatial_card_go_back", "Go back"), 0.24f, 0.80f, 0.49f, 0.91f),
+            CardButton(CardAction.CLOSE_PANEL, UiText.get("spatial_card_close_window", "Close window"), 0.51f, 0.80f, 0.76f, 0.91f, danger = true),
         )
         override val titleV = 0.645f
         override val titleH = 0.06f

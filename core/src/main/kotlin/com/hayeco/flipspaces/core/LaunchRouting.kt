@@ -43,11 +43,14 @@ data class LaunchFailure(val kind: FailureKind, val message: String) {
     }
 }
 
-enum class ShizukuStatus(val label: String) {
-    NOT_INSTALLED("Shizuku is not installed"),
-    NOT_RUNNING("Shizuku is installed but not running"),
-    NO_PERMISSION("Shizuku is running but Pocket XR is not allowed yet"),
-    READY("Shizuku is ready"),
+enum class ShizukuStatus(private val labelKey: String, private val labelEnglish: String) {
+    NOT_INSTALLED("core_shizuku_not_installed", "Shizuku is not installed"),
+    NOT_RUNNING("core_shizuku_not_running", "Shizuku is installed but not running"),
+    NO_PERMISSION("core_shizuku_no_permission", "Shizuku is running but Pocket XR is not allowed yet"),
+    READY("core_shizuku_ready", "Shizuku is ready"),
+    ;
+
+    val label: String get() = UiText.get(labelKey, labelEnglish)
 }
 
 /** Ways to start an app on the glasses. */

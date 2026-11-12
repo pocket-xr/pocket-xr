@@ -55,7 +55,7 @@ private const val DIVIDER_33 = 0x33FFFFFF
 private const val MASK = 0x80000000.toInt()
 
 /** The Spatial Mouse page's hint (1.1.10, issue 35: after the one finger scroll's line while it is on). */
-private const val LASER_TIP = "Lost the dot? Hold Home to bring it in front of you"
+private fun Context.laserTipText(): String = getString(R.string.pad_laser_tip)
 
 // 0.5.73 ("Light on glass", docs/VISUAL-DIRECTION.md): the page and the pad in the design tokens, as the glasses' Space.
 private const val BACKGROUND = com.hayeco.flipspaces.core.Look.PAGE
@@ -385,7 +385,7 @@ internal class PresetRow(
         name.textSize = 16 * d
         canvas.drawText(ellipsize(preset.name, name, right - tx), tx, h / 2f - 4 * d, name)
         sub.textSize = 12.5f * d
-        canvas.drawText(ellipsize("${panels.size} windows · ${preset.apps}", sub, right - tx), tx, h / 2f + 16 * d, sub)
+        canvas.drawText(ellipsize(resources.getQuantityString(R.plurals.pad_preset_windows_apps, panels.size, panels.size, preset.apps), sub, right - tx), tx, h / 2f + 16 * d, sub)
         line.color = 0x88FFFFFF.toInt()
         line.strokeWidth = 2f * d
         line.strokeCap = Paint.Cap.ROUND
@@ -583,14 +583,14 @@ internal class IntroCover(context: Context, private val art: com.hayeco.flipspac
         canvas.drawRoundRect(cx - mw / 2f, top, cx + mw / 2f, top + 2 * rowH, d(12f), d(12f), padRim)
         val textX = cx - mw / 2f + d(14f)
         val base = (rowH - label.descent() - label.ascent()) / 2f
-        canvas.drawText("Follow mode", textX, top + base, label)
+        canvas.drawText(context.getString(R.string.pad_glasses_menu_follow_mode), textX, top + base, label)
         // The pick: an accent tick at the row's end.
         arrow.strokeWidth = d(2.5f)
         val tx = cx + mw / 2f - d(26f)
         val ty = top + rowH / 2f
         canvas.drawLine(tx, ty, tx + d(5f), ty + d(5f), arrow)
         canvas.drawLine(tx + d(5f), ty + d(5f), tx + d(14f), ty - d(6f), arrow)
-        canvas.drawText("Stabilizer", textX, top + rowH + base, label)
+        canvas.drawText(context.getString(R.string.pad_glasses_menu_stabilizer), textX, top + rowH + base, label)
         // An off switch: a dim track with its knob at the left.
         val sw = d(30f)
         val sh = d(16f)
@@ -1168,10 +1168,10 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         val p = context.dp(13f)
         setPadding(p, p, p, p)
         setOnClickListener { openDrawer() }
-        contentDescription = "Menu"
+        contentDescription = context.getString(R.string.pad_menu)
     }
     private val selectorIcon = context.icon(R.drawable.ic_touchpad_portrait, 20f)
-    private val selectorLabel = context.padText("Vertical Trackpad", 16f, WHITE)
+    private val selectorLabel = context.padText(context.getString(R.string.pad_vertical_trackpad), 16f, WHITE)
     private val selectorTriangle = context.icon(R.drawable.ic_down_triangle, 20f)
     private val selector = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
@@ -1189,14 +1189,14 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         addView(hintIcon)
-        addView(context.padText("Hand tracking", 12f, TEXT_80), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = context.dp(5f) })
+        addView(context.padText(context.getString(R.string.pad_hand_tracking), 12f, TEXT_80), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { marginStart = context.dp(5f) })
         visibility = View.GONE
     }
 
     // 0.5.36 (Mike: on the cover screen, Spatial Mouse at the top of the trackpad like when the Flip is open, not in the
     // Menu): a chip over the top of the cover pad; a tap switches between the cover trackpad and Spatial Mouse.
     private val coverMouseIcon = ImageView(context).apply { setImageResource(R.drawable.ic_air_mouse) }
-    private val coverMouseLabel = context.padText("Spatial Mouse", 13f, WHITE)
+    private val coverMouseLabel = context.padText(context.getString(R.string.pad_spatial_mouse), 13f, WHITE)
     private val coverMouseChip = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER
@@ -1217,7 +1217,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     /** 0.5.36: the cover chip's look for the mode in use. */
     private fun refreshCoverMouse() {
         val on = host.coverSpatialMouseOn()
-        coverMouseLabel.text = if (on) "Spatial Mouse: ON" else "Spatial Mouse: OFF"
+        coverMouseLabel.text = context.getString(if (on) R.string.pad_spatial_mouse_on else R.string.pad_spatial_mouse_off)
         (coverMouseChip.background as? android.graphics.drawable.GradientDrawable)?.setColor(if (on) com.hayeco.flipspaces.core.Look.ACCENT_DEEP else 0x33FFFFFF)
         coverMouseChip.visibility = if (cover && !textOpen && host.coverSpatialMouseAvailable()) View.VISIBLE else View.GONE
     }
@@ -1230,12 +1230,12 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     private var onUpdate: (() -> Unit)? = null
     private var onUpdateLater: (() -> Unit)? = null
     private val updateText = context.padText("", 14f, WHITE, bold = true).apply { setSingleLine(true); ellipsize = android.text.TextUtils.TruncateAt.END }
-    private val updateLater = context.padText("Later", 14f, WHITE).apply {
+    private val updateLater = context.padText(context.getString(R.string.pad_later), 14f, WHITE).apply {
         gravity = Gravity.CENTER
         setPadding(context.dp(12f), 0, context.dp(12f), 0)
         setOnClickListener { onUpdateLater?.invoke() }
     }
-    private val updateNow = context.padText("Update", 14f, DARK_TEXT, bold = true).apply {
+    private val updateNow = context.padText(context.getString(R.string.pad_update), 14f, DARK_TEXT, bold = true).apply {
         gravity = Gravity.CENTER
         setBackgroundResource(R.drawable.bg_pad_button_light)
         setPadding(context.dp(14f), 0, context.dp(14f), 0)
@@ -1282,7 +1282,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     // 0.5.32 (Mike: a way to recenter the Spatial Mouse's dot): a tip that stays on the page, above the Home it names,
     // rather than one shown once in the intro and forgotten.
-    private val laserTip = context.padText(LASER_TIP, 12f, TEXT_80).apply { visibility = View.GONE }
+    private val laserTip = context.padText(context.laserTipText(), 12f, TEXT_80).apply { visibility = View.GONE }
 
     // The portrait Back and Home bar.
     private val barBackIcon = ImageView(context).apply { setImageResource(R.drawable.ic_back) }
@@ -1294,13 +1294,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     private val barRecentreIcon = ImageView(context).apply { setImageResource(R.drawable.ic_cover_recentre) }
     private val barRecentre = FrameLayout(context).apply {
         addView(barRecentreIcon, FrameLayout.LayoutParams(context.dp(28f), context.dp(28f), Gravity.CENTER))
-        contentDescription = "Recentre"
+        contentDescription = context.getString(R.string.pad_recentre)
     }
     /** Steady mode in the portrait bar, beside Recentre, as in the launcher. Landscape has a key, the cover its own. */
     private val barSteadyIcon = ImageView(context).apply { setImageResource(R.drawable.ic_cover_steady) }
     private val barSteady = FrameLayout(context).apply {
         addView(barSteadyIcon, FrameLayout.LayoutParams(context.dp(28f), context.dp(28f), Gravity.CENTER))
-        contentDescription = "Steady mode"
+        contentDescription = context.getString(R.string.pad_steady_mode)
     }
     private val barSteadyDivider = View(context).apply { setBackgroundColor(DIVIDER_1A) }
     private val bar = LinearLayout(context).apply {
@@ -1389,7 +1389,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     }
     private val lockGradient = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(0x00FFFFFF, 0x33FFFFFF))
     private val lockIcon = ImageView(context).apply { setImageResource(R.drawable.ic_unlock_icon) }
-    private val lockText = context.padText("Hold to unlock", 13f, TEXT_80)
+    private val lockText = context.padText(context.getString(R.string.pad_hold_to_unlock), 13f, TEXT_80)
     private val lockGlow = View(context).apply { background = lockGradient }
     @SuppressLint("ClickableViewAccessibility")
     private val lockTarget = View(context).apply {
@@ -1443,7 +1443,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         setTextColor(WHITE)
         setHintTextColor(TEXT_80)
         // 0.5.82: held in the field and sent on Enter (TrackpadActivity.flushText), so the keyboard stays open while typing.
-        hint = "Type, then Enter sends it to the window"
+        hint = context.getString(R.string.pad_type_hint)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         setSingleLine(true)
         background = GradientDrawable().apply {
@@ -1472,7 +1472,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             }
         })
     }
-    private val textDone = context.padText("Done", 14f, DARK_TEXT).apply {
+    private val textDone = context.padText(context.getString(R.string.pad_done), 14f, DARK_TEXT).apply {
         gravity = Gravity.CENTER
         setBackgroundResource(R.drawable.bg_pad_button_light)
         setOnClickListener { showText(false) }
@@ -1580,7 +1580,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         bar.visibility = if (landscape) View.GONE else View.VISIBLE
         laserTip.visibility = if (!cover && s.mode == PadMode.SPATIAL_MOUSE) View.VISIBLE else View.GONE
         // 1.1.10 (issue 35): the Spatial Mouse page's hint names the one finger scroll while it is on.
-        laserTip.text = if (s.oneFingerScroll) "${com.hayeco.flipspaces.core.pointer.IntroPages.ONE_FINGER_SCROLL_LINE}. $LASER_TIP" else LASER_TIP
+        laserTip.text = if (s.oneFingerScroll) "${com.hayeco.flipspaces.core.pointer.IntroPages.ONE_FINGER_SCROLL_LINE}. ${context.laserTipText()}" else context.laserTipText()
         // 0.5.17 cover screen: its own buttons take the place of the selector, the drawer button and the corner buttons.
         sideBack.visibility = if (landscape && !cover) View.VISIBLE else View.GONE
         sideHome.visibility = if (landscape && !cover) View.VISIBLE else View.GONE
@@ -1967,7 +1967,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         gestureButton = null
         if (host.gestureState() > 0) {
             val icon = context.icon(R.drawable.ic_gesture_off, 30f)
-            val label = context.padText("Hand tracking: Off", 14f, 0xE6FFFFFF.toInt())
+            val label = context.padText(context.getString(R.string.pad_hand_tracking_off), 14f, 0xE6FFFFFF.toInt())
             val loading = context.padText("• • •", 14f, 0xFF888888.toInt())
             val b = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
@@ -1999,7 +1999,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             2 -> {
                 b.setBackgroundResource(R.drawable.bg_gesture_on)
                 gestureIcon?.setImageResource(R.drawable.ic_gesture_on)
-                gestureLabel?.text = "Hand tracking: On"
+                gestureLabel?.text = context.getString(R.string.pad_hand_tracking_on)
                 gestureLabel?.setTextColor(DARK_TEXT)
                 gestureIcon?.visibility = View.VISIBLE
                 gestureLabel?.visibility = View.VISIBLE
@@ -2014,7 +2014,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             else -> {
                 b.setBackgroundResource(R.drawable.bg_gesture_off)
                 gestureIcon?.setImageResource(R.drawable.ic_gesture_off)
-                gestureLabel?.text = "Hand tracking: Off"
+                gestureLabel?.text = context.getString(R.string.pad_hand_tracking_off)
                 gestureLabel?.setTextColor(0xE6FFFFFF.toInt())
                 gestureIcon?.visibility = View.VISIBLE
                 gestureLabel?.visibility = View.VISIBLE
@@ -2122,7 +2122,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         // 1.1.15: a newer Pocket XR, in a card of its own until Later.
         updateVersion?.takeIf { com.hayeco.flipspaces.core.Support.MenuTop.UPDATE in top }?.let { v ->
             val update = card()
-            update.addView(row(R.drawable.ic_settings_sliders, com.hayeco.flipspaces.core.UpdateCheck.bannerLine(v), subtitle = "Tap to download it") {
+            update.addView(row(R.drawable.ic_settings_sliders, com.hayeco.flipspaces.core.UpdateCheck.bannerLine(v), subtitle = c.getString(R.string.pad_tap_to_download)) {
                 closeDrawer()
                 onUpdate?.invoke()
             }.apply { tag = MENU_UPDATE })
@@ -2213,7 +2213,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                     rotation = if (open) -90f else 90f
                     alpha = 0.7f
                 }, LinearLayout.LayoutParams(c.dp(8f), c.dp(14f)))
-                contentDescription = "${section.title}, ${if (open) "open" else "closed"}"
+                contentDescription = c.getString(if (open) R.string.pad_section_open else R.string.pad_section_closed, section.title.orEmpty())
                 for (i in 0 until childCount) getChildAt(i).importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                 accessibilityDelegate = object : View.AccessibilityDelegate() {
                     override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
@@ -2259,11 +2259,11 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     /** 1.2.6: the small line over the items that start their own card, or null. */
     private fun subheading(item: TrackpadMenu.Item, state: TrackpadMenu.State): String? = when (item) {
-        TrackpadMenu.Item.ARRANGE -> if (state.windowCount == 1) "Arrange 1 window" else "Arrange ${state.windowCount} windows"
-        TrackpadMenu.Item.PRESETS -> "Window presets"
-        TrackpadMenu.Item.GAME_CONTROLLER -> "Games"
-        TrackpadMenu.Item.GLASSES_CHECK -> "Glasses"
-        TrackpadMenu.Item.DEVELOPER_CARD -> "Developer"
+        TrackpadMenu.Item.ARRANGE -> resources.getQuantityString(R.plurals.pad_arrange_windows, state.windowCount, state.windowCount)
+        TrackpadMenu.Item.PRESETS -> context.getString(R.string.pad_window_presets)
+        TrackpadMenu.Item.GAME_CONTROLLER -> context.getString(R.string.pad_games)
+        TrackpadMenu.Item.GLASSES_CHECK -> context.getString(R.string.pad_glasses)
+        TrackpadMenu.Item.DEVELOPER_CARD -> context.getString(R.string.pad_developer)
         else -> null
     }
 
@@ -2276,7 +2276,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             MenuItem.SHAPE -> host.focusedShape()?.let { (label, aspect) ->
                 val presets = com.hayeco.flipspaces.core.spatial.WindowShape.Preset.entries
                 val now = com.hayeco.flipspaces.core.spatial.WindowShape.current(aspect)
-                listOf(segmented(R.drawable.ic_cover_resize, "Shape of $label", presets.map { it.label to it.small }, presets.indexOf(now)) { i ->
+                listOf(segmented(R.drawable.ic_cover_resize, c.getString(R.string.pad_shape_of, label), presets.map { it.label to it.small }, presets.indexOf(now)) { i ->
                     host.shapeChosen(presets[i].ratio)
                     postDelayed({ buildDrawer() }, SHAPE_REFRESH_MS)
                 })
@@ -2284,7 +2284,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             MenuItem.TEXT_SIZE -> host.focusedTextSize()?.let { (label, percent) -> listOf(textSizeRow(label, percent, host.textSizeBusy()).apply { tag = MENU_TEXT_SIZE }) }.orEmpty()
             // 1.2.3 (issue 58): Side by side 3D for the focused window's app.
             MenuItem.SIDE_BY_SIDE -> host.focusedSideBySide()?.let { (label, on) ->
-                listOf(row(R.drawable.ic_cover_view, "Side by side 3D in $label: ${if (on) "ON" else "OFF"}", tick = on, subtitle = "For a video split into two halves. Each eye sees its half.") {
+                listOf(row(R.drawable.ic_cover_view, onOff(c.getString(R.string.pad_side_by_side_in, label), on), tick = on, subtitle = c.getString(R.string.pad_side_by_side_subtitle)) {
                     closeDrawer()
                     host.sideBySideChosen(!on)
                 }.apply { tag = MENU_SIDE_BY_SIDE })
@@ -2292,7 +2292,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             // 1.2.3 (issue 58): 2D while moving, offered while the window shows Side by side 3D; off by default.
             MenuItem.SIDE_BY_SIDE_FLAT -> {
                 val flat = host.sideBySideFlatOn()
-                listOf(row(R.drawable.ic_cover_view, "${com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_ROW}: ${if (flat) "ON" else "OFF"}", tick = flat, subtitle = com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_SUBTITLE) {
+                listOf(row(R.drawable.ic_cover_view, onOff(com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_ROW, flat), tick = flat, subtitle = com.hayeco.flipspaces.core.spatial.SideBySideMotion.MENU_SUBTITLE) {
                     host.sideBySideFlatChosen(!flat)
                     buildDrawer()
                 })
@@ -2302,7 +2302,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             MenuItem.SPACE_TRACKING -> {
                 val modes = FollowMode.entries.filter { it.available }
                 val now = host.currentFollow()
-                listOf(segmented(R.drawable.ic_follow_mode, "Tracking", modes.map { it.label to it.dof }, modes.indexOf(now)) { i ->
+                listOf(segmented(R.drawable.ic_follow_mode, c.getString(R.string.pad_tracking), modes.map { it.label to it.dof }, modes.indexOf(now)) { i ->
                     host.followChosen(modes[i])
                     buildDrawer()
                 })
@@ -2325,7 +2325,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 }
             }
             // 0.5.88 (Mike: "a simple way to do this with trackpad and spatial mouse cursor dot"): every window held together.
-            MenuItem.ADJUST_ALL -> listOf(row(R.drawable.ic_arrange, "Adjust all windows together") {
+            MenuItem.ADJUST_ALL -> listOf(row(R.drawable.ic_arrange, c.getString(R.string.pad_adjust_all_windows)) {
                 closeDrawer()
                 host.arrange(ArrangeKind.ADJUST_ALL)
             })
@@ -2346,64 +2346,64 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 }
                 if (presets.isEmpty()) {
                     out += c.padText(
-                        if (state.windowCount > 0) "Save the windows you have open, then open them all again with one tap, each where it was."
-                        else "Open some windows, then save them here to open them all again with one tap, each where it was.",
+                        if (state.windowCount > 0) c.getString(R.string.pad_presets_empty_with_windows)
+                        else c.getString(R.string.pad_presets_empty_no_windows),
                         12f, TEXT_99,
                     ).apply { setPadding(c.dp(20f), c.dp(14f), c.dp(20f), c.dp(14f)) }
                 }
-                if (state.windowCount > 0) out += row(R.drawable.ic_arrange, "Save current windows as a preset") {
+                if (state.windowCount > 0) out += row(R.drawable.ic_arrange, c.getString(R.string.pad_save_preset)) {
                     host.savePreset()
                     buildDrawer()
                 }
                 out
             }
             MenuItem.CURSOR_SPEED -> {
-                val speed = speedRow("Cursor Speed", settings.cursorSpeed) { host.speedChanged(it) }
+                val speed = speedRow(c.getString(R.string.pad_cursor_speed), settings.cursorSpeed) { host.speedChanged(it) }
                 speedSlider = (speed as ViewGroup).getChildAt(1) as SpeedSlider
                 listOf(speed)
             }
             // 0.5.83 (Mike: "two finger scroll and trackpad scroll speed should be adjustable in settings").
-            MenuItem.SCROLL_SPEED -> listOf(speedRow("Two-finger scroll speed", settings.scrollSpeed) { host.scrollSpeedChanged(it) })
-            MenuItem.STRIP_SPEED -> listOf(speedRow("Scroll strip speed", settings.stripSpeed) { host.stripSpeedChanged(it) })
+            MenuItem.SCROLL_SPEED -> listOf(speedRow(c.getString(R.string.pad_scroll_speed), settings.scrollSpeed) { host.scrollSpeedChanged(it) })
+            MenuItem.STRIP_SPEED -> listOf(speedRow(c.getString(R.string.pad_strip_speed), settings.stripSpeed) { host.stripSpeedChanged(it) })
             // 1.1.10 (issue 35): one finger scrolls on Spatial Mouse, on by default.
             MenuItem.ONE_FINGER_SCROLL -> {
                 val oneFinger = settings.oneFingerScroll
-                listOf(row(R.drawable.ic_scroll_right, "One-finger scroll on Spatial Mouse: ${if (oneFinger) "ON" else "OFF"}", tick = oneFinger) {
+                listOf(row(R.drawable.ic_scroll_right, onOff(c.getString(R.string.pad_one_finger_scroll), oneFinger), tick = oneFinger) {
                     host.oneFingerScrollChosen(!oneFinger)
                     buildDrawer()
                 })
             }
             // 0.5.21: the thin scroll strip's side on the main screen.
             MenuItem.STRIP_SIDE -> listOf(choice(
-                "Scroll strip",
-                listOf(Triple(R.drawable.ic_scroll_left, "Left side", settings.stripSide == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, "Right side", settings.stripSide == StripSide.RIGHT)),
+                c.getString(R.string.pad_scroll_strip),
+                listOf(Triple(R.drawable.ic_scroll_left, c.getString(R.string.pad_left_side), settings.stripSide == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, c.getString(R.string.pad_right_side), settings.stripSide == StripSide.RIGHT)),
                 24f, 41f,
             ) { i -> host.stripChosen(if (i == 0) StripSide.LEFT else StripSide.RIGHT) })
             // 0.5.17 cover screen: which side the window buttons are on, for the thumb in use.
             MenuItem.COVER_BUTTONS_SIDE -> listOf(choice(
-                "Window buttons on the cover screen",
-                listOf(Triple(R.drawable.ic_scroll_left, "Left side", settings.coverControls == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, "Right side", settings.coverControls == StripSide.RIGHT)),
+                c.getString(R.string.pad_cover_buttons_side),
+                listOf(Triple(R.drawable.ic_scroll_left, c.getString(R.string.pad_left_side), settings.coverControls == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, c.getString(R.string.pad_right_side), settings.coverControls == StripSide.RIGHT)),
                 24f, 41f,
             ) { i -> host.coverControlsChosen(if (i == 0) StripSide.LEFT else StripSide.RIGHT) })
             // 0.5.41: on the cover the strip is opposite the window buttons, so choosing its side moves the buttons.
             MenuItem.COVER_STRIP_SIDE -> {
                 val stripNow = com.hayeco.flipspaces.core.pointer.ScrollStrip.coverSide(settings.coverControls)
                 listOf(choice(
-                    "Scroll strip on the cover screen",
-                    listOf(Triple(R.drawable.ic_scroll_left, "Left side", stripNow == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, "Right side", stripNow == StripSide.RIGHT)),
+                    c.getString(R.string.pad_cover_strip_side),
+                    listOf(Triple(R.drawable.ic_scroll_left, c.getString(R.string.pad_left_side), stripNow == StripSide.LEFT), Triple(R.drawable.ic_scroll_right, c.getString(R.string.pad_right_side), stripNow == StripSide.RIGHT)),
                     24f, 41f,
                 ) { i -> host.coverControlsChosen(if (i == 0) StripSide.RIGHT else StripSide.LEFT) })
             }
             // 1.2.3 (issue 56): only on the Horizontal Trackpad, the one page it turns.
             MenuItem.SIDEWAYS_DIRECTION -> listOf(choice(
-                "Sideways trackpad direction",
-                listOf(Triple(R.drawable.svg_orientation_default, "Default", settings.direction == PadDirection.DEFAULT), Triple(R.drawable.svg_orientation_flip, "Inverted", settings.direction == PadDirection.INVERTED)),
+                c.getString(R.string.pad_sideways_direction),
+                listOf(Triple(R.drawable.svg_orientation_default, c.getString(R.string.pad_direction_default), settings.direction == PadDirection.DEFAULT), Triple(R.drawable.svg_orientation_flip, c.getString(R.string.pad_direction_inverted), settings.direction == PadDirection.INVERTED)),
                 60f, 60f,
             ) { i -> host.directionChosen(if (i == 0) PadDirection.DEFAULT else PadDirection.INVERTED) })
             // 0.5.37 (Mike: the Cursor follows head toggle in the Menu, not on the trackpad).
             MenuItem.CURSOR_FOLLOWS_HEAD -> {
                 val follows = host.cursorFollowsHeadOn()
-                listOf(row(R.drawable.ic_cursor_speed, "Cursor follows head: ${if (follows) "ON" else "OFF"}", tick = follows) {
+                listOf(row(R.drawable.ic_cursor_speed, onOff(c.getString(R.string.pad_cursor_follows_head), follows), tick = follows) {
                     host.cursorFollowsHeadChosen(!follows)
                     buildDrawer()
                 })
@@ -2411,7 +2411,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             // 0.5.51 (Mike: the cover screen never goes dark): off lets the phone's screen sleep while the glasses are used.
             MenuItem.KEEPS_SCREEN_ON -> {
                 val keeps = host.keepsScreenOnOn()
-                listOf(row(R.drawable.ic_usage_intro, "Trackpad keeps screen on: ${if (keeps) "ON" else "OFF"}", tick = keeps) {
+                listOf(row(R.drawable.ic_usage_intro, onOff(c.getString(R.string.pad_keeps_screen_on), keeps), tick = keeps) {
                     host.keepsScreenOnChosen(!keeps)
                     buildDrawer()
                 })
@@ -2424,7 +2424,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                     com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD -> com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD_SUBTITLE
                     com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH_SUBTITLE
                 }
-                listOf(row(R.drawable.ic_cover_keyboard, "${com.hayeco.flipspaces.core.pointer.GameControllerMode.MENU_ROW}: ${mode.label}", tick = mode != com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF, subtitle = "$sub. Tap for ${mode.next().label}.") {
+                listOf(row(R.drawable.ic_cover_keyboard, c.getString(R.string.pad_label_value, com.hayeco.flipspaces.core.pointer.GameControllerMode.MENU_ROW, mode.label), tick = mode != com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF, subtitle = c.getString(R.string.pad_controller_subtitle, sub, mode.next().label)) {
                     closeDrawer()
                     host.controllerModeChosen(mode.next())
                 })
@@ -2432,26 +2432,26 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             // 1.2.3 (issue 59): in Touch, its spots.
             MenuItem.TOUCH_SPOTS -> {
                 val setting = host.touchSpotSetting()
-                listOf(row(R.drawable.ic_cover_keyboard, "Set touch spots: ${if (setting) "ON" else "OFF"}", tick = setting, subtitle = "Aim the dot at the game's own button, then hold the matching control for a second") {
+                listOf(row(R.drawable.ic_cover_keyboard, onOff(c.getString(R.string.pad_set_touch_spots), setting), tick = setting, subtitle = c.getString(R.string.pad_set_touch_spots_subtitle)) {
                     closeDrawer()
                     host.touchSpotSettingChosen(!setting)
                 })
             }
-            MenuItem.CLEAR_TOUCH_SPOTS -> listOf(row(R.drawable.ic_cover_keyboard, "Clear touch spots for this game") {
+            MenuItem.CLEAR_TOUCH_SPOTS -> listOf(row(R.drawable.ic_cover_keyboard, c.getString(R.string.pad_clear_touch_spots)) {
                 closeDrawer()
                 host.clearTouchSpots()
             })
             // 0.5.37 (Mike: a setting for window snapping; the "Open a new instance" switch in the Menu).
             MenuItem.SNAP_WINDOWS -> {
                 val snapOn = host.snapWindowsOn()
-                listOf(row(R.drawable.ic_arrange, "Snap windows: ${if (snapOn) "ON" else "OFF"}", tick = snapOn) {
+                listOf(row(R.drawable.ic_arrange, onOff(c.getString(R.string.pad_snap_windows), snapOn), tick = snapOn) {
                     host.snapWindowsChosen(!snapOn)
                     buildDrawer()
                 })
             }
             MenuItem.NEW_INSTANCE -> {
                 val newOn = host.newInstanceOn()
-                listOf(row(R.drawable.ic_arrange, "${com.hayeco.flipspaces.core.spatial.NewInstanceSwitch.LABEL}: ${if (newOn) "ON" else "OFF"}", tick = newOn, subtitle = com.hayeco.flipspaces.core.spatial.NewInstanceSwitch.SUBTITLE) {
+                listOf(row(R.drawable.ic_arrange, onOff(com.hayeco.flipspaces.core.spatial.NewInstanceSwitch.LABEL, newOn), tick = newOn, subtitle = com.hayeco.flipspaces.core.spatial.NewInstanceSwitch.SUBTITLE) {
                     host.newInstanceChosen(!newOn)
                     buildDrawer()
                 })
@@ -2460,52 +2460,48 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             // strongest ([com.hayeco.flipspaces.core.spatial.PanelCurve.MAX]).
             MenuItem.NEW_WINDOWS_CURVE -> listOf(curveRow())
             // 1.1.9 (issue 31), 1.1.16 (issue 12): the glasses' own settings the Space needs, with the head turn check.
-            MenuItem.GLASSES_CHECK -> listOf(row(R.drawable.ic_usage_intro, GLASSES_CHECK_ROW, subtitle = "The settings your glasses need, and a 10 second check") {
+            MenuItem.GLASSES_CHECK -> listOf(row(R.drawable.ic_usage_intro, c.getString(R.string.pad_glasses_check_row), subtitle = c.getString(R.string.pad_glasses_check_subtitle)) {
                 closeDrawer()
                 host.openGlassesCheck()
             }.apply { tag = MENU_GLASSES_CHECK })
             // 1.2.3 (issue 54): an Air's display mode, behind a switch that is off by default (untested on Air glasses).
             MenuItem.AIR_DISPLAY -> {
                 val on = host.airDisplayOn()
-                listOf(row(R.drawable.ic_cover_view, "${com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_ROW}: ${if (on) "ON" else "OFF"}", tick = on, subtitle = com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_SUBTITLE) {
+                listOf(row(R.drawable.ic_cover_view, onOff(com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_ROW, on), tick = on, subtitle = com.hayeco.flipspaces.core.spatial.AirDisplayMode.SWITCH_SUBTITLE) {
                     host.airDisplayChosen(!on)
                     buildDrawer()
                 })
             }
-            MenuItem.AIR_DISPLAY_MODE -> listOf(row(R.drawable.ic_cover_view, "Glasses display: ${host.airDisplayLine()}", subtitle = host.airDisplayAction()) {
+            MenuItem.AIR_DISPLAY_MODE -> listOf(row(R.drawable.ic_cover_view, c.getString(R.string.pad_glasses_display, host.airDisplayLine()), subtitle = host.airDisplayAction()) {
                 closeDrawer()
                 host.airDisplaySwitch()
             })
-            MenuItem.HOW_TO -> listOf(row(R.drawable.ic_usage_intro, "How to use the trackpad") {
+            MenuItem.HOW_TO -> listOf(row(R.drawable.ic_usage_intro, c.getString(R.string.pad_how_to_use)) {
                 closeDrawer()
                 showIntro(host.introPages())
             })
             // 0.5.101 (Mike: each settings screen needs "a way to reset to Pocket XR default settings"): asks first.
-            MenuItem.BACKUP_SETTINGS -> listOf(row(R.drawable.ic_usage_intro, "Save settings to a file", subtitle = "Your layouts, glasses and trackpad settings, to move to the Google Play version or a new phone") {
+            MenuItem.BACKUP_SETTINGS -> listOf(row(R.drawable.ic_usage_intro, c.getString(R.string.pad_backup_settings), subtitle = c.getString(R.string.pad_backup_settings_subtitle)) {
                 closeDrawer()
                 host.backupSettings()
             })
-            MenuItem.RESTORE_SETTINGS -> listOf(row(R.drawable.ic_usage_intro, "Restore settings from a file", subtitle = "From a file you saved. Pocket XR restarts.") {
+            MenuItem.RESTORE_SETTINGS -> listOf(row(R.drawable.ic_usage_intro, c.getString(R.string.pad_restore_settings), subtitle = c.getString(R.string.pad_restore_settings_subtitle)) {
                 closeDrawer()
                 host.restoreSettings()
             })
-            MenuItem.RESET -> listOf(row(R.drawable.ic_follow_mode, "Reset these settings to Pocket XR defaults") {
+            MenuItem.RESET -> listOf(row(R.drawable.ic_follow_mode, c.getString(R.string.pad_reset_settings)) {
                 android.app.AlertDialog.Builder(c, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle("Reset trackpad settings?")
-                    .setMessage(
-                        "Cursor, scroll and strip speeds, the strip's side, the sideways direction, cursor follows head, " +
-                            "keep screen on, the tracking mode, snap windows, new instances and the new windows' curve go back to " +
-                            "Pocket XR's defaults. The trackpad type, your windows and presets stay.",
-                    )
-                    .setPositiveButton("Reset") { _, _ ->
+                    .setTitle(c.getString(R.string.pad_reset_title))
+                    .setMessage(c.getString(R.string.pad_reset_message))
+                    .setPositiveButton(c.getString(R.string.pad_reset)) { _, _ ->
                         host.resetSettings()
                         buildDrawer()
                     }
-                    .setNegativeButton("Cancel", null)
+                    .setNegativeButton(c.getString(R.string.pad_cancel), null)
                     .show()
             })
             // 0.5.30, 1.1.6: the Developer card, shown by its own switch, remembered.
-            MenuItem.DEVELOPER -> listOf(row(R.drawable.ic_follow_mode, "Developer settings: ${if (developerShown) "ON" else "OFF"}", tick = developerShown) {
+            MenuItem.DEVELOPER -> listOf(row(R.drawable.ic_follow_mode, onOff(c.getString(R.string.pad_developer_settings), developerShown), tick = developerShown) {
                 developerShown = !developerShown
                 buildDrawer()
             })
@@ -2513,36 +2509,39 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         }
     }
 
+    /** A switch row's label with its state, "Snap windows: ON". */
+    private fun onOff(label: String, on: Boolean): String = context.getString(if (on) R.string.pad_label_on else R.string.pad_label_off, label)
+
     /** 0.5.30 onward: the Developer card's switches, each an A/B or a test. */
     private fun developerRows(): List<View> {
         val c = context
         val out = ArrayList<View>()
         fun switch(label: String, on: Boolean, chosen: (Boolean) -> Unit) {
-            out += row(R.drawable.ic_follow_mode, "$label: ${if (on) "ON" else "OFF"}", tick = on) {
+            out += row(R.drawable.ic_follow_mode, onOff(label, on), tick = on) {
                 chosen(!on)
                 buildDrawer()
             }
         }
-        switch("Debug info panel", host.debugInfoOn()) { host.debugInfoChosen(it) }
+        switch(c.getString(R.string.pad_dev_debug_info), host.debugInfoOn()) { host.debugInfoChosen(it) }
         // 0.5.32: the still head's lock, on by default; off for an A/B against 0.5.31's tremor.
-        switch("Still lock", host.stillLockOn()) { host.stillLockChosen(it) }
+        switch(c.getString(R.string.pad_dev_still_lock), host.stillLockOn()) { host.stillLockChosen(it) }
         // 0.5.64: the drawn orientation's One Euro filter, on by default; off for an A/B.
-        switch("Draw smoothing", host.drawSmoothingOn()) { host.drawSmoothingChosen(it) }
+        switch(c.getString(R.string.pad_dev_draw_smoothing), host.drawSmoothingOn()) { host.drawSmoothingChosen(it) }
         // 0.5.65: the glasses switched to the Space's view at plug-in, on by default.
-        switch("Switch the glasses' 3D / 2D", host.autoGlassesViewOn()) { host.autoGlassesViewChosen(it) }
+        switch(c.getString(R.string.pad_dev_auto_glasses_view), host.autoGlassesViewOn()) { host.autoGlassesViewChosen(it) }
         // 0.5.65: the glasses' factory calibration in the head tracking, on by default; off for an A/B.
-        switch("Factory calibration", host.factoryCalibrationOn()) { host.factoryCalibrationChosen(it) }
+        switch(c.getString(R.string.pad_dev_factory_calibration), host.factoryCalibrationOn()) { host.factoryCalibrationChosen(it) }
         // 0.5.43: the hand models on the Exynos 2500's NPU, MediaPipe behind them.
-        switch("Hands on the NPU", host.npuHandsOn()) { host.npuHandsChosen(it) }
+        switch(c.getString(R.string.pad_dev_npu_hands), host.npuHandsOn()) { host.npuHandsChosen(it) }
         // 0.5.52: window displays on a virtual device, in a display group of their own (applies to windows opened after).
-        switch("Windows stay awake when the phone sleeps (test)", host.deviceWindowsOn()) { host.deviceWindowsChosen(it) }
+        switch(c.getString(R.string.pad_dev_device_windows), host.deviceWindowsOn()) { host.deviceWindowsChosen(it) }
         // 0.5.55: off draws the trackpad in its window again, scaled by SurfaceFlinger on the cover.
-        switch("Trackpad at the screen's own pixels", host.nativeBufferOn()) { host.nativeBufferChosen(it) }
+        switch(c.getString(R.string.pad_dev_native_buffer), host.nativeBufferOn()) { host.nativeBufferChosen(it) }
         // 0.5.54: the glasses set the Space's frame clock (sfdo force-pacesetter). 0.5.58: OFF gives the phone its clock
         // back and checks it, and the last outcome shows under it.
         val clock = host.frameClockOn()
-        val clockNote = host.frameClockUnavailable()?.let { " ($it, so it can't run)" } ?: ""
-        out += row(R.drawable.ic_follow_mode, "Glasses set the frame clock (test): ${if (clock) "ON" else "OFF"}$clockNote", tick = clock) {
+        val clockLabel = onOff(c.getString(R.string.pad_dev_frame_clock), clock)
+        out += row(R.drawable.ic_follow_mode, host.frameClockUnavailable()?.let { c.getString(R.string.pad_dev_frame_clock_cannot_run, clockLabel, it) } ?: clockLabel, tick = clock) {
             host.frameClockChosen(!clock)
             buildDrawer()
         }
@@ -2558,7 +2557,8 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             setPadding(0, c.dp(20f), 0, c.dp(14f))
         }
         val curvePercent = com.hayeco.flipspaces.core.spatial.PanelCurve.percent(host.currentCurveDefault())
-        val curveLabel = c.padText("New windows curve: ${if (curvePercent == 0) "flat" else "$curvePercent %"}", 14f, TEXT_B3)
+        fun curveText(pct: Int) = if (pct == 0) c.getString(R.string.pad_new_windows_curve_flat) else c.getString(R.string.pad_new_windows_curve_percent, pct)
+        val curveLabel = c.padText(curveText(curvePercent), 14f, TEXT_B3)
         curveBox.addView(LinearLayout(c).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -2568,13 +2568,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         })
         curveBox.addView(SpeedSlider(c) { pct ->
             host.curveDefaultChosen(pct / 100f * com.hayeco.flipspaces.core.spatial.PanelCurve.MAX)
-            curveLabel.text = "New windows curve: ${if (pct == 0) "flat" else "$pct %"}"
+            curveLabel.text = curveText(pct)
         }.apply { progress = curvePercent }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, c.dp(40f)).apply { topMargin = c.dp(6f) })
         curveBox.addView(LinearLayout(c).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(c.dp(20f), 0, c.dp(20f), 0)
-            addView(c.padText("Flat", 12f, TEXT_B3), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-            addView(c.padText("Strong", 12f, TEXT_B3))
+            addView(c.padText(c.getString(R.string.pad_curve_flat), 12f, TEXT_B3), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            addView(c.padText(c.getString(R.string.pad_curve_strong), 12f, TEXT_B3))
         })
         return curveBox
     }
@@ -2590,7 +2590,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             when (item) {
                 MenuItem.STEADY -> {
                     val on = host.steadyOn()
-                    tile(item, R.drawable.ic_cover_steady, "Steady mode", on, "Steady mode") {
+                    tile(item, R.drawable.ic_cover_steady, c.getString(R.string.pad_steady_mode), on, c.getString(R.string.pad_steady_mode)) {
                         host.coverButton(CoverButton.STEADY, true)
                         host.coverButton(CoverButton.STEADY, false)
                         postDelayed({ refreshDrawer() }, QUICK_REFRESH_MS)
@@ -2616,19 +2616,19 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 // 0.5.99 (Mike: record the glasses as the Aura's puck does): the Space records what the left eye sees.
                 MenuItem.RECORD -> {
                     val recordingNow = host.recordingGlasses()
-                    tile(item, R.drawable.ic_record, if (recordingNow) "Stop recording" else "Record", recordingNow, if (recordingNow) "Stop recording the glasses" else "Record the glasses") {
+                    tile(item, R.drawable.ic_record, c.getString(if (recordingNow) R.string.pad_stop_recording else R.string.pad_record), recordingNow, c.getString(if (recordingNow) R.string.pad_stop_recording_glasses else R.string.pad_record_glasses)) {
                         closeDrawer()
                         host.recordGlasses(!recordingNow)
                     }
                 }
                 // 0.5.17 cover screen: the trackpad runs over the lock screen; this asks for the phone to unlock.
-                MenuItem.UNLOCK -> tile(item, R.drawable.ic_unlock_icon, "Unlock phone", null, "Unlock phone") {
+                MenuItem.UNLOCK -> tile(item, R.drawable.ic_unlock_icon, c.getString(R.string.pad_unlock_phone), null, c.getString(R.string.pad_unlock_phone)) {
                     closeDrawer()
                     host.unlockPhone()
                 }
-                MenuItem.PHONE_HOME -> tile(item, R.drawable.ic_back_home, "Phone home", null, "Go to the phone's home screen") { host.returnHome() }
+                MenuItem.PHONE_HOME -> tile(item, R.drawable.ic_back_home, c.getString(R.string.pad_phone_home), null, c.getString(R.string.pad_phone_home_description)) { host.returnHome() }
                 // 0.5.87, 0.5.103: the app's settings home.
-                MenuItem.SETTINGS -> tile(item, R.drawable.ic_settings_sliders, "Pocket XR Settings", null, "Pocket XR Settings") { host.openSettings() }
+                MenuItem.SETTINGS -> tile(item, R.drawable.ic_settings_sliders, c.getString(R.string.pad_settings), null, c.getString(R.string.pad_settings)) { host.openSettings() }
                 else -> null
             }
         }.filterNotNull()
@@ -2763,15 +2763,15 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     private fun addPictureAdjust(card: LinearLayout, adjust: com.hayeco.flipspaces.core.spatial.PictureAdjust) {
         val c = context
         val step = com.hayeco.flipspaces.core.spatial.PictureAdjust.STEP_PX
-        card.addView(c.padText("Applied in the glasses' 3D mode (3D and \"2D in 3D\"). Move each eye's picture by the pixels the edge check says it loses, or make it smaller until every edge shows.", 12f, TEXT_99).apply { setPadding(c.dp(20f), c.dp(4f), c.dp(20f), c.dp(8f)) })
-        card.addView(row(R.drawable.ic_follow_mode, "Same for both eyes", tick = adjust.same) {
+        card.addView(c.padText(c.getString(R.string.pad_adjust_explain), 12f, TEXT_99).apply { setPadding(c.dp(20f), c.dp(4f), c.dp(20f), c.dp(8f)) })
+        card.addView(row(R.drawable.ic_follow_mode, c.getString(R.string.pad_adjust_same), tick = adjust.same) {
             host.pictureAdjustChanged(adjust.withSame(!adjust.same), "same for both eyes ${if (adjust.same) "off" else "on"}")
             buildDrawer()
         })
         if (!adjust.same) {
             card.addView(c.divider(20f))
-            for ((i, name) in listOf("Left eye", "Right eye").withIndex()) {
-                card.addView(row(R.drawable.ic_follow_mode, "Adjust the ${name.lowercase()}", tick = adjustEye == i) {
+            for ((i, name) in listOf(c.getString(R.string.pad_adjust_left_eye), c.getString(R.string.pad_adjust_right_eye)).withIndex()) {
+                card.addView(row(R.drawable.ic_follow_mode, name, tick = adjustEye == i) {
                     adjustEye = i
                     buildDrawer()
                 })
@@ -2786,11 +2786,11 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             buildDrawer()
         }
         card.addView(c.divider(20f))
-        card.addView(stepper("Across: ${if (e.dxPx < 0) "left" else "right"} ${kotlin.math.abs(e.dxPx)} px", "Left $step", "Right $step", { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SHIFT_X, -1) }, { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SHIFT_X, 1) }))
-        card.addView(stepper("Up / down: ${if (e.dyPx < 0) "up" else "down"} ${kotlin.math.abs(e.dyPx)} px", "Up $step", "Down $step", { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SHIFT_Y, -1) }, { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SHIFT_Y, 1) }))
-        card.addView(stepper("Size: ${e.scalePct} %", "-1 %", "+1 %", { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SCALE, -1) }, { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SCALE, 1) }))
+        card.addView(stepper(c.getString(if (e.dxPx < 0) R.string.pad_adjust_across_left else R.string.pad_adjust_across_right, kotlin.math.abs(e.dxPx)), c.getString(R.string.pad_adjust_step_left, step), c.getString(R.string.pad_adjust_step_right, step), { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SHIFT_X, -1) }, { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SHIFT_X, 1) }))
+        card.addView(stepper(c.getString(if (e.dyPx < 0) R.string.pad_adjust_vertical_up else R.string.pad_adjust_vertical_down, kotlin.math.abs(e.dyPx)), c.getString(R.string.pad_adjust_step_up, step), c.getString(R.string.pad_adjust_step_down, step), { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SHIFT_Y, -1) }, { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SHIFT_Y, 1) }))
+        card.addView(stepper(c.getString(R.string.pad_adjust_size, e.scalePct), "-1 %", "+1 %", { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SCALE, -1) }, { change(com.hayeco.flipspaces.core.spatial.AdjustAxis.SCALE, 1) }))
         card.addView(c.divider(20f))
-        card.addView(row(R.drawable.ic_follow_mode, "Reset both eyes", enabled = !adjust.neutral || adjust.same) {
+        card.addView(row(R.drawable.ic_follow_mode, c.getString(R.string.pad_adjust_reset), enabled = !adjust.neutral || adjust.same) {
             host.pictureAdjustChanged(com.hayeco.flipspaces.core.spatial.PictureAdjust.NONE, "reset")
             buildDrawer()
         })
@@ -2804,7 +2804,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             setBackgroundResource(R.drawable.bg_drawer_tile)
             setPadding(c.dp(10f), c.dp(8f), c.dp(10f), c.dp(8f))
             minWidth = c.dp(64f)
-            contentDescription = "$label: $text"
+            contentDescription = c.getString(R.string.pad_label_value, label, text)
             setOnClickListener { onClick() }
         }
         return LinearLayout(c).apply {
@@ -2835,8 +2835,8 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             addView(LinearLayout(c).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(c.dp(20f), 0, c.dp(20f), 0)
-                addView(c.padText("Slow", 12f, TEXT_B3), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-                addView(c.padText("Fast", 12f, TEXT_B3))
+                addView(c.padText(c.getString(R.string.pad_slow), 12f, TEXT_B3), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+                addView(c.padText(c.getString(R.string.pad_fast), 12f, TEXT_B3))
             })
         }
     }
@@ -3011,8 +3011,8 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         return LinearLayout(c).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(c.dp(20f), c.dp(14f), c.dp(20f), c.dp(14f))
-            addView(c.padText("Text size in $label", 14f, WHITE))
-            addView(c.padText("Smaller fits more on the window. Remembered for this app.", 12f, TEXT_99), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(2f) })
+            addView(c.padText(c.getString(R.string.pad_text_size_in, label), 14f, WHITE))
+            addView(c.padText(c.getString(R.string.pad_text_size_explain), 12f, TEXT_99), LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(2f) })
             val buttons = LinearLayout(c).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -3024,9 +3024,9 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                         isEnabled = enabled
                         if (enabled) pressLight(this, 14f)
                         contentDescription = when {
-                            steps < 0 -> "Smaller text"
-                            steps > 0 -> "Larger text"
-                            else -> "Text size back to 100 %"
+                            steps < 0 -> c.getString(R.string.pad_text_smaller)
+                            steps > 0 -> c.getString(R.string.pad_text_larger)
+                            else -> c.getString(R.string.pad_text_size_reset)
                         }
                         setOnClickListener {
                             // A tap while the last one is still being laid out is dropped, never queued.
@@ -3045,7 +3045,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 addView(key("A+", percent < plus, 1), LinearLayout.LayoutParams(0, c.dp(44f), 1f))
             }
             addView(buttons, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(12f) })
-            if (busy) addView(c.padText(TEXT_SIZE_BUSY_LABEL, 12f, TEXT_99).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(6f) })
+            if (busy) addView(c.padText(c.getString(R.string.pad_text_size_busy), 12f, TEXT_99).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(6f) })
         }
     }
 
@@ -3199,7 +3199,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                         }
                     }, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER))
                     val last = introPage == n - 1
-                    addView(c.padText(if (last) "Done" else "Next", 14f, com.hayeco.flipspaces.core.Look.ACCENT, bold = true).apply {
+                    addView(c.padText(c.getString(if (last) R.string.pad_done else R.string.pad_next), 14f, com.hayeco.flipspaces.core.Look.ACCENT, bold = true).apply {
                         gravity = Gravity.CENTER
                         setPadding(c.dp(12f), 0, c.dp(4f), 0)
                         setOnClickListener { if (last) closeIntro() else turn(1) }
@@ -3227,7 +3227,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             setImageResource(R.drawable.ic_close)
             // 0.5.78: light on the dark card (its art is a dark grey for the old white page).
             setColorFilter(com.hayeco.flipspaces.core.Look.INK_2)
-            contentDescription = "Close"
+            contentDescription = c.getString(R.string.pad_close)
             setOnClickListener { closeIntro() }
         }, FrameLayout.LayoutParams(c.dp(30f), c.dp(30f), Gravity.TOP or Gravity.END).apply {
             topMargin = c.dp(10f)
@@ -3237,7 +3237,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     // ---- the dialog and the toast ----
 
-    fun showDialog(message: String, ok: String = "OK", cancel: String = "Cancel", onOk: () -> Unit) {
+    fun showDialog(message: String, ok: String = context.getString(R.string.pad_ok), cancel: String = context.getString(R.string.pad_cancel), onOk: () -> Unit) {
         val c = context
         dialog.removeAllViews()
         dialog.addView(c.padText(message, 16f, WHITE).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = c.dp(40f) })
@@ -3347,7 +3347,6 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         const val MENU_KO_FI = "menu:ko-fi"
         const val MENU_UPDATE = "menu:update"
         const val MENU_GLASSES_CHECK = "menu:glasses-check"
-        const val GLASSES_CHECK_ROW = "Glasses setup check"
 
         /** 1.2.6: a quick tile's tag is this and its item's name ("menu:tile:pocket_mode"). */
         const val MENU_TILE = "menu:tile:"
@@ -3368,7 +3367,10 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         const val MENU_TEXT_SIZE = "menu:text-size"
         const val SHAPE_REFRESH_MS = 300L
 
-        /** 1.2.7: under the Text size keys while a tap is still being laid out, the keys dimmed to this. */
+        /**
+         * 1.2.7: under the Text size keys while a tap is still being laid out, the keys dimmed to this. The label shown is
+         * R.string.pad_text_size_busy; this is its English, for the tests.
+         */
         const val TEXT_SIZE_BUSY_LABEL = "Resizing"
         const val TEXT_SIZE_BUSY_ALPHA = 0.4f
         const val MENU_SIDE_BY_SIDE = "menu:side-by-side"

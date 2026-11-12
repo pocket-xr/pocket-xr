@@ -15,6 +15,7 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.SystemClock
 import android.util.Log
+import com.hayeco.flipspaces.R
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import com.hayeco.flipspaces.core.hands.AirBox
@@ -206,12 +207,12 @@ object GlassesCameraProvider {
         _status.value = when {
             device == null -> ProviderStatus.Unavailable(
                 // 0.5.91: the One and One Pro have no camera; hand tracking needs glasses that have one, such as the Aura.
-                "These glasses have no camera for hand tracking (the XREAL Aura has one). The trackpad and Spatial Mouse work as usual.",
+                context.getString(R.string.hands_no_camera),
             )
             context.checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ->
-                ProviderStatus.NeedsPermission("Camera permission (Android requires it before granting a USB camera)")
-            !GlassesUsbAccess.hasPermission(context, device) -> ProviderStatus.NeedsPermission("USB access to ${GlassesUsbAccess.label(device)}")
-            !HandModelStore.available(context) -> ProviderStatus.NeedsPermission("Download the MediaPipe hand model (about 7.5 MB, once)")
+                ProviderStatus.NeedsPermission(context.getString(R.string.hands_needs_camera_permission))
+            !GlassesUsbAccess.hasPermission(context, device) -> ProviderStatus.NeedsPermission(context.getString(R.string.hands_needs_usb_access, GlassesUsbAccess.label(device)))
+            !HandModelStore.available(context) -> ProviderStatus.NeedsPermission(context.getString(R.string.hands_needs_model))
             lastFailure != null -> ProviderStatus.Failed(lastFailure!!)
             else -> ProviderStatus.Ready
         }
@@ -219,17 +220,17 @@ object GlassesCameraProvider {
 
     /** Opens the camera only to read its descriptors, then closes it. Blocking. */
     fun readFormats(context: Context): String {
-        val device = GlassesUsbAccess.find(context) ?: return "No USB camera connected.".also { _report.value = it }
+        val device = GlassesUsbAccess.find(context) ?: return context.getString(R.string.hands_no_usb_camera).also { _report.value = it }
         val header = "${GlassesUsbAccess.label(device)}\n${GlassesUsbAccess.interfaces(device)}"
         val text = try {
             UvcCameraSession(GlassesUsbAccess.manager(context), device).use { s ->
                 val camera = s.open()
                 val formats = camera.streaming.flatMap { it.formats }
                 val choice = UvcFormatChooser.choose(formats)
-                "$header\n\n${camera.describe()}\n\nPocket XR would use: ${choice?.label ?: "nothing (no format it can decode)"}"
+                "$header\n\n${camera.describe()}\n\n" + context.getString(R.string.hands_would_use, choice?.label ?: context.getString(R.string.hands_no_format))
             }
         } catch (e: Exception) {
-            "$header\n\nCould not read the camera: ${e.message}"
+            "$header\n\n" + context.getString(R.string.hands_could_not_read_camera, e.message.toString())
         }
         Log.i(TAG, text)
         _report.value = text
@@ -244,7 +245,7 @@ object GlassesCameraProvider {
         lastFailure = null
         stopRequested = false
         events.clear()
-        _status.value = ProviderStatus.Running("Starting the glasses camera")
+        _status.value = ProviderStatus.Running(context.getString(R.string.hands_starting_camera))
         thread = Thread({ supervise(app) }, "FlipSpacesHands").also { it.start() }
     }
 

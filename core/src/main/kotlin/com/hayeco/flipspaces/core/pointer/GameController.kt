@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.pointer
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.hypot
 
 /**
@@ -159,18 +160,20 @@ class GameControllerPresses(private val places: List<PadControlPlace>, var aspec
 }
 
 /** What the Menu's Game controller row cycles through. */
-enum class GameControllerMode(val label: String) {
-    OFF("Off"),
-    GAMEPAD("Gamepad"),
-    TOUCH("Touch"),
+enum class GameControllerMode(private val labelKey: String, private val labelEnglish: String) {
+    OFF("core_game_controller_off", "Off"),
+    GAMEPAD("core_game_controller_gamepad", "Gamepad"),
+    TOUCH("core_game_controller_touch", "Touch"),
     ;
+
+    val label: String get() = UiText.get(labelKey, labelEnglish)
 
     fun next(): GameControllerMode = entries[(ordinal + 1) % entries.size]
 
     companion object {
-        const val MENU_ROW = "Game controller"
-        const val GAMEPAD_SUBTITLE = "A gamepad games see as real (needs Shizuku)"
-        const val TOUCH_SUBTITLE = "Presses the game's own on-screen controls"
-        const val OFF_SUBTITLE = "A stick and buttons on the phone, as a gamepad or on the game's on-screen controls"
+        val MENU_ROW: String get() = UiText.get("core_game_controller", "Game controller")
+        val GAMEPAD_SUBTITLE: String get() = UiText.get("core_game_controller_gamepad_subtitle", "A gamepad games see as real (needs Shizuku)")
+        val TOUCH_SUBTITLE: String get() = UiText.get("core_game_controller_touch_subtitle", "Presses the game's own on-screen controls")
+        val OFF_SUBTITLE: String get() = UiText.get("core_game_controller_off_subtitle", "A stick and buttons on the phone, as a gamepad or on the game's on-screen controls")
     }
 }

@@ -230,11 +230,11 @@ class PointerAccess : AccessibilityService() {
                 main.postDelayed({ if (overlayDisplay == displayId && overlay == null) addOverlay(displayId) }, SETTLE_MS)
             } else {
                 Log.w(TAG, "cursor overlay on display $displayId refused again: ${e.message}")
-                LinkService.problem("Could not draw the cursor on the glasses: ${e.message}")
+                LinkService.problem(getString(R.string.addon_cursor_failed, e.message.toString()))
             }
         } catch (e: RuntimeException) {
             Log.w(TAG, "Overlay on display $displayId failed", e)
-            LinkService.problem("Could not draw the cursor on the glasses: ${e.message}")
+            LinkService.problem(getString(R.string.addon_cursor_failed, e.message.toString()))
         }
     }
 

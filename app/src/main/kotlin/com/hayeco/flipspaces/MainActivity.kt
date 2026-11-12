@@ -164,7 +164,7 @@ class MainActivity : ComponentActivity() {
                     onOpenHeadTracking = { startActivity(Intent(this, HeadTrackingActivity::class.java)) },
                     onGlassesReport = {
                         val file = com.hayeco.flipspaces.spatial.GlassesReportFile.share(this)
-                        message = if (file != null) "Glasses report saved: ${file.name}" else "Glasses report made (not saved)"
+                        message = if (file != null) getString(R.string.home_glasses_report_saved, file.name) else getString(R.string.home_glasses_report_not_saved)
                     },
                     onSendLogs = { SendLogs.send(this, this) },
                     onGlassesCheck = { startActivity(Intent(this, TrackpadActivity::class.java).putExtra(TrackpadActivity.EXTRA_GLASSES_CHECK, true)) },
@@ -254,11 +254,11 @@ class MainActivity : ComponentActivity() {
         val display = monitor.display(connected.display.id) ?: return error
         dismissPresentation()
         presentation = try {
-            GlassesPresentation(this, display, "Pocket XR\nKeep the phone app open to use the glasses.").also { it.show() }
+            GlassesPresentation(this, display, "Pocket XR\n" + getString(R.string.home_keep_phone_app_open)).also { it.show() }
         } catch (e: RuntimeException) {
-            return "$error The basic surface failed too: ${e.message}"
+            return getString(R.string.home_basic_surface_failed, error, e.message)
         }
-        return "$error Showing a basic surface on the glasses instead."
+        return getString(R.string.home_basic_surface_instead, error)
     }
 
     private fun dismissPresentation() {

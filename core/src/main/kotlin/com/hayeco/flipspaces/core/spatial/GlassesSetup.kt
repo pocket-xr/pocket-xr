@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 1.1.9 (issue 31, a One Pro in its own Anchor mode: windows moved twice as far; Mike: when testers get stuck on
  * something that only needs a setting changed, fix the onboarding so new users never hit it): what to set on the glasses
@@ -77,13 +79,14 @@ data class SetupHost(val beamPro: Boolean = false, val xrealApps: List<String> =
             return SetupHost(beam, apps)
         }
 
-        const val BEAM_PRO_NOTE =
-            "On a Beam Pro: XREAL's own spatial view can also turn the picture with your head, so windows move twice. Close it, then open the Space from Pocket XR."
-        const val BEAM_PRO_ONE_NOTE =
-            "The Beam Pro may switch your glasses back to Anchor. If the check fails, set Follow again on the glasses."
+        val BEAM_PRO_NOTE: String get() =
+            UiText.get("spatial_setup_beam_pro_note", "On a Beam Pro: XREAL's own spatial view can also turn the picture with your head, so windows move twice. Close it, then open the Space from Pocket XR.")
+        val BEAM_PRO_ONE_NOTE: String get() =
+            UiText.get("spatial_setup_beam_pro_one_note", "The Beam Pro may switch your glasses back to Anchor. If the check fails, set Follow again on the glasses.")
 
         fun appsNote(apps: List<String>): String =
-            "${apps.joinToString(", ")} ${if (apps.size == 1) "is" else "are"} on this phone. It does no harm while closed. If it is open, close it from Recents before you open the Space: it can drive the glasses' picture and head tracking too."
+            if (apps.size == 1) UiText.format("spatial_setup_app_note_one", "%1\$s is on this phone. It does no harm while closed. If it is open, close it from Recents before you open the Space: it can drive the glasses' picture and head tracking too.", apps.joinToString(", "))
+            else UiText.format("spatial_setup_app_note_many", "%1\$s are on this phone. It does no harm while closed. If it is open, close it from Recents before you open the Space: it can drive the glasses' picture and head tracking too.", apps.joinToString(", "))
     }
 }
 
@@ -92,9 +95,9 @@ object GlassesSetup {
      * The XREAL buttons and menu in XREAL's words (tutorials.xreal.com, One series: buttons, Stabilizer), each short
      * enough for a short landscape card (95 characters).
      */
-    const val STEP_FOLLOW = "Press X on the glasses once to switch mode. Pick Follow mode, not Anchor"
-    const val STEP_STABILIZER = "Press X twice to open the glasses' menu. In Spatial Screen, turn Stabilizer off"
-    const val STEP_MENU = "In the menu, + and - move, X picks, X twice goes back. Older firmware: Stabilizer is in Display"
+    val STEP_FOLLOW: String get() = UiText.get("spatial_setup_step_follow", "Press X on the glasses once to switch mode. Pick Follow mode, not Anchor")
+    val STEP_STABILIZER: String get() = UiText.get("spatial_setup_step_stabilizer", "Press X twice to open the glasses' menu. In Spatial Screen, turn Stabilizer off")
+    val STEP_MENU: String get() = UiText.get("spatial_setup_step_menu", "In the menu, + and - move, X picks, X twice goes back. Older firmware: Stabilizer is in Display")
 
     /**
      * The family of the glasses: the model, else the USB product on XREAL's vendor id. The One series' network link
@@ -129,11 +132,11 @@ object GlassesSetup {
         val name = when {
             model != null && model != GlassesModel.OTHER_XREAL && model != GlassesModel.UNKNOWN -> model.label
             family == SetupFamily.ONE_SERIES -> "XREAL One series"
-            else -> "glasses"
+            else -> UiText.get("spatial_setup_glasses", "glasses")
         }
         val steps = steps(family)
         return GlassesSetupPage(
-            title = if (steps.isEmpty()) "Check your $name" else "Set up your $name",
+            title = if (steps.isEmpty()) UiText.format("spatial_setup_check_your", "Check your %1\$s", name) else UiText.format("spatial_setup_set_up_your", "Set up your %1\$s", name),
             steps = steps,
             check = when {
                 family == SetupFamily.AURA -> AURA_CHECK
@@ -145,9 +148,9 @@ object GlassesSetup {
         )
     }
 
-    const val ONE_CHECK = "Check: look left and right. Windows should stay put. If they move twice as far or get cut off, the glasses are in Anchor mode."
-    const val NOTHING_TO_SET = "Nothing needs setting on these glasses. The check below makes sure the windows stay put."
-    const val AURA_CHECK = "Pocket XR sets these glasses for you. The check below makes sure the windows stay put."
+    val ONE_CHECK: String get() = UiText.get("spatial_setup_one_check", "Check: look left and right. Windows should stay put. If they move twice as far or get cut off, the glasses are in Anchor mode.")
+    val NOTHING_TO_SET: String get() = UiText.get("spatial_setup_nothing_to_set", "Nothing needs setting on these glasses. The check below makes sure the windows stay put.")
+    val AURA_CHECK: String get() = UiText.get("spatial_setup_aura_check", "Pocket XR sets these glasses for you. The check below makes sure the windows stay put.")
 
     /**
      * The model of the XREAL glasses on USB now, or null when none are plugged in: [usbProduct] is the USB product id on
@@ -182,7 +185,7 @@ object GlassesSetup {
         family(model) == SetupFamily.ONE_SERIES && !dutyOurs && dutyPercent != null && dutyPercent in 1..WORLD_LOCK_DUTY_MAX
 
     /** The card's words on the phone when [anchorLikely]. */
-    const val ANCHOR_CARD = "Your glasses may be in Anchor mode, so windows move twice as far as your head. Press X on the glasses once for Follow mode, and turn Stabilizer off."
-    const val ANCHOR_CARD_OK = "Glasses setup"
-    const val ANCHOR_CARD_LATER = "Not now"
+    val ANCHOR_CARD: String get() = UiText.get("spatial_setup_anchor_card", "Your glasses may be in Anchor mode, so windows move twice as far as your head. Press X on the glasses once for Follow mode, and turn Stabilizer off.")
+    val ANCHOR_CARD_OK: String get() = UiText.get("spatial_setup_anchor_card_ok", "Glasses setup")
+    val ANCHOR_CARD_LATER: String get() = UiText.get("spatial_setup_anchor_card_later", "Not now")
 }

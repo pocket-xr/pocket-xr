@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -9,12 +10,16 @@ import kotlin.math.sqrt
  * keeps about the same size (its area), so it changes shape without jumping bigger or smaller, within [PanelLimits].
  */
 object WindowShape {
-    enum class Preset(val label: String, val small: String, val ratio: Float) {
-        WIDE("16:9", "Video", 16f / 9f),
-        LAPTOP("3:2", "Laptop", 3f / 2f),
-        TABLET("4:3", "Tablet", 4f / 3f),
-        SQUARE("1:1", "Square", 1f),
-        PHONE("9:16", "Phone", 9f / 16f),
+    enum class Preset(val label: String, private val smallKey: String, private val smallEnglish: String, val ratio: Float) {
+        WIDE("16:9", "spatial_shape_video", "Video", 16f / 9f),
+        LAPTOP("3:2", "spatial_shape_laptop", "Laptop", 3f / 2f),
+        TABLET("4:3", "spatial_shape_tablet", "Tablet", 4f / 3f),
+        SQUARE("1:1", "spatial_shape_square", "Square", 1f),
+        PHONE("9:16", "spatial_shape_phone", "Phone", 9f / 16f),
+        ;
+
+        /** The shape's word under its ratio, in the phone's language. */
+        val small: String get() = UiText.get(smallKey, smallEnglish)
     }
 
     /** How close a window's shape must be to a preset's to count as it. */

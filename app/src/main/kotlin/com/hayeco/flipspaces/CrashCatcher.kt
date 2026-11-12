@@ -80,14 +80,11 @@ object CrashCatcher {
             ?.let { CrashReport.Info(it[0], it[1], it[2], it[3], it[4], it[5]) }
             ?: info(activity, "?")
         AlertDialog.Builder(activity, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle("Pocket XR closed unexpectedly")
-            .setMessage(
-                "Sorry about that. A crash report was saved: the error, the app version and your phone model, nothing " +
-                    "else. Sending it helps fix the problem.\n\nYou'll see it before it's sent."
-            )
-            .setPositiveButton("Email it") { _, _ -> if (email(activity, info, report)) clear(activity) }
-            .setNeutralButton("Post on GitHub") { _, _ -> if (open(activity, CrashReport.issueUrl(info, stack))) clear(activity) }
-            .setNegativeButton("Don't send") { _, _ -> clear(activity) }
+            .setTitle(R.string.home_crash_title)
+            .setMessage(R.string.home_crash_message)
+            .setPositiveButton(R.string.home_crash_email) { _, _ -> if (email(activity, info, report)) clear(activity) }
+            .setNeutralButton(R.string.home_crash_github) { _, _ -> if (open(activity, CrashReport.issueUrl(info, stack))) clear(activity) }
+            .setNegativeButton(R.string.home_crash_dont_send) { _, _ -> clear(activity) }
             .setCancelable(true)
             .show()
     }
@@ -101,7 +98,7 @@ object CrashCatcher {
             activity.startActivity(intent)
             true
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(activity, "No email app found. Try Post on GitHub instead.", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, R.string.home_no_email_app, Toast.LENGTH_LONG).show()
             offered = false
             false
         }
@@ -111,7 +108,7 @@ object CrashCatcher {
         activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         true
     } catch (e: ActivityNotFoundException) {
-        Toast.makeText(activity, "No browser found.", Toast.LENGTH_LONG).show()
+        Toast.makeText(activity, R.string.home_no_browser, Toast.LENGTH_LONG).show()
         offered = false
         false
     }

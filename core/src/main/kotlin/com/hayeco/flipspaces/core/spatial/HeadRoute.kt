@@ -1,6 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
 import com.hayeco.flipspaces.core.ShizukuStatus
+import com.hayeco.flipspaces.core.UiText
 
 /**
  * 0.5.5: the ways the head tracker reaches the glasses' IMU port. Mike's 0.5.4 log on the Flip 7
@@ -48,16 +49,15 @@ object HeadRoutePlan {
      */
     fun explain(error: String, vpn: String?, shizuku: ShizukuStatus): String? {
         if (!BIND.containsMatchIn(error)) return null
-        val cause = when {
+        val next = if (shizuku == ShizukuStatus.READY) UiText.get("spatial_route_shell_next", "the Shizuku shell helper is tried next") else UiText.format("spatial_route_start_shizuku", "%1\$s: start Shizuku so its shell helper can connect instead", shizuku.label)
+        return when {
             error.contains("EPERM") ->
-                "Android refused to bind Pocket XR's socket to the glasses' network (EPERM): a VPN that cannot be bypassed covers the app" +
-                    (vpn?.let { " (Android shows one: $it)" } ?: "")
+                if (vpn != null) UiText.format("spatial_route_eperm_vpn", "Android refused to bind Pocket XR's socket to the glasses' network (EPERM): a VPN that cannot be bypassed covers the app (Android shows one: %1\$s); %2\$s", vpn, next)
+                else UiText.format("spatial_route_eperm", "Android refused to bind Pocket XR's socket to the glasses' network (EPERM): a VPN that cannot be bypassed covers the app; %1\$s", next)
             error.contains("EACCES") ->
-                "Android refused to bind Pocket XR's socket to the glasses' network (EACCES): the network is restricted"
-            else -> return null
+                UiText.format("spatial_route_eacces", "Android refused to bind Pocket XR's socket to the glasses' network (EACCES): the network is restricted; %1\$s", next)
+            else -> null
         }
-        val next = if (shizuku == ShizukuStatus.READY) "the Shizuku shell helper is tried next" else "${shizuku.label}: start Shizuku so its shell helper can connect instead"
-        return "$cause; $next"
     }
 
     private val BIND = Regex("Binding socket to network \\d+ failed")

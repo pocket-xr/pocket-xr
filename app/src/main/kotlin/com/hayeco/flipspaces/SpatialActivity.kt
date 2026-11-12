@@ -62,7 +62,7 @@ class SpatialActivity : ComponentActivity() {
                     onMessageShown = { message = null },
                     onOpenSpace = {
                         message = glasses?.let { g -> SpaceRouting.openOnGlasses(this, g.display, "Spatial windows button") }
-                            ?: if (glasses == null) "Plug in the glasses first." else null
+                            ?: if (glasses == null) getString(R.string.home_plug_in_first) else null
                     },
                     onToggleLauncher = { SpaceSession.send(SpaceCommand.ToggleLauncher) },
                     onRemove = { SpaceSession.send(SpaceCommand.Remove(it)) },
@@ -98,7 +98,7 @@ class SpatialActivity : ComponentActivity() {
                         settings = saved()
                         com.hayeco.flipspaces.hands.HandFeed.resize()
                         SpaceSession.send(SpaceCommand.SettingsChanged)
-                        message = "Spatial windows settings are back to Pocket XR's defaults."
+                        message = getString(R.string.home_spatial_reset_done)
                     },
                     onAllowShizuku = {
                         ShizukuBridge.requestPermission()

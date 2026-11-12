@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 0.5.46 (Mike: "replace the Windows presets circle button with a Notifications button so users can see their phone
  * notifications in an extremely well designed way"; "the Control Panel should have a Bluetooth and Wifi button that shows
@@ -8,11 +10,15 @@ package com.hayeco.flipspaces.core.spatial
  * with Back at the top left and Close at the top right, so the Control Center's hit tests, cursor depth and drawing
  * serve them unchanged.
  */
-enum class ControlPage(val title: String) {
-    MAIN("Control Center"),
-    NOTIFICATIONS("Notifications"),
-    WIFI("Wi-Fi"),
-    BLUETOOTH("Bluetooth"),
+enum class ControlPage(private val key: String, private val english: String) {
+    MAIN("spatial_control_center", "Control Center"),
+    NOTIFICATIONS("spatial_page_notifications", "Notifications"),
+    WIFI("spatial_page_wifi", "Wi-Fi"),
+    BLUETOOTH("spatial_page_bluetooth", "Bluetooth"),
+    ;
+
+    /** The page's title as shown, in the phone's language. */
+    val title: String get() = UiText.get(key, english)
 }
 
 /** One phone notification as the Notifications page shows it. */
@@ -95,13 +101,13 @@ object ControlSheets {
             ControlPage.NOTIFICATIONS -> {
                 if (!s.noteAccess) {
                     message(
-                        "Pocket XR needs notification access to show your phone's notifications here.",
-                        "Allow it once and they appear on this page as they arrive.",
+                        UiText.get("spatial_notes_need_access", "Pocket XR needs notification access to show your phone's notifications here."),
+                        UiText.get("spatial_notes_allow_once", "Allow it once and they appear on this page as they arrive."),
                     )
                     button(ControlItem.NotesGrant, pad, 480f)
                     y += ControlCenterLayout.ROW_H
                 } else if (s.notes.isEmpty()) {
-                    message("You're all caught up: no notifications on your phone.")
+                    message(UiText.get("spatial_notes_caught_up", "You're all caught up: no notifications on your phone."))
                 } else {
                     s.notes.take(NOTES_SHOWN).forEachIndexed { i, n ->
                         val dismissW = if (n.clearable) NOTE_ROW_H else 0f
@@ -111,33 +117,33 @@ object ControlSheets {
                     }
                     y += gap
                     val more = s.notes.size - NOTES_SHOWN
-                    if (more > 0) headings += ControlHeading("$more more on your phone", pad, y + ControlCenterLayout.ROW_H * 0.6f, message = true)
+                    if (more > 0) headings += ControlHeading(UiText.format("spatial_notes_more", "%1\$d more on your phone", more), pad, y + ControlCenterLayout.ROW_H * 0.6f, message = true)
                     if (s.notes.any { it.clearable }) button(ControlItem.NotesClearAll, pad + inner - 300f, 300f)
                     y += ControlCenterLayout.ROW_H
                 }
             }
             ControlPage.WIFI -> {
                 if (!s.wifi.available) {
-                    message("Wi-Fi needs Shizuku running to be read and changed from the Space.", "Add networks in the phone's Wi-Fi settings, opened here as a window.")
+                    message(UiText.get("spatial_wifi_needs_shizuku", "Wi-Fi needs Shizuku running to be read and changed from the Space."), UiText.get("spatial_wifi_add_in_settings", "Add networks in the phone's Wi-Fi settings, opened here as a window."))
                     button(ControlItem.WifiAdd, pad, 480f)
                     y += ControlCenterLayout.ROW_H
                 } else {
-                    headings += ControlHeading("Connected", pad, y + headingH * 0.62f)
+                    headings += ControlHeading(UiText.get("spatial_wifi_connected", "Connected"), pad, y + headingH * 0.62f)
                     y += headingH
                     zones += ControlZone(ControlItem.WifiCurrent, pad, y, pad + inner, y + 88f, enabled = false)
                     y += 88f + ControlCenterLayout.SECTION_GAP
-                    headings += ControlHeading("Saved networks", pad, y + headingH * 0.62f)
+                    headings += ControlHeading(UiText.get("spatial_wifi_saved_networks", "Saved networks"), pad, y + headingH * 0.62f)
                     y += headingH
                     val others = s.wifi.saved.filter { it.ssid != s.wifi.connected }
                     if (others.isEmpty()) {
-                        message("No other saved networks.")
+                        message(UiText.get("spatial_wifi_no_other_saved", "No other saved networks."))
                     } else {
                         others.take(SAVED_SHOWN).forEach { n ->
                             zones += ControlZone(ControlItem.WifiSaved(n.id, n.ssid), pad, y, pad + inner - 200f - gap, y + LIST_ROW_H, enabled = false)
                             zones += ControlZone(ControlItem.WifiForget(n.id, n.ssid), pad + inner - 200f, y, pad + inner, y + LIST_ROW_H)
                             y += LIST_ROW_H + ROW_GAP
                         }
-                        if (others.size > SAVED_SHOWN) headings += ControlHeading("${others.size - SAVED_SHOWN} more in Wi-Fi settings", pad, y + headingH * 0.6f, message = true)
+                        if (others.size > SAVED_SHOWN) headings += ControlHeading(UiText.format("spatial_wifi_more_in_settings", "%1\$d more in Wi-Fi settings", others.size - SAVED_SHOWN), pad, y + headingH * 0.6f, message = true)
                         y += if (others.size > SAVED_SHOWN) headingH else 0f
                     }
                     y += gap
@@ -150,15 +156,15 @@ object ControlSheets {
             }
             ControlPage.BLUETOOTH -> {
                 if (!s.bt.permitted) {
-                    message("Pocket XR needs permission to see your phone's Bluetooth devices.")
+                    message(UiText.get("spatial_bt_need_permission", "Pocket XR needs permission to see your phone's Bluetooth devices."))
                     button(ControlItem.BtGrant, pad, 480f)
                     y += ControlCenterLayout.ROW_H
                 } else {
                     val connected = s.bt.devices.count { it.connected }
-                    headings += ControlHeading(if (connected == 0) "Paired devices" else "Paired devices, $connected connected", pad, y + headingH * 0.62f)
+                    headings += ControlHeading(if (connected == 0) UiText.get("spatial_bt_paired", "Paired devices") else UiText.format("spatial_bt_paired_connected", "Paired devices, %1\$d connected", connected), pad, y + headingH * 0.62f)
                     y += headingH
                     if (s.bt.devices.isEmpty()) {
-                        message(if (s.bt.enabled) "No paired devices yet." else "Bluetooth is off.")
+                        message(if (s.bt.enabled) UiText.get("spatial_bt_none_paired", "No paired devices yet.") else UiText.get("spatial_bt_off", "Bluetooth is off."))
                     } else {
                         val shown = s.bt.devices.sortedByDescending { it.connected }.take(DEVICES_SHOWN)
                         val colW = (inner - gap) / 2f
@@ -170,7 +176,7 @@ object ControlSheets {
                         val rows = (shown.size + 1) / 2
                         y += rows * (LIST_ROW_H + ROW_GAP)
                         if (s.bt.devices.size > DEVICES_SHOWN) {
-                            headings += ControlHeading("${s.bt.devices.size - DEVICES_SHOWN} more in Bluetooth settings", pad, y + headingH * 0.6f, message = true)
+                            headings += ControlHeading(UiText.format("spatial_bt_more_in_settings", "%1\$d more in Bluetooth settings", s.bt.devices.size - DEVICES_SHOWN), pad, y + headingH * 0.6f, message = true)
                             y += headingH
                         }
                     }
@@ -188,10 +194,10 @@ object ControlSheets {
     fun ago(postedMs: Long, nowMs: Long): String {
         val s = ((nowMs - postedMs) / 1000).coerceAtLeast(0)
         return when {
-            s < 60 -> "now"
-            s < 3600 -> "${s / 60} min"
-            s < 86_400 -> "${s / 3600} h"
-            else -> "${s / 86_400} d"
+            s < 60 -> UiText.get("spatial_ago_now", "now")
+            s < 3600 -> UiText.format("spatial_ago_min", "%1\$d min", s / 60)
+            s < 86_400 -> UiText.format("spatial_ago_h", "%1\$d h", s / 3600)
+            else -> UiText.format("spatial_ago_d", "%1\$d d", s / 86_400)
         }
     }
 

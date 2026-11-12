@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 1.2.3 (issue 58: "while I move my head or the cursor, the picture is 2D, and when I'm still and the cursor is hidden, it
  * goes back to 3D"): the optional 2D while moving for [SideBySide] windows, off by default (some like it, some find the
@@ -32,7 +34,7 @@ class SideBySideMotion {
         /** How long the head must be still, the cursor hidden, before the 3D comes back. */
         const val STILL_MS = 600L
 
-        const val MENU_ROW = "2D while moving"
-        const val MENU_SUBTITLE = "Side by side videos show flat while your head or the cursor moves, then 3D again"
+        val MENU_ROW: String get() = UiText.get("spatial_sbs_motion_row", "2D while moving")
+        val MENU_SUBTITLE: String get() = UiText.get("spatial_sbs_motion_subtitle", "Side by side videos show flat while your head or the cursor moves, then 3D again")
     }
 }

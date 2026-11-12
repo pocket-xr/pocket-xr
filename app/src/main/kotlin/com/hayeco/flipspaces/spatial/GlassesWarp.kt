@@ -3,6 +3,8 @@ package com.hayeco.flipspaces.spatial
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
+import com.hayeco.flipspaces.FlipSpacesApp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.ShizukuStatus
 import com.hayeco.flipspaces.core.spatial.ControlFramer
 import com.hayeco.flipspaces.core.spatial.GlassesControl
@@ -65,7 +67,7 @@ object GlassesWarp {
             offNotice = when (why) {
                 com.hayeco.flipspaces.core.spatial.WarpRestore.SCENE_DROPPED.label -> OFF_DROPPED
                 com.hayeco.flipspaces.core.spatial.WarpRestore.RECORD_COVERED.label -> OFF_COVERED
-                else -> "Glasses warp off: $why".take(60)
+                else -> FlipSpacesApp.text(R.string.sys_warp_off_why, why).take(60)
             }
         }
 
@@ -107,10 +109,10 @@ object GlassesWarp {
      * about 44 characters.
      */
     @Volatile private var offNotice: String? = null
-    const val OFF_DROPPED = "The glasses dropped out of warp mode"
-    const val OFF_COVERED = "Glasses warp off: DeX drew over its record"
-    const val REFUSED_2D = "In 2D the glasses can't take the warp; it works only in their 3D mode. Turn on their 3D mode first."
-    const val REFUSED_2D_SHORT = "Warp needs the glasses' 3D mode"
+    val OFF_DROPPED: String get() = FlipSpacesApp.text(R.string.sys_warp_off_dropped)
+    val OFF_COVERED: String get() = FlipSpacesApp.text(R.string.sys_warp_off_covered)
+    val REFUSED_2D: String get() = FlipSpacesApp.text(R.string.sys_warp_refused_2d)
+    val REFUSED_2D_SHORT: String get() = FlipSpacesApp.text(R.string.sys_warp_refused_2d_short)
 
     /** The Space's frame: a notice to show now, once. */
     fun takeOffNotice(): String? = offNotice?.also { offNotice = null }
@@ -220,9 +222,9 @@ object GlassesWarp {
         val now = SystemClock.elapsedRealtime()
         if (!controller.startTest(test, pictureStereo, now)) {
             return@synchronized when {
-                !pictureStereo -> "The 3D record tests need the glasses in 3D. Press their 3D button first."
-                switchOn -> "Turn Glasses warp off first."
-                else -> "Open the Space on the glasses first."
+                !pictureStereo -> FlipSpacesApp.text(R.string.sys_warp_test_needs_3d)
+                switchOn -> FlipSpacesApp.text(R.string.sys_warp_turn_off_first)
+                else -> FlipSpacesApp.text(R.string.sys_warp_open_space_first)
             }
         }
         switchOn = true
@@ -347,7 +349,7 @@ object GlassesWarp {
         if (on && chromeOverRecord && spaceRunning) {
             Log.i(TAG, "glasses warp switch on from $from refused: DeX's title bar or border is composed over the Space's top rows, where the record goes${chromeNote()}; the check is asked for again, and nothing is sent")
             recheckChrome?.invoke()
-            return "DeX's title bar is over the top of the Space, where the warp's record goes. Wait a moment and press again."
+            return FlipSpacesApp.text(R.string.sys_warp_dex_title_bar)
         }
         val store = SpaceStore(context)
         store.glassesWarp = on

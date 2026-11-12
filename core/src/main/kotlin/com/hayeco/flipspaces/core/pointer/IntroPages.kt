@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.pointer
 
+import com.hayeco.flipspaces.core.UiText
 import com.hayeco.flipspaces.core.spatial.GlassesModel
 import com.hayeco.flipspaces.core.spatial.GlassesSetup
 
@@ -24,36 +25,55 @@ object IntroPages {
      * The gesture pages. 0.5.96 (open source audit): written in Pocket XR's own words for what its gestures do (the earlier
      * pages were another product's text).
      */
-    val GESTURES: List<IntroPage> = listOf(
+    val GESTURES: List<IntroPage> get() = listOf(
         // 1.2.3 (issue 53): the resize handle needs a held finger, which nothing said.
         IntroPage(
-            "Point and click",
-            listOf("Move one finger to move the dot", "Tap to click", "Tap with two fingers for a long press"),
+            UiText.get("core_intro_point_title", "Point and click"),
+            listOf(
+                UiText.get("core_intro_point_move", "Move one finger to move the dot"),
+                UiText.get("core_intro_point_tap", "Tap to click"),
+                UiText.get("core_intro_point_two_finger_tap", "Tap with two fingers for a long press"),
+            ),
             IntroArt.POINT,
             note = RESIZE_LINE,
         ),
         IntroPage(
-            "Scroll and zoom",
-            listOf("Run a finger along the strip at the edge to scroll", "Move two fingers to scroll", "Pinch with two fingers to zoom"),
+            UiText.get("core_intro_scroll_title", "Scroll and zoom"),
+            listOf(
+                UiText.get("core_intro_scroll_strip", "Run a finger along the strip at the edge to scroll"),
+                UiText.get("core_intro_scroll_two_fingers", "Move two fingers to scroll"),
+                UiText.get("core_intro_scroll_pinch", "Pinch with two fingers to zoom"),
+            ),
             IntroArt.SCROLL,
         ),
         // 1.2.3 (issue 50): some phones keep three finger swipes for themselves; say what does the same without them.
-        IntroPage("Three fingers", listOf("Swipe up: your apps", "Swipe down: Control Center", "Swipe sideways: Back"), IntroArt.THREE_FINGERS, note = NO_THREE_FINGERS_LINE),
+        IntroPage(
+            UiText.get("core_intro_three_title", "Three fingers"),
+            listOf(
+                UiText.get("core_intro_three_up", "Swipe up: your apps"),
+                UiText.get("core_intro_three_down", "Swipe down: Control Center"),
+                UiText.get("core_intro_three_sideways", "Swipe sideways: Back"),
+            ),
+            IntroArt.THREE_FINGERS,
+            note = NO_THREE_FINGERS_LINE,
+        ),
     )
 
-    const val SPATIAL_MOUSE_TITLE = "Spatial Mouse (aim with your phone)"
+    val SPATIAL_MOUSE_TITLE: String get() = UiText.get("core_intro_spatial_mouse_title", "Spatial Mouse (aim with your phone)")
 
     /** 1.2.3 (issue 53): how to resize, under the first page's steps. */
-    const val RESIZE_LINE = "To resize a window, put the dot on its corner handle. Hold a finger still until the dot fills, then drag."
+    val RESIZE_LINE: String
+        get() = UiText.get("core_intro_resize", "To resize a window, put the dot on its corner handle. Hold a finger still until the dot fills, then drag.")
 
     /** 1.2.3 (issue 50): the Menu's row that opens the Control panel without a swipe. */
-    const val CONTROL_PANEL_ROW = "Open Control Center"
+    val CONTROL_PANEL_ROW: String get() = UiText.get("core_open_control_center", "Open Control Center")
 
     /**
      * 1.2.3 (issue 50): under the three finger page, for phones that take the swipes for themselves. No full stop: as the
      * last page its note gets the exit line after it ([trackpad]).
      */
-    const val NO_THREE_FINGERS_LINE = "If three fingers don't work: Home opens your apps, and the Menu has $CONTROL_PANEL_ROW"
+    val NO_THREE_FINGERS_LINE: String
+        get() = UiText.format("core_intro_no_three_fingers", "If three fingers don't work: Home opens your apps, and the Menu has %1\$s", CONTROL_PANEL_ROW)
 
     /**
      * Spatial Mouse, held the way the device is: a phone upright, a landscape handheld ([TrackpadSettings.landscapeHandheld])
@@ -65,9 +85,9 @@ object IntroPages {
         IntroPage(
             SPATIAL_MOUSE_TITLE,
             listOf(
-                "Pick Spatial Mouse at the top of the trackpad",
-                "Hold it sideways in both hands, like a game controller",
-                "Tilt the top edge up and down, and turn it left and right, to aim. Tap the screen to click",
+                UiText.get("core_intro_aim_pick", "Pick Spatial Mouse at the top of the trackpad"),
+                UiText.get("core_intro_aim_hold_sideways", "Hold it sideways in both hands, like a game controller"),
+                UiText.get("core_intro_aim_tilt", "Tilt the top edge up and down, and turn it left and right, to aim. Tap the screen to click"),
             ),
             IntroArt.AIM_HANDHELD,
         )
@@ -75,32 +95,34 @@ object IntroPages {
         IntroPage(
             SPATIAL_MOUSE_TITLE,
             listOf(
-                "Pick Spatial Mouse at the top of the trackpad",
-                "Hold the phone upright, like a remote",
-                "Point its top edge where you want the dot. Tap the screen to click",
+                UiText.get("core_intro_aim_pick", "Pick Spatial Mouse at the top of the trackpad"),
+                UiText.get("core_intro_aim_hold_upright", "Hold the phone upright, like a remote"),
+                UiText.get("core_intro_aim_point", "Point its top edge where you want the dot. Tap the screen to click"),
             ),
             IntroArt.AIM_PHONE,
         )
     }).let { if (oneFingerScroll) it.copy(note = ONE_FINGER_SCROLL_LINE) else it }
 
     /** 1.1.10 (issue 35): the tutorial's and the Spatial Mouse page's line for the one finger scroll. */
-    const val ONE_FINGER_SCROLL_LINE = "Slide one finger on the pad to scroll"
+    val ONE_FINGER_SCROLL_LINE: String get() = UiText.get("core_intro_one_finger_scroll", "Slide one finger on the pad to scroll")
 
     /** The glasses setup page for [model], or null when there is nothing to set on them. */
     fun glassesSetup(model: GlassesModel?): IntroPage? =
         GlassesSetup.forModel(model)?.let { IntroPage(it.title, it.steps, IntroArt.GLASSES_MENU, note = it.check) }
 
     /** 1.1.10: the label of the quit action, on the Menu's last row and on the ongoing notification. */
-    const val EXIT_LABEL = "Exit Pocket XR"
+    val EXIT_LABEL: String get() = UiText.get("core_exit_pocket_xr", "Exit Pocket XR")
 
     /**
      * 1.1.10 (a tester: "an exit app button would be nice, as it stays active in the notification bar"): the tutorial's
      * last page says where Exit is (Mike's onboarding rule: a new control is named where the tutorial ends).
      */
-    const val EXIT_NOTE = "To quit, open the Menu and tap $EXIT_LABEL at the end, or tap Exit on the Pocket XR notification."
+    val EXIT_NOTE: String
+        get() = UiText.format("core_intro_exit_note", "To quit, open the Menu and tap %1\$s at the end, or tap Exit on the Pocket XR notification.", EXIT_LABEL)
 
     /** 1.1.10: [EXIT_NOTE] in short, for under a page's own note (the one finger scroll line), so the note stays three lines. */
-    const val EXIT_NOTE_SHORT = "To quit, tap $EXIT_LABEL at the end of the Menu or on the notification."
+    val EXIT_NOTE_SHORT: String
+        get() = UiText.format("core_intro_exit_note_short", "To quit, tap %1\$s at the end of the Menu or on the notification.", EXIT_LABEL)
 
     /**
      * The Menu's "How to use the trackpad": the gestures, and Spatial Mouse where the phone can aim ([spatialMouse]).
@@ -116,7 +138,7 @@ object IntroPages {
      * 1.2.1 (Mike: tell new users about the optional add-on during setup): what the add-on gives, with its Install button
      * under the lines ([com.hayeco.flipspaces.core.AddonSetup]). Next skips it.
      */
-    val ADDON: IntroPage = IntroPage(
+    val ADDON: IntroPage get() = IntroPage(
         com.hayeco.flipspaces.core.AddonSetup.TITLE,
         com.hayeco.flipspaces.core.AddonSetup.ITEMS,
         IntroArt.ADDON,

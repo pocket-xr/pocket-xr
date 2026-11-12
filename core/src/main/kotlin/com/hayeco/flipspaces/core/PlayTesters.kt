@@ -10,12 +10,12 @@ object PlayTesters {
     const val GROUP_URL = "https://groups.google.com/a/mikehaye.com/g/pocketxr-testers"
     const val PLAY_URL = "https://play.google.com/apps/testing/com.hayeco.flipspaces"
 
-    const val TITLE = "Help Pocket XR get on Google Play"
-    const val BODY = "Join the testers in two taps. You'll need to uninstall this copy before installing from Play: first save your settings (Help and more, Save settings to a file), then restore them in the Play version."
-    const val JOIN = "Join"
-    const val OPEN_PLAY = "Open Play invite"
-    const val NOT_NOW = "Not now"
-    const val ALREADY_JOINED = "I already joined"
+    val TITLE: String get() = UiText.get("core_testers_title", "Help Pocket XR get on Google Play")
+    val BODY: String get() = UiText.get("core_testers_body", "Join the testers in two taps. You'll need to uninstall this copy before installing from Play: first save your settings (Help and more, Save settings to a file), then restore them in the Play version.")
+    val JOIN: String get() = UiText.get("core_testers_join", "Join")
+    val OPEN_PLAY: String get() = UiText.get("core_testers_open_play", "Open Play invite")
+    val NOT_NOW: String get() = UiText.get("core_testers_not_now", "Not now")
+    val ALREADY_JOINED: String get() = UiText.get("core_testers_already_joined", "I already joined")
 
     /** How long Not now hides the card. */
     const val SNOOZE_MS = 7L * 24 * 60 * 60 * 1000

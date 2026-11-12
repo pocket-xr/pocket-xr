@@ -39,8 +39,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.hands.HandProviderKind
 import com.hayeco.flipspaces.core.hands.ProviderStatus
 import com.hayeco.flipspaces.hands.GlassesCameraProvider
@@ -117,7 +119,7 @@ fun HandsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Text("Hands", style = MaterialTheme.typography.headlineMedium) }
+            item { Text(stringResource(R.string.hands_title), style = MaterialTheme.typography.headlineMedium) }
             // 0.5.1: first, so its reason is on screen when Android asks for the microphone.
             if (!setup.micAllowed) item { UsbHintCard(setup, onAllowMic, onUsbHintDone) }
             item { PointerServiceCard(setup, onOpenAccessibility, onOpenAppInfo, onGetAddon) }
@@ -131,8 +133,8 @@ fun HandsScreen(
             item { HandsDeveloperCard(setup, onRefresh, onReadFormats, onShoulderRayChange) }
             item {
                 ResetButton(
-                    "Hands",
-                    "Hand aim calibration is cleared (the Space offers it again) and the developer aim goes back to the camera ray. Hand setup, permissions and starting with the glasses stay.",
+                    stringResource(R.string.hands_title),
+                    stringResource(R.string.hands_reset_text),
                     onResetAll,
                 )
             }
@@ -149,18 +151,18 @@ fun HandsScreen(
 private fun UsbHintCard(setup: HandsSetup, onAllowMic: () -> Unit, onDone: () -> Unit) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(if (setup.micAllowed) "Tick Always on the plug-in prompt" else "Remember your glasses", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(if (setup.micAllowed) R.string.hands_tick_always else R.string.hands_remember_glasses), style = MaterialTheme.typography.titleMedium)
             if (!setup.micAllowed) {
                 Text(
-                    "Pocket XR needs the microphone permission so Android can remember your glasses. It never records.",
+                    stringResource(R.string.hands_mic_reason),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
             Text(setup.usbHintText, style = MaterialTheme.typography.bodySmall)
             if (setup.micAllowed) {
-                TextButton(onClick = onDone) { Text("Got it") }
+                TextButton(onClick = onDone) { Text(stringResource(R.string.hands_got_it)) }
             } else {
-                Button(onClick = onAllowMic) { Text("Allow microphone") }
+                Button(onClick = onAllowMic) { Text(stringResource(R.string.hands_allow_mic)) }
             }
         }
     }
@@ -176,31 +178,27 @@ private fun HandsAutoCard(
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Hands with the glasses", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.hands_with_glasses), style = MaterialTheme.typography.titleMedium)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Start hands with the glasses", Modifier.weight(1f))
+                Text(stringResource(R.string.hands_start_with_glasses), Modifier.weight(1f))
                 Switch(checked = setup.autoStart, onCheckedChange = onAutoStartChange)
             }
             Text(
-                "Turned on the first time Start hands works. Hands then start when the Space opens on the glasses. " +
-                    "Stop in the notification pauses them until the next plug-in.",
+                stringResource(R.string.hands_auto_note),
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(
-                "The cursor goes where the glasses camera sees your knuckles' pinch point, just in front of the " +
-                    "index knuckle, about 1:1 with where you see your hand. Closing the fingers does not move it.",
+                stringResource(R.string.hands_cursor_note),
                 style = MaterialTheme.typography.bodySmall,
             )
-            Text("Calibrate hand aim: ${setup.calibration}", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.hands_calibrate_state, setup.calibration), style = MaterialTheme.typography.bodyMedium)
             Text(
-                "With the Space on the glasses, tap Calibrate and pinch on each of the five dots it shows, pointing " +
-                    "at each one. It corrects the glasses camera's angle and field of view. The Space offers it once " +
-                    "by itself the first time it sees your hands; an open palm skips it.",
+                stringResource(R.string.hands_calibrate_howto),
                 style = MaterialTheme.typography.bodySmall,
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onCalibrate) { Text("Calibrate hand aim") }
-                OutlinedButton(onClick = onResetCalibration) { Text("Reset calibration") }
+                Button(onClick = onCalibrate) { Text(stringResource(R.string.hands_calibrate)) }
+                OutlinedButton(onClick = onResetCalibration) { Text(stringResource(R.string.hands_reset_calibration)) }
             }
         }
     }
@@ -214,42 +212,34 @@ private fun PointerServiceCard(setup: HandsSetup, onOpenAccessibility: () -> Uni
         colors = if (ok) CardDefaults.cardColors() else CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("1. Pocket XR pointer (accessibility service)", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.hands_pointer_title), style = MaterialTheme.typography.titleMedium)
             Text(
-                "Outside the Space, hands and the trackpad reach the glasses through an accessibility service. It is the only " +
-                    "way Android lets an ordinary app act on other apps' windows. It comes with the Pocket XR add-on, a " +
-                    "second small app, because Google blocks installing apps with one in some countries. It:",
+                stringResource(R.string.hands_pointer_why),
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                "- draws the cursor, hints and the dock on the glasses display\n" +
-                    "- reads where app windows are on the glasses (position, size and title only), and the labels of DeX's " +
-                    "title bar buttons there, to find its full screen button\n" +
-                    "- performs taps and drags on the glasses display, which is how windows are clicked, " +
-                    "moved (drag on the DeX title bar) and resized (drag on a corner)\n" +
-                    "It does nothing on the phone's own screens and sends nothing off the phone.",
+                stringResource(R.string.hands_pointer_does),
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(
                 when {
-                    !setup.addonInstalled -> "The Pocket XR add-on is not installed. The Space works without it."
-                    ok && setup.glassesDisplayId != null -> "On. Cursor is on display ${setup.glassesDisplayId}."
-                    ok -> "On, but no glasses display is connected."
-                    setup.serviceEnabled -> "Switched on in Settings but not running yet."
-                    else -> "Off. Turn on \"Pocket XR pointer\" under Settings, Accessibility, Installed apps."
+                    !setup.addonInstalled -> stringResource(R.string.hands_addon_missing)
+                    ok && setup.glassesDisplayId != null -> stringResource(R.string.hands_on_display, setup.glassesDisplayId)
+                    ok -> stringResource(R.string.hands_on_no_display)
+                    setup.serviceEnabled -> stringResource(R.string.hands_switched_on)
+                    else -> stringResource(R.string.hands_off)
                 },
                 style = MaterialTheme.typography.bodyMedium,
             )
-            setup.problem?.let { Text("Last problem: $it", style = MaterialTheme.typography.bodySmall) }
+            setup.problem?.let { Text(stringResource(R.string.hands_last_problem, it), style = MaterialTheme.typography.bodySmall) }
             if (!setup.addonInstalled) {
-                Button(onClick = onGetAddon) { Text("Get the add-on") }
+                Button(onClick = onGetAddon) { Text(stringResource(R.string.hands_get_addon)) }
                 return@Column
             }
-            Button(onClick = onOpenAccessibility) { Text("Open accessibility settings") }
+            Button(onClick = onOpenAccessibility) { Text(stringResource(R.string.hands_open_accessibility)) }
             if (!ok) {
                 Text(
-                    "If Android greys it out (\"Restricted setting\"), open App info, use the three dot menu, " +
-                        "\"Allow restricted settings\", then try again. Or by adb:",
+                    stringResource(R.string.hands_restricted),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 SelectionContainer {
@@ -260,19 +250,20 @@ private fun PointerServiceCard(setup: HandsSetup, onOpenAccessibility: () -> Uni
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
-                OutlinedButton(onClick = onOpenAppInfo) { Text("Add-on app info") }
+                OutlinedButton(onClick = onOpenAppInfo) { Text(stringResource(R.string.hands_addon_app_info)) }
             }
         }
     }
 }
 
+@Composable
 private fun describe(status: ProviderStatus?): String = when (status) {
-    null -> "Checking"
-    is ProviderStatus.Unavailable -> "Not available: ${status.reason}"
-    is ProviderStatus.NeedsPermission -> "Needs: ${status.what}"
-    ProviderStatus.Ready -> "Ready"
-    is ProviderStatus.Running -> "Running: ${status.detail}"
-    is ProviderStatus.Failed -> "Failed: ${status.error}"
+    null -> stringResource(R.string.hands_checking)
+    is ProviderStatus.Unavailable -> stringResource(R.string.hands_not_available, status.reason)
+    is ProviderStatus.NeedsPermission -> stringResource(R.string.hands_needs, status.what)
+    ProviderStatus.Ready -> stringResource(R.string.hands_ready)
+    is ProviderStatus.Running -> stringResource(R.string.hands_running, status.detail)
+    is ProviderStatus.Failed -> stringResource(R.string.hands_failed, status.error)
 }
 
 @Composable
@@ -287,28 +278,27 @@ private fun GlassesCameraCard(
     val status = setup.statuses[HandProviderKind.GLASSES_CAMERA]
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("2. Glasses camera hand tracking", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.hands_camera_title), style = MaterialTheme.typography.titleMedium)
             Text(
-                "Reads the standard UVC camera in the glasses over USB (no XREAL software) and finds your hand " +
-                    "with Google's MediaPipe Hand Landmarker, all on the phone.",
+                stringResource(R.string.hands_camera_explain),
                 style = MaterialTheme.typography.bodySmall,
             )
-            Text("USB camera: ${setup.usbDevice ?: "not found"}", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.hands_usb_camera, setup.usbDevice ?: stringResource(R.string.hands_not_found)), style = MaterialTheme.typography.bodyMedium)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (!setup.cameraAllowed) Button(onClick = onAskCamera) { Text("Allow camera") }
-                if (setup.usbDevice != null && !setup.usbAllowed) Button(onClick = onAskUsb) { Text("Allow USB access") }
+                if (!setup.cameraAllowed) Button(onClick = onAskCamera) { Text(stringResource(R.string.hands_allow_camera)) }
+                if (setup.usbDevice != null && !setup.usbAllowed) Button(onClick = onAskUsb) { Text(stringResource(R.string.hands_allow_usb)) }
                 if (!setup.modelReady) {
                     Button(onClick = onDownloadModel, enabled = !setup.downloading) {
-                        Text(if (setup.downloading) "Downloading" else "Download hand model")
+                        Text(stringResource(if (setup.downloading) R.string.hands_downloading else R.string.hands_download_model))
                     }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (status is ProviderStatus.Running) {
-                    Button(onClick = onStopHands) { Text("Stop hands") }
+                    Button(onClick = onStopHands) { Text(stringResource(R.string.hands_stop)) }
                 } else {
                     Button(onClick = onStartHands, enabled = status == ProviderStatus.Ready || status is ProviderStatus.Failed) {
-                        Text("Start hands")
+                        Text(stringResource(R.string.hands_start))
                     }
                 }
             }
@@ -322,7 +312,7 @@ private fun GlassesCameraCard(
 private fun CameraPreview(preview: GlassesCameraProvider.Preview, mirror: Boolean) {
     val bitmap = preview.frame
     Box(Modifier.fillMaxWidth().aspectRatio(bitmap.width.toFloat() / bitmap.height.coerceAtLeast(1))) {
-        Image(bitmap.asImageBitmap(), contentDescription = "Glasses camera", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+        Image(bitmap.asImageBitmap(), contentDescription = stringResource(R.string.hands_camera_preview), modifier = Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
         Canvas(Modifier.fillMaxSize()) {
             val box = GlassesCameraProvider.airBox
             drawRect(
@@ -335,7 +325,7 @@ private fun CameraPreview(preview: GlassesCameraProvider.Preview, mirror: Boolea
                 drawCircle(Color(0xFF5ADCFF), radius = 5f, center = Offset(p.x * size.width, p.y * size.height))
             }
         }
-        if (mirror) Text("Mirrored when mapped to the glasses", Modifier.align(Alignment.BottomStart).padding(4.dp), style = MaterialTheme.typography.labelSmall)
+        if (mirror) Text(stringResource(R.string.hands_mirrored), Modifier.align(Alignment.BottomStart).padding(4.dp), style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -344,16 +334,16 @@ private fun CameraPreview(preview: GlassesCameraProvider.Preview, mirror: Boolea
 private fun GesturesCard() {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Hand gestures", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.hands_gestures), style = MaterialTheme.typography.titleMedium)
             listOf(
-                "Point: the cursor follows your hand",
-                "Pinch and let go: click",
-                "Pinch and hold a window's bar, move, let go: move the window",
-                "Pinch and hold a corner, move, let go: resize",
-                "Pinch and hold inside a window, move: scroll or drag",
-                "Open palm, held a moment: the Menu",
-                "Both palms up, side by side: hold every window, then push, pull or spread to move them all",
-            ).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                R.string.hands_gesture_point,
+                R.string.hands_gesture_click,
+                R.string.hands_gesture_move,
+                R.string.hands_gesture_resize,
+                R.string.hands_gesture_scroll,
+                R.string.hands_gesture_menu,
+                R.string.hands_gesture_all,
+            ).forEach { Text(stringResource(it), style = MaterialTheme.typography.bodySmall) }
         }
     }
 }
@@ -365,23 +355,23 @@ private fun HandsDeveloperCard(setup: HandsSetup, onRefresh: () -> Unit, onReadF
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(Modifier.fillMaxWidth().clickable { open = !open }, verticalAlignment = Alignment.CenterVertically) {
-                Text("Developer", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Text(if (open) "Hide" else "Show", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.hands_developer), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text(stringResource(if (open) R.string.hands_hide else R.string.hands_show), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             }
             if (open) {
-                Text("Cursor driven by: ${setup.active.label}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.hands_driven_by, setup.active.label), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
                 HandProviderKind.entries.forEach { kind ->
                     Text(kind.label, style = MaterialTheme.typography.bodyLarge)
                     Text(describe(setup.statuses[kind]), style = MaterialTheme.typography.bodySmall)
                 }
-                TextButton(onClick = onRefresh) { Text("Check again") }
+                TextButton(onClick = onRefresh) { Text(stringResource(R.string.hands_check_again)) }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Shoulder ray (experimental): aim from the shoulder through the hand", Modifier.weight(1f))
+                    Text(stringResource(R.string.hands_shoulder_ray), Modifier.weight(1f))
                     Switch(checked = setup.shoulderRay, onCheckedChange = onShoulderRayChange)
                 }
-                if (setup.usbDevice != null && setup.usbAllowed) OutlinedButton(onClick = onReadFormats) { Text("Read camera formats") }
+                if (setup.usbDevice != null && setup.usbAllowed) OutlinedButton(onClick = onReadFormats) { Text(stringResource(R.string.hands_read_formats)) }
                 setup.report?.let {
-                    Text("What the camera offers:", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.hands_camera_offers), style = MaterialTheme.typography.bodyMedium)
                     SelectionContainer { Text(it, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall) }
                 }
             }

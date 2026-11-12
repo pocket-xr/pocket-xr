@@ -12,6 +12,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
+import com.hayeco.flipspaces.FlipSpacesApp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.openxr.OpenXrPads
 import com.hayeco.flipspaces.spatial.JoyConReader
 import com.hayeco.flipspaces.spatial.PanelHost
@@ -123,7 +125,7 @@ object PcVrSession {
                     return@post
                 }
                 Log.i(TAG, "PC VR: Steady mode is on; leaving it first, as PC VR needs the glasses in 3D")
-                com.hayeco.flipspaces.spatial.GlassesNotice.post("Leaving Steady mode for PC VR, which needs 3D. It comes back when you leave PC VR", 8_000L)
+                com.hayeco.flipspaces.spatial.GlassesNotice.post(FlipSpacesApp.text(R.string.sys_pcvr_leaving_steady), 8_000L)
                 control.steady(ctx, false)
                 steadyBack = true
                 steadyWaitSinceMs = SystemClock.elapsedRealtime()
@@ -243,7 +245,7 @@ object PcVrSession {
         }
         if (now - steadyWaitSinceMs > STEADY_WAIT_MS) {
             Log.w(TAG, "PC VR: the glasses did not get to 3D within ${STEADY_WAIT_MS / 1000} s of leaving Steady mode; not opened")
-            com.hayeco.flipspaces.spatial.GlassesNotice.post("PC VR could not start: the glasses did not switch to 3D. Turn Steady mode off and try again", 8_000L)
+            com.hayeco.flipspaces.spatial.GlassesNotice.post(FlipSpacesApp.text(R.string.sys_pcvr_no_3d), 8_000L)
             steadyBack = false
             return
         }

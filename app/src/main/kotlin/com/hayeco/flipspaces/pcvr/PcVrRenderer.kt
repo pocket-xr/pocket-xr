@@ -6,6 +6,7 @@ import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.os.SystemClock
 import android.util.Log
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.openxr.OpenXrPads
 import com.hayeco.flipspaces.spatial.HeadTracker
 import java.nio.ByteBuffer
@@ -492,7 +493,7 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
      */
     private fun chargingWords(phase: PcVrLoading.Phase): Pair<String, String>? {
         if (phase != PcVrLoading.Phase.STARTING || !charging) return null
-        return "Starting SteamVR" to "Tip: unplug the charger for a smoother picture."
+        return context.getString(R.string.sys_pcvr_starting_steamvr) to context.getString(R.string.sys_pcvr_unplug_tip)
     }
 
     @Volatile private var charging = false
@@ -500,15 +501,16 @@ class PcVrRenderer(private val context: Context, private val pads: PcVrPads) : G
 
     /** What the PC helper is doing, in the card's words; null for the usual "Connecting to your PC". */
     private fun helperWords(): Pair<String, String>? {
-        val pc = PcVrSession.helperPc ?: "your PC"
+        val pc = PcVrSession.helperPc ?: context.getString(R.string.sys_pcvr_your_pc)
+        fun t(id: Int, vararg args: Any) = context.getString(id, *args)
         return when (PcVrSession.helperStage) {
-            PcVrHelper.Stage.ASK_ON_PC -> "Allow Pocket XR on your PC" to "Click Yes on $pc. You only do this once."
-            PcVrHelper.Stage.REFUSED -> "Your PC said no" to "Start SteamVR on $pc yourself, or allow Pocket XR next time."
-            PcVrHelper.Stage.NO_STEAM -> "SteamVR isn't on $pc" to "Install Steam and SteamVR on your PC, then try again."
-            PcVrHelper.Stage.NO_ALVR -> "ALVR isn't set up on $pc" to "Install the ALVR streamer on your PC and open it once."
-            PcVrHelper.Stage.STARTING_STEAMVR -> "Starting SteamVR on $pc" to "This takes a few seconds."
-            PcVrHelper.Stage.STEAMVR_READY -> "Connecting to SteamVR" to "Almost there."
-            PcVrHelper.Stage.NO_HELPER -> "Connecting to your PC" to "Start SteamVR on your PC, or run the Pocket XR PC helper."
+            PcVrHelper.Stage.ASK_ON_PC -> t(R.string.sys_pcvr_allow_title) to t(R.string.sys_pcvr_allow_line, pc)
+            PcVrHelper.Stage.REFUSED -> t(R.string.sys_pcvr_refused_title) to t(R.string.sys_pcvr_refused_line, pc)
+            PcVrHelper.Stage.NO_STEAM -> t(R.string.sys_pcvr_no_steam_title, pc) to t(R.string.sys_pcvr_no_steam_line)
+            PcVrHelper.Stage.NO_ALVR -> t(R.string.sys_pcvr_no_alvr_title, pc) to t(R.string.sys_pcvr_no_alvr_line)
+            PcVrHelper.Stage.STARTING_STEAMVR -> t(R.string.sys_pcvr_starting_steamvr_on, pc) to t(R.string.sys_pcvr_few_seconds)
+            PcVrHelper.Stage.STEAMVR_READY -> t(R.string.sys_pcvr_connecting_steamvr) to t(R.string.sys_pcvr_almost_there)
+            PcVrHelper.Stage.NO_HELPER -> t(R.string.sys_pcvr_connecting) to t(R.string.sys_pcvr_no_helper_line)
             PcVrHelper.Stage.LOOKING, null -> null
         }
     }

@@ -16,7 +16,7 @@ object GlassesReady {
     const val ACTION_BOOT_COMPLETED = "android.intent.action.BOOT_COMPLETED"
     const val ACTION_MY_PACKAGE_REPLACED = "android.intent.action.MY_PACKAGE_REPLACED"
 
-    const val NOTIFICATION_TEXT = "Pocket XR is ready for your glasses"
+    val NOTIFICATION_TEXT: String get() = UiText.get("core_glasses_ready_notification", "Pocket XR is ready for your glasses")
 
     /** Manifest permissions the connectedDevice type needs on Android 14 and 15. */
     val PERMISSIONS = listOf(

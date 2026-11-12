@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import java.util.zip.CRC32
 
 /**
@@ -85,25 +86,28 @@ object AirDisplayMode {
     fun isSideBySide(mode: Int): Boolean = mode in SIDE_BY_SIDE
 
     /** What the glasses report as words, for the Menu. Unknown values say so. */
-    fun label(mode: Int): String = LABELS[mode] ?: "mode $mode (not known)"
+    fun label(mode: Int): String {
+        val (key, english) = LABELS[mode] ?: return UiText.format("spatial_air_mode_unknown", "mode %1\$d (not known)", mode)
+        return UiText.get(key, english)
+    }
 
     /** The mode a tap switches to from [mode]: 2D from side by side, side by side from anything else. */
     fun toggled(mode: Int): Int = if (isSideBySide(mode)) MODE_2D else MODE_3D_SBS
 
     private val SIDE_BY_SIDE = setOf(3, 4, 8, 9)
     private val LABELS = mapOf(
-        1 to "2D, 60 Hz",
-        3 to "3D side by side, 60 Hz",
-        4 to "3D side by side, 72 Hz",
-        5 to "2D, 72 Hz",
-        8 to "3D half side by side, 60 Hz",
-        9 to "3D side by side, 90 Hz",
-        10 to "2D, 90 Hz",
-        11 to "2D, 120 Hz",
+        1 to ("spatial_air_mode_2d_60" to "2D, 60 Hz"),
+        3 to ("spatial_air_mode_sbs_60" to "3D side by side, 60 Hz"),
+        4 to ("spatial_air_mode_sbs_72" to "3D side by side, 72 Hz"),
+        5 to ("spatial_air_mode_2d_72" to "2D, 72 Hz"),
+        8 to ("spatial_air_mode_half_sbs_60" to "3D half side by side, 60 Hz"),
+        9 to ("spatial_air_mode_sbs_90" to "3D side by side, 90 Hz"),
+        10 to ("spatial_air_mode_2d_90" to "2D, 90 Hz"),
+        11 to ("spatial_air_mode_2d_120" to "2D, 120 Hz"),
     )
 
-    const val SWITCH_ROW = "Air display mode (untested)"
-    const val SWITCH_SUBTITLE = "Read and switch the Air's 2D or 3D mode from here. Never tried on Air glasses yet."
+    val SWITCH_ROW: String get() = UiText.get("spatial_air_switch_row", "Air display mode (untested)")
+    val SWITCH_SUBTITLE: String get() = UiText.get("spatial_air_switch_subtitle", "Read and switch the Air's 2D or 3D mode from here. Never tried on Air glasses yet.")
 
     private fun put(p: ByteArray, at: Int, v: Int, bytes: Int) {
         for (i in 0 until bytes) p[at + i] = (v ushr (8 * i)).toByte()

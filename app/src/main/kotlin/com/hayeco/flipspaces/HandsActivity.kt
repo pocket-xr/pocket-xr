@@ -56,9 +56,9 @@ class HandsActivity : ComponentActivity() {
     private val askMic = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         android.util.Log.i("FlipSpacesHands", "Microphone permission (for \"Always\" on the plug-in prompt) ${if (granted) "granted" else "denied"}")
         message = if (granted) {
-            "Thanks. On the next plug-in, tick \"Always\" on Android's prompt."
+            getString(R.string.hands_mic_thanks)
         } else {
-            "Without it Android asks at every plug-in. You can allow it here later."
+            getString(R.string.hands_mic_denied)
         }
         refresh()
     }
@@ -67,11 +67,11 @@ class HandsActivity : ComponentActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             message = if (intent.action == UsbManager.ACTION_USB_DEVICE_DETACHED) {
                 // Not a permission answer: the detach broadcast carries no grant extra.
-                if (HandTrackingService.isRunning()) "The glasses disconnected from USB; hand tracking resumes when they are back." else null
+                if (HandTrackingService.isRunning()) getString(R.string.hands_usb_detached) else null
             } else if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                "USB access to the glasses allowed."
+                getString(R.string.hands_usb_allowed)
             } else {
-                "USB access to the glasses was not allowed."
+                getString(R.string.hands_usb_denied)
             }
             refresh()
         }
@@ -140,7 +140,7 @@ class HandsActivity : ComponentActivity() {
                             runOnUiThread { refresh() }
                         }.start()
                     },
-                    onStartHands = { message = HandInputManager.startHands(this) ?: "Starting hand tracking on the glasses camera." },
+                    onStartHands = { message = HandInputManager.startHands(this) ?: getString(R.string.hands_starting) },
                     onStopHands = { HandInputManager.stopHands(this) },
                     onRefresh = { refresh() },
                     onAutoStartChange = {
@@ -160,16 +160,16 @@ class HandsActivity : ComponentActivity() {
                     onCalibrate = {
                         message = if (SpaceSession.active) {
                             SpaceSession.send(SpaceCommand.CalibrateHands)
-                            "Look at the glasses: point at each dot and pinch. Tap again to cancel."
+                            getString(R.string.hands_calibrate_look)
                         } else {
-                            "Open the Space on the glasses first, with hands running."
+                            getString(R.string.hands_open_space_first)
                         }
                     },
                     onResetCalibration = {
                         prefs.calibration = RayCalibration.IDENTITY
                         prefs.calibrationRmsDeg = -1f
                         HandFeed.endCalibration(RayCalibration.IDENTITY)
-                        message = "Hand calibration reset."
+                        message = getString(R.string.hands_calibration_reset)
                         refresh()
                     },
                     // 0.5.101 (Mike: a reset to Pocket XR's defaults on each settings screen).
@@ -180,7 +180,7 @@ class HandsActivity : ComponentActivity() {
                         prefs.shoulderRay = false
                         HandFeed.endCalibration(RayCalibration.IDENTITY)
                         HandFeed.resize()
-                        message = "Hands settings are back to Pocket XR's defaults."
+                        message = getString(R.string.hands_reset_done)
                         refresh()
                     },
                 )
@@ -256,8 +256,8 @@ class HandsActivity : ComponentActivity() {
             twoHands = prefs.twoHands,
             // Shown once, after hands have been started (when the plug-in prompt matters).
             usbHint = !prefs.usbHintShown && prefs.autoStart,
-            calibration = if (fit.isIdentity) "not calibrated (camera defaults: ${CameraModel().line()})" else
-                "%s, %.1f degrees off on its dots".format(java.util.Locale.ROOT, fit.line(), rms),
+            calibration = if (fit.isIdentity) getString(R.string.hands_not_calibrated_defaults, CameraModel().line()) else
+                getString(R.string.hands_calibrated_fit, fit.line(), rms),
             micAllowed = UsbPrompt.recordAudioGranted(this),
         )
     }
@@ -276,7 +276,7 @@ class HandsActivity : ComponentActivity() {
             val error = HandModelStore.download(this)
             runOnUiThread {
                 downloading = false
-                message = error ?: "Hand model downloaded."
+                message = error ?: getString(R.string.hands_model_downloaded)
                 refresh()
             }
         }.start()

@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.atan
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -246,13 +247,13 @@ object EdgeCheck {
  *   hint to set Display size 100 % on them, so the phone's projection and their screen agree.
  */
 object FullViewHint {
-    const val TWO_D = "Full view: glasses 3D mode, Display size 100 %"
+    val TWO_D: String get() = UiText.get("spatial_full_view_two_d", "Full view: glasses 3D mode, Display size 100 %")
 
     /** The hint for the glasses' mode ([sbs]) and the screen in use, or null when there is nothing to say. */
     fun hint(sbs: Boolean, screen: GlassesScreen, confirmed: Boolean): String? = when {
         !sbs -> TWO_D
-        screen.sizeFactor < GlassesScreen.FULL - 1e-3f -> "Glasses screen %.0f %%: set Display size 100 %% on them".format(java.util.Locale.ROOT, screen.sizeFactor * 100)
-        !confirmed -> "For the full view: Display size 100 % on the glasses"
+        screen.sizeFactor < GlassesScreen.FULL - 1e-3f -> UiText.format("spatial_full_view_size", "Glasses screen %1\$.0f %%: set Display size 100 %% on them", screen.sizeFactor * 100)
+        !confirmed -> UiText.get("spatial_full_view_unconfirmed", "For the full view: Display size 100 % on the glasses")
         else -> null
     }
 }

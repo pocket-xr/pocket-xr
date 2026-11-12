@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import com.hayeco.flipspaces.FlipSpacesApp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.hands.HandProviderKind
 import com.hayeco.flipspaces.core.hands.HandStatus
 import com.hayeco.flipspaces.core.pointer.PointerSignal
@@ -45,7 +47,7 @@ object PointerHub {
         main.post {
             val s = session
             if (s == null) {
-                if (signal is PointerSignal.Down || (signal as? PointerSignal.ForHand)?.signal is PointerSignal.Down) report("Install the Pocket XR add-on and turn on its pointer service to click on the glasses.")
+                if (signal is PointerSignal.Down || (signal as? PointerSignal.ForHand)?.signal is PointerSignal.Down) report(FlipSpacesApp.text(R.string.sys_pointer_install_addon))
                 return@post
             }
             s.onSignal(signal, source)

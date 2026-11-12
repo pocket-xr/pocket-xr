@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import com.hayeco.flipspaces.core.pointer.PadHaptic
 import kotlin.math.abs
 import kotlin.math.asin
@@ -376,7 +377,7 @@ object CurveControl {
     }
 
     /** "FLAT" or "CURVE 40 %", for the held window's guide. */
-    fun guide(curve: Float): String = if (curve <= PanelCurve.FLAT_EPS) "FLAT" else "CURVE %d %%".format(java.util.Locale.ROOT, PanelCurve.percent(curve))
+    fun guide(curve: Float): String = if (curve <= PanelCurve.FLAT_EPS) UiText.get("spatial_guide_flat", "FLAT") else UiText.format("spatial_guide_curve", "CURVE %1\$d %%", PanelCurve.percent(curve))
 }
 
 /**

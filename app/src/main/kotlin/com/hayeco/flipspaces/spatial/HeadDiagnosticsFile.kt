@@ -95,7 +95,7 @@ object HeadDiagnosticsFile {
                 .onSuccess { u -> send.putExtra(Intent.EXTRA_STREAM, u).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }
                 .onFailure { Log.i(TAG, "the diagnostics file is not attached: ${it.message}") }
         }
-        runCatching { context.startActivity(Intent.createChooser(send, "Share the head tracking diagnostics").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        runCatching { context.startActivity(Intent.createChooser(send, context.getString(com.hayeco.flipspaces.R.string.head_share_chooser)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             .onFailure { Log.i(TAG, "no share sheet: ${it.message}") }
         return file
     }

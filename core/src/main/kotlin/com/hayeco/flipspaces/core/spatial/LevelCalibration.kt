@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.atan2
 import kotlin.math.tan
 
@@ -43,9 +44,9 @@ object LevelCalibration {
 
     /** 0.5.16: why a reading cannot be a mount, in plain words with the reading; null when it can. */
     fun refusal(rollDeg: Float, pitchDeg: Float): String? = when {
-        !rollDeg.isFinite() || !pitchDeg.isFinite() -> "the reading is not a number"
-        kotlin.math.abs(rollDeg) > MAX_ROLL_DEG -> String.format(java.util.Locale.ROOT, "roll %.1f degrees is more than %.0f", rollDeg, MAX_ROLL_DEG)
-        kotlin.math.abs(pitchDeg) > MAX_PITCH_DEG -> String.format(java.util.Locale.ROOT, "pitch %.1f degrees is more than %.0f", pitchDeg, MAX_PITCH_DEG)
+        !rollDeg.isFinite() || !pitchDeg.isFinite() -> UiText.get("spatial_level_not_a_number", "the reading is not a number")
+        kotlin.math.abs(rollDeg) > MAX_ROLL_DEG -> UiText.format("spatial_level_roll_too_much", "roll %1\$.1f degrees is more than %2\$.0f", rollDeg, MAX_ROLL_DEG)
+        kotlin.math.abs(pitchDeg) > MAX_PITCH_DEG -> UiText.format("spatial_level_pitch_too_much", "pitch %1\$.1f degrees is more than %2\$.0f", pitchDeg, MAX_PITCH_DEG)
         else -> null
     }
 

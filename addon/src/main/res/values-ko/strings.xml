@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pocket XR 애드온</string>
+    <string name="pointer_service_label">Pocket XR 포인터</string>
+    <string name="pointer_service_description">Pocket XR에서 손이나 휴대전화 화면으로 XR 글래스를 조작할 수 있게 해 줘요. 글래스에 커서를 그리고, 글래스 디스플레이에서 앱 창의 위치(위치, 크기, 창 제목)와 DeX 창 제목 표시줄 버튼의 이름을 읽고, 그곳에서 탭과 드래그를 수행해서 창을 클릭하고, 옮기고, 크기를 조절할 수 있게 해요. 휴대전화 자체 화면에서는 아무것도 하지 않으며, 입력하는 내용이나 앱 창 안의 내용은 읽지 않고, 휴대전화 밖으로 아무것도 보내지 않아요.</string>
+    <string name="addon_link_permission_label">Pocket XR 애드온 연결</string>
+    <string name="addon_setup_intro">Pocket XR을 위한 선택 서비스 두 가지예요. 각 서비스는 아래에서 동의하고 Android 설정에서 켜기 전까지 꺼져 있어요.</string>
+    <string name="addon_setup_it_reads">읽는 정보:</string>
+    <string name="addon_setup_on">켜짐. Android 설정에서 언제든지 끌 수 있어요.</string>
+    <string name="addon_setup_open_settings">설정 열기</string>
+    <string name="addon_hand_tip">핀치하면 클릭. 제목 표시줄을 핀치한 채로 있으면 이동, 모서리는 크기 조절. 손바닥을 펴면 독.</string>
+    <string name="addon_hint_moving">이동 중</string>
+    <string name="addon_hint_hold_move">유지하면 이동</string>
+    <string name="addon_hint_resizing">크기 조절 중</string>
+    <string name="addon_hint_hold_resize">유지하면 크기 조절</string>
+    <string name="addon_hint_dock">독</string>
+    <string name="addon_status_hand">%1$s: 손 인식됨</string>
+    <string name="addon_status_no_hand">%1$s: 보이는 손 없음</string>
+    <string name="addon_cursor_failed">글래스에 커서를 그릴 수 없어요: %1$s</string>
+    <string name="addon_gesture_tap_failed">탭 제스처를 만들 수 없어요: %1$s</string>
+    <string name="addon_gesture_build_failed">%1$s 제스처를 만들 수 없어요: %2$s</string>
+    <string name="addon_gesture_cancelled">Android가 글래스에서 %1$s 동작을 취소했어요(다른 터치 또는 시스템 제스처).</string>
+    <string name="addon_gesture_refused">Android가 디스플레이 %2$d에서 %1$s 동작을 거부했어요. Pocket XR 포인터 서비스가 아직 켜져 있나요?</string>
+    <string name="core_disclosure_agree">동의하고 켜기</string>
+    <string name="core_disclosure_decline">괜찮아요</string>
+    <string name="core_disclosure_pointer_title">Pocket XR 포인터는 접근성 서비스 API를 사용해요</string>
+    <string name="core_disclosure_pointer_intro">Pocket XR은 접근성 도구가 아니에요. Android의 AccessibilityService API는 한 가지 용도로만 사용해요: 스페이스 밖에서 손이나 휴대전화 화면으로 움직이는 커서를 XR 글래스에 제공하는 것이에요.</string>
+    <string name="core_disclosure_pointer_reads_windows">글래스 디스플레이에서 앱 창의 위치: 위치, 크기, 창 제목.</string>
+    <string name="core_disclosure_pointer_reads_dex">글래스 디스플레이에 있는 DeX 창 제목 표시줄 버튼의 이름. 전체 화면 버튼을 찾아 누르기 위해 사용해요.</string>
+    <string name="core_disclosure_pointer_use">글래스에 커서를 그리고 그곳에서 하는 탭과 드래그를 수행해서 창을 클릭하고, 옮기고, 크기를 조절할 수 있게 해요. 휴대전화 자체 화면에서는 아무것도 하지 않으며, 입력하는 내용이나 앱 창 안의 내용은 읽지 않아요.</string>
+    <string name="core_disclosure_sharing">읽은 정보는 저장, 수집되거나 휴대전화 밖으로 전송되지 않아요. 이 휴대전화의 Pocket XR 앱과만 공유하고, 다른 누구와도 공유하지 않아요.</string>
+    <string name="core_disclosure_pointer_without">이 서비스가 없어도 스페이스, 트랙패드, 핸드 트래킹은 작동해요. 스페이스 밖의 커서만 없어요.</string>
+    <string name="core_disclosure_notes_title">Pocket XR 애드온은 알림 접근 권한을 사용해요</string>
+    <string name="core_disclosure_notes_intro">Pocket XR은 XR 글래스의 스페이스 알림 페이지에 휴대전화 알림을 표시할 수 있어요.</string>
+    <string name="core_disclosure_notes_reads_notifications">알림: 각 알림의 앱, 제목, 내용, 받은 시간.</string>
+    <string name="core_disclosure_notes_reads_media">미디어를 재생 중인 앱(재생 중인 미디어 컨트롤용).</string>
+    <string name="core_disclosure_notes_use">글래스에 알림을 표시하고, 알림을 누르면 해당 앱을 열고, 지운 알림은 삭제해요.</string>
+    <string name="core_disclosure_notes_without">이 권한이 없어도 Pocket XR의 다른 기능은 모두 작동해요. 알림 페이지만 비어 있어요.</string>
+    <string name="core_disclosure_it_reads">읽는 정보:</string>
+</resources>

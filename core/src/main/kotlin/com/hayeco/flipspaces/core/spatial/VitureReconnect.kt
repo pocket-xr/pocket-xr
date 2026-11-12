@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 1.2.10 (Discussion #24, second report, a VITURE Beast on 1.2.8): which of VITURE's USB devices has the motion sensor,
  * and the Beast's own axes.
@@ -53,7 +55,7 @@ object VitureDevices {
     fun headTrackingOn(saved: Boolean?, productId: Int?): Boolean = saved ?: headTrackingByDefault(productId)
 
     /** The switch's name: plain on the Beast, still marked Experimental on other VITURE models. */
-    fun switchLabel(productId: Int?): String = if (productId == BEAST) "VITURE head tracking" else "Experimental VITURE head tracking"
+    fun switchLabel(productId: Int?): String = if (productId == BEAST) UiText.get("spatial_viture_switch", "VITURE head tracking") else UiText.get("spatial_viture_switch_experimental", "Experimental VITURE head tracking")
 }
 
 /**

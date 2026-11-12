@@ -5,6 +5,7 @@ import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.util.Log
 import android.view.Display
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.hands.ProviderStatus
 import com.hayeco.flipspaces.core.spatial.GlassesReport
 import com.hayeco.flipspaces.core.spatial.HeadTrackingStatus
@@ -87,7 +88,7 @@ object GlassesReportFile {
                 .onSuccess { u -> send.putExtra(Intent.EXTRA_STREAM, u).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }
                 .onFailure { Log.i(TAG, "the report file is not attached: ${it.message}") }
         }
-        runCatching { context.startActivity(Intent.createChooser(send, "Share the glasses report").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        runCatching { context.startActivity(Intent.createChooser(send, context.getString(R.string.sys_report_share_title)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             .onFailure { Log.i(TAG, "no share sheet: ${it.message}") }
         return file
     }

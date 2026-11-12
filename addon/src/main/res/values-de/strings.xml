@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pocket XR Add-on</string>
+    <string name="pointer_service_label">Pocket XR-Zeiger</string>
+    <string name="pointer_service_description">Damit steuerst du deine XR-Brille in Pocket XR mit den Händen oder dem Handybildschirm. Er zeichnet einen Cursor auf die Brille, liest, wo App-Fenster auf dem Brillendisplay sind (Position, Größe und Fenstertitel), sowie die Beschriftungen der Tasten in den DeX-Titelleisten dort, und führt dort Tipp- und Ziehgesten aus, damit du Fenster anklicken, verschieben und in der Größe ändern kannst. Auf dem Handybildschirm selbst tut er nichts, er liest nicht, was du tippst oder was in App-Fenstern steht, und sendet nichts vom Handy weg.</string>
+    <string name="addon_link_permission_label">Pocket XR Add-on-Verbindung</string>
+    <string name="addon_setup_intro">Zwei optionale Dienste für Pocket XR. Jeder bleibt aus, bis du unten zustimmst und ihn in den Android-Einstellungen einschaltest.</string>
+    <string name="addon_setup_it_reads">Er liest:</string>
+    <string name="addon_setup_on">An. Du kannst ihn jederzeit in den Android-Einstellungen ausschalten.</string>
+    <string name="addon_setup_open_settings">Einstellungen öffnen</string>
+    <string name="addon_hand_tip">Pinch zum Klicken. Pinch auf eine Titelleiste halten zum Verschieben, auf eine Ecke für die Größe. Offene Hand für das Dock.</string>
+    <string name="addon_hint_moving">Verschieben</string>
+    <string name="addon_hint_hold_move">Halten zum Verschieben</string>
+    <string name="addon_hint_resizing">Größe ändern</string>
+    <string name="addon_hint_hold_resize">Halten für Größe</string>
+    <string name="addon_hint_dock">Dock</string>
+    <string name="addon_status_hand">%1$s: Hand</string>
+    <string name="addon_status_no_hand">%1$s: keine Hand im Blick</string>
+    <string name="addon_cursor_failed">Cursor konnte nicht auf die Brille gezeichnet werden: %1$s</string>
+    <string name="addon_gesture_tap_failed">Tippgeste konnte nicht erstellt werden: %1$s</string>
+    <string name="addon_gesture_build_failed">Geste „%1$s“ konnte nicht erstellt werden: %2$s</string>
+    <string name="addon_gesture_cancelled">Android hat „%1$s“ auf der Brille abgebrochen (eine andere Berührung oder eine Systemgeste).</string>
+    <string name="addon_gesture_refused">Android hat „%1$s“ auf Display %2$d abgelehnt. Ist der Pocket XR-Zeigerdienst noch an?</string>
+    <string name="core_disclosure_agree">Zustimmen und einschalten</string>
+    <string name="core_disclosure_decline">Nein danke</string>
+    <string name="core_disclosure_pointer_title">Pocket XR-Zeiger nutzt die Bedienungshilfe-API (AccessibilityService)</string>
+    <string name="core_disclosure_pointer_intro">Pocket XR ist kein Bedienungshilfe-Tool. Es nutzt die AccessibilityService-API von Android für genau eine Aufgabe: deiner XR-Brille einen Cursor zu geben, den du außerhalb des Space mit den Händen oder dem Handybildschirm bewegst.</string>
+    <string name="core_disclosure_pointer_reads_windows">Wo App-Fenster auf dem Brillendisplay sind: ihre Position, Größe und ihr Fenstertitel.</string>
+    <string name="core_disclosure_pointer_reads_dex">Die Beschriftungen der Tasten in den DeX-Titelleisten auf dem Brillendisplay, um die Vollbildtaste zu finden und zu drücken.</string>
+    <string name="core_disclosure_pointer_use">Er zeichnet den Cursor auf die Brille und führt die Tipp- und Ziehgesten aus, die du dort machst, damit du Fenster anklicken, verschieben und in der Größe ändern kannst. Auf dem Handybildschirm selbst tut er nichts, und er liest nicht, was du tippst oder was in App-Fenstern steht.</string>
+    <string name="core_disclosure_sharing">Nichts, was er liest, wird gespeichert, gesammelt oder vom Handy weggesendet. Es wird nur mit der Pocket XR-App auf diesem Handy geteilt, mit niemandem sonst.</string>
+    <string name="core_disclosure_pointer_without">Ohne ihn funktionieren der Space, das Trackpad und das Hand-Tracking weiter; nur der Cursor außerhalb des Space fehlt.</string>
+    <string name="core_disclosure_notes_title">Pocket XR Add-on nutzt den Zugriff auf Benachrichtigungen</string>
+    <string name="core_disclosure_notes_intro">Pocket XR kann die Benachrichtigungen deines Handys auf der Seite „Benachrichtigungen“ im Space in deiner XR-Brille zeigen.</string>
+    <string name="core_disclosure_notes_reads_notifications">Deine Benachrichtigungen: App, Titel und Text jeder einzelnen und wann sie kam.</string>
+    <string name="core_disclosure_notes_reads_media">Welche Apps Medien abspielen, für die Steuerung „Aktuelle Wiedergabe“.</string>
+    <string name="core_disclosure_notes_use">Er zeigt sie in der Brille, öffnet die App einer Benachrichtigung, wenn du darauf drückst, und entfernt die, die du löschst.</string>
+    <string name="core_disclosure_notes_without">Ohne ihn funktioniert alles andere in Pocket XR; die Seite „Benachrichtigungen“ bleibt leer.</string>
+    <string name="core_disclosure_it_reads">Er liest:</string>
+</resources>

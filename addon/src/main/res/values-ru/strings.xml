@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Дополнение Pocket XR</string>
+    <string name="pointer_service_label">Указатель Pocket XR</string>
+    <string name="pointer_service_description">Позволяет управлять XR-очками руками или экраном телефона в Pocket XR. Рисует курсор в очках, считывает, где находятся окна приложений на дисплее очков (положение, размер и заголовок окна), и подписи кнопок в строках заголовка окон DeX там, а также выполняет там нажатия и перетаскивания, чтобы вы могли нажимать, перемещать окна и менять их размер. Ничего не делает на экране самого телефона, не читает то, что вы вводите, и содержимое окон приложений и ничего не отправляет с телефона.</string>
+    <string name="addon_link_permission_label">Связь с дополнением Pocket XR</string>
+    <string name="addon_setup_intro">Две необязательные службы для Pocket XR. Каждая остаётся выключенной, пока вы не согласитесь ниже и не включите её в настройках Android.</string>
+    <string name="addon_setup_it_reads">Что она считывает:</string>
+    <string name="addon_setup_on">Вкл. Её можно выключить в настройках Android в любой момент.</string>
+    <string name="addon_setup_open_settings">Открыть настройки</string>
+    <string name="addon_hand_tip">Сведите пальцы для клика. Сведите и держите на строке заголовка, чтобы переместить, на углу, чтобы изменить размер. Раскрытая ладонь открывает док.</string>
+    <string name="addon_hint_moving">Перемещение</string>
+    <string name="addon_hint_hold_move">Держите, чтобы переместить</string>
+    <string name="addon_hint_resizing">Изменение размера</string>
+    <string name="addon_hint_hold_resize">Держите, чтобы изменить размер</string>
+    <string name="addon_hint_dock">Док</string>
+    <string name="addon_status_hand">%1$s: рука</string>
+    <string name="addon_status_no_hand">%1$s: руки не видно</string>
+    <string name="addon_cursor_failed">Не удалось нарисовать курсор в очках: %1$s</string>
+    <string name="addon_gesture_tap_failed">Не удалось создать жест нажатия: %1$s</string>
+    <string name="addon_gesture_build_failed">Не удалось создать жест «%1$s»: %2$s</string>
+    <string name="addon_gesture_cancelled">Android отменил «%1$s» в очках (другое касание или системный жест).</string>
+    <string name="addon_gesture_refused">Android отклонил «%1$s» на дисплее %2$d. Служба указателя Pocket XR всё ещё включена?</string>
+    <string name="core_disclosure_agree">Согласиться и включить</string>
+    <string name="core_disclosure_decline">Нет, спасибо</string>
+    <string name="core_disclosure_pointer_title">Указатель Pocket XR использует API службы специальных возможностей</string>
+    <string name="core_disclosure_pointer_intro">Pocket XR не является средством специальных возможностей. Он использует API AccessibilityService Android для одной задачи: дать вашим XR-очкам курсор, которым вы управляете руками или экраном телефона вне Пространства.</string>
+    <string name="core_disclosure_pointer_reads_windows">Где находятся окна приложений на дисплее очков: их положение, размер и заголовок окна.</string>
+    <string name="core_disclosure_pointer_reads_dex">Подписи кнопок в строках заголовка окон DeX на дисплее очков, чтобы найти и нажать кнопку полноэкранного режима.</string>
+    <string name="core_disclosure_pointer_use">Он рисует курсор в очках и выполняет ваши нажатия и перетаскивания там, чтобы вы могли нажимать, перемещать окна и менять их размер. Он ничего не делает на экране самого телефона и не читает то, что вы вводите, и содержимое окон приложений.</string>
+    <string name="core_disclosure_sharing">Ничего из считанного не хранится, не собирается и не отправляется с телефона. Это передаётся только приложению Pocket XR на этом телефоне и больше никому.</string>
+    <string name="core_disclosure_pointer_without">Без него Пространство, трекпад и отслеживание рук работают; не будет только курсора вне Пространства.</string>
+    <string name="core_disclosure_notes_title">Дополнение Pocket XR использует доступ к уведомлениям</string>
+    <string name="core_disclosure_notes_intro">Pocket XR может показывать уведомления телефона на странице «Уведомления» Пространства в ваших XR-очках.</string>
+    <string name="core_disclosure_notes_reads_notifications">Ваши уведомления: приложение, заголовок и текст каждого и время поступления.</string>
+    <string name="core_disclosure_notes_reads_media">Какие приложения воспроизводят медиа, для элементов управления воспроизведением.</string>
+    <string name="core_disclosure_notes_use">Он показывает их в очках, открывает приложение уведомления, когда вы на него нажимаете, и смахивает те, что вы очищаете.</string>
+    <string name="core_disclosure_notes_without">Без него всё остальное в Pocket XR работает; страница «Уведомления» остаётся пустой.</string>
+    <string name="core_disclosure_it_reads">Что он считывает:</string>
+</resources>

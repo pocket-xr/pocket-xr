@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Complemento do Pocket XR</string>
+    <string name="pointer_service_label">Ponteiro do Pocket XR</string>
+    <string name="pointer_service_description">Permite controlar seus óculos XR com as mãos ou com a tela do celular no Pocket XR. Ele desenha um cursor nos óculos, lê onde estão as janelas dos apps na tela dos óculos (posição, tamanho e título da janela) e os rótulos dos botões nas barras de título das janelas do DeX ali, e faz toques e arrastes ali para você clicar, mover e redimensionar janelas. Ele não faz nada na tela do próprio celular, não lê o que você digita nem o que há dentro das janelas dos apps e não envia nada para fora do celular.</string>
+    <string name="addon_link_permission_label">Link do complemento do Pocket XR</string>
+    <string name="addon_setup_intro">Dois serviços opcionais para o Pocket XR. Cada um fica desligado até você concordar abaixo e ativá-lo nas configurações do Android.</string>
+    <string name="addon_setup_it_reads">Ele lê:</string>
+    <string name="addon_setup_on">Ligado. Você pode desativar nas configurações do Android quando quiser.</string>
+    <string name="addon_setup_open_settings">Abrir configurações</string>
+    <string name="addon_hand_tip">Faça pinça para clicar. Pinça segurando uma barra de título para mover, um canto para redimensionar. Mão aberta para a dock.</string>
+    <string name="addon_hint_moving">Movendo</string>
+    <string name="addon_hint_hold_move">Segure para mover</string>
+    <string name="addon_hint_resizing">Redimensionando</string>
+    <string name="addon_hint_hold_resize">Segure para redimensionar</string>
+    <string name="addon_hint_dock">Dock</string>
+    <string name="addon_status_hand">%1$s: mão</string>
+    <string name="addon_status_no_hand">%1$s: nenhuma mão à vista</string>
+    <string name="addon_cursor_failed">Não foi possível desenhar o cursor nos óculos: %1$s</string>
+    <string name="addon_gesture_tap_failed">Não foi possível criar o gesto de toque: %1$s</string>
+    <string name="addon_gesture_build_failed">Não foi possível criar o gesto %1$s: %2$s</string>
+    <string name="addon_gesture_cancelled">O Android cancelou o gesto %1$s nos óculos (outro toque ou um gesto do sistema).</string>
+    <string name="addon_gesture_refused">O Android recusou o gesto %1$s na tela %2$d. O serviço Ponteiro do Pocket XR ainda está ativado?</string>
+    <string name="core_disclosure_agree">Concordar e ativar</string>
+    <string name="core_disclosure_decline">Não, obrigado</string>
+    <string name="core_disclosure_pointer_title">O Ponteiro do Pocket XR usa a API do serviço de acessibilidade</string>
+    <string name="core_disclosure_pointer_intro">O Pocket XR não é uma ferramenta de acessibilidade. Ele usa a API AccessibilityService do Android para uma única tarefa: dar aos seus óculos XR um cursor que você move com as mãos ou com a tela do celular, fora do Espaço.</string>
+    <string name="core_disclosure_pointer_reads_windows">Onde estão as janelas dos apps na tela dos óculos: posição, tamanho e título da janela.</string>
+    <string name="core_disclosure_pointer_reads_dex">Os rótulos dos botões nas barras de título das janelas do DeX na tela dos óculos, para achar e apertar o botão de tela cheia.</string>
+    <string name="core_disclosure_pointer_use">Ele desenha o cursor nos óculos e faz os toques e arrastes que você faz ali, para você clicar, mover e redimensionar janelas. Ele não faz nada na tela do próprio celular e não lê o que você digita nem o que há dentro das janelas dos apps.</string>
+    <string name="core_disclosure_sharing">Nada do que ele lê é armazenado, coletado ou enviado para fora do celular. É compartilhado só com o app Pocket XR neste celular, e com mais ninguém.</string>
+    <string name="core_disclosure_pointer_without">Sem ele, o Espaço, o trackpad e o rastreamento de mãos continuam funcionando; só falta o cursor fora do Espaço.</string>
+    <string name="core_disclosure_notes_title">O complemento do Pocket XR usa o acesso às notificações</string>
+    <string name="core_disclosure_notes_intro">O Pocket XR pode mostrar as notificações do celular na página Notificações do Espaço nos seus óculos XR.</string>
+    <string name="core_disclosure_notes_reads_notifications">Suas notificações: o app, o título e o texto de cada uma, e quando chegou.</string>
+    <string name="core_disclosure_notes_reads_media">Quais apps estão tocando mídia, para os controles do que está tocando.</string>
+    <string name="core_disclosure_notes_use">Ele as mostra nos óculos, abre o app de uma notificação quando você a toca e dispensa as que você limpar.</string>
+    <string name="core_disclosure_notes_without">Sem ele, todo o resto do Pocket XR funciona; a página Notificações fica vazia.</string>
+    <string name="core_disclosure_it_reads">Ele lê:</string>
+</resources>

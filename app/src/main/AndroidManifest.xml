@@ -38,7 +38,7 @@
          it is granted whichever of the two apps is installed first. -->
     <permission
         android:name="${applicationId}.permission.ADDON_LINK"
-        android:label="Pocket XR add-on link"
+        android:label="@string/manifest_addon_link_permission"
         android:protectionLevel="signature" />
     <uses-permission android:name="${applicationId}.permission.ADDON_LINK" />
 
@@ -81,6 +81,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
+        android:localeConfig="@xml/locales_config"
         android:label="@string/app_label"
         android:supportsRtl="true"
         android:theme="@style/Theme.FlipSpaces">
@@ -154,7 +155,7 @@
         <activity
             android:name=".HandsActivity"
             android:exported="false"
-            android:label="Hands and trackpad" />
+            android:label="@string/manifest_hands_and_trackpad" />
 
         <!-- The Flip's main screen as a trackpad for the glasses cursor. 0.5.17:
              each page locks its own orientation and a turn or a fold never recreates the screen
@@ -170,7 +171,7 @@
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|density|uiMode|fontScale|fontWeightAdjustment"
             android:excludeFromRecents="false"
             android:exported="false"
-            android:label="Trackpad"
+            android:label="@string/manifest_trackpad"
             android:resizeableActivity="true"
             android:screenOrientation="unspecified"
             android:showWhenLocked="true"
@@ -187,13 +188,13 @@
         <activity
             android:name=".SpatialActivity"
             android:exported="false"
-            android:label="Spatial windows" />
+            android:label="@string/manifest_spatial_windows" />
 
         <!-- Diagnostics for the glasses' head tracking stream. -->
         <activity
             android:name=".HeadTrackingActivity"
             android:exported="false"
-            android:label="Glasses head tracking" />
+            android:label="@string/manifest_head_tracking" />
 
         <!-- The Space: full screen OpenGL scene of app panels on the glasses, with its own
              launcher; opened on plug-in whenever Shizuku is ready (0.4.0). 0.4.3: exported so
@@ -231,7 +232,7 @@
             android:name=".pcvr.PcVrTile"
             android:exported="false"
             android:icon="@drawable/ic_pcvr_tile"
-            android:label="PC VR"
+            android:label="@string/manifest_pc_vr"
             android:targetActivity=".spatial.SpaceActivity" />
 
         <!-- 1.1.0: the pointer accessibility service and the notification listener are in the Pocket XR

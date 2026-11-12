@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pocket XR 外掛程式</string>
+    <string name="pointer_service_label">Pocket XR 指標</string>
+    <string name="pointer_service_description">讓你在 Pocket XR 中用手或手機螢幕控制 XR 眼鏡。它會在眼鏡上繪製游標，讀取應用程式視窗在眼鏡顯示畫面上的位置 (位置、大小和視窗標題) 以及 DeX 視窗標題列中的按鈕標籤，並在那裡執行輕觸和拖曳，讓你可以點擊、移動和調整視窗大小。它不會在手機本身的螢幕上執行任何操作，不會讀取你輸入的內容或應用程式視窗內的內容，也不會將任何資料傳出手機。</string>
+    <string name="addon_link_permission_label">Pocket XR 外掛程式連結</string>
+    <string name="addon_setup_intro">Pocket XR 的兩項選用服務。每項服務都會保持關閉，直到你在下方同意並在 Android 設定中開啟。</string>
+    <string name="addon_setup_it_reads">它會讀取：</string>
+    <string name="addon_setup_on">已開啟。你隨時可以在 Android 設定中關閉。</string>
+    <string name="addon_setup_open_settings">開啟設定</string>
+    <string name="addon_hand_tip">捏合即可點擊。捏住標題列可移動，捏住角落可調整大小。張開手掌可開啟 Dock。</string>
+    <string name="addon_hint_moving">移動中</string>
+    <string name="addon_hint_hold_move">按住即可移動</string>
+    <string name="addon_hint_resizing">正在調整大小</string>
+    <string name="addon_hint_hold_resize">按住即可調整大小</string>
+    <string name="addon_hint_dock">Dock</string>
+    <string name="addon_status_hand">%1$s：偵測到手</string>
+    <string name="addon_status_no_hand">%1$s：視野中沒有手</string>
+    <string name="addon_cursor_failed">無法在眼鏡上繪製游標：%1$s</string>
+    <string name="addon_gesture_tap_failed">無法建立輕觸手勢：%1$s</string>
+    <string name="addon_gesture_build_failed">無法建立%1$s手勢：%2$s</string>
+    <string name="addon_gesture_cancelled">Android 取消了眼鏡上的%1$s (有其他觸控或系統手勢)。</string>
+    <string name="addon_gesture_refused">Android 拒絕了顯示器 %2$d 上的%1$s。Pocket XR 指標服務是否仍在開啟狀態？</string>
+    <string name="core_disclosure_agree">同意並開啟</string>
+    <string name="core_disclosure_decline">不用了，謝謝</string>
+    <string name="core_disclosure_pointer_title">Pocket XR 指標使用無障礙服務 API</string>
+    <string name="core_disclosure_pointer_intro">Pocket XR 不是無障礙工具。它只為了一個目的使用 Android 的 AccessibilityService API：在空間之外，為你的 XR 眼鏡提供可用手或手機螢幕移動的游標。</string>
+    <string name="core_disclosure_pointer_reads_windows">應用程式視窗在眼鏡顯示畫面上的位置：位置、大小和視窗標題。</string>
+    <string name="core_disclosure_pointer_reads_dex">眼鏡顯示畫面上 DeX 視窗標題列中的按鈕標籤，用來找到並按下全螢幕按鈕。</string>
+    <string name="core_disclosure_pointer_use">它會在眼鏡上繪製游標，並執行你在那裡做的輕觸和拖曳，讓你可以點擊、移動和調整視窗大小。它不會在手機本身的螢幕上執行任何操作，也不會讀取你輸入的內容或應用程式視窗內的內容。</string>
+    <string name="core_disclosure_sharing">它讀取的任何內容都不會被儲存、收集或傳出手機，只會提供給這支手機上的 Pocket XR 應用程式，不會分享給其他任何人。</string>
+    <string name="core_disclosure_pointer_without">沒有它，空間、觸控板和手部追蹤仍可正常使用，只是在空間之外不會有游標。</string>
+    <string name="core_disclosure_notes_title">Pocket XR 外掛程式使用通知存取權</string>
+    <string name="core_disclosure_notes_intro">Pocket XR 可以在 XR 眼鏡中空間的「通知」頁面顯示手機通知。</string>
+    <string name="core_disclosure_notes_reads_notifications">你的通知：每則通知的應用程式、標題、內文和收到時間。</string>
+    <string name="core_disclosure_notes_reads_media">哪些應用程式正在播放媒體，用於「正在播放」控制項。</string>
+    <string name="core_disclosure_notes_use">它會在眼鏡中顯示通知，在你按下通知時開啟對應的應用程式，並關閉你清除的通知。</string>
+    <string name="core_disclosure_notes_without">沒有它，Pocket XR 的其他功能都能正常使用，只是「通知」頁面會是空的。</string>
+    <string name="core_disclosure_it_reads">它會讀取：</string>
+</resources>

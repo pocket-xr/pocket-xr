@@ -1,10 +1,15 @@
 package com.hayeco.flipspaces.core.hands
 
+import com.hayeco.flipspaces.core.UiText
+
 /** Sources of pointer input, in the order Pocket XR prefers them. */
-enum class HandProviderKind(val label: String) {
-    XREAL_SDK("XREAL SDK hand tracking"),
-    GLASSES_CAMERA("Glasses camera + MediaPipe"),
-    TRACKPAD("Phone trackpad"),
+enum class HandProviderKind(private val labelKey: String, private val labelEnglish: String) {
+    XREAL_SDK("core_provider_xreal_sdk", "XREAL SDK hand tracking"),
+    GLASSES_CAMERA("core_provider_glasses_camera", "Glasses camera + MediaPipe"),
+    TRACKPAD("core_provider_trackpad", "Phone trackpad"),
+    ;
+
+    val label: String get() = UiText.get(labelKey, labelEnglish)
 }
 
 sealed interface ProviderStatus {

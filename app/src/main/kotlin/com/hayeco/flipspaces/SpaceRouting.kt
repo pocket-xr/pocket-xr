@@ -54,9 +54,9 @@ object SpaceRouting {
             GlassesSurface.SPACE -> AppLauncher.openSpace(caller, display.id)?.let { failure ->
                 // The Space would not start: the flat home still gives Mike his apps.
                 ModeLog.decided("$where, display ${display.id}", choice, "Space refused (${failure.message}); flat DeX home instead")
-                SpacesState.setBanner(FlatBanner("Flat mode: Android would not open the Space", failure.message, null))
+                SpacesState.setBanner(FlatBanner(caller.getString(R.string.home_flat_space_refused), failure.message, null))
                 SpacesLauncher.openHome(caller, display)
-                    ?: "Android would not open the Space on the glasses (${failure.message}); showing the flat home."
+                    ?: caller.getString(R.string.home_space_refused_flat_home, failure.message)
             }
             GlassesSurface.FLAT_HOME -> SpacesLauncher.openHome(caller, display)
         }
@@ -80,19 +80,19 @@ object SpaceRouting {
         ModeLog.decided("launch ${app.label} from ${source.name}", choice, route.name)
         SpacesState.setBanner(SpaceRouter.bannerFor(choice, shizuku))
         return when (route) {
-            AppRoute.NO_GLASSES -> "Plug in the glasses first. ${app.label} needs an external display to open on."
+            AppRoute.NO_GLASSES -> caller.getString(R.string.home_plug_in_for_app, app.label)
             AppRoute.DEX_WINDOW -> flat(display!!)
             AppRoute.PANEL -> {
                 SpaceSession.send(SpaceCommand.AddApp(app))
                 // Bring the Space forward if a DeX window or the flat home is over it.
                 if (!SpaceSession.active) AppLauncher.openSpace(caller, display!!.id)
-                "Adding ${app.label} as a panel."
+                caller.getString(R.string.home_adding_panel, app.label)
             }
             AppRoute.OPEN_SPACE_THEN_PANEL -> {
                 // Queued until the Space's first frame, so it is the new Space's first panel.
                 SpaceSession.send(SpaceCommand.AddApp(app))
-                AppLauncher.openSpace(caller, display!!.id)?.let { "Android would not open the Space on the glasses: ${it.message}" }
-                    ?: "Opening the Space with ${app.label} as a panel."
+                AppLauncher.openSpace(caller, display!!.id)?.let { caller.getString(R.string.home_space_refused, it.message) }
+                    ?: caller.getString(R.string.home_opening_space_with_panel, app.label)
             }
         }
     }

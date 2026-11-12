@@ -1,13 +1,14 @@
 package com.hayeco.flipspaces.core.spatial
 
 import com.hayeco.flipspaces.core.ShizukuStatus
+import com.hayeco.flipspaces.core.UiText
 
 /** Where the head tracker got to, step by step, with the exact error when a step failed. */
 sealed interface HeadTrackingStatus {
     val summary: String
 
     data object Off : HeadTrackingStatus {
-        override val summary = "Head tracking is off."
+        override val summary: String get() = UiText.get("spatial_head_off", "Head tracking is off.")
     }
 
     /**
@@ -15,11 +16,11 @@ sealed interface HeadTrackingStatus {
      * switch. Nothing is read from the glasses' motion sensor until it is on again.
      */
     data object TurnedOff : HeadTrackingStatus {
-        override val summary = "Head tracking is turned off in Settings. Windows stay in front of you and turn with your head."
+        override val summary: String get() = UiText.get("spatial_head_turned_off", "Head tracking is turned off in Settings. Windows stay in front of you and turn with your head.")
     }
 
     data object Searching : HeadTrackingStatus {
-        override val summary = "Looking for the glasses' USB network."
+        override val summary: String get() = UiText.get("spatial_head_searching", "Looking for the glasses' USB network.")
     }
 
     /**
@@ -29,9 +30,9 @@ sealed interface HeadTrackingStatus {
      * ([PhoneSystem.name]): One UI only on a Samsung, else Android.
      */
     data class NoNetwork(val networks: List<String>, val system: String = "Android") : HeadTrackingStatus {
-        override val summary =
-            "No USB network to the glasses. Android lists: " + (networks.ifEmpty { listOf("no networks") }.joinToString("; ")) +
-                ". $system may not have brought up the glasses' NCM or ECM interface."
+        override val summary: String get() =
+            UiText.format("spatial_head_no_network", "No USB network to the glasses. Android lists: %1\$s. %2\$s may not have brought up the glasses' NCM or ECM interface.",
+                networks.ifEmpty { listOf(UiText.get("spatial_head_no_networks", "no networks")) }.joinToString("; "), system)
     }
 
     /**
@@ -40,10 +41,9 @@ sealed interface HeadTrackingStatus {
      * this is for the other HID glasses, which have no reader yet.
      */
     data class HidGlasses(val vendorId: Int, val productId: Int, val interfaces: List<String>) : HeadTrackingStatus {
-        override val summary =
-            "These glasses (USB %04X:%04X) send head tracking over USB HID, like XREAL's Air family, not over a USB network. ".format(java.util.Locale.ROOT, vendorId, productId) +
-                "Pocket XR reads it over HID only on the Air, Air 2, Air 2 Pro and Air 2 Ultra, so head tracking is not available on these glasses yet; the Space stays head locked. " +
-                "USB interfaces: " + interfaces.ifEmpty { listOf("none listed") }.joinToString(", ") + "."
+        override val summary: String get() =
+            UiText.format("spatial_head_hid_glasses", "These glasses (USB %1\$04X:%2\$04X) send head tracking over USB HID, like XREAL's Air family, not over a USB network. Pocket XR reads it over HID only on the Air, Air 2, Air 2 Pro and Air 2 Ultra, so head tracking is not available on these glasses yet; the Space stays head locked. USB interfaces: %3\$s.",
+                vendorId, productId, interfaces.ifEmpty { listOf(UiText.get("spatial_head_none_listed", "none listed")) }.joinToString(", "))
     }
 
     /**
@@ -52,57 +52,57 @@ sealed interface HeadTrackingStatus {
      */
     data class VitureNotYet(val productId: Int, val experimentalOn: Boolean = false) : HeadTrackingStatus {
         // 1.2.12: the Beast is read by default; with its switch turned off, the status says so rather than "not supported".
-        override val summary = if (productId == VitureDevices.BEAST && !experimentalOn) {
-            "VITURE head tracking is turned off for the VITURE Beast (USB %04X:%04X), so the Space stays in front of you and turns with your head. ".format(java.util.Locale.ROOT, VitureImuProtocol.VENDOR, productId) +
-                "Turn on VITURE head tracking on the head tracking screen to look around the Space."
+        override val summary: String get() = if (productId == VitureDevices.BEAST && !experimentalOn) {
+            UiText.format("spatial_head_viture_beast_off", "VITURE head tracking is turned off for the VITURE Beast (USB %1\$04X:%2\$04X), so the Space stays in front of you and turns with your head. Turn on VITURE head tracking on the head tracking screen to look around the Space.", VitureImuProtocol.VENDOR, productId)
         } else {
-            "Head tracking isn't supported yet on VITURE glasses (USB %04X:%04X). The Space stays in front of you and turns with your head. ".format(java.util.Locale.ROOT, VitureImuProtocol.VENDOR, productId) +
-                if (experimentalOn) "The experimental VITURE reader is on but got no motion from these glasses. " +
-                    "Record motion for 20 seconds on the head tracking screen and send logs, so they can be added."
-                else "You can try the experimental VITURE reader on the head tracking screen, or record motion for 20 seconds there and send logs."
+            UiText.format("spatial_head_viture_not_yet", "Head tracking isn't supported yet on VITURE glasses (USB %1\$04X:%2\$04X). The Space stays in front of you and turns with your head.", VitureImuProtocol.VENDOR, productId) + " " +
+                if (experimentalOn) UiText.get("spatial_head_viture_experimental_no_motion", "The experimental VITURE reader is on but got no motion from these glasses. Record motion for 20 seconds on the head tracking screen and send logs, so they can be added.")
+                else UiText.get("spatial_head_viture_try_experimental", "You can try the experimental VITURE reader on the head tracking screen, or record motion for 20 seconds there and send logs.")
         }
     }
 
     data class Connecting(val network: String) : HeadTrackingStatus {
-        override val summary = "Connecting to ${OneImuProtocol.HOST}:${OneImuProtocol.STREAM_PORT} over $network."
+        override val summary: String get() = UiText.format("spatial_head_connecting", "Connecting to %1\$s:%2\$s over %3\$s.", OneImuProtocol.HOST, OneImuProtocol.STREAM_PORT.toString(), network)
     }
 
     /** The TCP connection failed: [error] is the exception class and message, word for word. */
     data class ConnectFailed(val network: String, val error: String) : HeadTrackingStatus {
-        override val summary = "TCP connect to ${OneImuProtocol.HOST}:${OneImuProtocol.STREAM_PORT} over $network failed: $error"
+        override val summary: String get() = UiText.format("spatial_head_connect_failed", "TCP connect to %1\$s:%2\$s over %3\$s failed: %4\$s", OneImuProtocol.HOST, OneImuProtocol.STREAM_PORT.toString(), network, error)
     }
 
     /** Connected, but no sensor report arrived. */
     data class NoReports(val network: String, val seconds: Int, val bytes: Long, val counts: FramerCounts, val hint: String = ONE_FAMILY_HINT) : HeadTrackingStatus {
-        override val summary = "Connected over $network but no sensor reports in $seconds s ($bytes bytes received, " +
-            "${counts.badLength} frames of another length, ${counts.unknownType} of another type). $hint"
+        override val summary: String get() = UiText.format(
+            "spatial_head_no_reports",
+            "Connected over %1\$s but no sensor reports in %2\$d s (%3\$d bytes received, %4\$d frames of another length, %5\$d of another type). %6\$s",
+            network, seconds, bytes, counts.badLength, counts.unknownType, hint,
+        )
     }
 
     /** 1.1.12: Air family glasses found on USB, but Android has not given Pocket XR access to them yet. */
     data class UsbPermission(val glasses: String) : HeadTrackingStatus {
-        override val summary = "Found the $glasses on USB; waiting for USB access for head tracking. Allow Pocket XR in Android's prompt " +
-            "(unplug and plug the glasses in again to see it again). The Space stays head locked until then."
+        override val summary: String get() = UiText.format("spatial_head_usb_permission", "Found the %1\$s on USB; waiting for USB access for head tracking. Allow Pocket XR in Android's prompt (unplug and plug the glasses in again to see it again). The Space stays head locked until then.", glasses)
     }
 
     /** 1.1.12: the Air family's motion sensor could not be opened over USB: [error] word for word. */
     data class UsbFailed(val glasses: String, val error: String) : HeadTrackingStatus {
-        override val summary = "Could not open the $glasses' motion sensor over USB: $error"
+        override val summary: String get() = UiText.format("spatial_head_usb_failed", "Could not open the %1\$s' motion sensor over USB: %2\$s", glasses, error)
     }
 
     companion object {
-        const val ONE_FAMILY_HINT = "This firmware may not serve the One family stream."
-        const val AIR_FAMILY_HINT = "The glasses' motion sensor did not answer the start command over USB HID."
-        const val VITURE_HINT = "These VITURE glasses did not answer the documented start command; head tracking isn't supported on them yet. Record motion for 20 seconds on the head tracking screen and send logs."
+        val ONE_FAMILY_HINT: String get() = UiText.get("spatial_head_hint_one", "This firmware may not serve the One family stream.")
+        val AIR_FAMILY_HINT: String get() = UiText.get("spatial_head_hint_air", "The glasses' motion sensor did not answer the start command over USB HID.")
+        val VITURE_HINT: String get() = UiText.get("spatial_head_hint_viture", "These VITURE glasses did not answer the documented start command; head tracking isn't supported on them yet. Record motion for 20 seconds on the head tracking screen and send logs.")
     }
 
     data class Streaming(val network: String, val rateHz: Double) : HeadTrackingStatus {
         // 0.5.48: built when read, not with every status (the head thread made one a report, 1000 a second).
-        override val summary: String get() = "Streaming over $network at %.0f reports a second.".format(rateHz)
+        override val summary: String get() = UiText.format("spatial_head_streaming", "Streaming over %1\$s at %2\$.0f reports a second.", network, rateHz)
     }
 
     /** The stream stopped after it had worked. */
     data class Lost(val network: String, val error: String) : HeadTrackingStatus {
-        override val summary = "Lost the sensor stream over $network: $error. Retrying."
+        override val summary: String get() = UiText.format("spatial_head_lost", "Lost the sensor stream over %1\$s: %2\$s. Retrying.", network, error)
     }
 
     /**
@@ -110,13 +110,16 @@ sealed interface HeadTrackingStatus {
      * network changes or the glasses are plugged in again.
      */
     data class NoRoute(val networks: List<String>) : HeadTrackingStatus {
-        override val summary = "No route to ${OneImuProtocol.HOST} on " + networks.ifEmpty { listOf("any glasses network") }.joinToString(", ") +
-            ". Not retrying until the glasses' network changes or they are plugged in again; the Space stays head locked."
+        override val summary: String get() = UiText.format(
+            "spatial_head_no_route",
+            "No route to %1\$s on %2\$s. Not retrying until the glasses' network changes or they are plugged in again; the Space stays head locked.",
+            OneImuProtocol.HOST, networks.ifEmpty { listOf(UiText.get("spatial_head_any_glasses_network", "any glasses network")) }.joinToString(", "),
+        )
     }
 
     /** 0.5.6: the last round failed for [why]; the next try is in [inSeconds] (backoff up to a minute). */
     data class RetryLater(val why: String, val inSeconds: Int) : HeadTrackingStatus {
-        override val summary = "$why Next try in $inSeconds s."
+        override val summary: String get() = UiText.format("spatial_head_retry_later", "%1\$s Next try in %2\$d s.", why, inSeconds)
     }
 
     val tracking: Boolean get() = this is Streaming
@@ -134,16 +137,20 @@ object HeadSilence {
         hint: String = HeadTrackingStatus.ONE_FAMILY_HINT,
     ): HeadTrackingStatus =
         if (everStreamed) {
-            HeadTrackingStatus.Lost(network, "no sensor report for $silentS s after it had streamed ($bytes bytes received in $sinceStartS s)")
+            HeadTrackingStatus.Lost(network, UiText.format("spatial_head_silent", "no sensor report for %1\$d s after it had streamed (%2\$d bytes received in %3\$d s)", silentS, bytes, sinceStartS))
         } else {
             HeadTrackingStatus.NoReports(network, sinceStartS, bytes, counts, hint)
         }
 }
 
-enum class SpatialMode(val label: String) {
-    SPATIAL("Spatial: app panels stay put as you turn your head"),
-    HEAD_LOCKED("Head locked: app panels in front of you, turned with the trackpad"),
-    FLAT("Flat: apps open as DeX windows on the glasses"),
+enum class SpatialMode(private val key: String, private val english: String) {
+    SPATIAL("spatial_mode_spatial", "Spatial: app panels stay put as you turn your head"),
+    HEAD_LOCKED("spatial_mode_head_locked", "Head locked: app panels in front of you, turned with the trackpad"),
+    FLAT("spatial_mode_flat", "Flat: apps open as DeX windows on the glasses"),
+    ;
+
+    /** The mode as shown, in the phone's language. */
+    val label: String get() = UiText.get(key, english)
 }
 
 data class ModeChoice(val mode: SpatialMode, val reasons: List<String>)
@@ -153,11 +160,11 @@ object SpatialModeChooser {
     fun choose(head: HeadTrackingStatus, shizuku: ShizukuStatus): ModeChoice {
         val reasons = mutableListOf<String>()
         if (shizuku != ShizukuStatus.READY) {
-            reasons += "${shizuku.label}: app panels need Shizuku to create their virtual displays."
+            reasons += UiText.format("spatial_mode_needs_shizuku", "%1\$s: app panels need Shizuku to create their virtual displays.", shizuku.label)
             return ModeChoice(SpatialMode.FLAT, reasons)
         }
         if (!head.tracking) {
-            reasons += "No head tracking: ${head.summary}"
+            reasons += UiText.format("spatial_mode_no_head_tracking", "No head tracking: %1\$s", head.summary)
             return ModeChoice(SpatialMode.HEAD_LOCKED, reasons)
         }
         return ModeChoice(SpatialMode.SPATIAL, reasons)

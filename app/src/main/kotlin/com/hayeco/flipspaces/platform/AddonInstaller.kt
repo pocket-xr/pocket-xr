@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.hayeco.flipspaces.BuildConfig
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.UpdateChecker
 import com.hayeco.flipspaces.core.AddonSetup
 import com.hayeco.flipspaces.core.UpdateCheck
@@ -129,10 +130,10 @@ object AddonInstaller {
                     }
                 }
             }
-            if (total > 0 && done != total) throw Failure("the download stopped early")
+            if (total > 0 && done != total) throw Failure(app.getString(R.string.sys_addon_download_stopped))
         }
         apk.delete()
-        if (!part.renameTo(apk)) throw Failure("the file could not be saved")
+        if (!part.renameTo(apk)) throw Failure(app.getString(R.string.sys_addon_file_not_saved))
         main.post { openPrompt(app, apk) }
     }
 
@@ -162,7 +163,7 @@ object AddonInstaller {
             app.startActivity(intent)
         }
         opened.onFailure { Log.i(TAG, "the install prompt did not open: ${it.javaClass.simpleName}: ${it.message}") }
-        set(if (opened.isSuccess) AddonSetup.Download.Prompted else AddonSetup.Download.Failed("Android's install prompt did not open"))
+        set(if (opened.isSuccess) AddonSetup.Download.Prompted else AddonSetup.Download.Failed(app.getString(R.string.sys_addon_prompt_not_opened)))
     }
 
     /** Opens Android's "Install unknown apps" setting for Pocket XR; the install goes on when the user comes back. */

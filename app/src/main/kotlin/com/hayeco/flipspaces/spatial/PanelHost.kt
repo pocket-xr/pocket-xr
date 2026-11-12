@@ -9,6 +9,8 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.view.Surface
+import com.hayeco.flipspaces.FlipSpacesApp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.ShizukuStatus
 import com.hayeco.flipspaces.core.spatial.BindRetry
 import com.hayeco.flipspaces.core.spatial.DisplayTasks
@@ -211,7 +213,7 @@ object PanelHost {
         } else if (dead.isNotEmpty()) {
             Log.w(PANEL_TAG, "displays $dead died with the panel service ($why)")
         }
-        setState(State.Failed("The panel service stopped ($why). Reconnecting."), why)
+        setState(State.Failed(FlipSpacesApp.text(R.string.panel_service_stopped, why)), why)
     }
 
     /**
@@ -311,7 +313,7 @@ object PanelHost {
         try {
             Shizuku.bindUserService(a, connection)
         } catch (e: Exception) {
-            setState(State.Failed("Shizuku would not start the panel service: ${e.javaClass.simpleName}: ${e.message}"), "bindUserService threw (try ${retry.tries})")
+            setState(State.Failed(FlipSpacesApp.text(R.string.panel_shizuku_would_not_start, "${e.javaClass.simpleName}: ${e.message}")), "bindUserService threw (try ${retry.tries})")
         }
         retryPending = true
         main.postDelayed(retryRunnable, wait)
@@ -404,6 +406,9 @@ object PanelHost {
 
     val ready: Boolean get() = host != null
 
+    /** Shown to the user (a window's problem line); resolved when it is shown, in the app's language. */
+    private fun notConnected(): String = FlipSpacesApp.text(R.string.panel_service_not_connected)
+
     /**
      * Creates a panel display and launches the app on it. [done] gets the display id or an
      * error, and the generation the call ran on (a result from an older one is stale).
@@ -423,7 +428,7 @@ object PanelHost {
     ) {
         calls.execute {
             val gen = generation
-            val h = host ?: return@execute done(null, "The panel service is not connected", gen).also {
+            val h = host ?: return@execute done(null, notConnected(), gen).also {
                 Log.w(PANEL_TAG, "create for $label (try $attempt) failed: the panel service is not connected")
             }
             try {
@@ -434,9 +439,9 @@ object PanelHost {
                 if (onVirtualDevice) Log.i(PANEL_TAG, if (id >= 0) "display $id for $label made on the virtual device" else "virtual device display for $label refused (${h.lastError()}); a plain display instead")
                 if (id < 0) id = h.createDisplay(name, width, height, dpi, PanelDisplays.flags(Build.VERSION.SDK_INT), surface, refreshRate)
                 if (id < 0) {
-                    val err = "Creating the panel display failed: ${h.lastError()}"
-                    Log.w(PANEL_TAG, "create for $label (try $attempt) failed: $err")
-                    return@execute done(null, err, gen)
+                    val why = h.lastError()
+                    Log.w(PANEL_TAG, "create for $label (try $attempt) failed: Creating the panel display failed: $why")
+                    return@execute done(null, FlipSpacesApp.text(R.string.panel_create_display_failed, why.toString()), gen)
                 }
                 panelDisplayIds += id
                 reportedDisplayIds += id
@@ -444,11 +449,11 @@ object PanelHost {
                 // 0.5.37: a new instance when the Menu's switch is on.
                 val launchError = h.launchNew(id, packageName, activityName, newInstance)
                 Log.i(PANEL_TAG, "launch $label on display $id: ${launchError ?: "launched"}; ${h.describeDisplay(id)}")
-                done(id, launchError?.let { "Android would not start $label on its panel: $it" }, gen)
+                done(id, launchError?.let { FlipSpacesApp.text(R.string.panel_launch_refused, label, it) }, gen)
             } catch (e: Exception) {
-                val err = "Panel service call failed: ${e.javaClass.simpleName}: ${e.message}"
-                Log.w(PANEL_TAG, "create for $label (try $attempt) failed: $err")
-                done(null, err, gen)
+                val why = "${e.javaClass.simpleName}: ${e.message}"
+                Log.w(PANEL_TAG, "create for $label (try $attempt) failed: Panel service call failed: $why")
+                done(null, FlipSpacesApp.text(R.string.panel_service_call_failed, why), gen)
             }
         }
     }
@@ -456,7 +461,7 @@ object PanelHost {
     /** 0.5.21: [dpi] too, which a window's size and Wide view set ([com.hayeco.flipspaces.core.spatial.PanelDisplaySize]). */
     fun resize(displayId: Int, width: Int, height: Int, dpi: Int = PanelDisplays.DENSITY_DPI, done: (String?) -> Unit = {}) {
         calls.execute {
-            val h = host ?: return@execute done("The panel service is not connected")
+            val h = host ?: return@execute done(notConnected())
             done(runCatching { h.resizeDisplay(displayId, width, height, dpi) }.getOrElse { it.message })
         }
     }
@@ -484,14 +489,14 @@ object PanelHost {
     /** A panel display with no surface: Android turns it off and its app stops, until [setSurface] gives it one again. */
     fun clearSurface(displayId: Int, done: (String?) -> Unit = {}) {
         calls.execute {
-            val h = host ?: return@execute done("The panel service is not connected")
+            val h = host ?: return@execute done(notConnected())
             done(runCatching { h.setDisplaySurface(displayId, null) }.getOrElse { it.message })
         }
     }
 
     fun setSurface(displayId: Int, surface: Surface, done: (String?) -> Unit = {}) {
         calls.execute {
-            val h = host ?: return@execute done("The panel service is not connected")
+            val h = host ?: return@execute done(notConnected())
             done(runCatching { h.setDisplaySurface(displayId, surface) }.getOrElse { it.message })
         }
     }
@@ -519,7 +524,7 @@ object PanelHost {
     fun motion(displayId: Int, m: PanelMotion, downTime: Long, result: ((String?) -> Unit)? = null, problem: (String) -> Unit) {
         val send = Runnable {
             calls.execute {
-                val h = host ?: return@execute result?.invoke("The panel service is not connected") ?: Unit
+                val h = host ?: return@execute result?.invoke(notConnected()) ?: Unit
                 val err = runCatching {
                     h.injectMotion(displayId, m.action, m.xs.toFloatArray(), m.ys.toFloatArray(), m.source, m.vScroll, m.hScroll, downTime)
                 }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
@@ -544,7 +549,7 @@ object PanelHost {
         calls.execute {
             val h = host
             if (h == null) {
-                main.post { done("The panel service is not connected (Shizuku)") }
+                main.post { done(FlipSpacesApp.text(R.string.panel_service_not_connected_shizuku)) }
                 return@execute
             }
             val err = runCatching { h.gamepadOpen() }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
@@ -573,7 +578,7 @@ object PanelHost {
     /** Gives [displayId] top focus (0.4.1), so typing and the phone's keyboard reach its app. */
     fun focus(displayId: Int, why: String? = null, done: (String?) -> Unit = {}) {
         calls.execute {
-            val h = host ?: return@execute done("The panel service is not connected")
+            val h = host ?: return@execute done(notConnected())
             val err = runCatching { h.focusDisplay(displayId) }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
             val reason = why?.let { " ($it)" } ?: ""
             if (err != null) Log.w(PANEL_TAG, "focus display $displayId$reason: $err") else Log.i(PANEL_TAG, "focus display $displayId$reason")
@@ -584,7 +589,7 @@ object PanelHost {
     /** 0.5.13: [displayId] asks for [hz] from now on; [done] gets null or why not. */
     fun setRefreshRate(displayId: Int, hz: Float, done: (String?) -> Unit = {}) {
         calls.execute {
-            val h = host ?: return@execute done("The panel service is not connected")
+            val h = host ?: return@execute done(notConnected())
             val err = runCatching { h.setDisplayRefreshRate(displayId, hz) }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
             Log.i(PANEL_TAG, "display $displayId refresh request %.0f Hz: ${err ?: "taken"}".format(hz))
             done(err)
@@ -610,7 +615,7 @@ object PanelHost {
     /** 1.1.15: moves root task [taskId] onto [displayId]; [done] gets null or why not. */
     fun moveTask(taskId: Int, displayId: Int, done: (String?) -> Unit) {
         calls.execute {
-            val h = host ?: return@execute done("The panel service is not connected")
+            val h = host ?: return@execute done(notConnected())
             done(runCatching { h.moveTaskToDisplay(taskId, displayId) }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" })
         }
     }
@@ -618,7 +623,7 @@ object PanelHost {
     /** Starts the panel's app again on its display (0.4.2, the App closed card's Reopen). */
     fun relaunch(displayId: Int, label: String, packageName: String, activityName: String, done: (String?) -> Unit) {
         calls.execute {
-            val h = host ?: return@execute done("The panel service is not connected")
+            val h = host ?: return@execute done(notConnected())
             // 0.5.83 (Mike: Reopen "sometimes it opens the app on my phone instead of in that floating window"): an app whose
             // task Android moved to the phone (often why its window shows App closed) was brought to the front there by a
             // plain NEW_TASK start, whatever display was asked for. Reopen starts it as a new instance on the window's display
@@ -632,7 +637,7 @@ object PanelHost {
     /** 0.5.21: the window's Refresh: the app's activity started anew on [displayId] with its task cleared. */
     fun refresh(displayId: Int, label: String, packageName: String, activityName: String, done: (String?) -> Unit) {
         calls.execute {
-            val h = host ?: return@execute done("The panel service is not connected")
+            val h = host ?: return@execute done(notConnected())
             val err = runCatching { h.refresh(displayId, packageName, activityName) }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
             Log.i(PANEL_TAG, "refresh $label on display $displayId: ${err ?: "started anew"}")
             done(err)
