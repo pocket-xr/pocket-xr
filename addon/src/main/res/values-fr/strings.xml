@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Extension Pocket XR</string>
+    <string name="pointer_service_label">Pointeur Pocket XR</string>
+    <string name="pointer_service_description">Vous permet de contrôler vos lunettes XR avec vos mains ou l\'écran de votre téléphone dans Pocket XR. Il dessine un curseur sur les lunettes, lit où se trouvent les fenêtres d\'apps sur l\'écran des lunettes (position, taille et titre de la fenêtre) ainsi que les libellés des boutons des barres de titre des fenêtres DeX, et y effectue des touches et des glissements pour que vous puissiez cliquer sur les fenêtres, les déplacer et les redimensionner. Il n\'agit pas sur l\'écran du téléphone, ne lit pas ce que vous tapez ni le contenu des fenêtres d\'apps, et n\'envoie rien hors du téléphone.</string>
+    <string name="addon_link_permission_label">Lien de l\'extension Pocket XR</string>
+    <string name="addon_setup_intro">Deux services facultatifs pour Pocket XR. Chacun reste désactivé tant que vous n\'avez pas accepté ci-dessous et ne l\'avez pas activé dans les paramètres d\'Android.</string>
+    <string name="addon_setup_it_reads">Il lit :</string>
+    <string name="addon_setup_on">Activé. Vous pouvez le désactiver à tout moment dans les paramètres d\'Android.</string>
+    <string name="addon_setup_open_settings">Ouvrir les paramètres</string>
+    <string name="addon_hand_tip">Pincez pour cliquer. Pincez et maintenez une barre de titre pour déplacer, un coin pour redimensionner. Main ouverte pour le dock.</string>
+    <string name="addon_hint_moving">Déplacement</string>
+    <string name="addon_hint_hold_move">Maintenir pour déplacer</string>
+    <string name="addon_hint_resizing">Redimensionnement</string>
+    <string name="addon_hint_hold_resize">Maintenir pour redimensionner</string>
+    <string name="addon_hint_dock">Dock</string>
+    <string name="addon_status_hand">%1$s : main</string>
+    <string name="addon_status_no_hand">%1$s : aucune main visible</string>
+    <string name="addon_cursor_failed">Impossible de dessiner le curseur sur les lunettes : %1$s</string>
+    <string name="addon_gesture_tap_failed">Impossible de créer le geste de toucher : %1$s</string>
+    <string name="addon_gesture_build_failed">Impossible de créer le geste %1$s : %2$s</string>
+    <string name="addon_gesture_cancelled">Android a annulé le geste %1$s sur les lunettes (un autre toucher ou un geste système).</string>
+    <string name="addon_gesture_refused">Android a refusé le geste %1$s sur l\'écran %2$d. Le service Pointeur Pocket XR est-il toujours activé ?</string>
+    <string name="core_disclosure_agree">Accepter et activer</string>
+    <string name="core_disclosure_decline">Non merci</string>
+    <string name="core_disclosure_pointer_title">Pointeur Pocket XR utilise l\'API du service d\'accessibilité</string>
+    <string name="core_disclosure_pointer_intro">Pocket XR n\'est pas un outil d\'accessibilité. Il utilise l\'API AccessibilityService d\'Android pour une seule tâche : donner à vos lunettes XR un curseur que vous déplacez avec vos mains ou l\'écran du téléphone, en dehors de l\'Espace.</string>
+    <string name="core_disclosure_pointer_reads_windows">L\'emplacement des fenêtres d\'apps sur l\'écran des lunettes : leur position, leur taille et le titre de la fenêtre.</string>
+    <string name="core_disclosure_pointer_reads_dex">Les libellés des boutons des barres de titre des fenêtres DeX sur l\'écran des lunettes, pour trouver et appuyer sur son bouton plein écran.</string>
+    <string name="core_disclosure_pointer_use">Il dessine le curseur sur les lunettes et effectue les touches et les glissements que vous y faites, pour que vous puissiez cliquer sur les fenêtres, les déplacer et les redimensionner. Il n\'agit pas sur l\'écran du téléphone, et ne lit pas ce que vous tapez ni le contenu des fenêtres d\'apps.</string>
+    <string name="core_disclosure_sharing">Rien de ce qu\'il lit n\'est stocké, collecté ou envoyé hors du téléphone. Ces données ne sont partagées qu\'avec l\'app Pocket XR sur ce téléphone, et avec personne d\'autre.</string>
+    <string name="core_disclosure_pointer_without">Sans lui, l\'Espace, le pavé tactile et le suivi des mains fonctionnent toujours ; seul le curseur en dehors de l\'Espace manque.</string>
+    <string name="core_disclosure_notes_title">L\'extension Pocket XR utilise l\'accès aux notifications</string>
+    <string name="core_disclosure_notes_intro">Pocket XR peut afficher les notifications de votre téléphone sur la page Notifications de l\'Espace dans vos lunettes XR.</string>
+    <string name="core_disclosure_notes_reads_notifications">Vos notifications : l\'app, le titre et le texte de chacune, et leur heure d\'arrivée.</string>
+    <string name="core_disclosure_notes_reads_media">Les apps qui lisent des médias, pour les commandes de lecture en cours.</string>
+    <string name="core_disclosure_notes_use">Il les affiche dans les lunettes, ouvre l\'app d\'une notification quand vous appuyez dessus et supprime celles que vous effacez.</string>
+    <string name="core_disclosure_notes_without">Sans lui, tout le reste de Pocket XR fonctionne ; la page Notifications reste vide.</string>
+    <string name="core_disclosure_it_reads">Il lit :</string>
+</resources>

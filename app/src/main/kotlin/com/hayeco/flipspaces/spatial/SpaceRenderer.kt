@@ -1,6 +1,7 @@
 package com.hayeco.flipspaces.spatial
 
 import android.content.Context
+import com.hayeco.flipspaces.R
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Build
@@ -128,7 +129,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     var fitNudges = 0
 
     /** Written by the panel host thread's callbacks too, so volatile. */
-    @Volatile var state: PanelState = PanelState.Waiting("Waiting for Shizuku")
+    @Volatile var state: PanelState = PanelState.Waiting(com.hayeco.flipspaces.FlipSpacesApp.text(R.string.space_waiting_shizuku))
 
     /** False after a failure or a lost service: open the next try on a new Surface. */
     @Volatile var surfaceFresh = true
@@ -384,6 +385,13 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
  */
 class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private val tag = "FlipSpaces/Space"
+
+    /** Text from the app's string resources, in the phone's language. */
+    private fun str(id: Int, vararg args: Any): String = context.getString(id, *args)
+    private val onText by lazy { str(R.string.space_on) }
+    private val offText by lazy { str(R.string.space_off) }
+    private val appsText by lazy { str(R.string.space_home_apps) }
+    private val closeText by lazy { str(R.string.space_home_close) }
     private val store = SpaceStore(context)
     private var layout = store.layout()
 
@@ -633,7 +641,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     private fun warpNotice(on: Boolean, from: String) {
         // The hint label is one line of about 44 characters at 40 px.
-        spaceNotice = if (on) "Glasses warp (experimental): ON" else "Glasses warp (experimental): OFF"
+        spaceNotice = str(if (on) R.string.space_warp_on else R.string.space_warp_off)
         spaceNoticeUntilMs = SystemClock.uptimeMillis() + WARP_NOTICE_MS
         Log.i(tag, "Glasses warp (beta) ${if (on) "on" else "off"} from $from: confirmation shown on the glasses for ${WARP_NOTICE_MS / 1000} s")
     }
@@ -2398,7 +2406,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         if (delayLabelMs != store.predictMs) {
             delayLabelMs = store.predictMs
             tex.set(
-                listOf("Display delay ${store.predictMs} ms: turn your head gently left and right", "Move the delay on the phone until the line stays put, then Save run"),
+                listOf(str(R.string.space_delay_hint, store.predictMs), str(R.string.space_delay_hint_save)),
                 Color.argb(220, 20, 24, 30), Color.WHITE, 30f, centred = true,
             )
         }
@@ -2426,7 +2434,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val tex = levelLabel ?: LabelTexture(1024, 128).also {
             levelLabel = it
             it.set(
-                listOf("Level: tilt your head until the green line lies on a level edge at eye height", "Hold still, then tap Save level on the phone"),
+                listOf(str(R.string.space_level_hint), str(R.string.space_level_hint_save)),
                 Color.argb(220, 20, 24, 30), Color.WHITE, 30f, centred = true,
             )
         }
@@ -2509,7 +2517,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         for (p in panels.values) {
             val id = p.displayId ?: continue
             if (!stallReleased.remove(id)) continue
-            p.state = PanelState.Waiting("Reopening after the Space stalled")
+            p.state = PanelState.Waiting(str(R.string.space_reopening_after_stall))
             p.surfaceFresh = false
             Log.i(WATCHDOG_TAG, "panel ${p.panel.id} ${p.panel.label}: reopening (its display $id was released in the stall)")
         }
@@ -2547,7 +2555,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             if (paused) {
                 PanelHost.clearSurface(display) { err -> if (err != null) Log.w(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: not paused for the game: $err") }
             } else {
-                PanelHost.setSurface(display, p.surface) { err -> if (err != null) problem = "Back from the game ${p.panel.label}: $err" }
+                PanelHost.setSurface(display, p.surface) { err -> if (err != null) problem = str(R.string.space_problem_back_from_game, p.panel.label, err) }
             }
         }
         Log.i(PANEL_TAG, if (paused) "$n windows paused for the game (their displays off)" else "$n windows back from the game")
@@ -2566,9 +2574,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val live = if (pointer.grabOn(id) != null) " (live, still held)" else ""
             val spec = com.hayeco.flipspaces.core.spatial.PanelDisplaySpec(w, h, dpi)
             Log.i(PANEL_TAG, "panel $id ${p.panel.label}: display $display resized to ${spec.line()}$live${if (wideView.isOn(p.panel.packageName)) ", Wide view on" else ""}${appDensity.smallestDp(p.panel.packageName)?.let { ", Fit video (its own %.0f dp smallest width)".format(java.util.Locale.ROOT, it) } ?: ""}")
-            PanelHost.resize(display, w, h, dpi) { err -> if (err != null) problem = "Resize ${p.panel.label}: $err" }
+            PanelHost.resize(display, w, h, dpi) { err -> if (err != null) problem = str(R.string.space_problem_resize, p.panel.label, err) }
             // 0.5.3: then onto the new reader at the new size (the host runs calls in order).
-            PanelHost.setSurface(display, p.surface) { err -> if (err != null) problem = "Resize ${p.panel.label}: $err" }
+            PanelHost.setSurface(display, p.surface) { err -> if (err != null) problem = str(R.string.space_problem_resize, p.panel.label, err) }
             // 1.2.7: a Text size change waits for the app's next frame after this.
             textSizeSettle.sent(id, p.framesOffered)
             // 0.5.22: the new size is a configuration change for the app: read what it asks for after it.
@@ -2591,7 +2599,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val p = panels[id] ?: continue
             val display = p.displayId ?: continue
             Log.i(PANEL_TAG, "panel $id ${p.panel.label}: relayout nudge, display $display to ${spec.line()}")
-            PanelHost.resize(display, spec.widthPx, spec.heightPx, spec.dpi) { err -> if (err != null) problem = "Relayout ${p.panel.label}: $err" }
+            PanelHost.resize(display, spec.widthPx, spec.heightPx, spec.dpi) { err -> if (err != null) problem = str(R.string.space_problem_relayout, p.panel.label, err) }
             textSizeSettle.sent(id, p.framesOffered)
         }
         // 1.2.7: a Text size change has landed once its window has nothing more to send and drew after the last send.
@@ -2730,11 +2738,11 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 0.5.46: the Control Center's pages' work off the GL thread (Shizuku commands wait on a process). */
     private val phoneWork = java.util.concurrent.Executors.newSingleThreadExecutor { r -> Thread(r, "space-phone-work").apply { isDaemon = true } }
 
-    private fun phoneTask(what: String, block: () -> String?) {
+    private fun phoneTask(what: String, shown: String, block: () -> String?) {
         phoneWork.execute {
             val err = runCatching { block() }.getOrElse { it.message ?: it.javaClass.simpleName }
             if (err != null) {
-                spaceNotice = "$what: ${err.lineSequence().first().take(80)}"
+                spaceNotice = str(R.string.space_task_error, shown, err.lineSequence().first().take(80))
                 spaceNoticeUntilMs = SystemClock.uptimeMillis() + 3_000L
             }
             Log.i(tag, "control center: $what${err?.let { " failed: $it" } ?: " done"}")
@@ -2746,9 +2754,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 0.5.46: the phone's Wi-Fi or Bluetooth settings as a window in the Space (Settings' own pages). */
     private fun openPhoneSettings(page: com.hayeco.flipspaces.core.spatial.ControlPage) {
         val (label, activity) = if (page == com.hayeco.flipspaces.core.spatial.ControlPage.WIFI) {
-            "Wi-Fi" to "com.android.settings.Settings\$WifiSettingsActivity"
+            str(R.string.space_wifi) to "com.android.settings.Settings\$WifiSettingsActivity"
         } else {
-            "Bluetooth" to "com.android.settings.Settings\$BluetoothSettingsActivity"
+            str(R.string.space_bluetooth) to "com.android.settings.Settings\$BluetoothSettingsActivity"
         }
         addApp(AppEntry(label, "com.android.settings", activity), inFrontOfGaze = true)
     }
@@ -2758,7 +2766,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val pkg = com.hayeco.flipspaces.phone.PhoneNotifications.packageOf(key) ?: return
         val component = context.packageManager.getLaunchIntentForPackage(pkg)?.component
         if (component == null) {
-            spaceNotice = "That app has no window to open"
+            spaceNotice = str(R.string.space_app_no_window)
             spaceNoticeUntilMs = SystemClock.uptimeMillis() + 2_500L
             return
         }
@@ -2803,7 +2811,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 if (saved != null) {
                     store.presets = saved
                     presetsCache = saved
-                    spaceNotice = "Saved ${saved.first().name}: ${saved.first().apps}"
+                    spaceNotice = str(R.string.space_preset_saved, saved.first().name, saved.first().apps)
                     spaceNoticeUntilMs = SystemClock.uptimeMillis() + 2_500L
                     Log.i(tag, "preset ${saved.first().name} saved from the Control Center (${saved.first().layout.panels.size} windows)")
                 }
@@ -2812,14 +2820,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             is com.hayeco.flipspaces.core.spatial.ControlCenterAction.TogglePower -> {
                 val wifiPage = action.page == com.hayeco.flipspaces.core.spatial.ControlPage.WIFI
                 val on = if (wifiPage) com.hayeco.flipspaces.phone.PhoneConnections.wifi.enabled else com.hayeco.flipspaces.phone.PhoneConnections.bt.enabled
-                phoneTask("${action.page.title} ${if (on) "off" else "on"}") { com.hayeco.flipspaces.phone.PhoneConnections.setPower(context, wifiPage, !on) }
+                phoneTask("${action.page.title} ${if (on) "off" else "on"}", str(if (on) R.string.space_task_power_off else R.string.space_task_power_on, action.page.title)) { com.hayeco.flipspaces.phone.PhoneConnections.setPower(context, wifiPage, !on) }
             }
             is com.hayeco.flipspaces.core.spatial.ControlCenterAction.OpenNote -> openNoteApp(action.key)
             is com.hayeco.flipspaces.core.spatial.ControlCenterAction.DismissNote -> com.hayeco.flipspaces.phone.PhoneNotifications.dismiss(action.key)
             com.hayeco.flipspaces.core.spatial.ControlCenterAction.ClearNotes -> com.hayeco.flipspaces.phone.PhoneNotifications.clearAll()
-            com.hayeco.flipspaces.core.spatial.ControlCenterAction.GrantNotes -> phoneTask("Notification access") { com.hayeco.flipspaces.phone.PhoneNotifications.grant(context) }
-            com.hayeco.flipspaces.core.spatial.ControlCenterAction.GrantBluetooth -> phoneTask("Bluetooth access") { com.hayeco.flipspaces.phone.PhoneConnections.grantBluetooth(context) }
-            is com.hayeco.flipspaces.core.spatial.ControlCenterAction.ForgetWifi -> phoneTask("Forget ${action.ssid}") { com.hayeco.flipspaces.phone.PhoneConnections.forget(action.id) }
+            com.hayeco.flipspaces.core.spatial.ControlCenterAction.GrantNotes -> phoneTask("Notification access", str(R.string.space_task_notification_access)) { com.hayeco.flipspaces.phone.PhoneNotifications.grant(context) }
+            com.hayeco.flipspaces.core.spatial.ControlCenterAction.GrantBluetooth -> phoneTask("Bluetooth access", str(R.string.space_task_bluetooth_access)) { com.hayeco.flipspaces.phone.PhoneConnections.grantBluetooth(context) }
+            is com.hayeco.flipspaces.core.spatial.ControlCenterAction.ForgetWifi -> phoneTask("Forget ${action.ssid}", str(R.string.space_cc_forget_named, action.ssid)) { com.hayeco.flipspaces.phone.PhoneConnections.forget(action.id) }
             is com.hayeco.flipspaces.core.spatial.ControlCenterAction.OpenSettings -> openPhoneSettings(action.page)
             com.hayeco.flipspaces.core.spatial.ControlCenterAction.Closed, com.hayeco.flipspaces.core.spatial.ControlCenterAction.Nothing -> Unit
         }
@@ -2895,7 +2903,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val down = if (m.source == PanelMotion.SOURCE_MOUSE) 0L else p.downTime
             // Every scroll and its result (0.4.2: a dropped scroll used to leave no trace).
             val result = if (m.action == PanelMotion.ACTION_SCROLL) scrollLog(p, id, m) else null
-            PanelHost.motion(id, m, down, result) { problem = "Input on ${p.panel.label}: $it" }
+            PanelHost.motion(id, m, down, result) { problem = str(R.string.space_problem_input, p.panel.label, it) }
         }
     }
 
@@ -2928,7 +2936,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         SpaceSession.focusKept = com.hayeco.flipspaces.core.spatial.FocusedWindow.keep(p.panel)
         // The focused panel is the front one among equals, for drawing and hit tests alike.
         if (layout.panels.lastOrNull()?.id != id) setLayout(layout.raise(id), commit = false)
-        p.displayId?.let { d -> PanelHost.focus(d) { err -> if (err != null) problem = "Focus on ${p.panel.label}: $err" } }
+        p.displayId?.let { d -> PanelHost.focus(d) { err -> if (err != null) problem = str(R.string.space_problem_focus, p.panel.label, err) } }
     }
 
     /**
@@ -2976,7 +2984,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         p.ask = null
         Log.i(PANEL_TAG, "panel $id $label: Refresh from its window controls")
         PanelHost.refresh(display, label, p.panel.packageName, p.panel.activityName) { err ->
-            if (err != null) onGl { problem = "Refreshing $label: $err" }
+            if (err != null) onGl { problem = str(R.string.space_problem_refreshing, label, err) }
         }
     }
 
@@ -3096,8 +3104,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         p.fitNudges++
         Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: after the resize $misfit: relayout nudge ${p.fitNudges} (display $display to ${spec.widthPx}x${spec.heightPx - 2} and back)")
-        PanelHost.resize(display, spec.widthPx, spec.heightPx - 2, spec.dpi) { err -> if (err != null) problem = "Relayout ${p.panel.label}: $err" }
-        PanelHost.resize(display, spec.widthPx, spec.heightPx, spec.dpi) { err -> if (err != null) problem = "Relayout ${p.panel.label}: $err" }
+        PanelHost.resize(display, spec.widthPx, spec.heightPx - 2, spec.dpi) { err -> if (err != null) problem = str(R.string.space_problem_relayout, p.panel.label, err) }
+        PanelHost.resize(display, spec.widthPx, spec.heightPx, spec.dpi) { err -> if (err != null) problem = str(R.string.space_problem_relayout, p.panel.label, err) }
         shapeSoon(p, SHAPE_AFTER_LAUNCH_MS)
     }
 
@@ -3150,7 +3158,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                         val display = p?.displayId
                         if (ok && p != null && display != null && !p.removed) {
                             PanelHost.refresh(display, p.panel.label, p.panel.packageName, p.panel.activityName) { err ->
-                                if (err != null) onGl { problem = "Restarting ${p.panel.label}: $err" }
+                                if (err != null) onGl { problem = str(R.string.space_problem_restarting, p.panel.label, err) }
                             }
                             val now = SystemClock.uptimeMillis()
                             p.shapeAskedMs = now - SHAPE_EVERY_MS + SHAPE_AFTER_TOGGLE_MS
@@ -3251,7 +3259,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             java.util.Locale.ROOT, next.widthDeg, next.heightDeg, com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(next), spec.line(),
             if (on) "; a phone's width, so a video app lays out its player full screen" else "; the app's usual density again",
         ))
-        showNotice(p, if (on) "Fit video: 16:9, phone layout" else "Fit video off", now)
+        showNotice(p, str(if (on) R.string.space_fit_video_on else R.string.space_fit_video_off), now)
         setLayout(layout.replace(next), commit = true)
         shapeSoon(p, SHAPE_AFTER_TOGGLE_MS)
     }
@@ -3263,14 +3271,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private fun shapeChosen(ratio: Float) {
         val p = focusedPanelId?.let { panels[it] } ?: return
         if (store.windowsLocked) {
-            showNotice(p, "Lock screens is on", SystemClock.uptimeMillis())
+            showNotice(p, str(R.string.space_lock_screens_on), SystemClock.uptimeMillis())
             return
         }
         val next = com.hayeco.flipspaces.core.spatial.WindowShape.shaped(p.panel, ratio)
         val name = com.hayeco.flipspaces.core.spatial.WindowShape.current(ratio)?.label ?: "%.2f".format(java.util.Locale.ROOT, ratio)
         Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: shape $name, %.1f by %.1f degrees (was %.1f by %.1f)".format(
             java.util.Locale.ROOT, next.widthDeg, next.heightDeg, p.panel.widthDeg, p.panel.heightDeg))
-        showNotice(p, "Shape $name", SystemClock.uptimeMillis())
+        showNotice(p, str(R.string.space_shape, name), SystemClock.uptimeMillis())
         setLayout(layout.replace(next), commit = true)
         shapeSoon(p, SHAPE_AFTER_TOGGLE_MS)
     }
@@ -3379,7 +3387,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             if (e.action == com.hayeco.flipspaces.core.pointer.TouchPointers.ACTION_DOWN) padTouchDownMs = SystemClock.uptimeMillis()
             val xs = FloatArray(e.us.size) { e.us[it] * p.width }
             val ys = FloatArray(e.vs.size) { e.vs[it] * p.height }
-            PanelHost.touches(display, e.action, e.ids, xs, ys, padTouchDownMs) { problem = "Game controller on ${p.panel.label}: $it" }
+            PanelHost.touches(display, e.action, e.ids, xs, ys, padTouchDownMs) { problem = str(R.string.space_problem_game_controller, p.panel.label, it) }
         }
     }
 
@@ -3387,7 +3395,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         Log.i(PANEL_TAG, "Back on panel ${p.panel.id} ${p.panel.label}")
         val down = SystemClock.uptimeMillis()
         listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).forEach { action ->
-            PanelHost.key(display, action, KeyRouting.KEYCODE_BACK, 0, 0, down) { problem = "Back on ${p.panel.label}: $it" }
+            PanelHost.key(display, action, KeyRouting.KEYCODE_BACK, 0, 0, down) { problem = str(R.string.space_problem_back, p.panel.label, it) }
         }
     }
 
@@ -3422,7 +3430,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 if (exit != null && exit.crashed && recent) {
                     crashes[p.panel.id] = "${exit.reasonName.lowercase().replaceFirstChar { it.uppercase() }}: ${exit.description.take(60)}"
                     SpaceSession.crashedApps[pkg] = SystemClock.uptimeMillis()
-                    problem = "${p.panel.label} crashed on its panel; Reopen or Close it there."
+                    problem = str(R.string.space_problem_crashed, p.panel.label)
                 }
             }
         }
@@ -3474,7 +3482,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         p.tasksCheckedMs = now
         setLayout(layout.replace(next), commit = true)
         PanelHost.relaunch(showing.displayId, app.label, app.packageName, app.activityName) { err ->
-            if (err != null) onGl { problem = "Switching to ${app.label}: $err" }
+            if (err != null) onGl { problem = str(R.string.space_problem_switching, app.label, err) }
         }
     }
 
@@ -3496,7 +3504,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             setLayout(layout.replace(capped), commit = true)
         }
         PanelHost.relaunch(showing.displayId, label, p.panel.packageName, p.panel.activityName) { err ->
-            if (err != null) onGl { problem = "Reopening $label: $err" }
+            if (err != null) onGl { problem = str(R.string.space_problem_reopening, label, err) }
         }
     }
 
@@ -3532,7 +3540,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 pickForPanel = p.panel.id
                 setLauncherOpen(true, "Switch app's All apps for ${p.panel.label}")
                 xr.settleTo(1, SystemClock.uptimeMillis())
-                spaceNotice = "Pick an app for ${p.panel.label}"
+                spaceNotice = str(R.string.space_pick_app_for, p.panel.label)
                 spaceNoticeUntilMs = SystemClock.uptimeMillis() + 4_000L
             }
             CardAction.KEEP, null -> if (card is PanelCard.AskBack) {
@@ -3634,7 +3642,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                         p.ask = null
                         p.movedTo = null
                         Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: display $display has no task ($tasks); App closed")
-                        problem = "${p.panel.label} closed on its panel; Reopen or Close it there."
+                        problem = str(R.string.space_problem_closed, p.panel.label)
                         askWhyClosed(p)
                         newer?.let { checkMovedTo(p, it.id) }
                     }
@@ -3715,10 +3723,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 p.movedSwitchOn = switchOn
                 if (switchOn) {
                     Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: its app moved to the newer window $newerId on display $display ($tasks) with Open a new instance on; one window only, so Close is offered, not Reopen")
-                    problem = "${p.panel.label} can only show one window on this phone. It moved to your newest window."
+                    problem = str(R.string.space_problem_one_window, p.panel.label)
                 } else {
                     Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: its app moved to the newer window $newerId on display $display ($tasks) with Open a new instance off; Turn on and reopen is offered")
-                    problem = "${p.panel.label} moved to your newer window. To keep both, turn on Open a new instance."
+                    problem = str(R.string.space_problem_moved_newer, p.panel.label)
                 }
             }
         }
@@ -3729,7 +3737,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val target = KeyRouting.target(launcher.isOpen, fullKeyboard = true, focusedPanelId = focusedPanelId, panelIds = panels.keys)
         val p = (target as? KeyTarget.Panel)?.let { panels[it.panelId] } ?: return
         val display = p.displayId ?: return
-        PanelHost.key(display, k.action, k.keyCode, k.metaState, k.repeat, k.downTime) { problem = "Key on ${p.panel.label}: $it" }
+        PanelHost.key(display, k.action, k.keyCode, k.metaState, k.repeat, k.downTime) { problem = str(R.string.space_problem_key, p.panel.label, it) }
     }
 
     /** Android paused, resumed or stopped a panel's display. */
@@ -3763,7 +3771,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val display = spaceDisplayId
         Log.i(PANEL_TAG, "panel ${p.panel.id} ${app.label}: open as a DeX window on display $display (protected content)")
         activity.runOnUiThread {
-            AppLauncher.openDexWindow(activity, app, display)?.let { problem = "Opening ${app.label} as a DeX window: ${it.message}" }
+            AppLauncher.openDexWindow(activity, app, display)?.let { problem = str(R.string.space_problem_dex, app.label, it.message.toString()) }
         }
         removePanel(p.panel.id)
     }
@@ -3832,7 +3840,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 logLauncher("search pressed: asking the phone for its keyboard")
             }
             com.hayeco.flipspaces.core.spatial.XrLauncherAction.PinLimit -> {
-                spaceNotice = "Too many apps are pinned"
+                spaceNotice = str(R.string.space_too_many_pinned)
                 spaceNoticeUntilMs = SystemClock.uptimeMillis() + PIN_NOTICE_MS
                 Log.i(tag, "launcher: Pin App with ${com.hayeco.flipspaces.core.spatial.LauncherGrid.PIN_LIMIT} pinned: \"Too many apps are pinned\"")
             }
@@ -3872,7 +3880,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 val options = android.app.ActivityOptions.makeBasic().apply { if (display >= 0) launchDisplayId = display }
                 activity.startActivity(intent, options.toBundle())
             } catch (e: RuntimeException) {
-                problem = "App Info for ${app.label}: ${e.message}"
+                problem = str(R.string.space_problem_app_info, app.label, e.message.toString())
                 Log.w(tag, "launcher: App Info for ${app.packageName} failed", e)
             }
         }
@@ -3882,7 +3890,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val p = panels[t.panelId] ?: return
         if (t.phase == TouchPhase.DOWN && p.state is PanelState.Failed) {
             // A pinch on a failed panel tries again from the first attempt.
-            p.state = PanelRecovery.retryByHand(p.state, "Trying ${p.panel.label} again")
+            p.state = PanelRecovery.retryByHand(p.state, str(R.string.space_trying_again, p.panel.label))
             Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: retry by hand")
             return
         }
@@ -4074,7 +4082,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         if (added == null) {
             windowOpenMs.remove(-1)
-            problem = "Six panels is the limit; close one first."
+            problem = str(R.string.space_problem_six_panels)
             return
         }
         setLayout(added.first, commit = true)
@@ -4107,7 +4115,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             panels[placed.id] = PanelGl(placed, f, wideView.isOn(sp.packageName), appDensity.smallestDp(sp.packageName), appTextSize.percent(sp.packageName))
             opened++
         }
-        spaceNotice = "${preset.name}: $opened windows"
+        spaceNotice = context.resources.getQuantityString(R.plurals.space_preset_opened, opened, preset.name, opened)
         spaceNoticeUntilMs = SystemClock.uptimeMillis() + 2_500L
         Log.i(PANEL_TAG, "preset ${preset.name} opened: $opened of ${preset.layout.panels.size} windows (${preset.apps})")
     }
@@ -4166,7 +4174,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private fun recoverIfHostLost() {
         if (liveGeneration < 0) return
         if (PanelHost.ready && PanelHost.generation == liveGeneration) return
-        val why = "The panel service restarted; reopening"
+        val why = str(R.string.space_service_restarted_waiting)
         val (next, dead) = PanelRecovery.onHostLost(panels.mapValues { it.value.state }, why)
         Log.w(PANEL_TAG, "panel service generation $liveGeneration lost; dead displays $dead; reopening ${next.size} panels")
         dead.forEach { openDisplays -= it }
@@ -4175,7 +4183,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             p.surfaceFresh = false
         }
         liveGeneration = -1
-        problem = "The panel service restarted; reopening the panels."
+        problem = str(R.string.space_problem_service_restarted)
     }
 
     /**
@@ -4185,8 +4193,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private fun openPending(nowMs: Long) {
         if (!PanelHost.ready) {
             val waiting = when (shizuku) {
-                ShizukuStatus.READY -> "Starting the panel service"
-                else -> "${shizuku.label}. Set it up on the phone: Pocket XR, Spatial windows."
+                ShizukuStatus.READY -> str(R.string.space_starting_service)
+                else -> str(R.string.space_shizuku_setup, shizuku.label)
             }
             panels.values.filter { it.state is PanelState.Waiting }.forEach { it.state = PanelState.Waiting(waiting) }
             return
@@ -4207,7 +4215,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 if (p.panel.id !in crashLogged) {
                     crashLogged += p.panel.id
                     Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: its app crashed ${crashedAgo / 1000} s ago; not started again for ${SpaceSession.CRASH_HOLD_MS / 1000} s")
-                    p.state = PanelState.Waiting("${p.panel.label} crashed ${crashedAgo / 1000} s ago; it opens again in a minute")
+                    p.state = PanelState.Waiting(str(R.string.space_waiting_crashed, p.panel.label, crashedAgo / 1000))
                 }
                 continue
             }
@@ -4241,11 +4249,11 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     // The call ran on a newer connection than it was queued for: start it over there.
                     if (id != null) PanelHost.release(id)
                     p.surfaceFresh = false
-                    p.state = PanelState.Waiting("The panel service reconnected; reopening")
+                    p.state = PanelState.Waiting(str(R.string.space_service_reconnected))
                     return@open
                 }
                 if (id == null) {
-                    val err = error ?: "unknown error"
+                    val err = error ?: str(R.string.space_unknown_error)
                     p.surfaceFresh = false
                     p.state = PanelRecovery.afterFailure(attempt, err, SystemClock.uptimeMillis())
                     Log.w(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: ${p.status}")
@@ -4672,14 +4680,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     if (p.panel.packageName !in packages || p.offerDismissed) return@secure
                     Log.i(PANEL_TAG, "panel ${p.panel.id} $label: FLAG_SECURE window on display $d; offering a DeX window")
                     p.offer = ProtectedOffer.message(label, secure = true)
-                    problem = "$label protects its screen; pinch its banner to open it as a DeX window."
+                    problem = str(R.string.space_problem_protects, label)
                 }
             }
         }
         if (now && !was && p.offer == null) {
             Log.i(PANEL_TAG, "panel ${p.panel.id} $label: black for ${p.black.blackForMs} ms while drawing; offering a DeX window")
             p.offer = ProtectedOffer.message(label, secure = false)
-            problem = "$label looks protected on its panel; pinch its banner to open it as a DeX window."
+            problem = str(R.string.space_problem_looks_protected, label)
         } else if (!p.black.blackLongEnough && p.offer != null) {
             p.offer = null
         }
@@ -4822,7 +4830,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         homeTexture?.let { tex ->
             val home = launcher.homeTile()
             val hot = launcher.homeHittable && rays.any { home.hit(it) != null }
-            tex.set(listOf(if (launcher.isOpen) "Close" else "Apps"), if (hot) Color.rgb(70, 120, 210) else Color.argb(220, 36, 42, 54), Color.WHITE, 40f, centred = true)
+            tex.set(listOf(if (launcher.isOpen) closeText else appsText), if (hot) Color.rgb(70, 120, 210) else Color.argb(220, 36, 42, 54), Color.WHITE, 40f, centred = true)
             drawLabel(tex.id, viewProj * home.asPanel().model(), 0.95f * alpha)
         }
     }
@@ -4859,7 +4867,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      */
     @Suppress("UNUSED_PARAMETER")
     private fun drawLauncherTiles(viewProj: Mat4, rays: List<com.hayeco.flipspaces.core.spatial.Ray>) {
-        launcherGl.draw(xr, viewProj, frameClockMs, rowFix, if (store.view == com.hayeco.flipspaces.core.spatial.GlassesView.SBS_3D) "On" else "Off")
+        launcherGl.draw(xr, viewProj, frameClockMs, rowFix, if (store.view == com.hayeco.flipspaces.core.spatial.GlassesView.SBS_3D) onText else offText)
     }
 
     /**
@@ -5039,14 +5047,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private var infoShown = false
 
     private fun infoLines(): List<String> = buildList {
-        add("Pocket XR: ${mode?.mode?.label ?: "starting"}")
-        add("Head tracking: ${HeadTracker.status.value.summary}")
-        add("Panels: ${layout.panels.size} of 6. ${shizuku.label}.")
-        add("Trackpad: swipe to move the cursor, tap to click, two finger tap: right click, two finger swipe: scroll, pinch: zoom. Tap a title bar to pick a window up: swipe moves it, two fingers the same way push it away (up) or pull it closer, pinch resizes, tap or Home drops it. Title bar Reset and Close. Three fingers up: recent apps, down: Control panel. Home: the launcher; hold Home: recentre the cursor.")
-        add("A panel that stays black (FLAG_SECURE or DRM, such as Netflix) offers to open its app as a DeX window.")
-        add("In view: $inView of ${layout.panels.size}. Thermal: ${ThermalGuard.label(thermalStatus)}, panels up to ${ThermalGuard.panelFps(thermalStatus, false)} fps (focused ${ThermalGuard.panelFps(thermalStatus, true)}).")
+        add(str(R.string.space_info_mode, mode?.mode?.label ?: str(R.string.space_info_starting)))
+        add(str(R.string.space_info_head_tracking, HeadTracker.status.value.summary))
+        add(str(R.string.space_info_panels, layout.panels.size, shizuku.label))
+        add(str(R.string.space_info_trackpad))
+        add(str(R.string.space_info_black_panel))
+        add(str(R.string.space_info_in_view, inView, layout.panels.size, ThermalGuard.label(thermalStatus), ThermalGuard.panelFps(thermalStatus, false), ThermalGuard.panelFps(thermalStatus, true)))
         perf.last?.let { add("Perf: ${it.line()}") }
-        problem?.let { add("Last problem: $it") }
+        problem?.let { add(str(R.string.space_info_last_problem, it)) }
     }
 
     /**
@@ -5229,7 +5237,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // glasses saying how to find it, once in 10 s at most.
         if (pointer.laserLost && nowMs - laserLostSaidMs > 10_000L) {
             laserLostSaidMs = nowMs
-            spaceNotice = "Can't find the dot? Hold Home on the phone"
+            spaceNotice = str(R.string.space_find_dot)
             spaceNoticeUntilMs = SystemClock.uptimeMillis() + 4_000L
             Log.i(tag, "Spatial Mouse: the phone points outside the view (the dot pinned at its edge for 2 s): hold Home shown on the glasses")
         }
@@ -5368,7 +5376,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 // An open palm skips the offered calibration; Calibrate on the Hands screen brings it back.
                 if (calibrationOffer) {
                     toggleCalibration()
-                    problem = "Hand calibration skipped. Calibrate any time from Hands on the phone."
+                    problem = str(R.string.space_calib_skipped)
                 }
                 true
             }
@@ -5392,7 +5400,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val r = c.result()
         Log.i(HANDS_TAG, "Hand ${r.line()}")
         if (!r.ok) {
-            calibrationNote = "That was %.1f degrees off. Again, slowly: point, hold still, pinch.".format(r.rmsDeg)
+            calibrationNote = str(R.string.space_calib_off, r.rmsDeg)
             c.restart()
             return
         }
@@ -5402,7 +5410,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         HandFeed.endCalibration(r.calibration)
         calibration = null
         calibrationOffer = false
-        problem = "Hands calibrated: %.1f degrees".format(r.rmsDeg)
+        problem = str(R.string.space_calib_done, r.rmsDeg)
     }
 
     /** The current dot, fixed in front of the head, and what to do, while calibrating. */
@@ -5420,8 +5428,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         drawColor(viewProj * Mat4.basis(at - dir * 0.001f, right, up, -dir, size * 0.45f, size * 0.45f), floatArrayOf(0.95f, 0.3f, 0.25f, 1f), circle = true)
         val tex = calibrationLabel ?: LabelTexture(1024, 128).also { calibrationLabel = it }
         val lines = listOfNotNull(
-            if (calibrationOffer && c.index == 0) "Calibrate your hands once: point at the dot and pinch (1 of ${c.targets.size})" else "Point at the dot and pinch (${c.index + 1} of ${c.targets.size})",
-            calibrationNote ?: if (calibrationOffer) "Open palm to skip" else null,
+            if (calibrationOffer && c.index == 0) str(R.string.space_calib_first, c.targets.size) else str(R.string.space_calib_dot, c.index + 1, c.targets.size),
+            calibrationNote ?: if (calibrationOffer) str(R.string.space_calib_skip) else null,
         )
         tex.set(lines, Look.GLASS, Look.INK, 34f, centred = true)
         val below = at - up * (size * 1.6f)

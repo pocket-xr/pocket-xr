@@ -20,15 +20,15 @@ object AddonSetup {
     /** Only an APK from Pocket XR's own releases is downloaded. */
     const val DOWNLOAD_PREFIX = "https://github.com/${UpdateCheck.OWNER}/${UpdateCheck.REPO}/releases/download/"
 
-    const val TITLE = "Phone notifications in your glasses"
-    const val WHAT = "The free Pocket XR add-on shows your phone's notifications in the glasses, and the pointer outside the Space. It is optional."
+    val TITLE: String get() = UiText.get("core_addon_title", "Phone notifications in your glasses")
+    val WHAT: String get() = UiText.get("core_addon_what", "The free Pocket XR add-on shows your phone's notifications in the glasses, and the pointer outside the Space. It is optional.")
 
     /** The tutorial page's two lines over the add-on's button. */
-    val ITEMS = listOf(
-        "See your phone's notifications on the Space's Notifications page",
-        "Use the pointer on the glasses outside the Space",
+    val ITEMS: List<String> get() = listOf(
+        UiText.get("core_addon_item_notifications", "See your phone's notifications on the Space's Notifications page"),
+        UiText.get("core_addon_item_pointer", "Use the pointer on the glasses outside the Space"),
     )
-    const val NOTE = "Optional. Skip it if you like, and install it later from the add-on releases."
+    val NOTE: String get() = UiText.get("core_addon_note", "Optional. Skip it if you like, and install it later from the add-on releases.")
 
     /** An add-on release: its version and its APK. */
     data class Release(val version: String, val apkUrl: String)
@@ -93,13 +93,13 @@ object AddonSetup {
         val done: Boolean get() = state == State.ACCESS_OFF || state == State.ACCESS_ON
     }
 
-    const val INSTALL = "Install add-on"
-    const val ALLOW = "Allow installs"
-    const val SETUP = "Open add-on setup"
-    const val TURN_ON = "Turn on notifications"
-    const val RELEASES = "Open releases page"
-    const val TRY_AGAIN = "Try again"
-    const val GET = "Get the add-on"
+    val INSTALL: String get() = UiText.get("core_addon_install", "Install add-on")
+    val ALLOW: String get() = UiText.get("core_addon_allow", "Allow installs")
+    val SETUP: String get() = UiText.get("core_addon_setup", "Open add-on setup")
+    val TURN_ON: String get() = UiText.get("core_addon_turn_on", "Turn on notifications")
+    val RELEASES: String get() = UiText.get("core_addon_releases", "Open releases page")
+    val TRY_AGAIN: String get() = UiText.get("core_addon_try_again", "Try again")
+    val GET: String get() = UiText.get("core_addon_get", "Get the add-on")
 
     /**
      * The step for: the add-on [installed], its notification access on ([accessOn]), the [download], whether Pocket XR
@@ -107,35 +107,36 @@ object AddonSetup {
      * Play build, nor a copy Google Play installed, which get the add-on from Play).
      */
     fun step(installed: Boolean, accessOn: Boolean, download: Download, canInstall: Boolean, selfInstall: Boolean): Step = when {
-        installed && accessOn -> Step(State.ACCESS_ON, "Add-on installed. Notifications are on.", listOf(Button(SETUP, Action.OPEN_SETUP)))
+        installed && accessOn -> Step(State.ACCESS_ON, UiText.get("core_addon_access_on", "Add-on installed. Notifications are on."), listOf(Button(SETUP, Action.OPEN_SETUP)))
         installed -> Step(
             State.ACCESS_OFF,
-            "Add-on installed. Turn on notification access to see them in the glasses.",
+            UiText.get("core_addon_access_off", "Add-on installed. Turn on notification access to see them in the glasses."),
             listOf(Button(TURN_ON, Action.OPEN_SETUP, primary = true)),
         )
-        !selfInstall -> Step(State.GET_FROM_STORE, "Get the add-on from Google Play.", listOf(Button(GET, Action.OPEN_RELEASES, primary = true)))
+        !selfInstall -> Step(State.GET_FROM_STORE, UiText.get("core_addon_from_play", "Get the add-on from Google Play."), listOf(Button(GET, Action.OPEN_RELEASES, primary = true)))
         download is Download.Running -> Step(
             State.DOWNLOADING,
-            download.percent?.let { "Downloading the add-on: $it%" } ?: "Downloading the add-on",
+            download.percent?.let { UiText.format("core_addon_downloading_percent", "Downloading the add-on: %1\$d%%", it) }
+                ?: UiText.get("core_addon_downloading", "Downloading the add-on"),
             emptyList(),
             progress = download.percent ?: 0,
         )
         download is Download.Failed -> Step(
             State.FAILED,
-            "The download did not work: ${download.reason}. Try again, or get it from the releases page.",
+            UiText.format("core_addon_download_failed", "The download did not work: %1\$s. Try again, or get it from the releases page.", download.reason),
             listOf(Button(TRY_AGAIN, Action.INSTALL, primary = true), Button(RELEASES, Action.OPEN_RELEASES)),
         )
         !canInstall -> Step(
             State.NEEDS_PERMISSION,
-            "First allow Pocket XR to install apps. Turn it on, then come back here.",
+            UiText.get("core_addon_allow_first", "First allow Pocket XR to install apps. Turn it on, then come back here."),
             listOf(Button(ALLOW, Action.ALLOW_INSTALLS, primary = true), Button(RELEASES, Action.OPEN_RELEASES)),
         )
         download is Download.Prompted -> Step(
             State.PROMPTED,
-            "Tap Install in Android's prompt. If it closed, tap $INSTALL again.",
+            UiText.format("core_addon_prompted", "Tap Install in Android's prompt. If it closed, tap %1\$s again.", INSTALL),
             listOf(Button(INSTALL, Action.INSTALL, primary = true), Button(RELEASES, Action.OPEN_RELEASES)),
         )
-        else -> Step(State.NOT_INSTALLED, "Not installed yet.", listOf(Button(INSTALL, Action.INSTALL, primary = true)))
+        else -> Step(State.NOT_INSTALLED, UiText.get("core_addon_not_installed", "Not installed yet."), listOf(Button(INSTALL, Action.INSTALL, primary = true)))
     }
 
     /** Whether the glasses check's result shows the step: until the add-on is installed with notification access on. */
@@ -143,10 +144,10 @@ object AddonSetup {
 
     /** A failed download's reason, in plain words, from GitHub's answer [code] (0: no answer at all). */
     fun reason(code: Int): String = when (code) {
-        0 -> "no connection to GitHub"
-        403, 429 -> "GitHub is busy, try again in a while"
-        404 -> "no add-on release found"
-        else -> "GitHub answered $code"
+        0 -> UiText.get("core_addon_reason_offline", "no connection to GitHub")
+        403, 429 -> UiText.get("core_addon_reason_busy", "GitHub is busy, try again in a while")
+        404 -> UiText.get("core_addon_reason_none", "no add-on release found")
+        else -> UiText.format("core_addon_reason_code", "GitHub answered %1\$d", code)
     }
 
     private val APK = Regex("\"browser_download_url\"\\s*:\\s*\"([^\"]*pocketxr-addon-([0-9][0-9.]*[0-9]|[0-9])\\.apk)\"")

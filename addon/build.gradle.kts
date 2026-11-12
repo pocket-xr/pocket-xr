@@ -16,8 +16,8 @@ android {
         applicationId = "com.hayeco.flipspaces.addon"
         minSdk = 30
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
     }
 
     // Signed like the app (app/build.gradle.kts): the release key for an official build, else the debug key. The app

@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import java.util.Locale
 
 /**
@@ -69,7 +70,7 @@ object ViewModeChoice {
         val sbs = StereoLayout.pickSbsMode(modes)
         val flat = pickFlatMode(modes)
         val all = modes.joinToString { fmt(it) }
-        val turnOn3d = if (glassesMenuOnly) DepthPress.GLASSES_MENU else "Turn on the glasses' 3D mode (Full SBS) for 3D"
+        val turnOn3d = if (glassesMenuOnly) DepthPress.GLASSES_MENU else UiText.get("spatial_view_turn_on_3d", "Turn on the glasses' 3D mode (Full SBS) for 3D")
         // Thermal limits keep the rate Android picked: ask only for the size, at the slowest rate offered there.
         fun atSize(i: Int?): Int? = i?.let { pick ->
             if (fastestAllowed) pick else modes.withIndex().filter { it.value.first == modes[pick].first && it.value.second == modes[pick].second }.minByOrNull { it.value.third }!!.index
@@ -100,7 +101,7 @@ object ViewModeChoice {
             } else {
                 ViewPlan(
                     wanted, atSize(sbs), if (sbs != null) StereoMode.SIDE_BY_SIDE else StereoMode.MONO, sbs != null,
-                    "Turn off the glasses' 3D mode for 2D at 120 Hz",
+                    UiText.get("spatial_view_turn_off_3d", "Turn off the glasses' 3D mode for 2D at 120 Hz"),
                     "view: 2D wanted, but Android offers only the side by side mode now (modes $all): the same picture goes to both halves" +
                         (sbs?.let { " at ${fmt(modes[atSize(it)!!])}" } ?: "") + " until the glasses' own 3D mode is off",
                 )

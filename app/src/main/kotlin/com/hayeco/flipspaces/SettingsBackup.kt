@@ -72,7 +72,7 @@ object SettingsBackup {
             .put("prefs", prefs)
             .put("files", files)
         app.contentResolver.openOutputStream(uri, "wt")?.use { it.write(root.toString(2).toByteArray()) }
-            ?: error("the file could not be opened")
+            ?: error(app.getString(R.string.home_backup_cannot_open))
         Log.i(TAG, "settings saved: ${prefs.length()} preferences files, ${files.length()} other files, Pocket XR $version")
         return prefs.length()
     }
@@ -83,10 +83,10 @@ object SettingsBackup {
      */
     fun restore(context: Context, uri: Uri): Int {
         val app = context.applicationContext
-        val text = app.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } ?: error("the file could not be opened")
+        val text = app.contentResolver.openInputStream(uri)?.use { it.readBytes().decodeToString() } ?: error(app.getString(R.string.home_backup_cannot_open))
         val root = runCatching { JSONObject(text) }.getOrNull()
-        require(root != null && root.optString("format") == FORMAT) { "This isn't a Pocket XR settings file." }
-        require(root.optInt("version") <= VERSION) { "This file is from a newer Pocket XR. Update Pocket XR first." }
+        require(root != null && root.optString("format") == FORMAT) { app.getString(R.string.home_backup_not_settings_file) }
+        require(root.optInt("version") <= VERSION) { app.getString(R.string.home_backup_newer_file) }
         val prefs = root.optJSONObject("prefs") ?: JSONObject()
         for (name in prefs.keys()) {
             if (!ours(name) || name.contains('/') || name.contains("..")) continue

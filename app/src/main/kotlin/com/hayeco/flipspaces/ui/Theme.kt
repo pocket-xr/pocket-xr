@@ -5,6 +5,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -45,9 +46,13 @@ private val Inter = FontFamily(
     Font(R.font.inter_medium, FontWeight.Medium),
 )
 
-private val SpacesType = Typography().let { t ->
+/**
+ * The type scale in [family]: Inter, or in Korean, Japanese and Chinese ([LookType.systemFontLanguage]) the phone's own
+ * font, since Inter has no letters for them.
+ */
+private fun spacesType(family: FontFamily) = Typography().let { t ->
     fun androidx.compose.ui.text.TextStyle.inter() = copy(
-        fontFamily = Inter,
+        fontFamily = family,
         fontWeight = if ((fontWeight ?: FontWeight.Normal) >= FontWeight.Medium) FontWeight.Medium else FontWeight.Normal,
     )
     Typography(
@@ -59,7 +64,12 @@ private val SpacesType = Typography().let { t ->
     )
 }
 
+private val SpacesType = spacesType(Inter)
+private val SystemType = spacesType(FontFamily.Default)
+
 @Composable
 fun FlipSpacesTheme(content: @Composable () -> Unit) {
-    MaterialTheme(colorScheme = SpacesColors, typography = SpacesType, content = content)
+    val locale = LocalConfiguration.current.locales[0]
+    val type = if (LookType.systemFontLanguage(locale)) SystemType else SpacesType
+    MaterialTheme(colorScheme = SpacesColors, typography = type, content = content)
 }

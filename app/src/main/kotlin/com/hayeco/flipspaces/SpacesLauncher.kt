@@ -43,7 +43,7 @@ object SpacesLauncher {
     fun openHome(phone: Activity, display: DisplayCandidate): String? {
         val failure = AppLauncher.openGlassesHome(phone, display.id) ?: return null
         noteHomeFailure(display, failure)
-        return "Android would not open Pocket XR on the glasses: ${failure.message}"
+        return phone.getString(R.string.home_home_refused, failure.message)
     }
 
     /** A tap on the phone. Returns the message for the phone snackbar. */
@@ -73,7 +73,7 @@ object SpacesLauncher {
         val failure = AppLauncher.openGlassesHome(phone, display.id)
         if (failure == null) {
             SpacesState.queue(SpacesState.PendingLaunch(app, display.id, SystemClock.elapsedRealtime()))
-            return "Opening Pocket XR on the glasses, then ${app.label}."
+            return phone.getString(R.string.home_opening_home_then, app.label)
         }
         noteHomeFailure(display, failure)
         return follow(phone, LaunchStep.START_HOME, failure, null, app, display, windowing, assessment)
@@ -114,11 +114,11 @@ object SpacesLauncher {
                         if (shellFailure == null) {
                             placed(shellSpec, LaunchStep.SHIZUKU)
                         } else {
-                            "Shizuku could not open ${app.label} either: ${shellFailure.message}"
+                            FlipSpacesApp.text(R.string.home_shizuku_failed_too, app.label, shellFailure.message)
                         },
                     )
                 }.start()
-                "Android refused ${app.label} on the glasses (${failure.message}). Trying again through Shizuku."
+                phone.getString(R.string.home_refused_trying_shizuku, app.label, failure.message)
             }
             else -> stopMessage(app, RouteDecision.Stop(StopReason.FAILED, failure.message))
         }
@@ -142,11 +142,11 @@ object SpacesLauncher {
     private fun placed(spec: LaunchSpec, step: LaunchStep): String {
         SpacesState.preferDisplay(spec.displayId)
         SpacesState.placed(spec.slot.index, spec.app)
-        val how = if (step == LaunchStep.SHIZUKU) " through Shizuku" else ""
+        val shell = step == LaunchStep.SHIZUKU
         return if (spec.windowed) {
-            "${spec.app.label} opened in slot ${spec.slot.label} on the glasses$how."
+            FlipSpacesApp.text(if (shell) R.string.home_opened_in_slot_shizuku else R.string.home_opened_in_slot, spec.app.label, spec.slot.label)
         } else {
-            "${spec.app.label} opened full screen on the glasses$how because freeform windowing is off."
+            FlipSpacesApp.text(if (shell) R.string.home_opened_full_screen_shizuku else R.string.home_opened_full_screen, spec.app.label)
         }
     }
 
@@ -157,16 +157,17 @@ object SpacesLauncher {
     }
 
     private fun stopMessage(app: AppEntry, stop: RouteDecision.Stop): String {
-        val error = stop.error?.let { " Android said: $it" }.orEmpty()
+        // %2$s in the messages below: this " Android said: ..." sentence, or nothing.
+        val error = stop.error?.let { " " + FlipSpacesApp.text(R.string.home_android_said, it) }.orEmpty()
         return when (stop.reason) {
             StopReason.MIRROR_MODE -> HostingAssessor.MIRROR_MESSAGE + error
             StopReason.SHIZUKU_NEEDS_PERMISSION -> {
                 ShizukuBridge.requestPermission()
-                "Android refused ${app.label} on the glasses.$error Allow Pocket XR in the Shizuku prompt, then tap the app again."
+                FlipSpacesApp.text(R.string.home_refused_allow_shizuku, app.label, error)
             }
             StopReason.SHIZUKU_UNAVAILABLE ->
-                "Android refused ${app.label} on the glasses.$error Start Shizuku to let Pocket XR open it with shell rights."
-            StopReason.FAILED -> "Could not open ${app.label} on the glasses.$error"
+                FlipSpacesApp.text(R.string.home_refused_start_shizuku, app.label, error)
+            StopReason.FAILED -> FlipSpacesApp.text(R.string.home_could_not_open, app.label, error)
         }
     }
 }

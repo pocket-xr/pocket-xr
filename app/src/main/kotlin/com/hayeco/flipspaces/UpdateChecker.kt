@@ -261,7 +261,7 @@ object UpdateChecker {
             Log.i(TAG, "Pocket XR ${release.version}: no notification (not allowed); the banner shows it")
             return
         }
-        manager.createNotificationChannel(NotificationChannel(CHANNEL, "Updates", NotificationManager.IMPORTANCE_DEFAULT))
+        manager.createNotificationChannel(NotificationChannel(CHANNEL, app.getString(R.string.home_channel_updates), NotificationManager.IMPORTANCE_DEFAULT))
         val open = Intent(app, TrackpadActivity::class.java)
             .putExtra(EXTRA_UPDATE, true)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)

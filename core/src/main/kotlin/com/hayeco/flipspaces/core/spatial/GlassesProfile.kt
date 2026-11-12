@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.atan
 import kotlin.math.sqrt
 import kotlin.math.tan
@@ -52,13 +53,14 @@ enum class GlassesModel(
     val defaultAxes: AxisMap = AxisMap.DEFAULT,
     /**
      * 0.5.95: a setting on the glasses themselves that the Space needs, said on the glasses for the first few sessions
-     * on that model ([SETUP_HINT_SESSIONS]); null when none is known. The app cannot read or change it.
+     * on that model ([SETUP_HINT_SESSIONS]); null when none is known. The app cannot read or change it. In English, for the
+     * Glasses report; [setupHint] is the words in the phone's language.
      */
-    val setupHint: String? = null,
+    val setupHintEnglish: String? = null,
 ) {
     AURA("XREAL Aura", "aura", tested = true, camera = true, diagonalFovDeg = null),
-    ONE("XREAL One", "one", tested = true, camera = false, diagonalFovDeg = 50f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
-    ONE_PRO("XREAL One Pro", "onepro", tested = false, camera = false, diagonalFovDeg = 57f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
+    ONE("XREAL One", "one", tested = true, camera = false, diagonalFovDeg = 50f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHintEnglish = ONE_STABILIZER),
+    ONE_PRO("XREAL One Pro", "onepro", tested = false, camera = false, diagonalFovDeg = 57f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHintEnglish = ONE_STABILIZER),
     // 1.2.13 (Discussion #81, a One Pro+ on a Galaxy Z Fold 6: "When looking straight ahead it's as if I'm looking
     // straight up. When I recenter, all of the windows appear straight down"): XREAL's 1 Pro+ (October 2026, the One Pro's
     // 57 degrees). Its display calls itself "XREAL 1 Pro+" (EDID product 16657) on USB 3318:0444. The tester's Send logs
@@ -66,8 +68,8 @@ enum class GlassesModel(
     // axes are its axes: a level-ish rest read 0.5, -9.8, 1.5 m/s2. What was wrong was a steady 30 to 45 degrees of
     // pitch (gravity tipped toward the sensor's +z), a display mount the factory calibration did not give
     // ([FactoryCalibration.mountNote]), not a quarter turn of the axes.
-    ONE_PRO_PLUS("XREAL One Pro+", "oneproplus", tested = false, camera = false, diagonalFovDeg = 57f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
-    ONE_S("XREAL 1S", "1s", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHint = ONE_STABILIZER),
+    ONE_PRO_PLUS("XREAL One Pro+", "oneproplus", tested = false, camera = false, diagonalFovDeg = 57f, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHintEnglish = ONE_STABILIZER),
+    ONE_S("XREAL 1S", "1s", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XRIGHT_YDOWN_ZFRONT, setupHintEnglish = ONE_STABILIZER),
     // 1.1.0: the One family's axes. Every XREAL with this head tracking link but the Aura has them, and the Aura's axes
     // on a One family model turn the picture upside down (0.5.91).
     // 1.1.12: the Air, Air 2, Air 2 Pro and Air 2 Ultra (USB [AirImuProtocol.modelName]). Their HID reports are turned
@@ -80,6 +82,13 @@ enum class GlassesModel(
     // head axes itself ([VitureAxes]), so the default axes.
     VITURE("VITURE glasses", "viture", tested = false, camera = false, diagonalFovDeg = null),
     UNKNOWN("Unknown glasses", "unknown", tested = false, camera = false, diagonalFovDeg = null);
+
+    /**
+     * 0.5.95: a setting on the glasses themselves that the Space needs, said on the glasses for the first few sessions
+     * on that model ([SETUP_HINT_SESSIONS]); null when none is known. In the phone's language.
+     */
+    val setupHint: String?
+        get() = setupHintEnglish?.let { if (it == ONE_STABILIZER) UiText.get("spatial_one_stabilizer_hint", it) else it }
 
     /**
      * The glasses' screen at size 1.0, as tan per picture pixel of a 1920 x 1080 picture. The Aura's is its own

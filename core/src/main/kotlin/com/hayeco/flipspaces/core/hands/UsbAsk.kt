@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.hands
 
+import com.hayeco.flipspaces.core.UiText
+
 /** What [UsbAsk.decide] says about asking for the glasses camera's USB access. */
 enum class UsbAskStep {
     /** Access is there: nothing to ask. */
@@ -70,12 +72,8 @@ object UsbAsk {
      * plug-in prompt; without it the box is hidden, so the hint asks for that first.
      */
     fun hint(recordAudioGranted: Boolean): String = if (recordAudioGranted) {
-        "When you plug the glasses in, Android shows one prompt, \"Open Pocket XR to handle XREAL Aura?\". " +
-            "Tick \"Always open Pocket XR when XREAL Aura is connected\" and tap OK. After that Pocket XR opens " +
-            "with the glasses and no prompt shows again."
+        UiText.get("core_usb_hint_always", "When you plug the glasses in, Android shows one prompt, \"Open Pocket XR to handle XREAL Aura?\". Tick \"Always open Pocket XR when XREAL Aura is connected\" and tap OK. After that Pocket XR opens with the glasses and no prompt shows again.")
     } else {
-        "Android only offers \"Always\" on the plug-in prompt once Pocket XR has the microphone permission, " +
-            "because the glasses have a microphone. Allow it here, then tick Always " +
-            "on the next plug-in."
+        UiText.get("core_usb_hint_microphone", "Android only offers \"Always\" on the plug-in prompt once Pocket XR has the microphone permission, because the glasses have a microphone. Allow it here, then tick Always on the next plug-in.")
     }
 }

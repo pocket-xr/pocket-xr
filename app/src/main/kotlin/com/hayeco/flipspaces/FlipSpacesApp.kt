@@ -1,6 +1,9 @@
 package com.hayeco.flipspaces
 
+import android.annotation.SuppressLint
 import android.app.Application
+import androidx.annotation.PluralsRes
+import androidx.annotation.StringRes
 import com.hayeco.flipspaces.core.GlassesReady
 
 /**
@@ -16,6 +19,9 @@ import com.hayeco.flipspaces.core.GlassesReady
 class FlipSpacesApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        started = this
+        // Core's words in the phone's language: core names a string in strings.xml, read here at the time it is shown.
+        com.hayeco.flipspaces.core.UiText.lookup = { key -> appString(key) }
         // 1.0.1: a crash is kept and offered the next time the app opens ([CrashCatcher]); first, so it catches the rest.
         CrashCatcher.install(this)
         // 1.1.10: the open screens, so Exit Pocket XR can finish each one.
@@ -36,5 +42,34 @@ class FlipSpacesApp : Application() {
         com.hayeco.flipspaces.spatial.PlainDisplaySession.restoreLeftOver(this)
         // 1.1.15: the GitHub update check at app start and every 12 hours, not only when Settings opens. Never on Play.
         UpdateChecker.start(this)
+    }
+
+    companion object {
+        @Volatile private var started: Application? = null
+
+        /**
+         * The app, for text where no Context is at hand (a background object). Set first thing in [onCreate]; before
+         * that, or where the process has another Application (the Robolectric tests), Android's current application.
+         */
+        val app: Application
+            get() = started ?: currentApplication().also { started = it }
+
+        @SuppressLint("PrivateApi", "DiscouragedPrivateApi")
+        private fun currentApplication(): Application =
+            Class.forName("android.app.ActivityThread").getMethod("currentApplication").invoke(null) as Application
+
+        /** A string in the phone's language, for code with no Context of its own. */
+        fun text(@StringRes id: Int, vararg args: Any): String = app.getString(id, *args)
+
+        /** A plural string in the phone's language, for code with no Context of its own. */
+        fun plural(@PluralsRes id: Int, count: Int, vararg args: Any): String = app.resources.getQuantityString(id, count, *args)
+
+        /** The string named [key] in strings.xml, or null; for [com.hayeco.flipspaces.core.UiText]. */
+        @SuppressLint("DiscouragedApi")
+        private fun appString(key: String): String? {
+            val res = app.resources
+            val id = res.getIdentifier(key, "string", app.packageName)
+            return if (id == 0) null else res.getString(id)
+        }
     }
 }

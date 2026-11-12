@@ -11,6 +11,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.FrameLayout
+import com.hayeco.flipspaces.FlipSpacesApp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.spatial.PanelHost
 import com.hayeco.flipspaces.spatial.SpaceActivity
 import org.freedesktop.monado.ipc.MonadoImpl
@@ -121,7 +123,7 @@ object OpenXrGlassesLayer {
             // 1.4.3: a game is side by side 3D; Steady mode's Ultrawide shows it as one flat canvas, and leaving it now would
             // re-plug the display and close the game's window. Say so instead.
             if (com.hayeco.flipspaces.spatial.GlassesDisplayControl.steadyActive) {
-                com.hayeco.flipspaces.spatial.GlassesNotice.post("Games need 3D: leave the game, turn Steady mode off, then start it again", 10_000L)
+                com.hayeco.flipspaces.spatial.GlassesNotice.post(FlipSpacesApp.text(R.string.sys_game_needs_3d), 10_000L)
                 Log.i(TAG, "a game started in Steady mode: told to turn Steady mode off first")
             }
         }

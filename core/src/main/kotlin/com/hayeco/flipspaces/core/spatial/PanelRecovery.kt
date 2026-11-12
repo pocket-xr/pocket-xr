@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * Where one app panel's virtual display is. Before 0.4.0 a panel that failed once stayed failed
  * until the Space restarted, and a panel service restart left every panel pointing at a dead
@@ -80,7 +82,7 @@ object PanelRecovery {
             PanelDisplayEvent.PAUSED -> showing.copy(paused = true) to null
             PanelDisplayEvent.RESUMED -> showing.copy(paused = false) to null
             PanelDisplayEvent.STOPPED ->
-                PanelState.RetryWait(1, "Android stopped the panel display ${showing.displayId}", nowMs + backoffMs(2)) to showing.displayId
+                PanelState.RetryWait(1, UiText.format("spatial_panel_display_stopped", "Android stopped the panel display %1\$d", showing.displayId), nowMs + backoffMs(2)) to showing.displayId
         }
     }
 
@@ -92,13 +94,14 @@ object PanelRecovery {
     fun label(state: PanelState, app: String): String = when (state) {
         is PanelState.Waiting -> state.why
         is PanelState.Opening ->
-            if (state.attempt == 1) "Opening $app" else "Opening $app (try ${state.attempt} of $MAX_ATTEMPTS)"
+            if (state.attempt == 1) UiText.format("spatial_panel_opening", "Opening %1\$s", app)
+            else UiText.format("spatial_panel_opening_try", "Opening %1\$s (try %2\$d of %3\$d)", app, state.attempt, MAX_ATTEMPTS)
         is PanelState.Showing -> when {
-            state.appClosed -> "$app closed. Reopen or close the panel."
-            state.paused -> "Android paused $app's display ${state.displayId}; it shows again when Android resumes it"
-            else -> state.warning ?: "Showing $app (display ${state.displayId})"
+            state.appClosed -> UiText.format("spatial_panel_app_closed", "%1\$s closed. Reopen or close the panel.", app)
+            state.paused -> UiText.format("spatial_panel_paused", "Android paused %1\$s's display %2\$d; it shows again when Android resumes it", app, state.displayId)
+            else -> state.warning ?: UiText.format("spatial_panel_showing", "Showing %1\$s (display %2\$d)", app, state.displayId)
         }
-        is PanelState.RetryWait -> "Try ${state.attempt} of $MAX_ATTEMPTS failed: ${state.error}. Retrying."
-        is PanelState.Failed -> "Failed after ${state.attempts} tries: ${state.error}. Pinch to try again."
+        is PanelState.RetryWait -> UiText.format("spatial_panel_try_failed", "Try %1\$d of %2\$d failed: %3\$s. Retrying.", state.attempt, MAX_ATTEMPTS, state.error)
+        is PanelState.Failed -> UiText.format("spatial_panel_failed", "Failed after %1\$d tries: %2\$s. Pinch to try again.", state.attempts, state.error)
     }
 }

@@ -54,14 +54,14 @@ object AccessibilityPrompt {
         prefs.edit().putBoolean(KEY_SHOWN, true).apply()
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         runCatching {
-            manager.createNotificationChannel(NotificationChannel(CHANNEL, "Setup prompts", NotificationManager.IMPORTANCE_DEFAULT))
+            manager.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.sys_notif_channel_setup), NotificationManager.IMPORTANCE_DEFAULT))
             val open = PendingIntent.getActivity(context, NOTIFICATION_ID, settingsIntent(context), PendingIntent.FLAG_IMMUTABLE)
             val n = Notification.Builder(context, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setContentTitle("Turn on the Pocket XR pointer service")
-                .setStyle(Notification.BigTextStyle().bigText("$why: only the Pocket XR pointer accessibility service may press DeX's full screen button. It comes with the Pocket XR add-on. Tap to read what it does and turn it on."))
+                .setContentTitle(context.getString(R.string.sys_pointer_prompt_title))
+                .setStyle(Notification.BigTextStyle().bigText(context.getString(R.string.sys_pointer_prompt_text, why)))
                 .setContentIntent(open)
-                .addAction(Notification.Action.Builder(null, "Set up", open).build())
+                .addAction(Notification.Action.Builder(null, context.getString(R.string.sys_pointer_prompt_action), open).build())
                 .setAutoCancel(true)
                 .build()
             manager.notify(NOTIFICATION_ID, n)

@@ -75,7 +75,7 @@ internal class GlassesCheckCard(
         addView(ImageView(context).apply {
             setImageResource(R.drawable.ic_close)
             setColorFilter(Look.INK_2)
-            contentDescription = "Skip the glasses check"
+            contentDescription = context.getString(R.string.home_check_skip_description)
             val p = context.dp(12f)
             setPadding(p, p, p, p)
             setOnClickListener { finish(null) }
@@ -132,9 +132,9 @@ internal class GlassesCheckCard(
                         setStroke(c.dp(1f), Look.RIM)
                     }
                 }, params(12f))
-                body.addView(c.padText("Then a 10 second check: turn your head and say what the windows did.", 13f, TEXT_QUIET), params(14f))
-                button("Start the check", primary = true) { startTurning() }
-                button("Skip") { finish(null) }
+                body.addView(c.padText(c.getString(R.string.home_check_then), 13f, TEXT_QUIET), params(14f))
+                button(c.getString(R.string.home_check_start), primary = true) { startTurning() }
+                button(c.getString(R.string.home_check_skip)) { finish(null) }
             }
             Step.TURNING -> {
                 title(GlassesCheck.TITLE)
@@ -146,7 +146,7 @@ internal class GlassesCheckCard(
                 body.addView(countdown, params(16f))
                 seen = c.padText("", 13f, TEXT_QUIET).apply { gravity = Gravity.CENTER }
                 body.addView(seen, params(6f))
-                button("Stop") {
+                button(c.getString(R.string.home_check_stop)) {
                     ticks.removeCallbacks(tickRun)
                     step = Step.SETUP
                     build()
@@ -156,8 +156,8 @@ internal class GlassesCheckCard(
             Step.ASK_STAYED -> {
                 title(GlassesCheck.TITLE)
                 body.addView(c.padText(GlassesCheck.Q_STAYED, 16f, Look.INK), params(12f))
-                button("Yes, they stayed put", primary = true) { answer(GlassesCheck.Answers(stayed = true)) }
-                button("No") {
+                button(c.getString(R.string.home_check_yes_stayed), primary = true) { answer(GlassesCheck.Answers(stayed = true)) }
+                button(c.getString(R.string.home_check_no)) {
                     answers = GlassesCheck.Answers(stayed = false)
                     step = Step.ASK_WHAT
                     build()
@@ -170,11 +170,11 @@ internal class GlassesCheckCard(
             }
             Step.RESULT -> {
                 val r = result ?: return
-                title(if (r.passed) "All set" else "One thing to change")
+                title(if (r.passed) c.getString(R.string.home_check_all_set) else c.getString(R.string.home_check_one_thing))
                 body.addView(c.padText(r.text, 15f, Look.INK_2).apply {
                     accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
                 }, params(12f))
-                if (!r.passed) button("Check again", primary = true) { startTurning() }
+                if (!r.passed) button(c.getString(R.string.home_check_again), primary = true) { startTurning() }
                 // 1.2.1: once the glasses are set, the optional add-on (the phone's notifications and the pointer), until
                 // it is installed with notification access on. Done skips it.
                 if (r.passed && addonShown()) {
@@ -182,7 +182,7 @@ internal class GlassesCheckCard(
                     body.addView(c.padText(AddonSetup.WHAT, 13f, Look.INK_2), params(6f))
                     body.addView(AddonPanel(c), params(8f))
                 }
-                button("Done", primary = r.passed && !addonShown()) { finish(r) }
+                button(c.getString(R.string.home_check_done), primary = r.passed && !addonShown()) { finish(r) }
             }
         }
         announceForAccessibility((body.getChildAt(0) as? TextView)?.text)
@@ -205,11 +205,12 @@ internal class GlassesCheckCard(
     }
 
     private fun updateTurning(leftMs: Long) {
-        countdown?.text = ((leftMs + 999) / 1000).coerceIn(0, 10).toString()
-        countdown?.contentDescription = "${countdown?.text} seconds left"
+        val secondsLeft = ((leftMs + 999) / 1000).coerceIn(0, 10).toInt()
+        countdown?.text = secondsLeft.toString()
+        countdown?.contentDescription = context.resources.getQuantityString(R.plurals.home_check_seconds_left, secondsLeft, secondsLeft)
         val t = meter.turned()
-        seen?.text = if (t == null) "Waiting for the Space's head tracking" else
-            "Pocket XR sees ${t.leftDeg.toInt()} degrees left, ${t.rightDeg.toInt()} right"
+        seen?.text = if (t == null) context.getString(R.string.home_check_waiting_tracking) else
+            context.getString(R.string.home_check_sees_degrees, t.leftDeg.toInt(), t.rightDeg.toInt())
     }
 
     private fun answer(a: GlassesCheck.Answers) {
@@ -252,7 +253,7 @@ internal class GlassesCheckCard(
                 importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
             }, LinearLayout.LayoutParams(c.dp(15f), c.dp(15f)).apply { topMargin = c.dp(2f) })
             addView(c.padText(text, 14f, Look.INK_2), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = c.dp(8f) })
-            contentDescription = "Step $n: $text"
+            contentDescription = c.getString(R.string.home_check_step, n, text)
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         }, params(10f))
     }
@@ -297,6 +298,6 @@ internal class GlassesCheckCard(
     private companion object {
         const val SAMPLE_MS = 50L
         const val TEXT_QUIET = 0x99FFFFFF.toInt()
-        const val NOTHING_TO_SET = com.hayeco.flipspaces.core.spatial.GlassesSetup.NOTHING_TO_SET
+        val NOTHING_TO_SET: String get() = com.hayeco.flipspaces.core.spatial.GlassesSetup.NOTHING_TO_SET
     }
 }

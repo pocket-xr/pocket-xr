@@ -98,7 +98,7 @@ class CursorOverlayView(context: Context, private val density: Float) : View(con
 
     fun showHand(status: Hand?, sourceLabel: String) {
         if (status?.present == true && hand?.present != true && !spaceUp) {
-            flash("Pinch to click. Pinch and hold a title bar to move, a corner to resize. Open palm for the dock.", 5000)
+            flash(context.getString(R.string.addon_hand_tip), 5000)
         }
         hand = status
         source = sourceLabel
@@ -148,11 +148,11 @@ class CursorOverlayView(context: Context, private val density: Float) : View(con
         val zone = hover ?: return null
         val held = pressed
         return when {
-            zone == WindowZone.TITLE_BAR -> if (held) "Moving" else "Hold to move"
-            zone.isCorner -> if (held) "Resizing" else "Hold to resize"
-            zone.isResize -> if (held) "Resizing" else "Hold to resize"
+            zone == WindowZone.TITLE_BAR -> context.getString(if (held) R.string.addon_hint_moving else R.string.addon_hint_hold_move)
+            zone.isCorner -> context.getString(if (held) R.string.addon_hint_resizing else R.string.addon_hint_hold_resize)
+            zone.isResize -> context.getString(if (held) R.string.addon_hint_resizing else R.string.addon_hint_hold_resize)
             held -> null
-            hand?.openPalm == true -> "Dock"
+            hand?.openPalm == true -> context.getString(R.string.addon_hint_dock)
             else -> null
         }
     }
@@ -161,8 +161,8 @@ class CursorOverlayView(context: Context, private val density: Float) : View(con
         val y = dp(22f)
         val status = when {
             hand == null || spaceUp -> null
-            hand?.present == true -> "$source: hand"
-            else -> "$source: no hand in view"
+            hand?.present == true -> context.getString(R.string.addon_status_hand, source)
+            else -> context.getString(R.string.addon_status_no_hand, source)
         }
         status?.let { drawChip(canvas, it, dp(16f), y) }
         val b = banner

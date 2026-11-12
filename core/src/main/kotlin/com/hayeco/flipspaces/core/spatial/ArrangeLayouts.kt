@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.asin
 import kotlin.math.ceil
 import kotlin.math.sqrt
@@ -17,29 +18,29 @@ object ArrangeLayouts {
     /** The Menu's choices for [n] windows, the most useful first. */
     fun forCount(n: Int): List<Choice> = when {
         n <= 0 -> emptyList()
-        n == 1 -> listOf(Choice(ArrangeKind.CENTER, "Center"), Choice(ArrangeKind.THEATER, "Theater (big screen)"))
+        n == 1 -> listOf(Choice(ArrangeKind.CENTER, UiText.get("spatial_arrange_center", "Center")), Choice(ArrangeKind.THEATER, UiText.get("spatial_arrange_theater_big", "Theater (big screen)")))
         n == 2 -> listOf(
-            Choice(ArrangeKind.SIDE_BY_SIDE, "Side by side"),
-            Choice(ArrangeKind.MAIN_SIDE, "Main + side"),
-            Choice(ArrangeKind.STACKED, "Stacked"),
+            Choice(ArrangeKind.SIDE_BY_SIDE, UiText.get("spatial_arrange_side_by_side", "Side by side")),
+            Choice(ArrangeKind.MAIN_SIDE, UiText.get("spatial_arrange_main_side", "Main + side")),
+            Choice(ArrangeKind.STACKED, UiText.get("spatial_arrange_stacked", "Stacked")),
         )
         n == 3 -> listOf(
-            Choice(ArrangeKind.ACROSS, "Three across"),
-            Choice(ArrangeKind.MAIN_SIDE, "Main + two stacked"),
-            Choice(ArrangeKind.CIRCLE, "Focus center"),
+            Choice(ArrangeKind.ACROSS, UiText.get("spatial_arrange_three_across", "Three across")),
+            Choice(ArrangeKind.MAIN_SIDE, UiText.get("spatial_arrange_main_two_stacked", "Main + two stacked")),
+            Choice(ArrangeKind.CIRCLE, UiText.get("spatial_arrange_focus_center", "Focus center")),
         )
         n == 4 -> listOf(
-            Choice(ArrangeKind.GRID, "2 × 2 grid"),
-            Choice(ArrangeKind.MAIN_SIDE, "Main + three stacked"),
-            Choice(ArrangeKind.MAIN_STRIP, "Main + strip below"),
-            Choice(ArrangeKind.ACROSS, "Four across"),
+            Choice(ArrangeKind.GRID, UiText.get("spatial_arrange_grid_2x2", "2 × 2 grid")),
+            Choice(ArrangeKind.MAIN_SIDE, UiText.get("spatial_arrange_main_three_stacked", "Main + three stacked")),
+            Choice(ArrangeKind.MAIN_STRIP, UiText.get("spatial_arrange_main_strip_below", "Main + strip below")),
+            Choice(ArrangeKind.ACROSS, UiText.get("spatial_arrange_four_across", "Four across")),
         )
         else -> listOf(
-            Choice(ArrangeKind.GRID, "Grid"),
-            Choice(ArrangeKind.MAIN_STRIP, "Main + strip below"),
-            Choice(ArrangeKind.CIRCLE, "Focus center"),
-            Choice(ArrangeKind.MAIN_SIDE, "Main + column"),
-            Choice(ArrangeKind.WRAPAROUND, "All around you"),
+            Choice(ArrangeKind.GRID, UiText.get("spatial_arrange_grid", "Grid")),
+            Choice(ArrangeKind.MAIN_STRIP, UiText.get("spatial_arrange_main_strip_below", "Main + strip below")),
+            Choice(ArrangeKind.CIRCLE, UiText.get("spatial_arrange_focus_center", "Focus center")),
+            Choice(ArrangeKind.MAIN_SIDE, UiText.get("spatial_arrange_main_column", "Main + column")),
+            Choice(ArrangeKind.WRAPAROUND, UiText.get("spatial_arrange_all_around_you", "All around you")),
         )
     }
 

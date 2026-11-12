@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.hands
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 0.5.8: the short hint the Space shows while a hand is near the bottom of the glasses camera's
  * picture ([HandStatus.nearBottom]). Mike's 0.5.6 two hand log had his right hand at y 894 to 982
@@ -30,6 +32,6 @@ class CameraEdgeHint(
     }
 
     companion object {
-        const val TEXT = "Hand low in the camera: raise it a little"
+        val TEXT: String get() = UiText.get("core_hand_low_hint", "Hand low in the camera: raise it a little")
     }
 }

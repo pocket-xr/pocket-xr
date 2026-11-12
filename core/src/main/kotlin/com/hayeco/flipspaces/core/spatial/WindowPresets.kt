@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 0.5.37 (Mike: "an option for users to save preset app windows so that every time they click a preset, it opens those
  * exact app windows in the exact size and close/far they were at"): a preset is a saved [SpaceLayout] (each window's app,
@@ -16,8 +18,22 @@ object WindowPresets {
 
     /** The name a new preset gets: "Workspace N", one past the highest in use. */
     fun nextName(existing: List<WindowPreset>): String {
-        val top = existing.mapNotNull { it.name.removePrefix("Workspace ").toIntOrNull() }.maxOrNull() ?: 0
-        return "Workspace ${top + 1}"
+        val top = existing.mapNotNull { number(it.name) }.maxOrNull() ?: 0
+        return UiText.format("spatial_preset_name", NAME, top + 1)
+    }
+
+    /** The name's pattern in English; the phone's language may word it differently ([number] reads both). */
+    private const val NAME = "Workspace %1\$d"
+
+    /** N of a "Workspace N" name, in English (saved before the app spoke other languages) or the phone's language. */
+    private fun number(name: String): Int? {
+        name.removePrefix("Workspace ").toIntOrNull()?.let { return it }
+        val pattern = UiText.get("spatial_preset_name", NAME)
+        val at = pattern.indexOf("%1\$d").takeIf { it >= 0 } ?: return null
+        val before = pattern.substring(0, at)
+        val after = pattern.substring(at + 4)
+        if (name.length < before.length + after.length || !name.startsWith(before) || !name.endsWith(after)) return null
+        return name.substring(before.length, name.length - after.length).trim().toIntOrNull()
     }
 
     /** [current] saved as a new preset at the top (unwrapped; at most [MAX], the oldest dropped), or null with no windows. */

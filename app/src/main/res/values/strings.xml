@@ -1,4 +1,1530 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Pocket XR</string>
+    <!-- Activity and permission labels in the manifest. -->
+    <string name="manifest_addon_link_permission">Pocket XR add-on link</string>
+    <string name="manifest_hands_and_trackpad">Hands and trackpad</string>
+    <string name="manifest_trackpad">Trackpad</string>
+    <string name="manifest_spatial_windows">Spatial windows</string>
+    <string name="manifest_head_tracking">Glasses head tracking</string>
+    <string name="manifest_pc_vr">PC VR</string>
+
+    <!-- values\strings_a.xml -->
+    <!-- Shared: a switch's state, shown on the glasses (Control Center tiles, launcher buttons). -->
+    <string name="space_on">On</string>
+    <string name="space_off">Off</string>
+    <string name="space_wifi">Wi-Fi</string>
+    <string name="space_bluetooth">Bluetooth</string>
+
+    <!-- Control Center on the glasses -->
+    <string name="space_cc_6dof_unavailable">6DoF, not on these glasses</string>
+    <string name="space_cc_spatial_mouse">Spatial Mouse</string>
+    <string name="space_cc_hand_tracking">Hand tracking</string>
+    <string name="space_cc_cursor_follows_head">Cursor follows head</string>
+    <string name="space_cc_snap_windows">Snap windows</string>
+    <string name="space_cc_tap_for_details">Tap for details</string>
+    <string name="space_cc_not_connected">Not connected</string>
+    <string name="space_cc_no_devices">No devices connected</string>
+    <plurals name="space_cc_devices_connected">
+        <item quantity="one">%1$d device connected</item>
+        <item quantity="other">%1$d devices connected</item>
+    </plurals>
+    <string name="space_cc_no_camera">No camera on these glasses</string>
+    <string name="space_cc_not_with_spatial_mouse">Not with Spatial Mouse</string>
+    <string name="space_cc_recenter_view">Recenter view</string>
+    <!-- Record button while recording: stops the recording. -->
+    <string name="space_cc_stop">Stop</string>
+    <string name="space_cc_record">Record</string>
+    <string name="space_cc_clear_all">Clear all</string>
+    <string name="space_cc_allow_notification_access">Allow notification access</string>
+    <string name="space_cc_allow_bluetooth_access">Allow Bluetooth access</string>
+    <string name="space_cc_add_network">+ Add a network</string>
+    <string name="space_cc_open_wifi_settings">Open Wi-Fi settings</string>
+    <string name="space_cc_pair_device">+ Pair a new device</string>
+    <!-- %1$s: a Wi-Fi network name -->
+    <string name="space_cc_forget_named">Forget %1$s</string>
+    <string name="space_cc_forget">Forget</string>
+    <string name="space_cc_wifi_off">Wi-Fi is off</string>
+    <string name="space_cc_pick_network">Pick a saved network or add one</string>
+    <!-- A Bluetooth device's state -->
+    <string name="space_cc_connected">Connected</string>
+    <string name="space_cc_paired">Paired</string>
+    <string name="space_cc_save_windows">+ Save these windows</string>
+    <string name="space_cc_save_current">+ Save current</string>
+
+    <!-- App launcher on the glasses -->
+    <string name="space_launcher_no_apps">No apps found</string>
+    <!-- Launcher button's top word, over On or Off: the 3D view -->
+    <string name="space_launcher_depth">Depth</string>
+    <string name="space_launcher_search_apps">Search apps</string>
+    <!-- The round home button on the glasses: opens or closes the launcher -->
+    <string name="space_home_apps">Apps</string>
+    <string name="space_home_close">Close</string>
+
+    <!-- Notices said on the glasses -->
+    <string name="space_warp_on">Glasses warp (experimental): ON</string>
+    <string name="space_warp_off">Glasses warp (experimental): OFF</string>
+    <!-- %1$d: milliseconds -->
+    <string name="space_delay_hint">Display delay %1$d ms: turn your head gently left and right</string>
+    <string name="space_delay_hint_save">Move the delay on the phone until the line stays put, then Save run</string>
+    <string name="space_level_hint">Level: tilt your head until the green line lies on a level edge at eye height</string>
+    <string name="space_level_hint_save">Hold still, then tap Save level on the phone</string>
+    <string name="space_app_no_window">That app has no window to open</string>
+    <!-- %1$s: preset name, %2$s: its apps -->
+    <string name="space_preset_saved">Saved %1$s: %2$s</string>
+    <!-- %1$s: preset name, %2$d: windows opened -->
+    <plurals name="space_preset_opened">
+        <item quantity="one">%1$s: %2$d window</item>
+        <item quantity="other">%1$s: %2$d windows</item>
+    </plurals>
+    <!-- %1$s: what was tried, %2$s: the error -->
+    <string name="space_task_error">%1$s: %2$s</string>
+    <!-- %1$s: Wi-Fi or Bluetooth -->
+    <string name="space_task_power_off">%1$s off</string>
+    <string name="space_task_power_on">%1$s on</string>
+    <string name="space_task_notification_access">Notification access</string>
+    <string name="space_task_bluetooth_access">Bluetooth access</string>
+    <string name="space_fit_video_on">Fit video: 16:9, phone layout</string>
+    <string name="space_fit_video_off">Fit video off</string>
+    <string name="space_lock_screens_on">Lock screens is on</string>
+    <!-- %1$s: a window shape, such as 16:9 -->
+    <string name="space_shape">Shape %1$s</string>
+    <!-- %1$s: app name -->
+    <string name="space_pick_app_for">Pick an app for %1$s</string>
+    <string name="space_too_many_pinned">Too many apps are pinned</string>
+    <string name="space_find_dot">Can\'t find the dot? Hold Home on the phone</string>
+
+    <!-- A window's status line, on the glasses and the phone -->
+    <string name="space_waiting_shizuku">Waiting for Shizuku</string>
+    <string name="space_reopening_after_stall">Reopening after the Space stalled</string>
+    <!-- %1$s: app name -->
+    <string name="space_trying_again">Trying %1$s again</string>
+    <string name="space_service_restarted_waiting">The panel service restarted; reopening</string>
+    <string name="space_starting_service">Starting the panel service</string>
+    <!-- %1$s: Shizuku's state, such as "Shizuku is not installed" -->
+    <string name="space_shizuku_setup">%1$s. Set it up on the phone: Pocket XR, Spatial windows.</string>
+    <!-- %1$s: app name, %2$d: seconds -->
+    <string name="space_waiting_crashed">%1$s crashed %2$d s ago; it opens again in a minute</string>
+    <string name="space_service_reconnected">The panel service reconnected; reopening</string>
+    <string name="space_unknown_error">unknown error</string>
+
+    <!-- Problems, shown on the phone. %1$s: app name, %2$s: the error -->
+    <string name="space_problem_back_from_game">Back from the game %1$s: %2$s</string>
+    <string name="space_problem_resize">Resize %1$s: %2$s</string>
+    <string name="space_problem_relayout">Relayout %1$s: %2$s</string>
+    <string name="space_problem_input">Input on %1$s: %2$s</string>
+    <string name="space_problem_focus">Focus on %1$s: %2$s</string>
+    <string name="space_problem_refreshing">Refreshing %1$s: %2$s</string>
+    <string name="space_problem_restarting">Restarting %1$s: %2$s</string>
+    <string name="space_problem_game_controller">Game controller on %1$s: %2$s</string>
+    <string name="space_problem_back">Back on %1$s: %2$s</string>
+    <string name="space_problem_switching">Switching to %1$s: %2$s</string>
+    <string name="space_problem_reopening">Reopening %1$s: %2$s</string>
+    <string name="space_problem_key">Key on %1$s: %2$s</string>
+    <string name="space_problem_dex">Opening %1$s as a DeX window: %2$s</string>
+    <string name="space_problem_app_info">App Info for %1$s: %2$s</string>
+    <string name="space_problem_crashed">%1$s crashed on its panel; Reopen or Close it there.</string>
+    <string name="space_problem_closed">%1$s closed on its panel; Reopen or Close it there.</string>
+    <string name="space_problem_one_window">%1$s can only show one window on this phone. It moved to your newest window.</string>
+    <string name="space_problem_moved_newer">%1$s moved to your newer window. To keep both, turn on Open a new instance.</string>
+    <string name="space_problem_six_panels">Six panels is the limit; close one first.</string>
+    <string name="space_problem_service_restarted">The panel service restarted; reopening the panels.</string>
+    <string name="space_problem_protects">%1$s protects its screen; pinch its banner to open it as a DeX window.</string>
+    <string name="space_problem_looks_protected">%1$s looks protected on its panel; pinch its banner to open it as a DeX window.</string>
+
+    <!-- Hand calibration on the glasses -->
+    <string name="space_calib_skipped">Hand calibration skipped. Calibrate any time from Hands on the phone.</string>
+    <!-- %1$.1f: degrees -->
+    <string name="space_calib_off">That was %1$.1f degrees off. Again, slowly: point, hold still, pinch.</string>
+    <string name="space_calib_done">Hands calibrated: %1$.1f degrees</string>
+    <!-- %1$d: number of dots -->
+    <string name="space_calib_first">Calibrate your hands once: point at the dot and pinch (1 of %1$d)</string>
+    <!-- %1$d: this dot, %2$d: number of dots -->
+    <string name="space_calib_dot">Point at the dot and pinch (%1$d of %2$d)</string>
+    <string name="space_calib_skip">Open palm to skip</string>
+
+    <!-- The Space's debug info panel (Developer) -->
+    <!-- %1$s: the display mode -->
+    <string name="space_info_mode">Pocket XR: %1$s</string>
+    <string name="space_info_starting">starting</string>
+    <string name="space_info_head_tracking">Head tracking: %1$s</string>
+    <!-- %1$d: panels open, %2$s: Shizuku's state -->
+    <string name="space_info_panels">Panels: %1$d of 6. %2$s.</string>
+    <string name="space_info_trackpad">Trackpad: swipe to move the cursor, tap to click, two finger tap: right click, two finger swipe: scroll, pinch: zoom. Tap a title bar to pick a window up: swipe moves it, two fingers the same way push it away (up) or pull it closer, pinch resizes, tap or Home drops it. Title bar Reset and Close. Three fingers up: recent apps, down: Control panel. Home: the launcher; hold Home: recentre the cursor.</string>
+    <string name="space_info_black_panel">A panel that stays black (FLAG_SECURE or DRM, such as Netflix) offers to open its app as a DeX window.</string>
+    <!-- %1$d: panels in view, %2$d: panels open, %3$s: thermal state, %4$d and %5$d: frames per second -->
+    <string name="space_info_in_view">In view: %1$d of %2$d. Thermal: %3$s, panels up to %4$d fps (focused %5$d).</string>
+    <string name="space_info_last_problem">Last problem: %1$s</string>
+
+    <!-- values\strings_b.xml -->
+    <!-- %1$s is the internal reason, in English (e.g. "Shizuku stopped"). -->
+    <string name="panel_service_stopped">The panel service stopped (%1$s). Reconnecting.</string>
+    <!-- %1$s is the technical error, in English. -->
+    <string name="panel_shizuku_would_not_start">Shizuku would not start the panel service: %1$s</string>
+    <string name="panel_service_not_connected">The panel service is not connected</string>
+    <string name="panel_service_not_connected_shizuku">The panel service is not connected (Shizuku)</string>
+    <!-- %1$s is Android's own error, in English. -->
+    <string name="panel_create_display_failed">Creating the panel display failed: %1$s</string>
+    <!-- %1$s is the app's name, %2$s is Android's own error, in English. -->
+    <string name="panel_launch_refused">Android would not start %1$s on its panel: %2$s</string>
+    <!-- %1$s is the technical error, in English. -->
+    <string name="panel_service_call_failed">Panel service call failed: %1$s</string>
+    <!-- Start of a phone notification about the Pocket XR pointer service; it is followed by ": only the Pocket XR pointer ..." -->
+    <string name="panel_dex_chrome_stays">DeX\'s taskbar and title bar stay on the glasses</string>
+
+    <!-- values\strings_c.xml -->
+    <!-- The phone trackpad and the cover screen: TrackpadViews.kt -->
+    <string name="pad_laser_tip">Lost the dot? Hold Home to bring it in front of you</string>
+    <string name="pad_menu">Menu</string>
+    <string name="pad_vertical_trackpad">Vertical Trackpad</string>
+    <string name="pad_hand_tracking">Hand tracking</string>
+    <string name="pad_hand_tracking_on">Hand tracking: On</string>
+    <string name="pad_hand_tracking_off">Hand tracking: Off</string>
+    <string name="pad_spatial_mouse">Spatial Mouse</string>
+    <string name="pad_spatial_mouse_on">Spatial Mouse: ON</string>
+    <string name="pad_spatial_mouse_off">Spatial Mouse: OFF</string>
+    <!-- The update banner's buttons -->
+    <string name="pad_later">Later</string>
+    <string name="pad_update">Update</string>
+    <string name="pad_recentre">Recentre</string>
+    <string name="pad_steady_mode">Steady mode</string>
+    <string name="pad_hold_to_unlock">Hold to unlock</string>
+    <string name="pad_type_hint">Type, then Enter sends it to the window</string>
+    <string name="pad_done">Done</string>
+    <string name="pad_next">Next</string>
+    <string name="pad_close">Close</string>
+    <string name="pad_ok">OK</string>
+    <string name="pad_cancel">Cancel</string>
+    <!-- A saved window preset's second line: the count of its windows, then %2$s its app names -->
+    <plurals name="pad_preset_windows_apps">
+        <item quantity="one">%1$d window · %2$s</item>
+        <item quantity="other">%1$d windows · %2$s</item>
+    </plurals>
+    <!-- A sketch of the XREAL glasses' own menu in the glasses setup pages; use the glasses' own wording if known -->
+    <string name="pad_glasses_menu_follow_mode">Follow mode</string>
+    <string name="pad_glasses_menu_stabilizer">Stabilizer</string>
+
+    <!-- The trackpad's Menu -->
+    <string name="pad_tap_to_download">Tap to download it</string>
+    <!-- A Menu section heading for TalkBack: %1$s is the section's name -->
+    <string name="pad_section_open">%1$s, open</string>
+    <string name="pad_section_closed">%1$s, closed</string>
+    <plurals name="pad_arrange_windows">
+        <item quantity="one">Arrange %1$d window</item>
+        <item quantity="other">Arrange %1$d windows</item>
+    </plurals>
+    <string name="pad_window_presets">Window presets</string>
+    <string name="pad_games">Games</string>
+    <string name="pad_glasses">Glasses</string>
+    <string name="pad_developer">Developer</string>
+    <!-- A switch row with its state: %1$s is the setting's name -->
+    <string name="pad_label_on">%1$s: ON</string>
+    <string name="pad_label_off">%1$s: OFF</string>
+    <!-- A setting's name, then its current value -->
+    <string name="pad_label_value">%1$s: %2$s</string>
+    <!-- %1$s is an app's name -->
+    <string name="pad_shape_of">Shape of %1$s</string>
+    <!-- %1$s is an app's name -->
+    <string name="pad_side_by_side_in">Side by side 3D in %1$s</string>
+    <string name="pad_side_by_side_subtitle">For a video split into two halves. Each eye sees its half.</string>
+    <string name="pad_tracking">Tracking</string>
+    <string name="pad_adjust_all_windows">Adjust all windows together</string>
+    <string name="pad_presets_empty_with_windows">Save the windows you have open, then open them all again with one tap, each where it was.</string>
+    <string name="pad_presets_empty_no_windows">Open some windows, then save them here to open them all again with one tap, each where it was.</string>
+    <string name="pad_save_preset">Save current windows as a preset</string>
+    <string name="pad_cursor_speed">Cursor Speed</string>
+    <string name="pad_scroll_speed">Two-finger scroll speed</string>
+    <string name="pad_strip_speed">Scroll strip speed</string>
+    <string name="pad_one_finger_scroll">One-finger scroll on Spatial Mouse</string>
+    <string name="pad_scroll_strip">Scroll strip</string>
+    <string name="pad_left_side">Left side</string>
+    <string name="pad_right_side">Right side</string>
+    <string name="pad_cover_buttons_side">Window buttons on the cover screen</string>
+    <string name="pad_cover_strip_side">Scroll strip on the cover screen</string>
+    <string name="pad_sideways_direction">Sideways trackpad direction</string>
+    <string name="pad_direction_default">Default</string>
+    <string name="pad_direction_inverted">Inverted</string>
+    <string name="pad_cursor_follows_head">Cursor follows head</string>
+    <string name="pad_keeps_screen_on">Trackpad keeps screen on</string>
+    <!-- The game controller row's subtitle: %1$s is what the current mode does, %2$s the next mode's name -->
+    <string name="pad_controller_subtitle">%1$s. Tap for %2$s.</string>
+    <string name="pad_set_touch_spots">Set touch spots</string>
+    <string name="pad_set_touch_spots_subtitle">Aim the dot at the game\'s own button, then hold the matching control for a second</string>
+    <string name="pad_clear_touch_spots">Clear touch spots for this game</string>
+    <string name="pad_snap_windows">Snap windows</string>
+    <string name="pad_glasses_check_row">Glasses setup check</string>
+    <string name="pad_glasses_check_subtitle">The settings your glasses need, and a 10 second check</string>
+    <!-- %1$s is the glasses' display mode (for example 3D side by side), or reading / switching -->
+    <string name="pad_glasses_display">Glasses display: %1$s</string>
+    <string name="pad_how_to_use">How to use the trackpad</string>
+    <string name="pad_backup_settings">Save settings to a file</string>
+    <string name="pad_backup_settings_subtitle">Your layouts, glasses and trackpad settings, to move to the Google Play version or a new phone</string>
+    <string name="pad_restore_settings">Restore settings from a file</string>
+    <string name="pad_restore_settings_subtitle">From a file you saved. Pocket XR restarts.</string>
+    <string name="pad_reset_settings">Reset these settings to Pocket XR defaults</string>
+    <string name="pad_reset_title">Reset trackpad settings?</string>
+    <string name="pad_reset_message">Cursor, scroll and strip speeds, the strip\'s side, the sideways direction, cursor follows head, keep screen on, the tracking mode, snap windows, new instances and the new windows\' curve go back to Pocket XR\'s defaults. The trackpad type, your windows and presets stay.</string>
+    <string name="pad_reset">Reset</string>
+    <string name="pad_developer_settings">Developer settings</string>
+    <!-- The Developer card's switches -->
+    <string name="pad_dev_debug_info">Debug info panel</string>
+    <string name="pad_dev_still_lock">Still lock</string>
+    <string name="pad_dev_draw_smoothing">Draw smoothing</string>
+    <string name="pad_dev_auto_glasses_view">Switch the glasses\' 3D / 2D</string>
+    <string name="pad_dev_factory_calibration">Factory calibration</string>
+    <string name="pad_dev_npu_hands">Hands on the NPU</string>
+    <string name="pad_dev_device_windows">Windows stay awake when the phone sleeps (test)</string>
+    <string name="pad_dev_native_buffer">Trackpad at the screen\'s own pixels</string>
+    <string name="pad_dev_frame_clock">Glasses set the frame clock (test)</string>
+    <!-- %1$s is the switch row with its state (Glasses set the frame clock (test): OFF), %2$s what is missing -->
+    <string name="pad_dev_frame_clock_cannot_run">%1$s (%2$s, so it can\'t run)</string>
+    <string name="pad_new_windows_curve_flat">New windows curve: flat</string>
+    <string name="pad_new_windows_curve_percent">New windows curve: %1$d %%</string>
+    <!-- The ends of the curve slider -->
+    <string name="pad_curve_flat">Flat</string>
+    <string name="pad_curve_strong">Strong</string>
+    <!-- The ends of a speed slider -->
+    <string name="pad_slow">Slow</string>
+    <string name="pad_fast">Fast</string>
+
+    <!-- The Menu's quick tiles -->
+    <string name="pad_stop_recording">Stop recording</string>
+    <string name="pad_record">Record</string>
+    <string name="pad_stop_recording_glasses">Stop recording the glasses</string>
+    <string name="pad_record_glasses">Record the glasses</string>
+    <string name="pad_unlock_phone">Unlock phone</string>
+    <string name="pad_phone_home">Phone home</string>
+    <string name="pad_phone_home_description">Go to the phone\'s home screen</string>
+    <string name="pad_settings">Pocket XR Settings</string>
+
+    <!-- The per-eye picture adjust -->
+    <string name="pad_adjust_explain">Applied in the glasses\' 3D mode (3D and \"2D in 3D\"). Move each eye\'s picture by the pixels the edge check says it loses, or make it smaller until every edge shows.</string>
+    <string name="pad_adjust_same">Same for both eyes</string>
+    <string name="pad_adjust_left_eye">Adjust the left eye</string>
+    <string name="pad_adjust_right_eye">Adjust the right eye</string>
+    <string name="pad_adjust_across_left">Across: left %1$d px</string>
+    <string name="pad_adjust_across_right">Across: right %1$d px</string>
+    <string name="pad_adjust_vertical_up">Up / down: up %1$d px</string>
+    <string name="pad_adjust_vertical_down">Up / down: down %1$d px</string>
+    <!-- Step buttons: %1$d is the step in pixels -->
+    <string name="pad_adjust_step_left">Left %1$d</string>
+    <string name="pad_adjust_step_right">Right %1$d</string>
+    <string name="pad_adjust_step_up">Up %1$d</string>
+    <string name="pad_adjust_step_down">Down %1$d</string>
+    <string name="pad_adjust_size">Size: %1$d %%</string>
+    <string name="pad_adjust_reset">Reset both eyes</string>
+
+    <!-- The focused window's text size; %1$s is an app's name -->
+    <string name="pad_text_size_in">Text size in %1$s</string>
+    <string name="pad_text_size_explain">Smaller fits more on the window. Remembered for this app.</string>
+    <string name="pad_text_smaller">Smaller text</string>
+    <string name="pad_text_larger">Larger text</string>
+    <string name="pad_text_size_reset" formatted="false">Text size back to 100 %</string>
+    <!-- Under the text size keys while the window is laid out again -->
+    <string name="pad_text_size_busy">Resizing</string>
+
+    <!-- TrackpadActivity.kt: notes and toasts on the trackpad -->
+    <string name="pad_ime_note">Type here; it goes to the window you\'re using</string>
+    <string name="pad_shizuku_allow">Allow Pocket XR in Shizuku for app windows.</string>
+    <string name="pad_shizuku_allow_action">Tap here to allow</string>
+    <string name="pad_shizuku_start">Start Shizuku for app windows.</string>
+    <string name="pad_shizuku_start_action">Tap here to open Shizuku</string>
+    <string name="pad_laser_recentred">Laser recentred in front of you.</string>
+    <string name="pad_status_driving">Driving the Space on the glasses.</string>
+    <string name="pad_status_pointer_off">Turn on the Pocket XR pointer service first.</string>
+    <string name="pad_status_no_glasses">No glasses display found.</string>
+    <!-- The glasses display row while the mode is being read or switched -->
+    <string name="pad_air_reading">reading</string>
+    <string name="pad_air_switching">switching</string>
+    <!-- %1$s is the error -->
+    <string name="pad_air_read_failed">could not read (%1$s)</string>
+    <string name="pad_air_read_again">Tap to read it again</string>
+    <string name="pad_air_switch_to_2d">Tap to switch to 2D</string>
+    <string name="pad_air_switch_to_3d">Tap to switch to 3D side by side</string>
+    <!-- %1$s is the display mode the glasses switch to -->
+    <string name="pad_air_switching_toast">The glasses switch to %1$s. Their screen reconnects, so give it a few seconds.</string>
+    <!-- %1$s is the error -->
+    <string name="pad_air_switch_failed">The glasses did not switch: %1$s</string>
+    <string name="pad_no_file_picker">No file picker on this phone</string>
+    <string name="pad_backup_saved">Settings saved. Keep the file to restore them later.</string>
+    <!-- %1$s is the error -->
+    <string name="pad_backup_failed">Settings not saved: %1$s</string>
+    <string name="pad_restore_title">Restore settings?</string>
+    <string name="pad_restore_message">Your settings on this phone are replaced by the ones in the file. Pocket XR then closes so they take effect; open it again.</string>
+    <string name="pad_restore">Restore</string>
+    <string name="pad_restore_done">Settings restored. Open Pocket XR again.</string>
+    <string name="pad_restore_failed">Settings not restored</string>
+    <string name="pad_reset_done">Trackpad settings are back to Pocket XR\'s defaults.</string>
+    <!-- How the glasses were recognised: %1$s their name, %2$04X and %3$04X the USB vendor and product ids in hex -->
+    <string name="pad_seen_as">Seen as %1$s, USB %2$04X:%3$04X</string>
+    <!-- As pad_seen_as, then %4$s the device's version -->
+    <string name="pad_seen_as_version">Seen as %1$s, USB %2$04X:%3$04X, version %4$s</string>
+    <string name="pad_plug_in_glasses">Plug in your glasses first.</string>
+    <!-- %1$s is a tracking mode's name -->
+    <string name="pad_needs_6dof">%1$s needs 6DoF glasses tracking, which these glasses do not give.</string>
+    <string name="pad_open_space_first">Open the Space on the glasses first.</string>
+    <string name="pad_allow_notifications">Allow notifications to hear when a new Pocket XR is ready</string>
+    <string name="pad_recording_on">Recording the glasses. Menu, then Stop recording, when you\'re done.</string>
+    <string name="pad_recording_off">Recording stopped. The glasses say where it was saved.</string>
+    <string name="pad_game_keys_on">Click a game\'s window first, then hold the keys.</string>
+    <!-- %1$s is the error -->
+    <string name="pad_gamepad_failed">The gamepad could not start: %1$s</string>
+    <string name="pad_gamepad_on">Gamepad on. Click the game\'s window first if it does not answer.</string>
+    <string name="pad_touch_set_spots">Set the spots: aim the dot at the game\'s button, then hold the matching control.</string>
+    <string name="pad_touch_on">Touch on: the controls press the game\'s own buttons.</string>
+    <string name="pad_dot_on_window">Put the dot on the game\'s window first.</string>
+    <!-- %1$s is a game control's name -->
+    <string name="pad_touch_spot_set">%1$s set. Set the others, then turn Set touch spots off.</string>
+    <string name="pad_touch_spots_setting_on">Aim the dot at the game\'s button, then hold the matching control for a second.</string>
+    <string name="pad_touch_spots_setting_off">Spots saved for this game.</string>
+    <string name="pad_click_game_window">Click the game\'s window first.</string>
+    <string name="pad_touch_spots_cleared">Touch spots cleared for this game.</string>
+    <string name="pad_leave_for_home">Leave the trackpad for the phone\'s home screen? The glasses keep showing your windows.</string>
+    <string name="pad_wrap_on_note">Wraparound is on: Curve bends the whole Space.</string>
+    <string name="pad_wrap_on_action">Tap here to unwrap</string>
+    <string name="pad_wrap_off">Wraparound off: each window curves on its own.</string>
+    <string name="pad_row_pose_on">Per-row pose in 3D on.</string>
+    <string name="pad_row_pose_off">Per-row pose in 3D off.</string>
+    <string name="pad_edge_check_on">Edge check on: one eye at a time, count the ticks on each side.</string>
+    <string name="pad_edge_check_off">Edge check off.</string>
+    <!-- %1$s is which eye or eyes the edge check shows -->
+    <string name="pad_edge_check_eyes">Edge check: %1$s.</string>
+    <string name="pad_debug_info_on">Debug info panel on.</string>
+    <string name="pad_debug_info_off">Debug info panel off.</string>
+    <string name="pad_head_cursor_auto">Head cursor hides when you\'re not using it.</string>
+    <string name="pad_head_cursor_always">Head cursor always shown.</string>
+    <string name="pad_head_cursor_off">Head cursor off.</string>
+    <string name="pad_warp_without_lsr">Warp without LSR: on next time it\'s switched on.</string>
+    <string name="pad_warp_with_lsr">Warp with LSR: on next time it\'s switched on.</string>
+    <string name="pad_warp_resumes">Warp goes back in after a drop.</string>
+    <string name="pad_warp_pauses">Warp pauses at the first drop.</string>
+    <string name="pad_screens_locked">Screens locked</string>
+    <string name="pad_screens_unlocked">Screens unlocked</string>
+    <string name="pad_open_windows_first">Open some windows first.</string>
+    <!-- %1$s is the new preset's name -->
+    <string name="pad_preset_saved">Saved as %1$s.</string>
+    <string name="pad_rename_preset">Rename preset</string>
+    <string name="pad_rename">Rename</string>
+    <string name="pad_name_unchanged">Name unchanged.</string>
+    <!-- %1$s is the preset's new name -->
+    <string name="pad_renamed_to">Renamed to %1$s.</string>
+    <!-- %1$s is the preset's name -->
+    <string name="pad_preset_deleted">%1$s deleted.</string>
+    <string name="pad_frame_clock_stuck">Still on the glasses\' clock: unplug the glasses, or turn the cover screen off and on.</string>
+    <string name="pad_frame_clock_back">The phone sets the frame clock again.</string>
+    <!-- %1$s is what is missing (for example Shizuku) -->
+    <string name="pad_frame_clock_missing">%1$s: the glasses can\'t set the frame clock.</string>
+    <string name="pad_frame_clock_on">The glasses set the frame clock (test).</string>
+    <string name="pad_frame_clock_giving_back">Giving the phone its frame clock back…</string>
+    <string name="pad_cover_spatial_mouse_on">Spatial Mouse on: point the phone\'s top edge, tap to click, hold Home to recenter.</string>
+    <string name="pad_cover_spatial_mouse_off">Cover trackpad back.</string>
+    <string name="pad_sharper_turns_on">Sharper turns on. The picture dims a little while you turn.</string>
+    <string name="pad_sharper_turns_off">Sharper turns off.</string>
+    <string name="pad_device_windows_on">Windows opened from now on stay awake when the phone sleeps (test).</string>
+    <string name="pad_device_windows_off">Windows opened from now on are plain displays again.</string>
+    <string name="pad_npu_hands_on">Hands on the NPU: on.</string>
+    <string name="pad_npu_hands_off">Hands on the NPU: off.</string>
+    <string name="pad_still_lock_on">Still lock on.</string>
+    <string name="pad_still_lock_off">Still lock off.</string>
+    <string name="pad_draw_smoothing_on">Draw smoothing on.</string>
+    <string name="pad_draw_smoothing_off">Draw smoothing off.</string>
+    <string name="pad_auto_glasses_view_on">Pocket XR switches the glasses\' 3D / 2D.</string>
+    <string name="pad_auto_glasses_view_off">The glasses\' 3D / 2D is left to their own control.</string>
+    <string name="pad_factory_calibration_on">Factory calibration on.</string>
+    <string name="pad_factory_calibration_off">Factory calibration off.</string>
+    <string name="pad_distance_correction_on">Each eye centred for the glasses\' 3D distance.</string>
+    <string name="pad_distance_correction_off">Distance correction off.</string>
+    <string name="pad_phone_not_locked">The phone is not locked.</string>
+    <string name="pad_unlock_from_lock_screen">Unlock the phone from its own lock screen.</string>
+    <string name="pad_cannot_type">These characters cannot be typed into the window.</string>
+
+    <!-- values\strings_d.xml -->
+    <!-- Head tracking screen -->
+    <string name="head_title">Glasses head tracking</string>
+    <string name="head_works">Head tracking works</string>
+    <string name="head_not_running">Head tracking not running</string>
+    <!-- %1$s: the connection route in use, e.g. "eth1 (the app's own socket)" -->
+    <string name="head_route">Route: %1$s</string>
+    <string name="head_without_it">Without it the Space still works: panels stay in front of you (head locked) and the trackpad turns the view.</string>
+    <string name="head_recentre">Recentre</string>
+    <string name="head_try_again">Try again</string>
+    <string name="head_copy_all">Copy all</string>
+    <string name="head_share">Share</string>
+    <string name="head_step_network">1. Glasses USB network</string>
+    <string name="head_net_not_found">Not found.</string>
+    <string name="head_net_hid">Not used: these glasses send head tracking over USB HID.</string>
+    <string name="head_net_viture">Not used: VITURE glasses have no USB network.</string>
+    <string name="head_net_turned_off">Not looked for: head tracking is turned off in Settings.</string>
+    <string name="head_net_looking">Looking.</string>
+    <string name="head_net_found">Found.</string>
+    <string name="head_nothing_listed">Nothing listed yet.</string>
+    <string name="head_usb_ethernet">USB Ethernet (eth0, eth1) through Shizuku:</string>
+    <string name="head_not_needed">Not needed or not tried yet.</string>
+    <string name="head_not_tried">Not tried yet.</string>
+    <string name="head_routes_order">Routes, in the order tried (the app\'s own socket, then the Shizuku shell helper):</string>
+    <string name="head_none_tried">None tried yet.</string>
+    <string name="head_step_reports">3. Sensor reports</string>
+    <string name="head_none_yet">None yet.</string>
+    <string name="head_reports_rate">%1$.0f IMU reports a second</string>
+    <string name="head_step_orientation">4. Live orientation</string>
+    <string name="head_no_pose">No pose yet.</string>
+    <string name="head_turn_hint">Turn right: yaw goes up. Look up: pitch goes up. Tilt right ear down: roll goes up. If not, pick another axis layout below.</string>
+    <!-- %1$s: the names of the axis layouts that fit, comma separated -->
+    <string name="head_gravity_wrong">Gravity is not on this layout\'s up axis. Layouts that fit: %1$s.</string>
+    <string name="head_axis_layout">Sensor axis layout</string>
+    <string name="head_axis_hint">XREAL does not document the axes. Keep the glasses still and level; the right layout puts gravity on up.</string>
+    <string name="head_display_delay">Glasses display delay: %1$d ms (added to the measured two frames the pose is predicted ahead; it no longer delays the frame itself)</string>
+    <string name="head_delay_calibrated">Calibrated on these glasses</string>
+    <string name="head_delay_not_calibrated">Not calibrated: 8 ms is a guess</string>
+    <string name="head_delay_howto">Calibrate it: with the Space on the glasses, tap Check delay. A thin line appears fixed in the room. Turn your head gently left and right and move the slider until the line stays put, then tap Save run. Move the slider to one end before each run. Three runs within 1 ms of each other set the delay for these glasses.</string>
+    <string name="head_stop_check">Stop check</string>
+    <string name="head_check_delay">Check delay</string>
+    <string name="head_save_run">Save run</string>
+    <string name="head_clear_runs">Clear runs</string>
+    <!-- %1$s: the saved runs, e.g. "8 ms, 9 ms" -->
+    <string name="head_runs">Runs: %1$s</string>
+    <!-- Card title: the level calibration (making the picture level with the horizon) -->
+    <string name="head_level">Level</string>
+    <string name="head_level_calibrated">Calibrated: the glasses\' sensor reads roll %1$.2f, pitch %2$.2f degrees when the picture is level.</string>
+    <string name="head_level_not_calibrated">Not calibrated: the sensor is taken as level with the picture.</string>
+    <string name="head_level_howto">Once per pair of glasses: with the Space on the glasses, tap Check level. A green line appears across the middle of the view. Look at a level edge at eye height (the horizon, a far shelf or window frame), tilt your head until the line lies on it, hold still, then tap Save level. The sensor may read up to 50 degrees of pitch (the Aura\'s sits about 14.5 degrees tilted, a One Pro more, a One Pro+ about 40) and 10 of roll.</string>
+    <string name="head_stop_level">Stop level</string>
+    <string name="head_check_level">Check level</string>
+    <string name="head_save_level">Save level</string>
+    <string name="head_clear">Clear</string>
+    <string name="head_row_pose">Per-row pose (each row of the picture drawn for the moment it lights)</string>
+    <string name="head_in_2d">In 2D</string>
+    <string name="head_in_3d_sbs">In 3D side by side</string>
+    <string name="head_late_warp">Late warp in 3D</string>
+    <string name="head_row_pose_hint">On in 3D since 0.5.25, with the 60 Hz row model: if the picture tilts during head turns in 3D, turn it off there. Late warp in 3D draws the Space early and turns it by the newest head pose just before each frame is due, so a slow frame no longer jumps.</string>
+    <string name="head_other_checks">Other checks</string>
+    <!-- %1$s: the phone's chip (system on chip) name -->
+    <string name="head_chip">Chip: %1$s</string>
+    <string name="head_dynamic_sensors">Dynamic sensors (an Android head tracker would show here): %1$s</string>
+    <string name="head_none">none</string>
+    <string name="head_protocol">Protocol: XREAL One family IMU stream, read only. See docs/SPATIAL.md 1.1.</string>
+    <string name="head_other_title">Glasses that aren\'t XREAL\'s</string>
+    <string name="head_other_explain">Record motion for 20 seconds saves what your glasses\' motion sensor sends over USB, so support for them can be added. It asks for USB access, reads for 20 seconds while you move your head, and keeps only the sensor\'s numbers; Send logs takes it along. On VITURE glasses it also sends VITURE\'s documented start command after 5 seconds.</string>
+    <!-- %1$s: the glasses' USB id and name -->
+    <string name="head_plugged_in">Plugged in: %1$s</string>
+    <string name="head_no_other_glasses">No glasses other than XREAL\'s are plugged in.</string>
+    <string name="head_recording">Recording...</string>
+    <string name="head_record_20s">Record motion for 20 seconds</string>
+    <string name="head_viture_beast_note">On by default on the VITURE Beast, and it comes back by itself when you plug the glasses in again. The sensor axis layout starts at x right, y down, z front, with both switches off.</string>
+    <string name="head_viture_experimental_note">Experimental. It follows a public description of VITURE\'s newer glasses; your model may not answer. On the VITURE Beast the sensor axis layout starts at x right, y down, z front, with both switches off. On other models, if turning your head moves the view the wrong way, try the switches below; they apply at once.</string>
+    <string name="head_flip_up_down">Flip up and down</string>
+    <string name="head_swap_turn_tilt">Swap turn and tilt</string>
+    <plurals name="head_copied_lines">
+        <item quantity="one">Copied all of it (%1$d line)</item>
+        <item quantity="other">Copied all of it (%1$d lines)</item>
+    </plurals>
+    <string name="head_copy_refused">Android did not allow the copy; try Share</string>
+    <!-- %1$s: the newest recording's file name and summary -->
+    <string name="head_last_recording">Last recording: %1$s</string>
+    <string name="head_share_chooser">Share the head tracking diagnostics</string>
+
+    <!-- Motion recording (glasses that aren't XREAL's) -->
+    <!-- %1$s: why, e.g. "the glasses went away" -->
+    <string name="head_motion_not_recorded">Not recorded: %1$s</string>
+    <string name="head_motion_no_glasses">no glasses other than XREAL\'s on USB (XREAL glasses have their own reader)</string>
+    <!-- %1$s: the name of the VITURE head tracking switch -->
+    <string name="head_motion_turn_off_first">turn off %1$s first; it holds the glasses\' motion sensor</string>
+    <string name="head_motion_gone">the glasses went away</string>
+    <!-- %1$s: the glasses' USB id and name -->
+    <string name="head_motion_no_access">USB access for %1$s was not given</string>
+    <string name="head_motion_not_open">Android would not open %1$s</string>
+    <string name="head_motion_allow">Allow Pocket XR in Android\'s USB prompt for %1$s...</string>
+    <!-- %1$s: the glasses' USB id and name; %2$d: seconds left -->
+    <string name="head_motion_recording">Recording motion from %1$s: %2$d s left. Move your head slowly: left, right, up, down, then tilt.</string>
+    <!-- %1$s: file name; %2$s: a short technical summary of what was recorded -->
+    <string name="head_motion_saved">Saved %1$s: %2$s. Send logs takes it along. If the glasses\' own buttons act up, unplug them and plug them in again.</string>
+
+    <!-- Head tracker status -->
+    <!-- %1$s: the glasses' IP address; %2$s: the network interfaces -->
+    <string name="head_no_route">No route to %1$s on %2$s: nothing is tried until the glasses\' network changes or they are plugged in again.</string>
+    <!-- %1$s: the route; %2$s: the technical error -->
+    <string name="head_failed_over">Failed over %1$s: %2$s</string>
+    <!-- %1$s: IP address; %2$s: port; %3$s: the route -->
+    <string name="head_answered">The glasses answered on %1$s:%2$s over %3$s.</string>
+    <!-- %1$s: the route; %2$s: the phone's local address -->
+    <string name="head_connected_over">Connected over %1$s (%2$s)</string>
+    <string name="head_stream_stopped">The stream stopped.</string>
+    <string name="head_no_reports">The glasses accepted the connection but sent no head tracking reports.</string>
+    <!-- %1$s: the route or network -->
+    <string name="head_could_not_connect_over">Could not connect over %1$s.</string>
+    <string name="head_could_not_connect">Could not connect.</string>
+    <!-- %1$s: the glasses' model name, e.g. "XREAL Air 2" -->
+    <string name="head_air_no_reports">The %1$s took the start command but sent no head tracking reports.</string>
+    <string name="head_closed_connection">the glasses closed the connection</string>
+    <string name="head_level_not_running">Not saved: head tracking is not running.</string>
+    <string name="head_level_cleared">Level calibration cleared.</string>
+    <string name="head_level_not_steady">Not saved: hold your head still for a moment first (gravity was not steady or the head was turning).</string>
+    <!-- %3$s: why the reading was refused -->
+    <string name="head_level_implausible">Not saved: the glasses read roll %1$.1f, pitch %2$.1f degrees: %3$s; is the line really on a level edge at eye height?</string>
+    <string name="head_level_no_context">Not saved: no app context.</string>
+    <string name="head_level_saved">Saved: the IMU reads roll %1$.2f, pitch %2$.2f degrees while the display is level; applied from now on.</string>
+
+    <!-- Hands screen -->
+    <string name="hands_title">Hands</string>
+    <string name="hands_reset_text">Hand aim calibration is cleared (the Space offers it again) and the developer aim goes back to the camera ray. Hand setup, permissions and starting with the glasses stay.</string>
+    <string name="hands_tick_always">Tick Always on the plug-in prompt</string>
+    <string name="hands_remember_glasses">Remember your glasses</string>
+    <string name="hands_mic_reason">Pocket XR needs the microphone permission so Android can remember your glasses. It never records.</string>
+    <string name="hands_got_it">Got it</string>
+    <string name="hands_allow_mic">Allow microphone</string>
+    <string name="hands_with_glasses">Hands with the glasses</string>
+    <string name="hands_start_with_glasses">Start hands with the glasses</string>
+    <string name="hands_auto_note">Turned on the first time Start hands works. Hands then start when the Space opens on the glasses. Stop in the notification pauses them until the next plug-in.</string>
+    <string name="hands_cursor_note">The cursor goes where the glasses camera sees your knuckles\' pinch point, just in front of the index knuckle, about 1:1 with where you see your hand. Closing the fingers does not move it.</string>
+    <!-- %1$s: the saved calibration in words -->
+    <string name="hands_calibrate_state">Calibrate hand aim: %1$s</string>
+    <string name="hands_calibrate_howto">With the Space on the glasses, tap Calibrate and pinch on each of the five dots it shows, pointing at each one. It corrects the glasses camera\'s angle and field of view. The Space offers it once by itself the first time it sees your hands; an open palm skips it.</string>
+    <string name="hands_calibrate">Calibrate hand aim</string>
+    <string name="hands_reset_calibration">Reset calibration</string>
+    <string name="hands_pointer_title">1. Pocket XR pointer (accessibility service)</string>
+    <string name="hands_pointer_why">Outside the Space, hands and the trackpad reach the glasses through an accessibility service. It is the only way Android lets an ordinary app act on other apps\' windows. It comes with the Pocket XR add-on, a second small app, because Google blocks installing apps with one in some countries. It:</string>
+    <string name="hands_pointer_does">- draws the cursor, hints and the dock on the glasses display\n- reads where app windows are on the glasses (position, size and title only), and the labels of DeX\'s title bar buttons there, to find its full screen button\n- performs taps and drags on the glasses display, which is how windows are clicked, moved (drag on the DeX title bar) and resized (drag on a corner)\nIt does nothing on the phone\'s own screens and sends nothing off the phone.</string>
+    <string name="hands_addon_missing">The Pocket XR add-on is not installed. The Space works without it.</string>
+    <string name="hands_on_display">On. Cursor is on display %1$d.</string>
+    <string name="hands_on_no_display">On, but no glasses display is connected.</string>
+    <string name="hands_switched_on">Switched on in Settings but not running yet.</string>
+    <string name="hands_off">Off. Turn on \"Pocket XR pointer\" under Settings, Accessibility, Installed apps.</string>
+    <string name="hands_last_problem">Last problem: %1$s</string>
+    <string name="hands_get_addon">Get the add-on</string>
+    <string name="hands_open_accessibility">Open accessibility settings</string>
+    <string name="hands_restricted">If Android greys it out (\"Restricted setting\"), open App info, use the three dot menu, \"Allow restricted settings\", then try again. Or by adb:</string>
+    <string name="hands_addon_app_info">Add-on app info</string>
+    <string name="hands_checking">Checking</string>
+    <string name="hands_not_available">Not available: %1$s</string>
+    <string name="hands_needs">Needs: %1$s</string>
+    <string name="hands_ready">Ready</string>
+    <string name="hands_running">Running: %1$s</string>
+    <string name="hands_failed">Failed: %1$s</string>
+    <string name="hands_camera_title">2. Glasses camera hand tracking</string>
+    <string name="hands_camera_explain">Reads the standard UVC camera in the glasses over USB (no XREAL software) and finds your hand with Google\'s MediaPipe Hand Landmarker, all on the phone.</string>
+    <!-- %1$s: the USB camera's name and id, or "not found" -->
+    <string name="hands_usb_camera">USB camera: %1$s</string>
+    <string name="hands_not_found">not found</string>
+    <string name="hands_allow_camera">Allow camera</string>
+    <string name="hands_allow_usb">Allow USB access</string>
+    <string name="hands_downloading">Downloading</string>
+    <string name="hands_download_model">Download hand model</string>
+    <string name="hands_stop">Stop hands</string>
+    <string name="hands_start">Start hands</string>
+    <string name="hands_camera_preview">Glasses camera</string>
+    <string name="hands_mirrored">Mirrored when mapped to the glasses</string>
+    <string name="hands_gestures">Hand gestures</string>
+    <string name="hands_gesture_point">Point: the cursor follows your hand</string>
+    <string name="hands_gesture_click">Pinch and let go: click</string>
+    <string name="hands_gesture_move">Pinch and hold a window\'s bar, move, let go: move the window</string>
+    <string name="hands_gesture_resize">Pinch and hold a corner, move, let go: resize</string>
+    <string name="hands_gesture_scroll">Pinch and hold inside a window, move: scroll or drag</string>
+    <string name="hands_gesture_menu">Open palm, held a moment: the Menu</string>
+    <string name="hands_gesture_all">Both palms up, side by side: hold every window, then push, pull or spread to move them all</string>
+    <string name="hands_developer">Developer</string>
+    <string name="hands_hide">Hide</string>
+    <string name="hands_show">Show</string>
+    <!-- %1$s: the input provider's name -->
+    <string name="hands_driven_by">Cursor driven by: %1$s</string>
+    <string name="hands_check_again">Check again</string>
+    <string name="hands_shoulder_ray">Shoulder ray (experimental): aim from the shoulder through the hand</string>
+    <string name="hands_read_formats">Read camera formats</string>
+    <string name="hands_camera_offers">What the camera offers:</string>
+
+    <!-- Hands messages -->
+    <string name="hands_mic_thanks">Thanks. On the next plug-in, tick \"Always\" on Android\'s prompt.</string>
+    <string name="hands_mic_denied">Without it Android asks at every plug-in. You can allow it here later.</string>
+    <string name="hands_usb_detached">The glasses disconnected from USB; hand tracking resumes when they are back.</string>
+    <string name="hands_usb_allowed">USB access to the glasses allowed.</string>
+    <string name="hands_usb_denied">USB access to the glasses was not allowed.</string>
+    <string name="hands_starting">Starting hand tracking on the glasses camera.</string>
+    <string name="hands_calibrate_look">Look at the glasses: point at each dot and pinch. Tap again to cancel.</string>
+    <string name="hands_open_space_first">Open the Space on the glasses first, with hands running.</string>
+    <string name="hands_calibration_reset">Hand calibration reset.</string>
+    <string name="hands_reset_done">Hands settings are back to Pocket XR\'s defaults.</string>
+    <!-- %1$s: the camera's default angles, technical -->
+    <string name="hands_not_calibrated_defaults">not calibrated (camera defaults: %1$s)</string>
+    <!-- %1$s: the calibration, technical; %2$.1f: average error in degrees -->
+    <string name="hands_calibrated_fit">%1$s, %2$.1f degrees off on its dots</string>
+    <string name="hands_model_downloaded">Hand model downloaded.</string>
+    <!-- %1$d: HTTP status code; %2$s: the server's message -->
+    <string name="hands_download_failed_http">Download failed: HTTP %1$d %2$s</string>
+    <plurals name="hands_download_too_small">
+        <item quantity="one">Download was too small (%1$d byte)</item>
+        <item quantity="other">Download was too small (%1$d bytes)</item>
+    </plurals>
+    <string name="hands_could_not_save">Could not save the model</string>
+    <string name="hands_download_failed">Download failed: %1$s</string>
+
+    <!-- Hand tracking status and notification -->
+    <string name="hands_no_camera">These glasses have no camera for hand tracking (the XREAL Aura has one). The trackpad and Spatial Mouse work as usual.</string>
+    <string name="hands_needs_camera_permission">Camera permission (Android requires it before granting a USB camera)</string>
+    <!-- %1$s: the USB camera's name and id -->
+    <string name="hands_needs_usb_access">USB access to %1$s</string>
+    <string name="hands_needs_model">Download the MediaPipe hand model (about 7.5 MB, once)</string>
+    <string name="hands_starting_camera">Starting the glasses camera</string>
+    <string name="hands_no_usb_camera">No USB camera connected.</string>
+    <!-- %1$s: the video format Pocket XR would pick -->
+    <string name="hands_would_use">Pocket XR would use: %1$s</string>
+    <string name="hands_no_format">nothing (no format it can decode)</string>
+    <string name="hands_could_not_read_camera">Could not read the camera: %1$s</string>
+    <string name="hands_xreal_sdk_reason">No public XREAL SDK supports this phone with these glasses: the SDK is Unity only, lists Beam Pro and Galaxy S24 and later (no Z Flip), and gives hand data only to its own full screen app. See docs/HAND-TRACKING.md.</string>
+    <string name="hands_trackpad_open">Trackpad open on the Flip</string>
+    <string name="hands_needs_what">Hand tracking needs: %1$s</string>
+    <string name="hands_android_refused">Android would not start hand tracking: %1$s</string>
+    <string name="hands_channel">Hand tracking</string>
+    <string name="hands_notif_title">Pocket XR hand tracking</string>
+    <string name="hands_notif_text">Reading the glasses camera to follow your hands</string>
+    <string name="hands_notif_stop">Stop until next plug-in</string>
+
+    <!-- values\strings_e.xml -->
+    <!-- ResetButton -->
+    <string name="home_reset_defaults">Reset to Pocket XR defaults</string>
+    <!-- %1$s: the settings screen's name, e.g. "Spatial windows" -->
+    <string name="home_reset_title">Reset %1$s?</string>
+    <string name="home_reset">Reset</string>
+    <string name="home_cancel">Cancel</string>
+
+    <!-- SpaceRouting -->
+    <string name="home_flat_space_refused">Flat mode: Android would not open the Space</string>
+    <!-- %1$s: Android's error text -->
+    <string name="home_space_refused_flat_home">Android would not open the Space on the glasses (%1$s); showing the flat home.</string>
+    <string name="home_plug_in_for_app">Plug in the glasses first. %1$s needs an external display to open on.</string>
+    <string name="home_adding_panel">Adding %1$s as a panel.</string>
+    <!-- %1$s: Android's error text -->
+    <string name="home_space_refused">Android would not open the Space on the glasses: %1$s</string>
+    <string name="home_opening_space_with_panel">Opening the Space with %1$s as a panel.</string>
+
+    <!-- SpacesLauncher -->
+    <!-- %1$s: Android's error text -->
+    <string name="home_home_refused">Android would not open Pocket XR on the glasses: %1$s</string>
+    <string name="home_opening_home_then">Opening Pocket XR on the glasses, then %1$s.</string>
+    <!-- %1$s: app name, %2$s: the error text -->
+    <string name="home_shizuku_failed_too">Shizuku could not open %1$s either: %2$s</string>
+    <!-- %1$s: app name, %2$s: Android's error text -->
+    <string name="home_refused_trying_shizuku">Android refused %1$s on the glasses (%2$s). Trying again through Shizuku.</string>
+    <!-- %1$s: app name, %2$s: the slot's name -->
+    <string name="home_opened_in_slot">%1$s opened in slot %2$s on the glasses.</string>
+    <string name="home_opened_in_slot_shizuku">%1$s opened in slot %2$s on the glasses through Shizuku.</string>
+    <string name="home_opened_full_screen">%1$s opened full screen on the glasses because freeform windowing is off.</string>
+    <string name="home_opened_full_screen_shizuku">%1$s opened full screen on the glasses through Shizuku because freeform windowing is off.</string>
+    <!-- %1$s: Android's error text. Added (after a space) as %2$s in the three messages below. -->
+    <string name="home_android_said">Android said: %1$s</string>
+    <!-- %1$s: app name, %2$s: "Android said: ..." or nothing -->
+    <string name="home_refused_allow_shizuku">Android refused %1$s on the glasses.%2$s Allow Pocket XR in the Shizuku prompt, then tap the app again.</string>
+    <string name="home_refused_start_shizuku">Android refused %1$s on the glasses.%2$s Start Shizuku to let Pocket XR open it with shell rights.</string>
+    <string name="home_could_not_open">Could not open %1$s on the glasses.%2$s</string>
+
+    <!-- SpatialActivity -->
+    <string name="home_plug_in_first">Plug in the glasses first.</string>
+    <string name="home_spatial_reset_done">Spatial windows settings are back to Pocket XR\'s defaults.</string>
+
+    <!-- GlassesHomeActivity -->
+    <!-- %1$d: Android's display id number -->
+    <string name="home_display_number">Display %1$d</string>
+    <string name="home_display_went_away">The glasses display went away.</string>
+
+    <!-- MainActivity -->
+    <!-- %1$s: the file name -->
+    <string name="home_glasses_report_saved">Glasses report saved: %1$s</string>
+    <string name="home_glasses_report_not_saved">Glasses report made (not saved)</string>
+    <!-- Shown on the glasses under the name Pocket XR when nothing else would open there -->
+    <string name="home_keep_phone_app_open">Keep the phone app open to use the glasses.</string>
+    <!-- %1$s: the earlier error message, %2$s: Android's error text -->
+    <string name="home_basic_surface_failed">%1$s The basic surface failed too: %2$s</string>
+    <!-- %1$s: the earlier error message -->
+    <string name="home_basic_surface_instead">%1$s Showing a basic surface on the glasses instead.</string>
+
+    <!-- PhoneScreen -->
+    <string name="home_update">Update</string>
+    <!-- Puts off the update banner until the next version -->
+    <string name="home_later">Later</string>
+    <string name="home_open_trackpad">Open trackpad</string>
+    <string name="home_show_on_glasses">Show on glasses</string>
+    <string name="home_check_for_updates">Check for updates</string>
+    <!-- %1$s: the installed version, e.g. 1.4.1; %2$s: the update check's status sentence -->
+    <string name="home_version_line">Version %1$s. %2$s</string>
+    <string name="home_check_now">Check now</string>
+    <string name="home_settings">Settings</string>
+    <string name="home_spatial_windows">Spatial windows</string>
+    <string name="home_spatial_windows_detail">Screen size, 3D, eye distance, window glow and colour, hand pointer; Shizuku setup</string>
+    <string name="home_head_tracking">Head tracking</string>
+    <string name="home_head_tracking_on">On: windows stay put as you turn your head</string>
+    <string name="home_head_tracking_off">Off: windows stay in front of you and turn with your head</string>
+    <string name="home_recenter_tilt">Recenter follows head tilt</string>
+    <string name="home_recenter_tilt_on">On: recenter puts the windows where you look, up or down</string>
+    <string name="home_recenter_tilt_off">Off: recenter keeps the windows on the horizon</string>
+    <string name="home_steady_6dof">Steady mode in 6DoF</string>
+    <string name="home_steady_6dof_off">Off: Steady mode keeps the wide screen still as you turn your head</string>
+    <string name="home_steady_6dof_on_user">On: in Steady mode, turn on 6DoF in your glasses\' menu (Spatial Display) and the wide screen stays put as you lean and move. New with the XREAL Eye: please tell us how it goes</string>
+    <string name="home_steady_6dof_on">On: in Steady mode the wide screen stays put as you lean and move. The glasses\' Spatial Anchor does it, and 3D is off</string>
+    <string name="home_glasses_setup_check">Glasses setup check</string>
+    <string name="home_glasses_setup_check_detail">The settings your glasses need, and a 10 second check that windows stay put</string>
+    <string name="home_hands">Hands</string>
+    <string name="home_hands_detail">Hand tracking, calibrating hand aim, gestures</string>
+    <string name="home_trackpad">Trackpad</string>
+    <string name="home_trackpad_detail">Cursor and scroll speeds, scroll strip, window curve, in its Menu</string>
+    <string name="home_advanced">Advanced</string>
+    <string name="home_hide">Hide</string>
+    <string name="home_show">Show</string>
+    <string name="home_head_tracking_diagnostics">Head tracking diagnostics</string>
+    <string name="home_head_tracking_diagnostics_detail">The glasses\' sensor stream, delay check and levels</string>
+    <string name="home_glasses_report">Glasses report</string>
+    <string name="home_glasses_report_detail">What these glasses report and what worked, saved to share</string>
+    <string name="home_open_app_on_glasses">Open an app on the glasses</string>
+    <string name="home_glasses_connected">Glasses connected</string>
+    <string name="home_plug_in_to_begin">Plug in your glasses to begin</string>
+    <!-- %1$s: the display mode, e.g. Extended or Mirror -->
+    <string name="home_mode_line">Mode: %1$s</string>
+    <string name="home_dex_owns_display">Samsung DeX is running the glasses\' display.</string>
+    <string name="home_no_glasses_yet">No glasses yet</string>
+    <string name="home_no_glasses_help">Plug your XR glasses straight into the phone\'s USB-C port. If the glasses show a copy of the phone and nothing appears here, the phone is mirroring: turn on its external display mode (on Samsung, DeX on an external display).</string>
+    <string name="home_mirroring_title">The glasses are mirroring the phone</string>
+    <!-- Label above Android's own error text -->
+    <string name="home_android_said_label">Android said:</string>
+    <string name="home_try_again">Try again</string>
+    <string name="home_update_off">Off. Turn on to hear about new versions on GitHub Releases</string>
+    <string name="home_update_every_12h">Every 12 hours, on GitHub Releases</string>
+    <!-- When the last update check ran, used as %1$s in the lines below -->
+    <string name="home_just_now">just now</string>
+    <string name="home_update_checking">Checking GitHub Releases...</string>
+    <!-- %1$s: when, e.g. "just now" or "5 minutes ago" -->
+    <string name="home_update_up_to_date">Up to date. Checked %1$s</string>
+    <string name="home_update_available">A new version is available. Checked %1$s</string>
+    <string name="home_update_no_releases">No releases published yet. Checked %1$s</string>
+    <string name="home_update_failed">Could not reach GitHub. Tried %1$s</string>
+
+    <!-- SpatialScreen -->
+    <string name="home_panel_service">Panel service</string>
+    <string name="home_last_problem">Last problem in the Space</string>
+    <!-- %1$d: open panels, %2$d: the most there can be -->
+    <string name="home_panels_count">Panels (%1$d of %2$d)</string>
+    <string name="home_close">Close</string>
+    <string name="home_close_all_panels">Close all panels</string>
+    <string name="home_spatial_reset_what">The glasses\' screen sizes, 3D (on for the Aura and the One), eye distance, window glow and its colour, and the hand pointer go back to Pocket XR\'s defaults. Your windows, presets and the glasses\' calibration stay.</string>
+    <!-- %1$s: the glasses' display name -->
+    <string name="home_glasses_name">Glasses: %1$s</string>
+    <string name="home_glasses_not_connected">Glasses not connected.</string>
+    <string name="home_secure_note">Protected video shows black on panels: apps that mark their windows secure (FLAG_SECURE, DRM video such as Netflix, some banking apps) cannot be captured into a panel, even with Shizuku. Open those in flat DeX mode.</string>
+    <string name="home_show_space">Show the Space</string>
+    <string name="home_open_space">Open the Space</string>
+    <string name="home_recentre">Recentre</string>
+    <string name="home_close_launcher">Close the launcher</string>
+    <string name="home_open_launcher">Open the launcher</string>
+    <string name="home_shizuku_setup_title">One-time setup: Shizuku</string>
+    <string name="home_shizuku_why">App panels need Shizuku: it lets Pocket XR act as the phone\'s shell to create the virtual displays apps run on, start apps there and pass your clicks to them. Until then apps open as flat DeX windows.</string>
+    <string name="home_shizuku_step1">1. Install Shizuku from Google Play.</string>
+    <string name="home_shizuku_step2">2. Turn on Developer options (Settings, About phone, Software information, tap Build number 7 times).</string>
+    <string name="home_shizuku_step3">3. Connect to Wi-Fi, then in Developer options turn on Wireless debugging.</string>
+    <string name="home_shizuku_step4">4. Open Shizuku, tap Pairing under Start via Wireless debugging, and enter the pairing code from Wireless debugging (split screen helps).</string>
+    <string name="home_shizuku_step5">5. In Shizuku tap Start.</string>
+    <string name="home_shizuku_step6">6. Come back here and tap Allow Pocket XR.</string>
+    <string name="home_shizuku_after_reboot">After every reboot, open Shizuku and tap Start again (Wireless debugging must be on).</string>
+    <string name="home_get_shizuku">Get Shizuku</string>
+    <string name="home_allow_pocket_xr">Allow Pocket XR</string>
+    <string name="home_space_settings">Space settings</string>
+    <!-- %1$.0f: percent, %2$.1f and %3$.1f: width and height in degrees -->
+    <string name="home_screen_size_2d">Glasses screen size in 2D: %1$.0f %% (%2$.1f by %3$.1f degrees)</string>
+    <string name="home_screen_size_3d">In their 3D mode: %1$.0f %% (%2$.1f by %3$.1f degrees)</string>
+    <string name="home_screen_size_help" formatted="false">Set these to the glasses\' own Display size (their menu). For the full view set Display size to 100 % on the glasses and here; 130 % is wider than their panels and cuts the edges. The 3D size is read from the glasses\' own log whenever Glasses warp has it on.</string>
+    <string name="home_stereo">3D: windows at real depth</string>
+    <!-- %1$.0f: eye distance in millimetres -->
+    <string name="home_stereo_help">On: each eye gets its own picture, so windows sit at their distance. Off: the same picture in both eyes, the steadiest. The 3D / 2D button in the launcher switches it too. Eye distance for 3D: %1$.0f mm</string>
+    <!-- %1$d: percent -->
+    <string name="home_window_glow_percent">Window glow: %1$d %%</string>
+    <string name="home_window_glow_off">Window glow: Off</string>
+    <string name="home_window_glow_help">The glow round the window you are using. Lower it to soften the glow, or slide it to Off to hide it.</string>
+    <!-- %1$s: the colour's name, e.g. Blue or Custom -->
+    <string name="home_glow_colour">Glow colour: %1$s</string>
+    <!-- The swatch that opens the hue and colour sliders -->
+    <string name="home_custom">Custom</string>
+    <string name="home_hue">Hue</string>
+    <string name="home_colour_saturation">Colour: from white to the full hue</string>
+    <string name="home_hand_pointer">Hand pointer</string>
+    <string name="home_hand_ray">Hand ray: the hand aims, pinch clicks</string>
+    <string name="home_look_and_pinch">Look and pinch: head gaze aims, pinch anywhere clicks</string>
+    <string name="home_look_and_pinch_help">Look and pinch needs head tracking; the hand only has to be seen pinching, which is the steadiest thing the camera does.</string>
+    <string name="home_developer">Developer</string>
+    <string name="home_plain_display">Plain glasses display without DeX (experimental)</string>
+    <string name="home_plain_display_help">With Shizuku: on plug-in, DeX is switched off for the Space\'s session so it can fill the glasses. Every setting changed is logged and put back when the Space closes or the glasses unplug; if it does not work within a few seconds, DeX comes back and the Space opens as before.</string>
+
+    <!-- Notification channels (GlassesReadyService, UpdateChecker), shown in Android's app notification settings -->
+    <string name="home_channel_glasses_ready">Ready for the glasses</string>
+    <string name="home_channel_updates">Updates</string>
+
+    <!-- GlassesCheckCard: the glasses setup check on the trackpad -->
+    <string name="home_check_skip_description">Skip the glasses check</string>
+    <string name="home_check_then">Then a 10 second check: turn your head and say what the windows did.</string>
+    <string name="home_check_start">Start the check</string>
+    <string name="home_check_skip">Skip</string>
+    <string name="home_check_stop">Stop</string>
+    <string name="home_check_yes_stayed">Yes, they stayed put</string>
+    <string name="home_check_no">No</string>
+    <string name="home_check_all_set">All set</string>
+    <string name="home_check_one_thing">One thing to change</string>
+    <string name="home_check_again">Check again</string>
+    <string name="home_check_done">Done</string>
+    <!-- Read out by TalkBack with the countdown -->
+    <plurals name="home_check_seconds_left">
+        <item quantity="one">%1$d second left</item>
+        <item quantity="other">%1$d seconds left</item>
+    </plurals>
+    <string name="home_check_waiting_tracking">Waiting for the Space\'s head tracking</string>
+    <!-- %1$d and %2$d: degrees the head turned left and right -->
+    <string name="home_check_sees_degrees">Pocket XR sees %1$d degrees left, %2$d right</string>
+    <!-- Read out by TalkBack. %1$d: the step number, %2$s: the step's text -->
+    <string name="home_check_step">Step %1$d: %2$s</string>
+
+    <!-- CrashCatcher -->
+    <string name="home_crash_title">Pocket XR closed unexpectedly</string>
+    <string name="home_crash_message">Sorry about that. A crash report was saved: the error, the app version and your phone model, nothing else. Sending it helps fix the problem.\n\nYou\'ll see it before it\'s sent.</string>
+    <string name="home_crash_email">Email it</string>
+    <string name="home_crash_github">Post on GitHub</string>
+    <string name="home_crash_dont_send">Don\'t send</string>
+    <string name="home_no_email_app">No email app found. Try Post on GitHub instead.</string>
+    <string name="home_no_browser">No browser found.</string>
+
+    <!-- SendLogs -->
+    <string name="home_logs_getting_ready">Getting the logs ready...</string>
+    <!-- %1$s: the error text -->
+    <string name="home_logs_not_zipped">Could not put the logs together: %1$s</string>
+    <string name="home_logs_not_attached">Could not attach the logs: %1$s</string>
+    <!-- %1$s: the zip's file name -->
+    <string name="home_logs_no_email_app">No email app found. The logs are saved as %1$s.</string>
+
+    <!-- SettingsBackup: reasons shown when saving or restoring the settings file fails -->
+    <string name="home_backup_cannot_open">the file could not be opened</string>
+    <string name="home_backup_not_settings_file">This isn\'t a Pocket XR settings file.</string>
+    <string name="home_backup_newer_file">This file is from a newer Pocket XR. Update Pocket XR first.</string>
+
+    <!-- values\strings_f.xml -->
+    <string name="sys_pcvr_still_looking">Still looking for your PC</string>
+    <string name="sys_pcvr_still_looking_line">Check the Pocket XR PC helper is running and both are on the same Wi-Fi.</string>
+    <string name="sys_pcvr_connecting">Connecting to your PC</string>
+    <string name="sys_pcvr_few_seconds">This takes a few seconds.</string>
+    <string name="sys_pcvr_starting_steamvr">Starting SteamVR</string>
+    <string name="sys_pcvr_almost_there">Almost there.</string>
+    <string name="sys_pcvr_reconnecting">Reconnecting to your PC</string>
+    <string name="sys_pcvr_reconnecting_line">Your game keeps running.</string>
+    <string name="sys_pcvr_leaving">Going back to your Space</string>
+    <string name="sys_pcvr_leaving_line">Keep holding, or let go to stay.</string>
+    <string name="sys_pcvr_stalled">Waiting for your PC</string>
+    <string name="sys_pcvr_stalled_line">The picture paused. It comes back by itself.</string>
+    <!-- Small heading on the PC VR card and the launcher's PC VR button -->
+    <string name="sys_pcvr_name">PC VR</string>
+    <string name="sys_pcvr_joycons_ready">Joy-Cons ready</string>
+    <string name="sys_pcvr_joycons_rest">While you wait, set both Joy-Cons down flat</string>
+    <!-- The left Joy-Con, on a small pill on the PC VR card -->
+    <string name="sys_pcvr_pad_left">Left</string>
+    <!-- The right Joy-Con, on a small pill on the PC VR card -->
+    <string name="sys_pcvr_pad_right">Right</string>
+    <!-- %1$s: Left or Right (a Joy-Con) that is not reporting -->
+    <string name="sys_pcvr_pad_off">%1$s: off</string>
+    <string name="sys_pcvr_unplug_tip">Tip: unplug the charger for a smoother picture.</string>
+    <!-- Used in place of the PC's name when it is not known, inside sentences such as sys_pcvr_allow_line -->
+    <string name="sys_pcvr_your_pc">your PC</string>
+    <string name="sys_pcvr_allow_title">Allow Pocket XR on your PC</string>
+    <!-- %1$s: the PC's name, or sys_pcvr_your_pc -->
+    <string name="sys_pcvr_allow_line">Click Yes on %1$s. You only do this once.</string>
+    <string name="sys_pcvr_refused_title">Your PC said no</string>
+    <string name="sys_pcvr_refused_line">Start SteamVR on %1$s yourself, or allow Pocket XR next time.</string>
+    <string name="sys_pcvr_no_steam_title">SteamVR isn\'t on %1$s</string>
+    <string name="sys_pcvr_no_steam_line">Install Steam and SteamVR on your PC, then try again.</string>
+    <string name="sys_pcvr_no_alvr_title">ALVR isn\'t set up on %1$s</string>
+    <string name="sys_pcvr_no_alvr_line">Install the ALVR streamer on your PC and open it once.</string>
+    <string name="sys_pcvr_starting_steamvr_on">Starting SteamVR on %1$s</string>
+    <string name="sys_pcvr_connecting_steamvr">Connecting to SteamVR</string>
+    <string name="sys_pcvr_no_helper_line">Start SteamVR on your PC, or run the Pocket XR PC helper.</string>
+    <string name="sys_pcvr_card_on_glasses">PC VR is on your glasses</string>
+    <string name="sys_pcvr_card_back">Back to your Space</string>
+    <string name="sys_pcvr_card_hold_hint">Or hold Home or Capture on a Joy-Con for 2 seconds.</string>
+    <!-- The launcher's PC VR button while SteamVR runs on the PC -->
+    <string name="sys_pcvr_tile_ready">PC VR: ready</string>
+    <string name="sys_pcvr_tile_starting">PC VR: starting</string>
+    <string name="sys_pcvr_tile_pc_off">PC VR: PC off</string>
+    <string name="sys_pcvr_leaving_steady">Leaving Steady mode for PC VR, which needs 3D. It comes back when you leave PC VR</string>
+    <string name="sys_pcvr_no_3d">PC VR could not start: the glasses did not switch to 3D. Turn Steady mode off and try again</string>
+    <string name="sys_pointer_no_display">No glasses display, so there is nowhere to click.</string>
+    <string name="sys_pointer_home">Pocket XR home</string>
+    <string name="sys_pointer_home_failed">Could not open Pocket XR home: %1$s</string>
+    <string name="sys_pointer_opening_home_then">Opening Pocket XR home, then %1$s.</string>
+    <!-- %1$s: app name; %2$s: the error -->
+    <string name="sys_pointer_open_failed">Could not open %1$s: %2$s</string>
+    <string name="sys_pointer_install_addon">Install the Pocket XR add-on and turn on its pointer service to click on the glasses.</string>
+    <string name="sys_notif_channel_setup">Setup prompts</string>
+    <string name="sys_pointer_prompt_title">Turn on the Pocket XR pointer service</string>
+    <!-- %1$s: what does not work without the service -->
+    <string name="sys_pointer_prompt_text">%1$s: only the Pocket XR pointer accessibility service may press DeX\'s full screen button. It comes with the Pocket XR add-on. Tap to read what it does and turn it on.</string>
+    <string name="sys_pointer_prompt_action">Set up</string>
+    <string name="sys_game_needs_3d">Games need 3D: leave the game, turn Steady mode off, then start it again</string>
+    <string name="sys_wifi_connected">Connected</string>
+    <!-- %1$s: the Wi-Fi link speed number -->
+    <string name="sys_wifi_mbps">%1$s Mbps</string>
+    <string name="sys_shizuku_not_running">Shizuku is not running</string>
+    <string name="sys_notes_install_addon">Install the Pocket XR add-on first: %1$s</string>
+    <!-- Shown on the glasses after 'Notification access:' -->
+    <string name="sys_notes_finish_on_phone">finish on the phone\'s screen</string>
+    <!-- Reason a download failed; shown after 'The download did not work:' -->
+    <string name="sys_addon_download_stopped">the download stopped early</string>
+    <string name="sys_addon_file_not_saved">the file could not be saved</string>
+    <string name="sys_addon_prompt_not_opened">Android\'s install prompt did not open</string>
+    <string name="sys_settings_open_failed">Could not open Settings: %1$s</string>
+    <!-- %1$d: Android's display id -->
+    <string name="sys_display_fallback_name">Display %1$d</string>
+    <!-- %1$s: the reason (an engineering label) -->
+    <string name="sys_warp_off_why">Glasses warp off: %1$s</string>
+    <string name="sys_warp_off_dropped">The glasses dropped out of warp mode</string>
+    <string name="sys_warp_off_covered">Glasses warp off: DeX drew over its record</string>
+    <string name="sys_warp_refused_2d">In 2D the glasses can\'t take the warp; it works only in their 3D mode. Turn on their 3D mode first.</string>
+    <string name="sys_warp_refused_2d_short">Warp needs the glasses\' 3D mode</string>
+    <string name="sys_warp_test_needs_3d">The 3D record tests need the glasses in 3D. Press their 3D button first.</string>
+    <string name="sys_warp_turn_off_first">Turn Glasses warp off first.</string>
+    <string name="sys_warp_open_space_first">Open the Space on the glasses first.</string>
+    <string name="sys_warp_dex_title_bar">DeX\'s title bar is over the top of the Space, where the warp\'s record goes. Wait a moment and press again.</string>
+    <string name="sys_report_share_title">Share the glasses report</string>
+
+    <!-- values\strings_g.xml -->
+    <string name="core_addon_title">Phone notifications in your glasses</string>
+    <string name="core_addon_what">The free Pocket XR add-on shows your phone\'s notifications in the glasses, and the pointer outside the Space. It is optional.</string>
+    <string name="core_addon_item_notifications">See your phone\'s notifications on the Space\'s Notifications page</string>
+    <string name="core_addon_item_pointer">Use the pointer on the glasses outside the Space</string>
+    <string name="core_addon_note">Optional. Skip it if you like, and install it later from the add-on releases.</string>
+    <string name="core_addon_install">Install add-on</string>
+    <string name="core_addon_allow">Allow installs</string>
+    <string name="core_addon_setup">Open add-on setup</string>
+    <string name="core_addon_turn_on">Turn on notifications</string>
+    <string name="core_addon_releases">Open releases page</string>
+    <string name="core_addon_try_again">Try again</string>
+    <string name="core_addon_get">Get the add-on</string>
+    <string name="core_addon_access_on">Add-on installed. Notifications are on.</string>
+    <string name="core_addon_access_off">Add-on installed. Turn on notification access to see them in the glasses.</string>
+    <string name="core_addon_from_play">Get the add-on from Google Play.</string>
+    <!-- %1$d: percent done -->
+    <string name="core_addon_downloading_percent">Downloading the add-on: %1$d%%</string>
+    <string name="core_addon_downloading">Downloading the add-on</string>
+    <!-- %1$s: why the download failed, from core_addon_reason_* (or an Android error) -->
+    <string name="core_addon_download_failed">The download did not work: %1$s. Try again, or get it from the releases page.</string>
+    <string name="core_addon_allow_first">First allow Pocket XR to install apps. Turn it on, then come back here.</string>
+    <!-- %1$s: the Install add-on button label -->
+    <string name="core_addon_prompted">Tap Install in Android\'s prompt. If it closed, tap %1$s again.</string>
+    <string name="core_addon_not_installed">Not installed yet.</string>
+    <string name="core_addon_reason_offline">no connection to GitHub</string>
+    <string name="core_addon_reason_busy">GitHub is busy, try again in a while</string>
+    <string name="core_addon_reason_none">no add-on release found</string>
+    <!-- %1$d: the HTTP status code GitHub answered with -->
+    <string name="core_addon_reason_code">GitHub answered %1$d</string>
+    <string name="core_mirror_message">The glasses are in mirror mode, so apps can\'t open on them. Turn on DeX (or the extended display mode) and try again.</string>
+    <string name="core_settings_dex">Open Samsung DeX settings</string>
+    <string name="core_settings_dex_hint">Turn on Samsung DeX, then come back.</string>
+    <string name="core_settings_external">Open external display settings</string>
+    <string name="core_settings_external_hint">Switch the glasses from mirror to extend, then come back.</string>
+    <string name="core_settings_home">Open Settings</string>
+    <string name="core_settings_home_hint">Go to Connected devices, Samsung DeX, turn it on, then come back.</string>
+    <string name="core_display_type_unknown">unknown type</string>
+    <string name="core_display_type_internal">built-in</string>
+    <string name="core_display_type_external">external wired (USB-C DisplayPort or HDMI)</string>
+    <string name="core_display_type_wifi">wireless</string>
+    <string name="core_display_type_overlay">overlay</string>
+    <string name="core_display_type_virtual">virtual</string>
+    <string name="core_display_origin_built_in">built-in screen</string>
+    <string name="core_display_origin_external">external display</string>
+    <string name="core_display_origin_virtual">virtual display</string>
+    <!-- A display: %1$s its name, %2$s where it is (core_display_origin_*) -->
+    <string name="core_display_kind">%1$s, %2$s</string>
+    <!-- A display: %1$s its name, %2$s where it is (core_display_origin_*), %3$s its type (core_display_type_*) -->
+    <string name="core_display_kind_type">%1$s, %2$s (%3$s)</string>
+    <!-- %1$s display name, %2$d x %3$d pixels, %4$d refresh rate, %5$d Android display id -->
+    <string name="core_display_summary">%1$s, %2$dx%3$d at %4$d Hz (display %5$d)</string>
+    <string name="core_glasses_ready_notification">Pocket XR is ready for your glasses</string>
+    <string name="core_shizuku_not_installed">Shizuku is not installed</string>
+    <string name="core_shizuku_not_running">Shizuku is installed but not running</string>
+    <string name="core_shizuku_no_permission">Shizuku is running but Pocket XR is not allowed yet</string>
+    <string name="core_shizuku_ready">Shizuku is ready</string>
+    <string name="core_send_logs">Send logs to Mike</string>
+    <string name="core_send_logs_what">Emails Mike one zip of Pocket XR\'s logs and head tracking diagnostics, with your app version, phone, Android version and glasses. Emails, account, Wi-Fi and Bluetooth device names and IP addresses are taken out. Nothing goes until you tap send.</string>
+    <string name="core_testers_title">Help Pocket XR get on Google Play</string>
+    <string name="core_testers_body">Join the testers in two taps. You\'ll need to uninstall this copy before installing from Play: first save your settings (Help and more, Save settings to a file), then restore them in the Play version.</string>
+    <string name="core_testers_join">Join</string>
+    <string name="core_testers_open_play">Open Play invite</string>
+    <string name="core_testers_not_now">Not now</string>
+    <string name="core_testers_already_joined">I already joined</string>
+    <string name="core_support_label">Buy me a beer</string>
+    <string name="core_support_description">Buy me a beer on Ko-fi. Opens ko-fi.com in the browser.</string>
+    <!-- %1$s: the version, e.g. 1.4.2 -->
+    <string name="core_update_banner">Update available: %1$s</string>
+    <!-- %1$s: the version, e.g. 1.4.2 -->
+    <string name="core_update_notification_title">Pocket XR %1$s is ready</string>
+    <string name="core_update_notification_text">Tap to see the update.</string>
+    <string name="core_hand_low_hint">Hand low in the camera: raise it a little</string>
+    <!-- %1$s: a technical reason (USB error text) -->
+    <string name="core_camera_link_lost">Camera link lost (%1$s). Reconnecting.</string>
+    <!-- %1$s: a technical error text, then this -->
+    <string name="core_camera_trying_again">%1$s. Trying again.</string>
+    <!-- %1$d: minutes -->
+    <string name="core_camera_gave_up">The glasses stayed disconnected for %1$d minutes, so hand tracking stopped. It starts again by itself when the Space opens with the glasses.</string>
+    <string name="core_camera_not_started">Not started</string>
+    <string name="core_camera_opening">Opening the glasses camera</string>
+    <!-- %1$d: the attempt number -->
+    <string name="core_camera_opening_try">Opening the glasses camera (try %1$d)</string>
+    <string name="core_camera_streaming">Streaming</string>
+    <string name="core_camera_stopped">Stopped</string>
+    <string name="core_camera_detached">The glasses disconnected from USB. Waiting for them to come back; hand tracking resumes by itself.</string>
+    <string name="core_camera_not_connected">The glasses camera is not connected</string>
+    <string name="core_camera_needs_permission">The glasses reconnected but Android reset USB access to them. Accept the USB prompt on the Flip to resume.</string>
+    <string name="core_provider_xreal_sdk">XREAL SDK hand tracking</string>
+    <!-- Hand tracking from the glasses camera with Google MediaPipe -->
+    <string name="core_provider_glasses_camera">Glasses camera + MediaPipe</string>
+    <string name="core_provider_trackpad">Phone trackpad</string>
+    <string name="core_usb_hint_always">When you plug the glasses in, Android shows one prompt, \"Open Pocket XR to handle XREAL Aura?\". Tick \"Always open Pocket XR when XREAL Aura is connected\" and tap OK. After that Pocket XR opens with the glasses and no prompt shows again.</string>
+    <string name="core_usb_hint_microphone">Android only offers \"Always\" on the plug-in prompt once Pocket XR has the microphone permission, because the glasses have a microphone. Allow it here, then tick Always on the next plug-in.</string>
+    <!-- The Game controller mode, shown after "Game controller: " -->
+    <string name="core_game_controller_off">Off</string>
+    <!-- The Game controller mode, shown after "Game controller: " -->
+    <string name="core_game_controller_gamepad">Gamepad</string>
+    <!-- The Game controller mode, shown after "Game controller: " -->
+    <string name="core_game_controller_touch">Touch</string>
+    <string name="core_game_controller">Game controller</string>
+    <string name="core_game_controller_gamepad_subtitle">A gamepad games see as real (needs Shizuku)</string>
+    <string name="core_game_controller_touch_subtitle">Presses the game\'s own on-screen controls</string>
+    <string name="core_game_controller_off_subtitle">A stick and buttons on the phone, as a gamepad or on the game\'s on-screen controls</string>
+    <string name="core_game_keys">Game keys</string>
+    <string name="core_game_keys_subtitle">Keys that games feel held down, beside the trackpad</string>
+    <string name="core_intro_point_title">Point and click</string>
+    <string name="core_intro_point_move">Move one finger to move the dot</string>
+    <string name="core_intro_point_tap">Tap to click</string>
+    <string name="core_intro_point_two_finger_tap">Tap with two fingers for a long press</string>
+    <string name="core_intro_scroll_title">Scroll and zoom</string>
+    <string name="core_intro_scroll_strip">Run a finger along the strip at the edge to scroll</string>
+    <string name="core_intro_scroll_two_fingers">Move two fingers to scroll</string>
+    <string name="core_intro_scroll_pinch">Pinch with two fingers to zoom</string>
+    <string name="core_intro_three_title">Three fingers</string>
+    <string name="core_intro_three_up">Swipe up: your apps</string>
+    <string name="core_intro_three_down">Swipe down: Control Center</string>
+    <string name="core_intro_three_sideways">Swipe sideways: Back</string>
+    <string name="core_intro_spatial_mouse_title">Spatial Mouse (aim with your phone)</string>
+    <string name="core_intro_resize">To resize a window, put the dot on its corner handle. Hold a finger still until the dot fills, then drag.</string>
+    <string name="core_open_control_center">Open Control Center</string>
+    <!-- %1$s: the Menu row core_open_control_center. No full stop at the end on purpose. -->
+    <string name="core_intro_no_three_fingers">If three fingers don\'t work: Home opens your apps, and the Menu has %1$s</string>
+    <string name="core_intro_aim_pick">Pick Spatial Mouse at the top of the trackpad</string>
+    <string name="core_intro_aim_hold_sideways">Hold it sideways in both hands, like a game controller</string>
+    <string name="core_intro_aim_tilt">Tilt the top edge up and down, and turn it left and right, to aim. Tap the screen to click</string>
+    <string name="core_intro_aim_hold_upright">Hold the phone upright, like a remote</string>
+    <string name="core_intro_aim_point">Point its top edge where you want the dot. Tap the screen to click</string>
+    <string name="core_intro_one_finger_scroll">Slide one finger on the pad to scroll</string>
+    <string name="core_exit_pocket_xr">Exit Pocket XR</string>
+    <!-- %1$s: the Menu row core_exit_pocket_xr -->
+    <string name="core_intro_exit_note">To quit, open the Menu and tap %1$s at the end, or tap Exit on the Pocket XR notification.</string>
+    <!-- %1$s: the Menu row core_exit_pocket_xr -->
+    <string name="core_intro_exit_note_short">To quit, tap %1$s at the end of the Menu or on the notification.</string>
+    <string name="core_pad_spatial_mouse">Spatial Mouse</string>
+    <!-- Trackpad page name -->
+    <string name="core_pad_vertical">Vertical Trackpad</string>
+    <!-- Trackpad page name -->
+    <string name="core_pad_horizontal">Horizontal Trackpad</string>
+    <string name="core_pocket_hold_to_leave">Hold to leave Pocket mode</string>
+    <string name="core_pocket_hold_to_unlock">Hold to unlock</string>
+    <string name="core_pocket_mode">Pocket mode</string>
+    <string name="core_pocket_mode_subtitle">A black, locked phone screen. The glasses keep running. Hold the lock to leave.</string>
+    <!-- Heading of the trackpad Menu section for the focused window -->
+    <string name="core_menu_this_window">This window</string>
+    <!-- Heading of the trackpad Menu section for the Space (the virtual room of windows in the glasses) -->
+    <string name="core_menu_space">Space</string>
+    <string name="core_menu_space_summary">Lock screens, Arrange, presets</string>
+    <string name="core_menu_trackpad">Trackpad and controls</string>
+    <string name="core_menu_trackpad_summary">Speeds, scrolling, cursor, game controller</string>
+    <string name="core_menu_windows_glasses">Windows and glasses</string>
+    <string name="core_menu_windows_glasses_summary">Snap, new instances, curve, glasses check</string>
+    <string name="core_menu_help">Help and more</string>
+    <string name="core_menu_help_summary">How to use, reset, developer settings</string>
+
+    <!-- values\strings_h.xml -->
+    <string name="spatial_arrange_center">Center</string>
+    <string name="spatial_arrange_theater_big">Theater (big screen)</string>
+    <string name="spatial_arrange_side_by_side">Side by side</string>
+    <string name="spatial_arrange_main_side">Main + side</string>
+    <string name="spatial_arrange_stacked">Stacked</string>
+    <string name="spatial_arrange_three_across">Three across</string>
+    <string name="spatial_arrange_main_two_stacked">Main + two stacked</string>
+    <string name="spatial_arrange_focus_center">Focus center</string>
+    <string name="spatial_arrange_grid_2x2">2 × 2 grid</string>
+    <string name="spatial_arrange_main_three_stacked">Main + three stacked</string>
+    <string name="spatial_arrange_main_strip_below">Main + strip below</string>
+    <string name="spatial_arrange_four_across">Four across</string>
+    <string name="spatial_arrange_grid">Grid</string>
+    <string name="spatial_arrange_main_column">Main + column</string>
+    <string name="spatial_arrange_all_around_you">All around you</string>
+    <!-- Layout button: gather all windows in front -->
+    <string name="spatial_arrange_kind_arrange">Arrange</string>
+    <!-- Window layout: windows on a circle around you -->
+    <string name="spatial_arrange_kind_circle">Circle</string>
+    <string name="spatial_arrange_kind_theater">Theater</string>
+    <!-- Window layout: windows in one row -->
+    <string name="spatial_arrange_kind_across">Across</string>
+    <string name="spatial_arrange_kind_main_strip">Main + strip</string>
+    <string name="spatial_arrange_kind_all_around">All around</string>
+    <!-- Move and resize all windows together -->
+    <string name="spatial_arrange_kind_adjust_all">Adjust all</string>
+    <!-- Tracking mode name -->
+    <string name="spatial_follow_smooth">Smooth Follow</string>
+    <!-- Tracking mode name -->
+    <string name="spatial_follow_body_anchor">Body Anchor</string>
+    <!-- Tracking mode name -->
+    <string name="spatial_follow_space_locked">Space locked</string>
+    <!-- An unknown display mode number the glasses report -->
+    <string name="spatial_air_mode_unknown">mode %1$d (not known)</string>
+    <string name="spatial_air_mode_2d_60">2D, 60 Hz</string>
+    <string name="spatial_air_mode_sbs_60">3D side by side, 60 Hz</string>
+    <string name="spatial_air_mode_sbs_72">3D side by side, 72 Hz</string>
+    <string name="spatial_air_mode_2d_72">2D, 72 Hz</string>
+    <string name="spatial_air_mode_half_sbs_60">3D half side by side, 60 Hz</string>
+    <string name="spatial_air_mode_sbs_90">3D side by side, 90 Hz</string>
+    <string name="spatial_air_mode_2d_90">2D, 90 Hz</string>
+    <string name="spatial_air_mode_2d_120">2D, 120 Hz</string>
+    <string name="spatial_air_switch_row">Air display mode (untested)</string>
+    <string name="spatial_air_switch_subtitle">Read and switch the Air\'s 2D or 3D mode from here. Never tried on Air glasses yet.</string>
+    <!-- %1$d is a percent, e.g. Text size 120 % -->
+    <string name="spatial_text_size_percent">Text size %1$d %%</string>
+    <!-- Title of the panel of controls drawn in the glasses -->
+    <string name="spatial_control_center">Control Center</string>
+    <!-- %1$s is a line like: Update available: 1.4.2 -->
+    <string name="spatial_update_from_phone">%1$s. Update from Pocket XR on the phone.</string>
+    <!-- Heading over the tracking modes -->
+    <string name="spatial_tracking">Tracking</string>
+    <string name="spatial_arrange_one_window">Arrange 1 window</string>
+    <!-- Heading; %1$d is 2 or more -->
+    <string name="spatial_arrange_n_windows">Arrange %1$d windows</string>
+    <string name="spatial_quick_settings">Quick settings</string>
+    <string name="spatial_cursor_speed">Cursor speed</string>
+    <string name="spatial_window_presets">Window presets</string>
+    <string name="spatial_page_notifications">Notifications</string>
+    <string name="spatial_page_wifi">Wi-Fi</string>
+    <string name="spatial_page_bluetooth">Bluetooth</string>
+    <string name="spatial_notes_need_access">Pocket XR needs notification access to show your phone\'s notifications here.</string>
+    <string name="spatial_notes_allow_once">Allow it once and they appear on this page as they arrive.</string>
+    <string name="spatial_notes_caught_up">You\'re all caught up: no notifications on your phone.</string>
+    <!-- %1$d is a number of notifications not shown -->
+    <string name="spatial_notes_more">%1$d more on your phone</string>
+    <string name="spatial_wifi_needs_shizuku">Wi-Fi needs Shizuku running to be read and changed from the Space.</string>
+    <string name="spatial_wifi_add_in_settings">Add networks in the phone\'s Wi-Fi settings, opened here as a window.</string>
+    <!-- Heading over the Wi-Fi network in use -->
+    <string name="spatial_wifi_connected">Connected</string>
+    <string name="spatial_wifi_saved_networks">Saved networks</string>
+    <string name="spatial_wifi_no_other_saved">No other saved networks.</string>
+    <!-- %1$d is a number of saved networks not shown -->
+    <string name="spatial_wifi_more_in_settings">%1$d more in Wi-Fi settings</string>
+    <string name="spatial_bt_need_permission">Pocket XR needs permission to see your phone\'s Bluetooth devices.</string>
+    <string name="spatial_bt_paired">Paired devices</string>
+    <string name="spatial_bt_paired_connected">Paired devices, %1$d connected</string>
+    <string name="spatial_bt_none_paired">No paired devices yet.</string>
+    <string name="spatial_bt_off">Bluetooth is off.</string>
+    <!-- %1$d is a number of devices not shown -->
+    <string name="spatial_bt_more_in_settings">%1$d more in Bluetooth settings</string>
+    <!-- How long ago a notification came: just now -->
+    <string name="spatial_ago_now">now</string>
+    <!-- Minutes ago, short -->
+    <string name="spatial_ago_min">%1$d min</string>
+    <!-- Hours ago, short -->
+    <string name="spatial_ago_h">%1$d h</string>
+    <!-- Days ago, short -->
+    <string name="spatial_ago_d">%1$d d</string>
+    <string name="spatial_check_title">Turn your head check</string>
+    <string name="spatial_check_turn_prompt">Look at a window. Turn your head slowly left and right, a few times, for 10 seconds.</string>
+    <string name="spatial_check_q_stayed">Did the windows stay in place in the room while you turned?</string>
+    <string name="spatial_check_q_what">What did the windows do?</string>
+    <!-- Answer: what the windows did -->
+    <string name="spatial_check_moved_too_far">Moved further than my head, or got cut off at the sides</string>
+    <!-- Answer: what the windows did -->
+    <string name="spatial_check_moved_slid_back">Slid back slowly after I stopped turning</string>
+    <!-- Answer: what the windows did -->
+    <string name="spatial_check_moved_stuck">Stayed in front of me, turning with my head</string>
+    <!-- Answer: what the windows did -->
+    <string name="spatial_check_moved_other">Something else</string>
+    <string name="spatial_check_fix_anchor">Your glasses are in Anchor mode, so they turn the picture as well as Pocket XR. Press X on the glasses once to switch to Follow mode, then check again.</string>
+    <string name="spatial_check_fix_anchor_beam">If it keeps going back to Anchor, close XREAL\'s spatial view on the Beam Pro first.</string>
+    <string name="spatial_check_fix_stabilizer">Stabilizer is on in the glasses. Press X twice to open their menu, go to Spatial Screen (Display on older firmware), then Stabilizer, and turn it off.</string>
+    <string name="spatial_check_fix_beam_view">XREAL\'s spatial view on the Beam Pro is turning the picture too. Close it, then open the Space from Pocket XR and check again.</string>
+    <!-- %1$s is one or more XREAL app names, or the text An XREAL app -->
+    <string name="spatial_check_fix_xreal_app">%1$s may be turning the picture too. Close it from Recents, then check again.</string>
+    <string name="spatial_check_an_xreal_app">An XREAL app</string>
+    <string name="spatial_check_fix_unknown_mode">Something else is turning the picture too. If your glasses have their own Anchor, 3DoF or stabilizer setting, turn it off so they show a plain screen, then check again.</string>
+    <string name="spatial_check_fix_steady_on">Steady mode is on, so the glasses hold the picture and this check can\'t measure it. Turn Steady mode off, then check again.</string>
+    <string name="spatial_check_fix_aura_reconnect">Unplug the glasses and plug them back in. Pocket XR sets Spatial Anchor and the glasses\' mode each time it connects. Then check again.</string>
+    <string name="spatial_check_fix_pocket_follow">Pocket XR is set to Smooth Follow. Open the Menu and pick Body Anchor (3DoF), then check again.</string>
+    <string name="spatial_check_fix_no_turn">Pocket XR did not see your head turn %1$d degrees each way. Turn further, or check that Head tracking is on in Pocket XR Settings.</string>
+    <string name="spatial_check_fix_no_space">Open the Space on the glasses first, so there are windows to look at, then check again.</string>
+    <string name="spatial_check_fix_report">That is not a setting Pocket XR knows. Please send a Glasses report (Pocket XR Settings, Advanced) on GitHub and say what the windows did.</string>
+    <string name="spatial_check_aura_sets_own">Pocket XR sets the Aura\'s own settings for you.</string>
+    <string name="spatial_check_passed">All set. Windows stay put as you turn. This check won\'t come up again for these glasses; it is in the Menu if you need it.</string>
+    <string name="spatial_setup_beam_pro_note">On a Beam Pro: XREAL\'s own spatial view can also turn the picture with your head, so windows move twice. Close it, then open the Space from Pocket XR.</string>
+    <string name="spatial_setup_beam_pro_one_note">The Beam Pro may switch your glasses back to Anchor. If the check fails, set Follow again on the glasses.</string>
+    <!-- %1$s is the name of one XREAL app -->
+    <string name="spatial_setup_app_note_one">%1$s is on this phone. It does no harm while closed. If it is open, close it from Recents before you open the Space: it can drive the glasses\' picture and head tracking too.</string>
+    <!-- %1$s is a comma separated list of XREAL app names -->
+    <string name="spatial_setup_app_note_many">%1$s are on this phone. It does no harm while closed. If it is open, close it from Recents before you open the Space: it can drive the glasses\' picture and head tracking too.</string>
+    <string name="spatial_setup_step_follow">Press X on the glasses once to switch mode. Pick Follow mode, not Anchor</string>
+    <string name="spatial_setup_step_stabilizer">Press X twice to open the glasses\' menu. In Spatial Screen, turn Stabilizer off</string>
+    <string name="spatial_setup_step_menu">In the menu, + and - move, X picks, X twice goes back. Older firmware: Stabilizer is in Display</string>
+    <!-- Used in Check your %1$s / Set up your %1$s when the model is not known -->
+    <string name="spatial_setup_glasses">glasses</string>
+    <!-- %1$s is a glasses model name, or the word glasses -->
+    <string name="spatial_setup_check_your">Check your %1$s</string>
+    <!-- %1$s is a glasses model name, or the word glasses -->
+    <string name="spatial_setup_set_up_your">Set up your %1$s</string>
+    <string name="spatial_setup_one_check">Check: look left and right. Windows should stay put. If they move twice as far or get cut off, the glasses are in Anchor mode.</string>
+    <string name="spatial_setup_nothing_to_set">Nothing needs setting on these glasses. The check below makes sure the windows stay put.</string>
+    <string name="spatial_setup_aura_check">Pocket XR sets these glasses for you. The check below makes sure the windows stay put.</string>
+    <string name="spatial_setup_anchor_card">Your glasses may be in Anchor mode, so windows move twice as far as your head. Press X on the glasses once for Follow mode, and turn Stabilizer off.</string>
+    <!-- Button that opens the glasses setup page -->
+    <string name="spatial_setup_anchor_card_ok">Glasses setup</string>
+    <string name="spatial_setup_anchor_card_later">Not now</string>
+    <string name="spatial_head_off">Head tracking is off.</string>
+    <string name="spatial_head_turned_off">Head tracking is turned off in Settings. Windows stay in front of you and turn with your head.</string>
+    <string name="spatial_head_searching">Looking for the glasses\' USB network.</string>
+    <!-- %1$s is a list of network names; %2$s is Android or One UI -->
+    <string name="spatial_head_no_network">No USB network to the glasses. Android lists: %1$s. %2$s may not have brought up the glasses\' NCM or ECM interface.</string>
+    <string name="spatial_head_no_networks">no networks</string>
+    <!-- %1$04X:%2$04X is a USB id in hex; %3$s is a list of USB interfaces -->
+    <string name="spatial_head_hid_glasses">These glasses (USB %1$04X:%2$04X) send head tracking over USB HID, like XREAL\'s Air family, not over a USB network. Pocket XR reads it over HID only on the Air, Air 2, Air 2 Pro and Air 2 Ultra, so head tracking is not available on these glasses yet; the Space stays head locked. USB interfaces: %3$s.</string>
+    <string name="spatial_head_none_listed">none listed</string>
+    <!-- %1$04X:%2$04X is a USB id in hex -->
+    <string name="spatial_head_viture_beast_off">VITURE head tracking is turned off for the VITURE Beast (USB %1$04X:%2$04X), so the Space stays in front of you and turns with your head. Turn on VITURE head tracking on the head tracking screen to look around the Space.</string>
+    <!-- %1$04X:%2$04X is a USB id in hex -->
+    <string name="spatial_head_viture_not_yet">Head tracking isn\'t supported yet on VITURE glasses (USB %1$04X:%2$04X). The Space stays in front of you and turns with your head.</string>
+    <string name="spatial_head_viture_experimental_no_motion">The experimental VITURE reader is on but got no motion from these glasses. Record motion for 20 seconds on the head tracking screen and send logs, so they can be added.</string>
+    <string name="spatial_head_viture_try_experimental">You can try the experimental VITURE reader on the head tracking screen, or record motion for 20 seconds there and send logs.</string>
+    <!-- %1$s:%2$s is an address and port; %3$s is a network name -->
+    <string name="spatial_head_connecting">Connecting to %1$s:%2$s over %3$s.</string>
+    <!-- %1$s:%2$s is an address and port; %3$s is a network name; %4$s is the error -->
+    <string name="spatial_head_connect_failed">TCP connect to %1$s:%2$s over %3$s failed: %4$s</string>
+    <!-- %1$s is a network name; %6$s is a hint sentence -->
+    <string name="spatial_head_no_reports">Connected over %1$s but no sensor reports in %2$d s (%3$d bytes received, %4$d frames of another length, %5$d of another type). %6$s</string>
+    <!-- %1$s is a glasses model name -->
+    <string name="spatial_head_usb_permission">Found the %1$s on USB; waiting for USB access for head tracking. Allow Pocket XR in Android\'s prompt (unplug and plug the glasses in again to see it again). The Space stays head locked until then.</string>
+    <!-- %1$s is a glasses model name; %2$s is the error -->
+    <string name="spatial_head_usb_failed">Could not open the %1$s\' motion sensor over USB: %2$s</string>
+    <string name="spatial_head_hint_one">This firmware may not serve the One family stream.</string>
+    <string name="spatial_head_hint_air">The glasses\' motion sensor did not answer the start command over USB HID.</string>
+    <string name="spatial_head_hint_viture">These VITURE glasses did not answer the documented start command; head tracking isn\'t supported on them yet. Record motion for 20 seconds on the head tracking screen and send logs.</string>
+    <!-- %1$s is a network name -->
+    <string name="spatial_head_streaming">Streaming over %1$s at %2$.0f reports a second.</string>
+    <!-- %1$s is a network name; %2$s is what went wrong -->
+    <string name="spatial_head_lost">Lost the sensor stream over %1$s: %2$s. Retrying.</string>
+    <!-- %1$s is an address; %2$s is a list of network names -->
+    <string name="spatial_head_no_route">No route to %1$s on %2$s. Not retrying until the glasses\' network changes or they are plugged in again; the Space stays head locked.</string>
+    <string name="spatial_head_any_glasses_network">any glasses network</string>
+    <!-- %1$s is a sentence saying what went wrong -->
+    <string name="spatial_head_retry_later">%1$s Next try in %2$d s.</string>
+    <string name="spatial_head_silent">no sensor report for %1$d s after it had streamed (%2$d bytes received in %3$d s)</string>
+    <string name="spatial_mode_spatial">Spatial: app panels stay put as you turn your head</string>
+    <string name="spatial_mode_head_locked">Head locked: app panels in front of you, turned with the trackpad</string>
+    <string name="spatial_mode_flat">Flat: apps open as DeX windows on the glasses</string>
+    <!-- %1$s is a Shizuku status, e.g. Shizuku is not running -->
+    <string name="spatial_mode_needs_shizuku">%1$s: app panels need Shizuku to create their virtual displays.</string>
+    <!-- %1$s is a sentence about the head tracker's state -->
+    <string name="spatial_mode_no_head_tracking">No head tracking: %1$s</string>
+    <!-- Notice on the glasses -->
+    <string name="spatial_view_turn_on_3d">Turn on the glasses\' 3D mode (Full SBS) for 3D</string>
+    <!-- Notice on the glasses -->
+    <string name="spatial_view_turn_off_3d">Turn off the glasses\' 3D mode for 2D at 120 Hz</string>
+    <!-- Notice on the glasses -->
+    <string name="spatial_depth_glasses_menu">Turn on 3D in your glasses menu first</string>
+    <!-- Notice on the glasses -->
+    <string name="spatial_steady_turn_on_6dof">Steady mode in 6DoF: turn on 6DoF in your glasses\' menu (Spatial Display) so the screen stays put as you move</string>
+    <!-- Notice on the glasses -->
+    <string name="spatial_steady_turn_off_6dof">Steady mode is off: turn 6DoF off again in your glasses\' menu, and use Follow mode with Stabilizer off</string>
+    <!-- Setting that stops windows from being moved or resized -->
+    <string name="spatial_lock_label">Lock screens</string>
+    <!-- Short label under a toggle button -->
+    <string name="spatial_lock_short">Lock</string>
+    <!-- Short label under a toggle button, when on -->
+    <string name="spatial_lock_short_on">Locked</string>
+    <string name="spatial_lock_notice">Screens are locked. Unlock them from the Lock button or the Menu.</string>
+    <string name="spatial_lock_subtitle">Windows stay where they are. Clicks, scrolls and typing still work.</string>
+    <string name="spatial_lock_row_on">Lock screens: ON</string>
+    <string name="spatial_lock_row_off">Lock screens: OFF</string>
+    <string name="spatial_lock_description_on">Lock screens, on. Windows can\'t be moved or resized. Tap to unlock.</string>
+    <string name="spatial_lock_description_off">Lock screens, off. Tap to lock every window in place.</string>
+    <!-- Why a level calibration reading was refused -->
+    <string name="spatial_level_not_a_number">the reading is not a number</string>
+    <!-- Why a level calibration reading was refused -->
+    <string name="spatial_level_roll_too_much">roll %1$.1f degrees is more than %2$.0f</string>
+    <!-- Why a level calibration reading was refused -->
+    <string name="spatial_level_pitch_too_much">pitch %1$.1f degrees is more than %2$.0f</string>
+    <!-- Default name of a saved window preset -->
+    <string name="spatial_preset_name">Workspace %1$d</string>
+    <!-- Launcher button tooltip -->
+    <string name="spatial_launcher_pc_vr">PC VR</string>
+    <!-- Launcher button tooltip: bring the Space back in front -->
+    <string name="spatial_launcher_recentre">Recentre</string>
+    <!-- Launcher button tooltip: Steady mode -->
+    <string name="spatial_launcher_steady">Steady</string>
+    <!-- Launcher button tooltip -->
+    <string name="spatial_launcher_depth">Depth (3D side by side)</string>
+    <!-- Launcher button tooltip -->
+    <string name="spatial_launcher_control_panel">Control panel</string>
+    <string name="spatial_launcher_app_info">App Info</string>
+    <string name="spatial_launcher_pin_app">Pin App</string>
+    <string name="spatial_launcher_unpin_app">Unpin App</string>
+    <!-- Said on the glasses -->
+    <string name="spatial_one_stabilizer_hint">Use Follow mode (not Anchor) with Stabilizer off on the glasses, or windows won\'t stay put</string>
+    <string name="spatial_route_shell_next">the Shizuku shell helper is tried next</string>
+    <!-- %1$s is a Shizuku status, e.g. Shizuku is not running -->
+    <string name="spatial_route_start_shizuku">%1$s: start Shizuku so its shell helper can connect instead</string>
+    <!-- %1$s is a VPN's name; %2$s is what is tried next -->
+    <string name="spatial_route_eperm_vpn">Android refused to bind Pocket XR\'s socket to the glasses\' network (EPERM): a VPN that cannot be bypassed covers the app (Android shows one: %1$s); %2$s</string>
+    <!-- %1$s is what is tried next -->
+    <string name="spatial_route_eperm">Android refused to bind Pocket XR\'s socket to the glasses\' network (EPERM): a VPN that cannot be bypassed covers the app; %1$s</string>
+    <!-- %1$s is what is tried next -->
+    <string name="spatial_route_eacces">Android refused to bind Pocket XR\'s socket to the glasses\' network (EACCES): the network is restricted; %1$s</string>
+    <!-- %1$s is an address; %2$s a port number -->
+    <string name="spatial_reach_no_answer">The glasses do not answer on %1$s port %2$s: the connection went out and nothing came back. This firmware may not serve the XREAL One head tracking stream. The Space stays head locked.</string>
+    <!-- %1$s is a port number -->
+    <string name="spatial_reach_refused">The glasses refused port %1$s: they are there but do not serve the head tracking stream on it. The Space stays head locked.</string>
+    <!-- %1$s is an address -->
+    <string name="spatial_reach_no_route">No route to %1$s on this network; it is not tried again until the glasses\' network changes.</string>
+    <!-- Short guide on a held window in the glasses, in capitals -->
+    <string name="spatial_guide_farther">FARTHER</string>
+    <!-- Short guide on a held window in the glasses, in capitals -->
+    <string name="spatial_guide_closer">CLOSER</string>
+    <!-- Short guide on a held window in the glasses, in capitals -->
+    <string name="spatial_guide_larger">LARGER</string>
+    <!-- Short guide on a held window in the glasses, in capitals -->
+    <string name="spatial_guide_smaller">SMALLER</string>
+    <!-- Short guide on a held window: the window is not curved -->
+    <string name="spatial_guide_flat">FLAT</string>
+    <!-- Short guide on a held window: how curved it is, in percent -->
+    <string name="spatial_guide_curve">CURVE %1$d %%</string>
+    <!-- Short guide: the whole Space is wrapped; %1$s is FLAT or CURVE 40 % -->
+    <string name="spatial_guide_wrap">WRAP %1$s</string>
+    <string name="spatial_all_open_window_first">Open a window first.</string>
+    <string name="spatial_all_held_phone">All windows held: point the phone to turn them, two fingers up or down to push or pull, spread or pinch to resize. Tap to let go, Back to undo.</string>
+    <string name="spatial_all_held_finger">All windows held: move a finger to turn them, two fingers up or down to push or pull, spread or pinch to resize. Tap to let go, Back to undo.</string>
+    <string name="spatial_wrap_curve_notice">Wraparound on: Curve bends the whole Space. Unwrap: tap the note on the trackpad</string>
+    <!-- Name of a setting; also used inside spatial_card_keep_both -->
+    <string name="spatial_new_instance_name">Open a new instance</string>
+    <string name="spatial_new_instance_label">Open a new instance if the app is already running</string>
+    <string name="spatial_new_instance_subtitle">Lets you open two windows of the same app, like two Chrome windows</string>
+    <string name="spatial_card_app_crashed">The app closed: it crashed</string>
+    <string name="spatial_card_app_closed">App closed</string>
+    <string name="spatial_card_reopen">Reopen</string>
+    <string name="spatial_card_close">Close</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_card_one_window_only">%1$s can only show one window on this phone.</string>
+    <string name="spatial_card_moved_newest">It moved to your newest window.</string>
+    <string name="spatial_card_close_this_window">Close this window</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_card_moved_newer">%1$s moved to your newer window.</string>
+    <!-- %1$s is the setting name Open a new instance -->
+    <string name="spatial_card_keep_both">To keep both, turn on %1$s.</string>
+    <string name="spatial_card_turn_on_reopen">Turn on and reopen</string>
+    <string name="spatial_card_switch_app">Switch app</string>
+    <string name="spatial_card_no_apps_pinned">No apps pinned. Pin apps in the launcher, or pick from All apps.</string>
+    <string name="spatial_card_pinned_or_all">Pinned apps, or pick from All apps</string>
+    <string name="spatial_card_all_apps">All apps</string>
+    <string name="spatial_card_cancel">Cancel</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_card_back_would_close_line">Back would close %1$s.</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_card_back_would_close">Back would close %1$s</string>
+    <string name="spatial_card_back_anyway_question">Go back anyway, or close this window?</string>
+    <string name="spatial_card_go_back">Go back</string>
+    <string name="spatial_card_close_window">Close window</string>
+    <!-- Name of a window button that gives an app a landscape screen -->
+    <string name="spatial_wide_view">Wide view</string>
+    <string name="spatial_wide_view_tip">Wide view gives this app a landscape screen. Some apps don\'t lay out well; tap again to turn it off.</string>
+    <string name="spatial_wide_view_cannot_disable">This app only runs in landscape, so Wide view stays on.</string>
+    <string name="spatial_fix_open_shizuku">Open Shizuku</string>
+    <string name="spatial_fix_allow_shizuku">Allow Pocket XR in Shizuku</string>
+    <string name="spatial_fix_get_shizuku">Get Shizuku</string>
+    <string name="spatial_flat_not_running">Flat mode: Shizuku is not running</string>
+    <string name="spatial_flat_not_running_reason">App panels need Shizuku. Open Shizuku on the phone and tap Start (needed after each reboot).</string>
+    <string name="spatial_flat_no_permission">Flat mode: Pocket XR is not allowed in Shizuku</string>
+    <string name="spatial_flat_no_permission_reason">Shizuku is running but has not allowed Pocket XR yet. Allow it in the Shizuku prompt on the phone.</string>
+    <string name="spatial_flat_not_installed">Flat mode: Shizuku is not installed</string>
+    <string name="spatial_flat_not_installed_reason">App panels need Shizuku from Google Play, started with Wireless debugging.</string>
+    <string name="spatial_sbs_on_notice">Side by side 3D: each eye sees its half</string>
+    <string name="spatial_sbs_mono_notice">Side by side 3D: switch the glasses to 3D to see depth</string>
+    <string name="spatial_sbs_switching_notice">Side by side 3D: switching the glasses to 3D</string>
+    <string name="spatial_sbs_off_notice">Side by side 3D off</string>
+    <!-- %1$d is a display number -->
+    <string name="spatial_panel_display_stopped">Android stopped the panel display %1$d</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_panel_opening">Opening %1$s</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_panel_opening_try">Opening %1$s (try %2$d of %3$d)</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_panel_app_closed">%1$s closed. Reopen or close the panel.</string>
+    <!-- %1$s is an app name; %2$d a display number -->
+    <string name="spatial_panel_paused">Android paused %1$s\'s display %2$d; it shows again when Android resumes it</string>
+    <!-- %1$s is an app name; %2$d a display number -->
+    <string name="spatial_panel_showing">Showing %1$s (display %2$d)</string>
+    <!-- %3$s is the error -->
+    <string name="spatial_panel_try_failed">Try %1$d of %2$d failed: %3$s. Retrying.</string>
+    <!-- %2$s is the error -->
+    <string name="spatial_panel_failed">Failed after %1$d tries: %2$s. Pinch to try again.</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_protected_secure">%1$s protects its screen (FLAG_SECURE), so it shows black on a panel. Pinch here to open it as a DeX window.</string>
+    <!-- %1$s is an app name -->
+    <string name="spatial_protected_drm">%1$s shows only black here, likely protected video (DRM). Pinch here to open it as a DeX window.</string>
+    <!-- %1$.0f is a number of seconds -->
+    <string name="spatial_record_saved">Saved to Movies/Pocket XR (%1$.0f s)</string>
+    <string name="spatial_record_failed">The recording didn\'t work on this phone. Nothing was saved.</string>
+    <string name="spatial_record_not_started">The recording couldn\'t start on this phone. Nothing was saved.</string>
+    <string name="spatial_sbs_motion_row">2D while moving</string>
+    <string name="spatial_sbs_motion_subtitle">Side by side videos show flat while your head or the cursor moves, then 3D again</string>
+    <!-- Short hint on the glasses, at most about 50 characters -->
+    <string name="spatial_full_view_two_d" formatted="false">Full view: glasses 3D mode, Display size 100 %</string>
+    <!-- Short hint on the glasses; %1$.0f is a percent -->
+    <string name="spatial_full_view_size">Glasses screen %1$.0f %%: set Display size 100 %% on them</string>
+    <!-- Short hint on the glasses, at most about 50 characters -->
+    <string name="spatial_full_view_unconfirmed" formatted="false">For the full view: Display size 100 % on the glasses</string>
+    <!-- Window shape 16:9, a short word under the ratio -->
+    <string name="spatial_shape_video">Video</string>
+    <!-- Window shape 3:2, a short word under the ratio -->
+    <string name="spatial_shape_laptop">Laptop</string>
+    <!-- Window shape 4:3, a short word under the ratio -->
+    <string name="spatial_shape_tablet">Tablet</string>
+    <!-- Window shape 1:1, a short word under the ratio -->
+    <string name="spatial_shape_square">Square</string>
+    <!-- Window shape 9:16, a short word under the ratio -->
+    <string name="spatial_shape_phone">Phone</string>
+    <!-- Said on the glasses, at most about 44 characters -->
+    <string name="spatial_distance_note_1">Glasses 3D distance %1$.1f m, not 4 m</string>
+    <!-- Said on the glasses, at most about 44 characters -->
+    <string name="spatial_distance_note_2">Their default 4 m gives the full, centred view</string>
+    <!-- Said on the glasses, at most about 44 characters; Display size and Distance are the glasses' own menu items -->
+    <string name="spatial_distance_note_3">Glasses menu, by Display size: Distance 4 m</string>
+    <!-- Inserted into spatial_warp_drop; keep the leading space -->
+    <string name="spatial_warp_drop_after">" after %1$.1f s"</string>
+    <!-- Inserted into spatial_warp_drop; keep the leading space -->
+    <string name="spatial_warp_drop_times">" (%1$d times this session)"</string>
+    <!-- %1$s is empty or spatial_warp_drop_after; %2$s is empty or spatial_warp_drop_times -->
+    <string name="spatial_warp_drop">Off: the glasses dropped out of warp mode%1$s%2$s. Not the Menu or the switch: they leave it by themselves, and the warp then turns off so the picture comes back.</string>
+    <string name="spatial_viture_switch">VITURE head tracking</string>
+    <string name="spatial_viture_switch_experimental">Experimental VITURE head tracking</string>
+    <!-- The cover screen's and portrait trackpad's buttons (core CoverButton). -->
+    <string name="core_cover_menu">Menu</string>
+    <string name="core_cover_keyboard">Keyboard</string>
+    <string name="core_cover_back">Back</string>
+    <string name="core_cover_home">Home</string>
+    <string name="core_cover_recentre">Recentre</string>
+    <string name="core_cover_move">Move</string>
+    <string name="core_cover_resize">Resize</string>
+    <string name="core_cover_further">Further</string>
+    <string name="core_cover_closer">Closer</string>
+    <string name="core_cover_curve">Curve</string>
+    <string name="core_cover_steady">Steady</string>
+    <!-- The Game keys key that turns Game keys off. -->
+    <string name="core_game_keys_done">Done</string>
+    <!-- Head tracking screen: which way each of the glasses' sensor axes points. -->
+    <string name="spatial_axes_xright_yup_zback">x right, y up, z back</string>
+    <string name="spatial_axes_xright_ydown_zfront">x right, y down, z front</string>
+    <string name="spatial_axes_xright_zup_yfront">x right, y front, z up</string>
+    <string name="spatial_axes_xfront_yleft_zup">x front, y left, z up</string>
+    <string name="spatial_axes_xleft_yup_zfront">x left, y up, z front</string>
+    <string name="spatial_axes_xdown_yright_zback">x down, y right, z back</string>
+    <string name="spatial_axes_xleft_ydown_zback">x left, y down, z back</string>
+    <string name="spatial_axes_xright_zdown_yback">x right, y back, z down</string>
+    <string name="spatial_axes_xup_yleft_zback">x up, y left, z back</string>
 </resources>

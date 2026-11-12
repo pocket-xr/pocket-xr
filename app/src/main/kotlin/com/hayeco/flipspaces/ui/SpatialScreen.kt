@@ -44,11 +44,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.ShizukuStatus
 import com.hayeco.flipspaces.core.spatial.ModeChoice
 import com.hayeco.flipspaces.core.spatial.SpatialMode
@@ -71,10 +74,6 @@ data class SpaceSettings(
     /** 1.2.2: the focused window's glow colour, opaque ARGB, the accent blue unless changed. */
     val windowGlowColor: Int = com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_COLOR,
 )
-
-const val SECURE_NOTE =
-    "Protected video shows black on panels: apps that mark their windows secure (FLAG_SECURE, DRM video such as Netflix, " +
-        "some banking apps) cannot be captured into a panel, even with Shizuku. Open those in flat DeX mode."
 
 @Composable
 fun SpatialScreen(
@@ -109,28 +108,28 @@ fun SpatialScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { Text("Spatial windows", style = MaterialTheme.typography.headlineSmall) }
+            item { Text(stringResource(R.string.home_spatial_windows), style = MaterialTheme.typography.headlineSmall) }
             item { ModeCard(choice, glassesName, space, onOpenSpace, onToggleLauncher, onRecentre) }
             if (shizuku != ShizukuStatus.READY) item { ShizukuCard(shizuku, onAllowShizuku, onGetShizuku) }
             if (host is PanelHost.State.Failed) {
-                item { Problem("Panel service", host.error) }
+                item { Problem(stringResource(R.string.home_panel_service), host.error) }
             }
-            space.problem?.let { item { Problem("Last problem in the Space", it) } }
+            space.problem?.let { item { Problem(stringResource(R.string.home_last_problem), it) } }
             if (space.panels.isNotEmpty()) {
                 item {
                     Card(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("Panels (${space.panels.size} of 6)", style = MaterialTheme.typography.titleMedium)
+                            Text(stringResource(R.string.home_panels_count, space.panels.size, 6), style = MaterialTheme.typography.titleMedium)
                             space.panels.forEach { p ->
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Column(Modifier.weight(1f)) {
                                         Text(p.label, style = MaterialTheme.typography.bodyLarge)
                                         Text(p.status, style = MaterialTheme.typography.bodySmall)
                                     }
-                                    TextButton(onClick = { onRemove(p.id) }) { Text("Close") }
+                                    TextButton(onClick = { onRemove(p.id) }) { Text(stringResource(R.string.home_close)) }
                                 }
                             }
-                            TextButton(onClick = onClear) { Text("Close all panels") }
+                            TextButton(onClick = onClear) { Text(stringResource(R.string.home_close_all_panels)) }
                             space.perf?.let { Text("Perf: $it", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace) }
                         }
                     }
@@ -140,7 +139,7 @@ fun SpatialScreen(
             // 0.5.101 (Mike's settings audit): the app list is gone from here (the launcher on the glasses and Advanced on
             // the main screen open apps); the plain display test is under Developer; and a reset to the defaults.
             item { DeveloperCard(settings, onSettings) }
-            item { ResetButton("Spatial windows", "The glasses' screen sizes, 3D (on for the Aura and the One), eye distance, window glow and its colour, and the hand pointer go back to Pocket XR's defaults. Your windows, presets and the glasses' calibration stay.", onReset) }
+            item { ResetButton(stringResource(R.string.home_spatial_windows), stringResource(R.string.home_spatial_reset_what), onReset) }
         }
     }
 }
@@ -159,18 +158,18 @@ private fun ModeCard(
             Text(choice.mode.label, style = MaterialTheme.typography.titleMedium)
             choice.reasons.forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
             Text(
-                glassesName?.let { "Glasses: $it" } ?: "Glasses not connected.",
+                glassesName?.let { stringResource(R.string.home_glasses_name, it) } ?: stringResource(R.string.home_glasses_not_connected),
                 style = MaterialTheme.typography.bodySmall,
             )
-            Text(SECURE_NOTE, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.home_secure_note), style = MaterialTheme.typography.bodySmall)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onOpenSpace, enabled = glassesName != null && choice.mode != SpatialMode.FLAT) {
-                    Text(if (space.running) "Show the Space" else "Open the Space")
+                    Text(if (space.running) stringResource(R.string.home_show_space) else stringResource(R.string.home_open_space))
                 }
-                OutlinedButton(onClick = onRecentre) { Text("Recentre") }
+                OutlinedButton(onClick = onRecentre) { Text(stringResource(R.string.home_recentre)) }
             }
             if (space.running) {
-                OutlinedButton(onClick = onToggleLauncher) { Text(if (space.launcherOpen) "Close the launcher" else "Open the launcher") }
+                OutlinedButton(onClick = onToggleLauncher) { Text(if (space.launcherOpen) stringResource(R.string.home_close_launcher) else stringResource(R.string.home_open_launcher)) }
             }
         }
     }
@@ -183,25 +182,24 @@ private fun ShizukuCard(status: ShizukuStatus, onAllow: () -> Unit, onGet: () ->
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("One-time setup: Shizuku", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.home_shizuku_setup_title), style = MaterialTheme.typography.titleMedium)
             Text(status.label + ".", style = MaterialTheme.typography.bodyMedium)
             Text(
-                "App panels need Shizuku: it lets Pocket XR act as the phone's shell to create the virtual displays apps run on, " +
-                    "start apps there and pass your clicks to them. Until then apps open as flat DeX windows.",
+                stringResource(R.string.home_shizuku_why),
                 style = MaterialTheme.typography.bodySmall,
             )
             listOf(
-                "1. Install Shizuku from Google Play.",
-                "2. Turn on Developer options (Settings, About phone, Software information, tap Build number 7 times).",
-                "3. Connect to Wi-Fi, then in Developer options turn on Wireless debugging.",
-                "4. Open Shizuku, tap Pairing under Start via Wireless debugging, and enter the pairing code from Wireless debugging (split screen helps).",
-                "5. In Shizuku tap Start.",
-                "6. Come back here and tap Allow Pocket XR.",
-                "After every reboot, open Shizuku and tap Start again (Wireless debugging must be on).",
+                stringResource(R.string.home_shizuku_step1),
+                stringResource(R.string.home_shizuku_step2),
+                stringResource(R.string.home_shizuku_step3),
+                stringResource(R.string.home_shizuku_step4),
+                stringResource(R.string.home_shizuku_step5),
+                stringResource(R.string.home_shizuku_step6),
+                stringResource(R.string.home_shizuku_after_reboot),
             ).forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (status == ShizukuStatus.NOT_INSTALLED) OutlinedButton(onClick = onGet) { Text("Get Shizuku") }
-                if (status == ShizukuStatus.NO_PERMISSION) Button(onClick = onAllow) { Text("Allow Pocket XR") }
+                if (status == ShizukuStatus.NOT_INSTALLED) OutlinedButton(onClick = onGet) { Text(stringResource(R.string.home_get_shizuku)) }
+                if (status == ShizukuStatus.NO_PERMISSION) Button(onClick = onAllow) { Text(stringResource(R.string.home_allow_pocket_xr)) }
             }
         }
     }
@@ -215,17 +213,17 @@ private fun degreesOf(factor: Float): Pair<Float, Float> =
 private fun SettingsCard(settings: SpaceSettings, onChange: (SpaceSettings) -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Space settings", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.home_space_settings), style = MaterialTheme.typography.titleMedium)
             // 0.5.26: the projection is the glasses' own screen; its size is theirs to set.
             val steps = com.hayeco.flipspaces.core.spatial.GlassesScreen.STEPS
-            Text("Glasses screen size in 2D: %.0f %% (%.1f by %.1f degrees)".format(settings.screen2d * 100, degreesOf(settings.screen2d).first, degreesOf(settings.screen2d).second), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.home_screen_size_2d, settings.screen2d * 100, degreesOf(settings.screen2d).first, degreesOf(settings.screen2d).second), style = MaterialTheme.typography.bodyMedium)
             Slider(
                 value = steps.indexOf(com.hayeco.flipspaces.core.spatial.GlassesScreen.nearestStep(settings.screen2d)).toFloat(),
                 onValueChange = { onChange(settings.copy(screen2d = steps[it.toInt().coerceIn(0, steps.size - 1)])) },
                 valueRange = 0f..(steps.size - 1).toFloat(),
                 steps = steps.size - 2,
             )
-            Text("In their 3D mode: %.0f %% (%.1f by %.1f degrees)".format(settings.screen3d * 100, degreesOf(settings.screen3d).first, degreesOf(settings.screen3d).second), style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.home_screen_size_3d, settings.screen3d * 100, degreesOf(settings.screen3d).first, degreesOf(settings.screen3d).second), style = MaterialTheme.typography.bodyMedium)
             Slider(
                 value = steps.indexOf(com.hayeco.flipspaces.core.spatial.GlassesScreen.nearestStep(settings.screen3d)).toFloat(),
                 onValueChange = { onChange(settings.copy(screen3d = steps[it.toInt().coerceIn(0, steps.size - 1)])) },
@@ -233,14 +231,12 @@ private fun SettingsCard(settings: SpaceSettings, onChange: (SpaceSettings) -> U
                 steps = steps.size - 2,
             )
             Text(
-                "Set these to the glasses' own Display size (their menu). For the full view set Display size to 100 % on the glasses and here; " +
-                    "130 % is wider than their panels and cuts the edges. The 3D size is read from the glasses' own log whenever Glasses warp has it on.",
+                stringResource(R.string.home_screen_size_help),
                 style = MaterialTheme.typography.bodySmall,
             )
-            Toggle("3D: windows at real depth", settings.stereo) { onChange(settings.copy(stereo = it)) }
+            Toggle(stringResource(R.string.home_stereo), settings.stereo) { onChange(settings.copy(stereo = it)) }
             Text(
-                "On: each eye gets its own picture, so windows sit at their distance. Off: the same picture in both eyes, the steadiest. " +
-                    "The 3D / 2D button in the launcher switches it too. Eye distance for 3D: %.0f mm".format(settings.ipdMm),
+                stringResource(R.string.home_stereo_help, settings.ipdMm),
                 style = MaterialTheme.typography.bodySmall,
             )
             Slider(
@@ -249,7 +245,7 @@ private fun SettingsCard(settings: SpaceSettings, onChange: (SpaceSettings) -> U
                 valueRange = com.hayeco.flipspaces.core.spatial.StereoLayout.MIN_IPD_MM..com.hayeco.flipspaces.core.spatial.StereoLayout.MAX_IPD_MM,
             )
             // 1.2.2 (a user: "reduce opacity or intensity of the blue drop shadow around the windows").
-            Text(windowGlowLabel(settings.windowGlow), style = MaterialTheme.typography.bodyMedium)
+            Text(windowGlowLabel(settings.windowGlow, LocalContext.current), style = MaterialTheme.typography.bodyMedium)
             Slider(
                 value = settings.windowGlow.toFloat(),
                 onValueChange = { onChange(settings.copy(windowGlow = windowGlowStep(it))) },
@@ -257,15 +253,15 @@ private fun SettingsCard(settings: SpaceSettings, onChange: (SpaceSettings) -> U
                 steps = WINDOW_GLOW_STEPS,
             )
             Text(
-                "The glow round the window you are using. Lower it to soften the glow, or slide it to Off to hide it.",
+                stringResource(R.string.home_window_glow_help),
                 style = MaterialTheme.typography.bodySmall,
             )
             GlowColorChoice(settings.windowGlowColor) { onChange(settings.copy(windowGlowColor = it)) }
-            Text("Hand pointer", style = MaterialTheme.typography.bodyMedium)
-            Choice("Hand ray: the hand aims, pinch clicks", settings.handsSteer) { onChange(settings.copy(handsSteer = true)) }
-            Choice("Look and pinch: head gaze aims, pinch anywhere clicks", !settings.handsSteer) { onChange(settings.copy(handsSteer = false)) }
+            Text(stringResource(R.string.home_hand_pointer), style = MaterialTheme.typography.bodyMedium)
+            Choice(stringResource(R.string.home_hand_ray), settings.handsSteer) { onChange(settings.copy(handsSteer = true)) }
+            Choice(stringResource(R.string.home_look_and_pinch), !settings.handsSteer) { onChange(settings.copy(handsSteer = false)) }
             Text(
-                "Look and pinch needs head tracking; the hand only has to be seen pinching, which is the steadiest thing the camera does.",
+                stringResource(R.string.home_look_and_pinch_help),
                 style = MaterialTheme.typography.bodySmall,
             )
         }
@@ -279,13 +275,19 @@ internal const val WINDOW_GLOW_STEPS = 9
 internal fun windowGlowStep(value: Float): Int =
     com.hayeco.flipspaces.core.spatial.WindowGlow.clamp((value / 10f).roundToInt() * 10)
 
-/** 1.2.2: Window glow's title at [percent]. */
-internal fun windowGlowLabel(percent: Int): String =
-    if (com.hayeco.flipspaces.core.spatial.WindowGlow.shown(percent)) "Window glow: $percent %" else "Window glow: Off"
+/** 1.2.2: Window glow's title at [percent], in the phone's language given a [context] (the English without, for the tests). */
+internal fun windowGlowLabel(percent: Int, context: android.content.Context? = null): String =
+    if (com.hayeco.flipspaces.core.spatial.WindowGlow.shown(percent)) {
+        context?.getString(R.string.home_window_glow_percent, percent) ?: "Window glow: $percent %"
+    } else {
+        context?.getString(R.string.home_window_glow_off) ?: "Window glow: Off"
+    }
 
-/** 1.2.2: Window glow colour's title for [argb]. */
-internal fun windowGlowColorLabel(argb: Int): String =
-    "Glow colour: " + com.hayeco.flipspaces.core.spatial.WindowGlow.name(argb)
+/** 1.2.2: Window glow colour's title for [argb], in the phone's language given a [context] (the English without). */
+internal fun windowGlowColorLabel(argb: Int, context: android.content.Context? = null): String =
+    com.hayeco.flipspaces.core.spatial.WindowGlow.name(argb).let { name ->
+        context?.getString(R.string.home_glow_colour, name) ?: "Glow colour: $name"
+    }
 
 /**
  * 1.2.2 (Mike: users should be able to change the glow's colour): the preset swatches, the default blue first, and a
@@ -298,7 +300,7 @@ private fun GlowColorChoice(argb: Int, onChange: (Int) -> Unit) {
     // The hue is kept here too, so taking the colour down to white and back up does not lose it.
     var hue by rememberSaveable { mutableStateOf(glow.hueSaturation(argb).first) }
     var saturation by rememberSaveable { mutableStateOf(glow.hueSaturation(argb).second) }
-    Text(windowGlowColorLabel(argb), style = MaterialTheme.typography.bodyMedium)
+    Text(windowGlowColorLabel(argb, LocalContext.current), style = MaterialTheme.typography.bodyMedium)
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -309,7 +311,7 @@ private fun GlowColorChoice(argb: Int, onChange: (Int) -> Unit) {
                 onChange(s.argb)
             }
         }
-        GlowSwatch("Custom", Brush.sweepGradient(RAINBOW), glow.preset(argb) == null) {
+        GlowSwatch(stringResource(R.string.home_custom), Brush.sweepGradient(RAINBOW), glow.preset(argb) == null) {
             customOpen = true
             val (h, sat) = glow.hueSaturation(argb)
             if (sat > 0f) hue = h
@@ -317,13 +319,13 @@ private fun GlowColorChoice(argb: Int, onChange: (Int) -> Unit) {
         }
     }
     if (customOpen || glow.preset(argb) == null) {
-        Text("Hue", style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.home_hue), style = MaterialTheme.typography.bodySmall)
         Slider(
             value = hue,
             onValueChange = { hue = it; onChange(glow.custom(hue, saturation)) },
             valueRange = 0f..360f,
         )
-        Text("Colour: from white to the full hue", style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.home_colour_saturation), style = MaterialTheme.typography.bodySmall)
         Slider(
             value = saturation,
             onValueChange = { saturation = it; onChange(glow.custom(hue, saturation)) },
@@ -358,13 +360,13 @@ private fun DeveloperCard(settings: SpaceSettings, onChange: (SpaceSettings) -> 
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(Modifier.fillMaxWidth().clickable { open = !open }, verticalAlignment = Alignment.CenterVertically) {
-                Text("Developer", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Text(if (open) "Hide" else "Show", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.home_developer), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text(if (open) stringResource(R.string.home_hide) else stringResource(R.string.home_show), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
             }
             if (open) {
-                Toggle("Plain glasses display without DeX (experimental)", settings.plainDisplay) { onChange(settings.copy(plainDisplay = it)) }
+                Toggle(stringResource(R.string.home_plain_display), settings.plainDisplay) { onChange(settings.copy(plainDisplay = it)) }
                 Text(
-                    "With Shizuku: on plug-in, DeX is switched off for the Space's session so it can fill the glasses. Every setting changed is logged and put back when the Space closes or the glasses unplug; if it does not work within a few seconds, DeX comes back and the Space opens as before.",
+                    stringResource(R.string.home_plain_display_help),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

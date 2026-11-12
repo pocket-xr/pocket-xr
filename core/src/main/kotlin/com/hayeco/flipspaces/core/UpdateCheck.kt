@@ -108,9 +108,9 @@ object UpdateCheck {
     fun asksForNotifications(sdkInt: Int, granted: Boolean, askedBefore: Boolean): Boolean = sdkInt >= 33 && !granted && !askedBefore
 
     /** 1.1.15: the banner's and the Control Center's line, and the notification's title. */
-    fun bannerLine(version: String): String = "Update available: $version"
-    fun notificationTitle(version: String): String = "Pocket XR $version is ready"
-    const val NOTIFICATION_TEXT = "Tap to see the update."
+    fun bannerLine(version: String): String = UiText.format("core_update_banner", "Update available: %1\$s", version)
+    fun notificationTitle(version: String): String = UiText.format("core_update_notification_title", "Pocket XR %1\$s is ready", version)
+    val NOTIFICATION_TEXT: String get() = UiText.get("core_update_notification_text", "Tap to see the update.")
 
     private fun string(json: String, key: String): String? =
         Regex("\"" + Regex.escape(key) + "\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"").find(json)?.groupValues?.get(1)?.let(::unescape)

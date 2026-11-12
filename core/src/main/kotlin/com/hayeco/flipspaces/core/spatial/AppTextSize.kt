@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.roundToInt
 
 /**
@@ -31,7 +32,7 @@ object AppTextSize {
     }
 
     /** How the Menu and the window's notice say it. */
-    fun label(percent: Int): String = "Text size $percent %"
+    fun label(percent: Int): String = UiText.format("spatial_text_size_percent", "Text size %1\$d %%", percent)
 }
 
 /** 1.2.3 (issue 57): each app's [AppTextSize], one `package=percent` a line; an app at 100 % is not stored. */

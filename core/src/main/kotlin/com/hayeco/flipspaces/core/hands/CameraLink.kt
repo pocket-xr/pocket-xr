@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.hands
 
+import com.hayeco.flipspaces.core.UiText
+
 /** Where the glasses camera connection is, for [CameraLink]. */
 sealed interface LinkState {
     data object Idle : LinkState
@@ -97,7 +99,7 @@ class CameraLink(
         if (lostAtMs == null) lostAtMs = nowMs
         failures++
         if (!everStreamed && failures >= maxFailuresBeforeStreaming) return set(LinkState.Failed(reason))
-        return set(LinkState.Waiting("Camera link lost ($reason). Reconnecting.", nowMs + backoff(), failures, sinceMs = nowMs))
+        return set(LinkState.Waiting(UiText.format("core_camera_link_lost", "Camera link lost (%1\$s). Reconnecting.", reason), nowMs + backoff(), failures, sinceMs = nowMs))
     }
 
     /** Opening or negotiating failed with [reason]. */
@@ -105,7 +107,7 @@ class CameraLink(
         if (state is LinkState.Stopped) return state
         failures++
         if (!everStreamed && failures >= maxFailuresBeforeStreaming) return set(LinkState.Failed(reason))
-        return set(LinkState.Waiting("$reason. Trying again.", nowMs + backoff(), failures, sinceMs = nowMs))
+        return set(LinkState.Waiting(UiText.format("core_camera_trying_again", "%1\$s. Trying again.", reason), nowMs + backoff(), failures, sinceMs = nowMs))
     }
 
     /** The glasses left USB (detach broadcast, or the device vanished from the device list). */
@@ -151,8 +153,7 @@ class CameraLink(
         if (s is LinkState.Waiting && s.detached && nowMs - s.sinceMs >= giveUpDetachedMs) {
             return set(
                 LinkState.Failed(
-                    "The glasses stayed disconnected for ${giveUpDetachedMs / 60_000} minutes, so hand tracking stopped. " +
-                        "It starts again by itself when the Space opens with the glasses.",
+                    UiText.format("core_camera_gave_up", "The glasses stayed disconnected for %1\$d minutes, so hand tracking stopped. It starts again by itself when the Space opens with the glasses.", giveUpDetachedMs / 60_000),
                     gaveUp = true,
                 ),
             )
@@ -163,12 +164,12 @@ class CameraLink(
     /** What the setup screen and notification should say. */
     val message: String
         get() = when (val s = state) {
-            LinkState.Idle -> "Not started"
-            is LinkState.Connecting -> if (s.attempt <= 1) "Opening the glasses camera" else "Opening the glasses camera (try ${s.attempt})"
-            is LinkState.Streaming -> "Streaming"
+            LinkState.Idle -> UiText.get("core_camera_not_started", "Not started")
+            is LinkState.Connecting -> if (s.attempt <= 1) UiText.get("core_camera_opening", "Opening the glasses camera") else UiText.format("core_camera_opening_try", "Opening the glasses camera (try %1\$d)", s.attempt)
+            is LinkState.Streaming -> UiText.get("core_camera_streaming", "Streaming")
             is LinkState.Waiting -> s.reason
             is LinkState.Failed -> s.reason
-            LinkState.Stopped -> "Stopped"
+            LinkState.Stopped -> UiText.get("core_camera_stopped", "Stopped")
         }
 
     private fun backoff(): Long = backoffMs[(failures - 1).coerceIn(0, backoffMs.lastIndex)]
@@ -179,8 +180,8 @@ class CameraLink(
     }
 
     companion object {
-        const val DETACHED = "The glasses disconnected from USB. Waiting for them to come back; hand tracking resumes by itself."
-        const val NOT_CONNECTED = "The glasses camera is not connected"
-        const val NEEDS_PERMISSION = "The glasses reconnected but Android reset USB access to them. Accept the USB prompt on the Flip to resume."
+        val DETACHED: String get() = UiText.get("core_camera_detached", "The glasses disconnected from USB. Waiting for them to come back; hand tracking resumes by itself.")
+        val NOT_CONNECTED: String get() = UiText.get("core_camera_not_connected", "The glasses camera is not connected")
+        val NEEDS_PERMISSION: String get() = UiText.get("core_camera_needs_permission", "The glasses reconnected but Android reset USB access to them. Accept the USB prompt on the Flip to resume.")
     }
 }

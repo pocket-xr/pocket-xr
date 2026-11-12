@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 1.1.15 (tester John Davis: "Is there a way to add a "lock screens" option? Sometimes the cursor being pressed too long
  * resizes the screens"): Lock screens. While on, no window moves or resizes from the pointer: no Move pill or grab band
@@ -9,25 +11,25 @@ package com.hayeco.flipspaces.core.spatial
  */
 object WindowLock {
     /** The Menu row's and the quick toggle's name. */
-    const val LABEL = "Lock screens"
+    val LABEL: String get() = UiText.get("spatial_lock_label", "Lock screens")
 
     /** The quick toggle's short label under its icon. */
-    const val SHORT_LABEL = "Lock"
-    const val SHORT_LABEL_ON = "Locked"
+    val SHORT_LABEL: String get() = UiText.get("spatial_lock_short", "Lock")
+    val SHORT_LABEL_ON: String get() = UiText.get("spatial_lock_short_on", "Locked")
 
     /** Said on the glasses when a move or resize is tried while locked. */
-    const val NOTICE = "Screens are locked. Unlock them from the Lock button or the Menu."
+    val NOTICE: String get() = UiText.get("spatial_lock_notice", "Screens are locked. Unlock them from the Lock button or the Menu.")
 
     /** The Menu row's subtitle. */
-    const val SUBTITLE = "Windows stay where they are. Clicks, scrolls and typing still work."
+    val SUBTITLE: String get() = UiText.get("spatial_lock_subtitle", "Windows stay where they are. Clicks, scrolls and typing still work.")
 
     /** The saved preference's key (SharedPreferences "space"). */
     const val KEY = "windows_locked_1115"
 
-    fun rowLabel(locked: Boolean): String = "$LABEL: ${if (locked) "ON" else "OFF"}"
+    fun rowLabel(locked: Boolean): String = if (locked) UiText.get("spatial_lock_row_on", "Lock screens: ON") else UiText.get("spatial_lock_row_off", "Lock screens: OFF")
 
     /** What a screen reader says for the quick toggle. */
-    fun description(locked: Boolean): String = if (locked) "Lock screens, on. Windows can't be moved or resized. Tap to unlock." else "Lock screens, off. Tap to lock every window in place."
+    fun description(locked: Boolean): String = if (locked) UiText.get("spatial_lock_description_on", "Lock screens, on. Windows can't be moved or resized. Tap to unlock.") else UiText.get("spatial_lock_description_off", "Lock screens, off. Tap to lock every window in place.")
 
     /**
      * What a hit is while [locked]: the resize handle's part inside the window is the window's content, its part outside

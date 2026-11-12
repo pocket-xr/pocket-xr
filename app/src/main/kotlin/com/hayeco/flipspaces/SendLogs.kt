@@ -44,13 +44,13 @@ object SendLogs {
 
     /** Builds the zip off the main thread, then opens the email from [context] (an activity). */
     fun send(context: Context, owner: LifecycleOwner) {
-        Toast.makeText(context, "Getting the logs ready...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, R.string.home_logs_getting_ready, Toast.LENGTH_SHORT).show()
         owner.lifecycleScope.launch {
             val made = withContext(Dispatchers.IO) { runCatching { build(context) } }
             made.onSuccess { (file, info) -> open(context, file, info) }
                 .onFailure {
                     Log.w(TAG, "logs not zipped: ${it.javaClass.simpleName}: ${it.message}")
-                    Toast.makeText(context, "Could not put the logs together: ${it.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.home_logs_not_zipped, it.message), Toast.LENGTH_LONG).show()
                 }
         }
     }
@@ -109,7 +109,7 @@ object SendLogs {
         val uri = runCatching { androidx.core.content.FileProvider.getUriForFile(context, context.packageName + ".reports", file) }
             .getOrElse {
                 Log.w(TAG, "the zip cannot be attached: ${it.message}")
-                Toast.makeText(context, "Could not attach the logs: ${it.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.home_logs_not_attached, it.message), Toast.LENGTH_LONG).show()
                 return
             }
         val send = email(uri, file.name, info)
@@ -121,7 +121,7 @@ object SendLogs {
             try {
                 context.startActivity(Intent.createChooser(send, LogBundle.BUTTON))
             } catch (e2: ActivityNotFoundException) {
-                Toast.makeText(context, "No email app found. The logs are saved as ${file.name}.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.home_logs_no_email_app, file.name), Toast.LENGTH_LONG).show()
             }
         }
     }

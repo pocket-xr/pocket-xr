@@ -1,6 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
-import java.util.Locale
+import com.hayeco.flipspaces.core.UiText
 
 /** One EGL config's sizes, read with eglGetConfigAttrib, and whether a video encoder's surface takes it (EGL_RECORDABLE_ANDROID). */
 data class EglConfigSizes(
@@ -48,8 +48,8 @@ object RecordSurface {
      * that couldn't start said nothing at all, so a tap on Record looked ignored.
      */
     fun notice(kept: Boolean, frames: Long, seconds: Double): String = when {
-        kept -> "Saved to Movies/Pocket XR (%.0f s)".format(Locale.ROOT, seconds)
-        frames > 0 -> "The recording didn't work on this phone. Nothing was saved."
-        else -> "The recording couldn't start on this phone. Nothing was saved."
+        kept -> UiText.format("spatial_record_saved", "Saved to Movies/Pocket XR (%1\$.0f s)", seconds)
+        frames > 0 -> UiText.get("spatial_record_failed", "The recording didn't work on this phone. Nothing was saved.")
+        else -> UiText.get("spatial_record_not_started", "The recording couldn't start on this phone. Nothing was saved.")
     }
 }

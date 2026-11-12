@@ -22,6 +22,7 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.TextUtils
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.AppEntry
 import com.hayeco.flipspaces.core.spatial.DpRect
 import com.hayeco.flipspaces.core.spatial.LauncherButton
@@ -145,7 +146,7 @@ internal class LauncherGl(private val context: Context) {
         // Search found nothing: say so where the grid would be.
         if (l.query.isNotEmpty() && l.matches().isEmpty() && l.searchAlpha() > 0.01f) {
             val r = DpRect(LauncherGrid.PANEL_W / 2f - 300f, LauncherGrid.MARGIN_TOP + 60f, 600f, 40f)
-            texture(mvp(r), text("none", "No apps found", 600f, 40f, LauncherGrid.LABEL_SP, LauncherGrid.LABEL_COLOR, medium), panelAlpha * l.searchAlpha(), rowFix)
+            texture(mvp(r), text("none", context.getString(R.string.space_launcher_no_apps), 600f, 40f, LauncherGrid.LABEL_SP, LauncherGrid.LABEL_COLOR, medium), panelAlpha * l.searchAlpha(), rowFix)
         }
 
         // The search card on the All apps pages.
@@ -597,7 +598,7 @@ internal class LauncherGl(private val context: Context) {
 
     /** A round button, 94 dp: the dark surface at 0.75, a 2 dp gradient rim, a white glyph in 32 dp padding. */
     private fun buttonTexture(b: LauncherButton, viewLabel: String): Int {
-        val still = if (GlassesDisplayControl.steadyOn) "On" else "Off"
+        val still = context.getString(if (GlassesDisplayControl.steadyOn) R.string.space_on else R.string.space_off)
         val pcvr = com.hayeco.flipspaces.pcvr.PcVrTileStatus.state
         return baked("button:${b.name}:$viewLabel:$still:$pcvr", LauncherGrid.BUTTON, LauncherGrid.BUTTON) { c, px ->
             val sz = LauncherGrid.BUTTON * px
@@ -614,7 +615,7 @@ internal class LauncherGl(private val context: Context) {
                 LauncherButton.RECENTRE -> g.crosshair()
                 LauncherButton.STEADY -> g.twoWords("Steady", still, regular)
                 // 0.5.45: "Depth" over its state, On or Off (was "3D" or "2D", what a press switched to).
-                LauncherButton.VIEW -> g.twoWords("Depth", viewLabel, regular)
+                LauncherButton.VIEW -> g.twoWords(context.getString(R.string.space_launcher_depth), viewLabel, regular)
                 LauncherButton.NOTIFICATIONS -> g.bell()
                 LauncherButton.CONTROLS -> g.sliders()
                 LauncherButton.PC_VR -> {
@@ -662,7 +663,7 @@ internal class LauncherGl(private val context: Context) {
         val fm = p.fontMetrics
         val textLeft = 56f * px
         val textRight = (LauncherGrid.SEARCH_W - if (query.isEmpty()) 24f else LauncherGrid.SEARCH_H) * px
-        val shown = if (query.isEmpty()) "Search apps" else TextUtils.ellipsize(query, p, textRight - textLeft, TextUtils.TruncateAt.START).toString()
+        val shown = if (query.isEmpty()) context.getString(R.string.space_launcher_search_apps) else TextUtils.ellipsize(query, p, textRight - textLeft, TextUtils.TruncateAt.START).toString()
         c.drawText(shown, textLeft, h / 2f - (fm.ascent + fm.descent) / 2f, p)
         if (query.isNotEmpty()) {
             val cx = (LauncherGrid.SEARCH_W - LauncherGrid.SEARCH_H / 2f) * px

@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.max
 import kotlin.math.min
 
@@ -18,17 +19,21 @@ object GlassesCheck {
     /** Degrees Pocket XR must see the head turn each way for the turn to count. */
     const val TURN_DEG = 12f
 
-    const val TITLE = "Turn your head check"
-    const val TURN_PROMPT = "Look at a window. Turn your head slowly left and right, a few times, for 10 seconds."
-    const val Q_STAYED = "Did the windows stay in place in the room while you turned?"
-    const val Q_WHAT = "What did the windows do?"
+    val TITLE: String get() = UiText.get("spatial_check_title", "Turn your head check")
+    val TURN_PROMPT: String get() = UiText.get("spatial_check_turn_prompt", "Look at a window. Turn your head slowly left and right, a few times, for 10 seconds.")
+    val Q_STAYED: String get() = UiText.get("spatial_check_q_stayed", "Did the windows stay in place in the room while you turned?")
+    val Q_WHAT: String get() = UiText.get("spatial_check_q_what", "What did the windows do?")
 
     /** The second question's answers, in the order shown. */
-    enum class Moved(val label: String) {
-        TOO_FAR("Moved further than my head, or got cut off at the sides"),
-        SLID_BACK("Slid back slowly after I stopped turning"),
-        STUCK("Stayed in front of me, turning with my head"),
-        OTHER("Something else"),
+    enum class Moved(private val key: String, private val english: String) {
+        TOO_FAR("spatial_check_moved_too_far", "Moved further than my head, or got cut off at the sides"),
+        SLID_BACK("spatial_check_moved_slid_back", "Slid back slowly after I stopped turning"),
+        STUCK("spatial_check_moved_stuck", "Stayed in front of me, turning with my head"),
+        OTHER("spatial_check_moved_other", "Something else"),
+        ;
+
+        /** The answer as shown, in the phone's language. */
+        val label: String get() = UiText.get(key, english)
     }
 
     /**
@@ -109,21 +114,21 @@ object GlassesCheck {
 
     /** The words for [fix]: what to change, where. */
     fun text(fix: Fix, family: SetupFamily, host: SetupHost): String = when (fix) {
-        Fix.GLASSES_ANCHOR -> "Your glasses are in Anchor mode, so they turn the picture as well as Pocket XR. Press X on the glasses once to switch to Follow mode, then check again." +
-            if (host.beamPro) " If it keeps going back to Anchor, close XREAL's spatial view on the Beam Pro first." else ""
-        Fix.GLASSES_STABILIZER -> "Stabilizer is on in the glasses. Press X twice to open their menu, go to Spatial Screen (Display on older firmware), then Stabilizer, and turn it off."
-        Fix.XREAL_HOST -> if (host.beamPro) "XREAL's spatial view on the Beam Pro is turning the picture too. Close it, then open the Space from Pocket XR and check again." else
-            "${host.xrealApps.joinToString(", ").ifEmpty { "An XREAL app" }} may be turning the picture too. Close it from Recents, then check again."
-        Fix.UNKNOWN_GLASSES_MODE -> "Something else is turning the picture too. If your glasses have their own Anchor, 3DoF or stabilizer setting, turn it off so they show a plain screen, then check again."
-        Fix.STEADY_ON -> "Steady mode is on, so the glasses hold the picture and this check can't measure it. Turn Steady mode off, then check again."
-        Fix.AURA_RECONNECT -> "Unplug the glasses and plug them back in. Pocket XR sets Spatial Anchor and the glasses' mode each time it connects. Then check again."
-        Fix.POCKET_FOLLOW -> "Pocket XR is set to Smooth Follow. Open the Menu and pick Body Anchor (3DoF), then check again."
-        Fix.NO_TURN -> "Pocket XR did not see your head turn ${TURN_DEG.toInt()} degrees each way. Turn further, or check that Head tracking is on in Pocket XR Settings."
-        Fix.NO_SPACE -> "Open the Space on the glasses first, so there are windows to look at, then check again."
-        Fix.REPORT -> "That is not a setting Pocket XR knows. Please send a Glasses report (Pocket XR Settings, Advanced) on GitHub and say what the windows did."
-    }.let { if (family == SetupFamily.AURA && fix == Fix.REPORT) "$it Pocket XR sets the Aura's own settings for you." else it }
+        Fix.GLASSES_ANCHOR -> UiText.get("spatial_check_fix_anchor", "Your glasses are in Anchor mode, so they turn the picture as well as Pocket XR. Press X on the glasses once to switch to Follow mode, then check again.") +
+            if (host.beamPro) " " + UiText.get("spatial_check_fix_anchor_beam", "If it keeps going back to Anchor, close XREAL's spatial view on the Beam Pro first.") else ""
+        Fix.GLASSES_STABILIZER -> UiText.get("spatial_check_fix_stabilizer", "Stabilizer is on in the glasses. Press X twice to open their menu, go to Spatial Screen (Display on older firmware), then Stabilizer, and turn it off.")
+        Fix.XREAL_HOST -> if (host.beamPro) UiText.get("spatial_check_fix_beam_view", "XREAL's spatial view on the Beam Pro is turning the picture too. Close it, then open the Space from Pocket XR and check again.") else
+            UiText.format("spatial_check_fix_xreal_app", "%1\$s may be turning the picture too. Close it from Recents, then check again.", host.xrealApps.joinToString(", ").ifEmpty { UiText.get("spatial_check_an_xreal_app", "An XREAL app") })
+        Fix.UNKNOWN_GLASSES_MODE -> UiText.get("spatial_check_fix_unknown_mode", "Something else is turning the picture too. If your glasses have their own Anchor, 3DoF or stabilizer setting, turn it off so they show a plain screen, then check again.")
+        Fix.STEADY_ON -> UiText.get("spatial_check_fix_steady_on", "Steady mode is on, so the glasses hold the picture and this check can't measure it. Turn Steady mode off, then check again.")
+        Fix.AURA_RECONNECT -> UiText.get("spatial_check_fix_aura_reconnect", "Unplug the glasses and plug them back in. Pocket XR sets Spatial Anchor and the glasses' mode each time it connects. Then check again.")
+        Fix.POCKET_FOLLOW -> UiText.get("spatial_check_fix_pocket_follow", "Pocket XR is set to Smooth Follow. Open the Menu and pick Body Anchor (3DoF), then check again.")
+        Fix.NO_TURN -> UiText.format("spatial_check_fix_no_turn", "Pocket XR did not see your head turn %1\$d degrees each way. Turn further, or check that Head tracking is on in Pocket XR Settings.", TURN_DEG.toInt())
+        Fix.NO_SPACE -> UiText.get("spatial_check_fix_no_space", "Open the Space on the glasses first, so there are windows to look at, then check again.")
+        Fix.REPORT -> UiText.get("spatial_check_fix_report", "That is not a setting Pocket XR knows. Please send a Glasses report (Pocket XR Settings, Advanced) on GitHub and say what the windows did.")
+    }.let { if (family == SetupFamily.AURA && fix == Fix.REPORT) "$it " + UiText.get("spatial_check_aura_sets_own", "Pocket XR sets the Aura's own settings for you.") else it }
 
-    const val PASSED = "All set. Windows stay put as you turn. This check won't come up again for these glasses; it is in the Menu if you need it."
+    val PASSED: String get() = UiText.get("spatial_check_passed", "All set. Windows stay put as you turn. This check won't come up again for these glasses; it is in the Menu if you need it.")
 
     /** How far Pocket XR saw the head turn: the furthest left and right of where it started, degrees. */
     data class Turn(val leftDeg: Float, val rightDeg: Float) {

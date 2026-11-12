@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pocket XR 附加组件</string>
+    <string name="pointer_service_label">Pocket XR 指针</string>
+    <string name="pointer_service_description">让你在 Pocket XR 中用手或手机屏幕控制 XR 眼镜。它会在眼镜上绘制光标，读取应用窗口在眼镜显示屏上的位置（位置、大小和窗口标题）以及那里 DeX 窗口标题栏中按钮的标签，并在那里执行点按和拖动，让你可以点击、移动窗口和调整窗口大小。它不会在手机自身的屏幕上做任何操作，不会读取你输入的内容或应用窗口内的内容，也不会把任何数据发出手机。</string>
+    <string name="addon_link_permission_label">Pocket XR 附加组件连接</string>
+    <string name="addon_setup_intro">Pocket XR 的两项可选服务。每项服务都会保持关闭，直到你在下方同意并在 Android 设置中将其开启。</string>
+    <string name="addon_setup_it_reads">它会读取：</string>
+    <string name="addon_setup_on">已开启。你可以随时在 Android 设置中将其关闭。</string>
+    <string name="addon_setup_open_settings">打开设置</string>
+    <string name="addon_hand_tip">捏合即可点击。捏住标题栏可移动，捏住边角可调整大小。张开手掌可打开程序坞。</string>
+    <string name="addon_hint_moving">正在移动</string>
+    <string name="addon_hint_hold_move">按住以移动</string>
+    <string name="addon_hint_resizing">正在调整大小</string>
+    <string name="addon_hint_hold_resize">按住以调整大小</string>
+    <string name="addon_hint_dock">程序坞</string>
+    <string name="addon_status_hand">%1$s：检测到手</string>
+    <string name="addon_status_no_hand">%1$s：视野中没有手</string>
+    <string name="addon_cursor_failed">无法在眼镜上绘制光标：%1$s</string>
+    <string name="addon_gesture_tap_failed">无法生成点按手势：%1$s</string>
+    <string name="addon_gesture_build_failed">无法生成“%1$s”手势：%2$s</string>
+    <string name="addon_gesture_cancelled">Android 取消了眼镜上的“%1$s”（另一次触摸或系统手势）。</string>
+    <string name="addon_gesture_refused">Android 拒绝了显示屏 %2$d 上的“%1$s”。Pocket XR 指针服务是否仍处于开启状态？</string>
+    <string name="core_disclosure_agree">同意并开启</string>
+    <string name="core_disclosure_decline">不用了</string>
+    <string name="core_disclosure_pointer_title">Pocket XR 指针使用无障碍服务 API</string>
+    <string name="core_disclosure_pointer_intro">Pocket XR 不是无障碍工具。它只把 Android 的 AccessibilityService API 用于一项工作：在空间之外，为你的 XR 眼镜提供一个可以用手或手机屏幕移动的光标。</string>
+    <string name="core_disclosure_pointer_reads_windows">应用窗口在眼镜显示屏上的位置：它们的位置、大小和窗口标题。</string>
+    <string name="core_disclosure_pointer_reads_dex">眼镜显示屏上 DeX 窗口标题栏中按钮的标签，用于找到并按下其全屏按钮。</string>
+    <string name="core_disclosure_pointer_use">它会在眼镜上绘制光标，并执行你在那里进行的点按和拖动，让你可以点击、移动窗口和调整窗口大小。它不会在手机自身的屏幕上做任何操作，也不会读取你输入的内容或应用窗口内的内容。</string>
+    <string name="core_disclosure_sharing">它读取的任何内容都不会被存储、收集或发出手机。这些内容只与这部手机上的 Pocket XR 应用共享，不会与其他任何人共享。</string>
+    <string name="core_disclosure_pointer_without">没有它，空间、触控板和手部追踪仍可使用；只是空间之外没有光标。</string>
+    <string name="core_disclosure_notes_title">Pocket XR 附加组件使用通知访问权限</string>
+    <string name="core_disclosure_notes_intro">Pocket XR 可以在 XR 眼镜中空间的“通知”页面上显示手机通知。</string>
+    <string name="core_disclosure_notes_reads_notifications">你的通知：每条通知的应用、标题、内容和收到时间。</string>
+    <string name="core_disclosure_notes_reads_media">哪些应用正在播放媒体，用于“正在播放”控制。</string>
+    <string name="core_disclosure_notes_use">它会在眼镜中显示通知，在你点按某条通知时打开其应用，并移除你清除的通知。</string>
+    <string name="core_disclosure_notes_without">没有它，Pocket XR 的其他功能都能使用；只是“通知”页面会保持空白。</string>
+    <string name="core_disclosure_it_reads">它会读取：</string>
+</resources>

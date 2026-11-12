@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.abs
 
 /**
@@ -163,7 +164,7 @@ object ControlCenterLayout {
         if (windows < 1) return base
         val adjust = ArrangeLayouts.Choice(ArrangeKind.ADJUST_ALL, ArrangeKind.ADJUST_ALL.label)
         if (windows < 2 || base.any { it.kind == ArrangeKind.CIRCLE }) return base + adjust
-        return base + ArrangeLayouts.Choice(ArrangeKind.CIRCLE, "Circle") + adjust
+        return base + ArrangeLayouts.Choice(ArrangeKind.CIRCLE, ArrangeKind.CIRCLE.label) + adjust
     }
 
     fun layout(s: ControlCenterState): Layout {
@@ -176,7 +177,7 @@ object ControlCenterLayout {
         val rightX = PAD + colW + COLUMN_GAP
         // Title, with Recenter and Close at the right.
         var y = PAD
-        headings += ControlHeading("Control Center", PAD, y + TITLE_H * 0.7f, title = true)
+        headings += ControlHeading(UiText.get("spatial_control_center", "Control Center"), PAD, y + TITLE_H * 0.7f, title = true)
         zones += ControlZone(ControlItem.Close, WIDTH_PX - PAD - TITLE_H, y, WIDTH_PX - PAD, y + TITLE_H)
         zones += ControlZone(ControlItem.Recentre, WIDTH_PX - PAD - TITLE_H - GAP - RECENTRE_W, y + 4f, WIDTH_PX - PAD - TITLE_H - GAP, y + TITLE_H - 4f)
         // 0.5.99: Record, left of Recenter view.
@@ -185,14 +186,14 @@ object ControlCenterLayout {
         y += TITLE_H + GAP
         // 1.1.15: a newer Pocket XR, one line under the title; it is installed from the phone.
         s.update?.let { v ->
-            headings += ControlHeading("${com.hayeco.flipspaces.core.UpdateCheck.bannerLine(v)}. Update from Pocket XR on the phone.", PAD, y + HEADING_H * 0.62f, message = true)
+            headings += ControlHeading(UiText.format("spatial_update_from_phone", "%1\$s. Update from Pocket XR on the phone.", com.hayeco.flipspaces.core.UpdateCheck.bannerLine(v)), PAD, y + HEADING_H * 0.62f, message = true)
             y += HEADING_H
         }
         val top = y
 
         // Left column: tracking, one segmented control; then the arrange layouts, two a row.
         var ly = top
-        headings += ControlHeading("Tracking", leftX, ly + HEADING_H * 0.62f)
+        headings += ControlHeading(UiText.get("spatial_tracking", "Tracking"), leftX, ly + HEADING_H * 0.62f)
         ly += HEADING_H
         val modes = FollowMode.entries
         val segW = colW / modes.size
@@ -201,7 +202,7 @@ object ControlCenterLayout {
         }
         ly += SEGMENT_H + SECTION_GAP
         val choices = arrangeChoices(s.windows)
-        headings += ControlHeading(if (s.windows == 1) "Arrange 1 window" else "Arrange ${s.windows} windows", leftX, ly + HEADING_H * 0.62f)
+        headings += ControlHeading(if (s.windows == 1) UiText.get("spatial_arrange_one_window", "Arrange 1 window") else UiText.format("spatial_arrange_n_windows", "Arrange %1\$d windows", s.windows), leftX, ly + HEADING_H * 0.62f)
         ly += HEADING_H
         if (choices.isEmpty()) {
             ly += CHIP_H * 0.5f
@@ -218,7 +219,7 @@ object ControlCenterLayout {
 
         // Right column: the quick settings, a 2 x 3 grid of toggles (0.5.46: Wi-Fi and Bluetooth last); then the cursor speed.
         var ry = top
-        headings += ControlHeading("Quick settings", rightX, ry + HEADING_H * 0.62f)
+        headings += ControlHeading(UiText.get("spatial_quick_settings", "Quick settings"), rightX, ry + HEADING_H * 0.62f)
         ry += HEADING_H
         val tileW = (colW - GAP) / 2f
         val toggles = listOf(
@@ -236,7 +237,7 @@ object ControlCenterLayout {
         }
         val tileRows = (toggles.size + 1) / 2
         ry += tileRows * TILE_H + (tileRows - 1) * GAP + SECTION_GAP
-        headings += ControlHeading("Cursor speed", rightX, ry + HEADING_H * 0.62f)
+        headings += ControlHeading(UiText.get("spatial_cursor_speed", "Cursor speed"), rightX, ry + HEADING_H * 0.62f)
         ry += HEADING_H
         val rightEnd = rightX + colW
         zones += ControlZone(ControlItem.SpeedDown, rightX, ry, rightX + ROW_H, ry + ROW_H, enabled = s.cursorSpeed > 0)
@@ -246,7 +247,7 @@ object ControlCenterLayout {
 
         // Across the bottom: the newest presets and Save.
         y = maxOf(ly, ry) + SECTION_GAP
-        headings += ControlHeading("Window presets", PAD, y + HEADING_H * 0.62f)
+        headings += ControlHeading(UiText.get("spatial_window_presets", "Window presets"), PAD, y + HEADING_H * 0.62f)
         y += HEADING_H
         val slots = PRESETS_SHOWN + 1
         val chipW = (inner - (slots - 1) * GAP) / slots

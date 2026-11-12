@@ -40,7 +40,7 @@ class HandTrackingService : Service() {
             startForeground(NOTIFICATION_ID, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA)
         } catch (e: RuntimeException) {
             // SecurityException without the CAMERA permission; ForegroundServiceStartNotAllowedException from the background.
-            GlassesCameraProvider.markFailed("Android would not start hand tracking: ${e.message}")
+            GlassesCameraProvider.markFailed(getString(R.string.hands_android_refused, e.message.toString()))
             stopSelf()
             return START_NOT_STICKY
         }
@@ -55,17 +55,17 @@ class HandTrackingService : Service() {
 
     private fun notification(): Notification {
         val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(NotificationChannel(CHANNEL, "Hand tracking", NotificationManager.IMPORTANCE_LOW))
+        manager.createNotificationChannel(NotificationChannel(CHANNEL, getString(R.string.hands_channel), NotificationManager.IMPORTANCE_LOW))
         val open = PendingIntent.getActivity(this, 0, Intent(this, HandsActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(
             this, 1, Intent(this, HandTrackingService::class.java).setAction(ACTION_STOP), PendingIntent.FLAG_IMMUTABLE,
         )
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Pocket XR hand tracking")
-            .setContentText("Reading the glasses camera to follow your hands")
+            .setContentTitle(getString(R.string.hands_notif_title))
+            .setContentText(getString(R.string.hands_notif_text))
             .setContentIntent(open)
-            .addAction(Notification.Action.Builder(null, "Stop until next plug-in", stop).build())
+            .addAction(Notification.Action.Builder(null, getString(R.string.hands_notif_stop), stop).build())
             // 1.1.10: quit Pocket XR altogether from here too.
             .addAction(Notification.Action.Builder(null, com.hayeco.flipspaces.core.pointer.IntroPages.EXIT_LABEL, com.hayeco.flipspaces.GlassesReadyService.exitIntent(this)).build())
             .setOngoing(true)

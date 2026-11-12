@@ -46,7 +46,7 @@ class GestureInjector(private val service: AccessibilityService, private val onP
             GestureDescription.StrokeDescription(Path().apply { moveTo(x, y); lineTo(x, y) }, 0, TAP_MS)
         } catch (e: IllegalArgumentException) {
             Log.w(TAG, "Tap at $where: invalid stroke: ${e.message}")
-            onProblem("Could not build the tap gesture: ${e.message}")
+            onProblem(service.getString(R.string.addon_gesture_tap_failed, e.message.toString()))
             return
         }
         Log.i(TAG, "Tap at $where: dispatching a $TAP_MS ms stroke")
@@ -116,7 +116,7 @@ class GestureInjector(private val service: AccessibilityService, private val onP
             GestureDescription.Builder().addStroke(s).setDisplayId(displayId).build()
         } catch (e: IllegalArgumentException) {
             Log.w(TAG, "Could not build the $what gesture: ${e.message}")
-            onProblem("Could not build the $what gesture: ${e.message}")
+            onProblem(service.getString(R.string.addon_gesture_build_failed, what, e.message.toString()))
             reset()
             return
         }
@@ -135,7 +135,7 @@ class GestureInjector(private val service: AccessibilityService, private val onP
                     if (mine != generation) return
                     dispatching = false
                     Log.w(TAG, "$what cancelled on display $displayId")
-                    onProblem("Android cancelled the $what on the glasses (another touch or a system gesture).")
+                    onProblem(service.getString(R.string.addon_gesture_cancelled, what))
                     reset()
                 }
             },
@@ -144,7 +144,7 @@ class GestureInjector(private val service: AccessibilityService, private val onP
         if (!accepted) {
             Log.w(TAG, "$what refused by dispatchGesture on display $displayId")
             dispatching = false
-            onProblem("Android refused the $what on display $displayId. Is the Pocket XR pointer service still on?")
+            onProblem(service.getString(R.string.addon_gesture_refused, what, displayId))
             reset()
         }
     }

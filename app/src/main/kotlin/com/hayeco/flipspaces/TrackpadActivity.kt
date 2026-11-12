@@ -184,7 +184,7 @@ class TrackpadActivity : Activity(), PadHost {
         // The phone's own keyboard opens over the trackpad: say where typing goes. 0.5.96 (open source audit): our own words.
         screen.setOnApplyWindowInsetsListener { v, insets ->
             val ime = insets.isVisible(WindowInsets.Type.ime())
-            if (ime && !imeShown && !typing) screen.showToast("Type here; it goes to the window you're using")
+            if (ime && !imeShown && !typing) screen.showToast(getString(R.string.pad_ime_note))
             imeShown = ime
             // 0.5.17 cover screen: the cutouts and corners may only be known now.
             if (cover) v.post { updateCoverLayout() }
@@ -476,7 +476,7 @@ class TrackpadActivity : Activity(), PadHost {
         // button was only under Menu, Settings, Spatial windows; the trackpad now asks Shizuku's own dialog at one tap.
         if (status == com.hayeco.flipspaces.core.ShizukuStatus.NO_PERMISSION) {
             Log.i(TAG, "Shizuku is running but has not allowed Pocket XR: the trackpad offers to allow it")
-            screen.showAction("Allow Pocket XR in Shizuku for app windows.", "Tap here to allow", millis = 15_000L) {
+            screen.showAction(getString(R.string.pad_shizuku_allow), getString(R.string.pad_shizuku_allow_action), millis = 15_000L) {
                 Log.i(TAG, "Shizuku's allow dialog asked for from the trackpad's note")
                 com.hayeco.flipspaces.platform.ShizukuBridge.requestPermission()
             }
@@ -484,7 +484,7 @@ class TrackpadActivity : Activity(), PadHost {
         }
         if (status != com.hayeco.flipspaces.core.ShizukuStatus.NOT_RUNNING) return
         Log.i(TAG, "Shizuku is installed but not running: the trackpad offers to start it")
-        screen.showAction("Start Shizuku for app windows.", "Tap here to open Shizuku") {
+        screen.showAction(getString(R.string.pad_shizuku_start), getString(R.string.pad_shizuku_start_action)) {
             Log.i(TAG, "Shizuku opened from the trackpad's note")
             SpaceRouting.fix(this, com.hayeco.flipspaces.core.spatial.FlatFix.OPEN_SHIZUKU)
         }
@@ -573,7 +573,7 @@ class TrackpadActivity : Activity(), PadHost {
         // says it worked, with a buzz and a toast.
         if (signals.any { it is PadSignal.Home && it.event == com.hayeco.flipspaces.core.pointer.HomeEvent.LONG_PRESS }) {
             buzz(PadHaptic.RECENTRE)
-            if (padMode == PadMode.SPATIAL_MOUSE) screen.showToast("Laser recentred in front of you.")
+            if (padMode == PadMode.SPATIAL_MOUSE) screen.showToast(getString(R.string.pad_laser_recentred))
         }
         pad.takeHaptics().forEach(::buzz)
         // 0.5.22: a three finger gesture that did nothing says why.
@@ -818,9 +818,9 @@ class TrackpadActivity : Activity(), PadHost {
         val first = lastLine == null
         lastLine = line
         when (line) {
-            TrackpadLine.DRIVING_SPACE -> if (!first) screen.showToast("Driving the Space on the glasses.")
-            TrackpadLine.POINTER_OFF -> screen.showToast("Turn on the Pocket XR pointer service first.")
-            TrackpadLine.NO_GLASSES -> screen.showToast("No glasses display found.")
+            TrackpadLine.DRIVING_SPACE -> if (!first) screen.showToast(getString(R.string.pad_status_driving))
+            TrackpadLine.POINTER_OFF -> screen.showToast(getString(R.string.pad_status_pointer_off))
+            TrackpadLine.NO_GLASSES -> screen.showToast(getString(R.string.pad_status_no_glasses))
             TrackpadLine.HOLDING, TrackpadLine.NONE -> Unit
         }
     }
@@ -916,12 +916,12 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun airDisplayLine(): String {
         if (airMode == null && airNote == null && !airBusy) airRead(0L)
-        return airMode?.let { com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(it) } ?: airNote ?: "reading"
+        return airMode?.let { com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(it) } ?: airNote ?: getString(R.string.pad_air_reading)
     }
 
     override fun airDisplayAction(): String = when (val m = airMode) {
-        null -> "Tap to read it again"
-        else -> if (com.hayeco.flipspaces.core.spatial.AirDisplayMode.isSideBySide(m)) "Tap to switch to 2D" else "Tap to switch to 3D side by side"
+        null -> getString(R.string.pad_air_read_again)
+        else -> getString(if (com.hayeco.flipspaces.core.spatial.AirDisplayMode.isSideBySide(m)) R.string.pad_air_switch_to_2d else R.string.pad_air_switch_to_3d)
     }
 
     override fun airDisplaySwitch() {
@@ -939,14 +939,14 @@ class TrackpadActivity : Activity(), PadHost {
                 airBusy = false
                 result.onSuccess {
                     Log.i(TAG, "Air display mode: asked for $to (${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(to)}), the glasses took it")
-                    screen.showToast("The glasses switch to ${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(to)}. Their screen reconnects, so give it a few seconds.")
+                    screen.showToast(getString(R.string.pad_air_switching_toast, com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(to)))
                     airMode = null
-                    airNote = "switching"
+                    airNote = getString(R.string.pad_air_switching)
                     // The display reconnects after a switch; the mode is read again once it has had time.
                     airRead(AIR_REREAD_MS)
                 }.onFailure {
                     Log.w(TAG, "Air display mode: asking for $to failed: ${it.message}")
-                    screen.showToast("The glasses did not switch: ${it.message}")
+                    screen.showToast(getString(R.string.pad_air_switch_failed, it.message.orEmpty()))
                 }
             }
         }, "air-display").start()
@@ -955,7 +955,7 @@ class TrackpadActivity : Activity(), PadHost {
     private fun airRead(delayMs: Long) {
         if (airBusy) return
         airBusy = true
-        airNote = "reading"
+        airNote = getString(R.string.pad_air_reading)
         Thread({
             if (delayMs > 0) SystemClock.sleep(delayMs)
             val result = runCatching { com.hayeco.flipspaces.spatial.AirDisplayLink.mode(this) }
@@ -967,7 +967,7 @@ class TrackpadActivity : Activity(), PadHost {
                     Log.i(TAG, "Air display mode: the glasses report $it (${com.hayeco.flipspaces.core.spatial.AirDisplayMode.label(it)})")
                 }.onFailure {
                     airMode = null
-                    airNote = "could not read (${it.message})"
+                    airNote = getString(R.string.pad_air_read_failed, it.message.orEmpty())
                     Log.w(TAG, "Air display mode: reading failed: ${it.message}")
                 }
                 screen.refreshDrawer()
@@ -989,14 +989,14 @@ class TrackpadActivity : Activity(), PadHost {
             .addCategory(android.content.Intent.CATEGORY_OPENABLE)
             .setType(SettingsBackup.MIME)
             .putExtra(android.content.Intent.EXTRA_TITLE, SettingsBackup.fileName())
-        runCatching { startActivityForResult(pick, PICK_BACKUP) }.onFailure { toast("No file picker on this phone") }
+        runCatching { startActivityForResult(pick, PICK_BACKUP) }.onFailure { toast(getString(R.string.pad_no_file_picker)) }
     }
 
     override fun restoreSettings() {
         val pick = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT)
             .addCategory(android.content.Intent.CATEGORY_OPENABLE)
             .setType("*/*")
-        runCatching { startActivityForResult(pick, PICK_RESTORE) }.onFailure { toast("No file picker on this phone") }
+        runCatching { startActivityForResult(pick, PICK_RESTORE) }.onFailure { toast(getString(R.string.pad_no_file_picker)) }
     }
 
     @Deprecated("Activity results, for the settings file picker")
@@ -1006,25 +1006,25 @@ class TrackpadActivity : Activity(), PadHost {
         if (resultCode != RESULT_OK || uri == null) return
         when (requestCode) {
             PICK_BACKUP -> runCatching { SettingsBackup.save(this, uri) }
-                .onSuccess { toast("Settings saved. Keep the file to restore them later.") }
-                .onFailure { toast("Settings not saved: ${it.message}") }
+                .onSuccess { toast(getString(R.string.pad_backup_saved)) }
+                .onFailure { toast(getString(R.string.pad_backup_failed, it.message.orEmpty())) }
             PICK_RESTORE -> {
                 android.app.AlertDialog.Builder(this)
-                    .setTitle("Restore settings?")
-                    .setMessage("Your settings on this phone are replaced by the ones in the file. Pocket XR then closes so they take effect; open it again.")
-                    .setPositiveButton("Restore") { _, _ ->
+                    .setTitle(getString(R.string.pad_restore_title))
+                    .setMessage(getString(R.string.pad_restore_message))
+                    .setPositiveButton(getString(R.string.pad_restore)) { _, _ ->
                         runCatching { SettingsBackup.restore(this, uri) }
                             .onSuccess {
-                                toast("Settings restored. Open Pocket XR again.")
+                                toast(getString(R.string.pad_restore_done))
                                 // Closed at once, so nothing still running writes its old settings over the restored ones.
                                 window.decorView.postDelayed({
                                     finishAffinity()
                                     android.os.Process.killProcess(android.os.Process.myPid())
                                 }, RESTORE_CLOSE_MS)
                             }
-                            .onFailure { toast(it.message ?: "Settings not restored") }
+                            .onFailure { toast(it.message ?: getString(R.string.pad_restore_failed)) }
                     }
-                    .setNegativeButton("Cancel", null)
+                    .setNegativeButton(getString(R.string.pad_cancel), null)
                     .show()
             }
         }
@@ -1077,7 +1077,7 @@ class TrackpadActivity : Activity(), PadHost {
         prefs.applyCurve()
         followChosen(FollowMode.BODY_ANCHOR)
         Log.i(TAG, "trackpad settings reset to Pocket XR's defaults (the Menu)")
-        screen.showToast("Trackpad settings are back to Pocket XR's defaults.")
+        screen.showToast(getString(R.string.pad_reset_done))
     }
 
     // ---- 1.1.9: the tutorial's pages and the glasses setup ----
@@ -1092,9 +1092,9 @@ class TrackpadActivity : Activity(), PadHost {
         val d = usb?.deviceList?.values?.firstOrNull { com.hayeco.flipspaces.core.hands.GlassesUsb.isXreal(it.vendorId) } ?: return@runCatching null
         val model = com.hayeco.flipspaces.core.spatial.GlassesSetup.plugged(d.productId, d.productName) ?: return@runCatching null
         // How they were recognised: the name, the USB ids and the device's version (its firmware's, as USB reports it).
-        val line = "Seen as ${d.productName?.trim()?.ifEmpty { null } ?: model.label}, USB %04X:%04X%s".format(
-            java.util.Locale.ROOT, d.vendorId, d.productId, runCatching { d.version }.getOrNull()?.takeIf { it.isNotBlank() }?.let { ", version $it" } ?: "",
-        )
+        val name = d.productName?.trim()?.ifEmpty { null } ?: model.label
+        val version = runCatching { d.version }.getOrNull()?.takeIf { it.isNotBlank() }
+        val line = if (version != null) getString(R.string.pad_seen_as_version, name, d.vendorId, d.productId, version) else getString(R.string.pad_seen_as, name, d.vendorId, d.productId)
         Plugged(model, d.productId, line)
     }.getOrNull()
 
@@ -1126,7 +1126,7 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun openGlassesCheck() {
         val (model, p) = checkTarget() ?: run {
-            screen.showToast("Plug in your glasses first.")
+            screen.showToast(getString(R.string.pad_plug_in_glasses))
             return
         }
         openGlassesCheck(model, p, "the Menu")
@@ -1188,7 +1188,7 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun followChosen(mode: FollowMode) {
         if (!mode.available) {
-            screen.showToast("${mode.label} needs 6DoF glasses tracking, which these glasses do not give.")
+            screen.showToast(getString(R.string.pad_needs_6dof, mode.label))
             return
         }
         SpaceSession.follow = mode
@@ -1208,7 +1208,7 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun arrange(kind: ArrangeKind) {
         if (!SpaceSession.active) {
-            screen.showToast("Open the Space on the glasses first.")
+            screen.showToast(getString(R.string.pad_open_space_first))
             return
         }
         SpaceSession.send(SpaceCommand.Arrange(kind))
@@ -1232,7 +1232,7 @@ class TrackpadActivity : Activity(), PadHost {
         notificationAskChecked = true
         if (!UpdateChecker.takeNotificationAsk(this)) return
         Log.i(TAG, "notification permission asked for with the first update banner")
-        screen.showToast("Allow notifications to hear when a new Pocket XR is ready")
+        screen.showToast(getString(R.string.pad_allow_notifications))
         requestPermissions(arrayOf(com.hayeco.flipspaces.core.GlassesReady.POST_NOTIFICATIONS), REQUEST_NOTIFICATIONS)
     }
 
@@ -1258,11 +1258,11 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun recordGlasses(on: Boolean) {
         if (on && !com.hayeco.flipspaces.spatial.SpaceSession.active) {
-            screen.showToast("Open the Space on the glasses first.")
+            screen.showToast(getString(R.string.pad_open_space_first))
             return
         }
         com.hayeco.flipspaces.spatial.SpaceSession.recordWanted = on
-        screen.showToast(if (on) "Recording the glasses. Menu, then Stop recording, when you're done." else "Recording stopped. The glasses say where it was saved.")
+        screen.showToast(getString(if (on) R.string.pad_recording_on else R.string.pad_recording_off))
     }
 
     /** 1.2.3 (issue 59): Game keys on; for this run of the trackpad, off again when it closes. */
@@ -1275,7 +1275,7 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun gameKeysChosen(on: Boolean) {
         if (on && !SpaceSession.active) {
-            screen.showToast("Open the Space on the glasses first.")
+            screen.showToast(getString(R.string.pad_open_space_first))
             return
         }
         if (gameKeys == on) return
@@ -1284,7 +1284,7 @@ class TrackpadActivity : Activity(), PadHost {
         gameKeys = on
         Log.i(TAG, "Game keys ${if (on) "on: held keys go to the focused window" else "off"}")
         screen.configure(settings, cover, coverLayout)
-        if (on) screen.showToast("Click a game's window first, then hold the keys.")
+        if (on) screen.showToast(getString(R.string.pad_game_keys_on))
     }
 
     /**
@@ -1317,7 +1317,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun controllerModeChosen(mode: com.hayeco.flipspaces.core.pointer.GameControllerMode) {
         val off = com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF
         if (mode != off && !SpaceSession.active) {
-            screen.showToast("Open the Space on the glasses first.")
+            screen.showToast(getString(R.string.pad_open_space_first))
             return
         }
         if (mode == controllerMode) return
@@ -1341,21 +1341,21 @@ class TrackpadActivity : Activity(), PadHost {
             com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD -> com.hayeco.flipspaces.spatial.PanelHost.gamepadOpen { err ->
                 if (err != null) {
                     Log.w(TAG, "the virtual gamepad could not start: $err")
-                    screen.showToast("The gamepad could not start: $err")
+                    screen.showToast(getString(R.string.pad_gamepad_failed, err))
                     if (controllerMode == com.hayeco.flipspaces.core.pointer.GameControllerMode.GAMEPAD) controllerModeChosen(off)
                 } else {
                     // Gamepad input goes to the focused display: the game's window is put on top.
                     SpaceSession.send(SpaceCommand.FocusWindow)
-                    screen.showToast("Gamepad on. Click the game's window first if it does not answer.")
+                    screen.showToast(getString(R.string.pad_gamepad_on))
                 }
             }
             com.hayeco.flipspaces.core.pointer.GameControllerMode.TOUCH -> {
                 val pkg = focusedApp()?.first
                 if (pkg == null || touchSpots.of(pkg).isEmpty()) {
                     spotSetting = true
-                    screen.showToast("Set the spots: aim the dot at the game's button, then hold the matching control.")
+                    screen.showToast(getString(R.string.pad_touch_set_spots))
                 } else {
-                    screen.showToast("Touch on: the controls press the game's own buttons.")
+                    screen.showToast(getString(R.string.pad_touch_on))
                 }
             }
             com.hayeco.flipspaces.core.pointer.GameControllerMode.OFF -> Unit
@@ -1393,14 +1393,14 @@ class TrackpadActivity : Activity(), PadHost {
     private fun spotHeld(c: com.hayeco.flipspaces.core.pointer.PadControl, since: Long) {
         if (!spotSetting || spotHeldSince[c] != since) return
         val (pkg, u, v) = SpaceSession.pointerSpot ?: run {
-            screen.showToast("Put the dot on the game's window first.")
+            screen.showToast(getString(R.string.pad_dot_on_window))
             return
         }
         touchSpots.set(pkg, c, com.hayeco.flipspaces.core.pointer.TouchSpot(u, v))
         com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots = touchSpots.encode()
         buzz(PadHaptic.MODE)
         Log.i(TAG, "touch spot for ${c.label} set at %.3f, %.3f in $pkg".format(java.util.Locale.ROOT, u, v))
-        screen.showToast("${c.label} set. Set the others, then turn Set touch spots off.")
+        screen.showToast(getString(R.string.pad_touch_spot_set, c.label))
     }
 
     override fun touchSpotSetting(): Boolean = spotSetting
@@ -1409,14 +1409,14 @@ class TrackpadActivity : Activity(), PadHost {
         spotSetting = on
         spotHeldSince.clear()
         if (on) sendTouches(touchPointers.cancel())
-        screen.showToast(if (on) "Aim the dot at the game's button, then hold the matching control for a second." else "Spots saved for this game.")
+        screen.showToast(getString(if (on) R.string.pad_touch_spots_setting_on else R.string.pad_touch_spots_setting_off))
     }
 
     override fun clearTouchSpots() {
-        val pkg = focusedApp()?.first ?: return screen.showToast("Click the game's window first.")
+        val pkg = focusedApp()?.first ?: return screen.showToast(getString(R.string.pad_click_game_window))
         touchSpots.clear(pkg)
         com.hayeco.flipspaces.spatial.SpaceStore(this).touchSpots = touchSpots.encode()
-        screen.showToast("Touch spots cleared for this game.")
+        screen.showToast(getString(R.string.pad_touch_spots_cleared))
     }
 
     override fun openControlPanel() {
@@ -1446,7 +1446,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun returnHome() {
         screen.closeDrawer()
         // 0.5.96 (open source audit): in our own words (the earlier line was another product's).
-        screen.showDialog("Leave the trackpad for the phone's home screen? The glasses keep showing your windows.") {
+        screen.showDialog(getString(R.string.pad_leave_for_home)) {
             CoverTrackpad.leftByUser()
             startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }
@@ -1461,7 +1461,7 @@ class TrackpadActivity : Activity(), PadHost {
         if (down) buzz(PadHaptic.COVER_BUTTON)
         val needsSpace = button.window || button == CoverButton.RECENTRE || button == CoverButton.KEYBOARD || button == CoverButton.STEADY
         if (needsSpace && !SpaceSession.active) {
-            if (!down) screen.showToast("Open the Space on the glasses first.")
+            if (!down) screen.showToast(getString(R.string.pad_open_space_first))
             return
         }
         when (button) {
@@ -1505,11 +1505,11 @@ class TrackpadActivity : Activity(), PadHost {
      */
     private fun offerUnwrap() {
         if (!prefs.wrap) return
-        screen.showAction("Wraparound is on: Curve bends the whole Space.", "Tap here to unwrap") {
+        screen.showAction(getString(R.string.pad_wrap_on_note), getString(R.string.pad_wrap_on_action)) {
             if (prefs.wrap) {
                 wrapLastMs = 0L
                 wrapChosen(false, "the Curve note")
-                screen.showToast("Wraparound off: each window curves on its own.")
+                screen.showToast(getString(R.string.pad_wrap_off))
             }
         }
     }
@@ -1523,7 +1523,7 @@ class TrackpadActivity : Activity(), PadHost {
      */
     override fun curveSlide(dyPx: Float, phase: com.hayeco.flipspaces.core.pointer.Phase) {
         if (!SpaceSession.active) {
-            if (phase == com.hayeco.flipspaces.core.pointer.Phase.END) screen.showToast("Open the Space on the glasses first.")
+            if (phase == com.hayeco.flipspaces.core.pointer.Phase.END) screen.showToast(getString(R.string.pad_open_space_first))
             return
         }
         if (phase == com.hayeco.flipspaces.core.pointer.Phase.BEGIN) offerUnwrap()
@@ -1562,7 +1562,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun rowPoseSbsChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.SpaceStore(this).rowPoseSbs = on
         Log.i(TAG, "per-row pose ${if (on) "on" else "off"} in side by side (the trackpad's Menu, ${if (cover) "cover" else "main"} screen)")
-        screen.showToast(if (on) "Per-row pose in 3D on." else "Per-row pose in 3D off.")
+        screen.showToast(getString(if (on) R.string.pad_row_pose_on else R.string.pad_row_pose_off))
     }
 
 
@@ -1572,7 +1572,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun edgeCheckChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.EdgeCheckTest.on = on
         Log.i(TAG, "edge check ${if (on) "on" else "off"} from the trackpad's Menu (${if (cover) "cover" else "main"} screen)")
-        screen.showToast(if (on) "Edge check on: one eye at a time, count the ticks on each side." else "Edge check off.")
+        screen.showToast(getString(if (on) R.string.pad_edge_check_on else R.string.pad_edge_check_off))
     }
 
     override fun edgeEyes(): com.hayeco.flipspaces.core.spatial.EdgeEyes = com.hayeco.flipspaces.spatial.EdgeCheckTest.eyes
@@ -1581,7 +1581,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun edgeEyesChosen(eyes: com.hayeco.flipspaces.core.spatial.EdgeEyes) {
         com.hayeco.flipspaces.spatial.EdgeCheckTest.eyes = eyes
         Log.i(TAG, "edge check on ${eyes.label} from the trackpad's Menu (${if (cover) "cover" else "main"} screen)")
-        screen.showToast("Edge check: ${eyes.label}.")
+        screen.showToast(getString(R.string.pad_edge_check_eyes, eyes.label))
     }
 
     override fun glassesDistance(): Pair<Float, String> = com.hayeco.flipspaces.spatial.SpaceStore(this).let { it.glassesDistanceM to it.glassesDistanceFrom }
@@ -1598,7 +1598,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun debugInfoChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.SpaceStore(this).debugInfo = on
         Log.i(TAG, "debug info panel: ${if (on) "on" else "off"} (the trackpad's Menu, Developer, ${if (cover) "cover" else "main"} screen)")
-        screen.showToast(if (on) "Debug info panel on." else "Debug info panel off.")
+        screen.showToast(getString(if (on) R.string.pad_debug_info_on else R.string.pad_debug_info_off))
     }
 
     override fun headCursorMode(): com.hayeco.flipspaces.core.spatial.HeadCursorMode =
@@ -1609,9 +1609,9 @@ class TrackpadActivity : Activity(), PadHost {
         Log.i(TAG, "head cursor: ${mode.label} (the trackpad's Menu, ${if (cover) "cover" else "main"} screen)")
         screen.showToast(
             when (mode) {
-                com.hayeco.flipspaces.core.spatial.HeadCursorMode.AUTO -> "Head cursor hides when you're not using it."
-                com.hayeco.flipspaces.core.spatial.HeadCursorMode.ALWAYS -> "Head cursor always shown."
-                com.hayeco.flipspaces.core.spatial.HeadCursorMode.OFF -> "Head cursor off."
+                com.hayeco.flipspaces.core.spatial.HeadCursorMode.AUTO -> getString(R.string.pad_head_cursor_auto)
+                com.hayeco.flipspaces.core.spatial.HeadCursorMode.ALWAYS -> getString(R.string.pad_head_cursor_always)
+                com.hayeco.flipspaces.core.spatial.HeadCursorMode.OFF -> getString(R.string.pad_head_cursor_off)
             },
         )
     }
@@ -1621,7 +1621,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun warpNoLsrChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.SpaceStore(this).warpNoLsr = on
         Log.i(TAG, "glasses warp without LSR: ${if (on) "on" else "off"} (Developer; applied at the next switch on)")
-        screen.showToast(if (on) "Warp without LSR: on next time it's switched on." else "Warp with LSR: on next time it's switched on.")
+        screen.showToast(getString(if (on) R.string.pad_warp_without_lsr else R.string.pad_warp_with_lsr))
     }
 
     override fun warpReenterOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).warpReenter
@@ -1629,7 +1629,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun warpReenterChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.SpaceStore(this).warpReenter = on
         Log.i(TAG, "glasses warp back in after a drop: ${if (on) "on" else "off"} (Developer; applied at the next switch on)")
-        screen.showToast(if (on) "Warp goes back in after a drop." else "Warp pauses at the first drop.")
+        screen.showToast(getString(if (on) R.string.pad_warp_resumes else R.string.pad_warp_pauses))
     }
 
     override fun windowsLockedOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).windowsLocked
@@ -1638,7 +1638,7 @@ class TrackpadActivity : Activity(), PadHost {
         com.hayeco.flipspaces.spatial.SpaceStore(this).windowsLocked = on
         Log.i(TAG, "Lock screens: ${if (on) "on" else "off"} (the trackpad)")
         if (on) buzz(PadHaptic.COVER_BUTTON)
-        screen.showToast(if (on) "Screens locked" else "Screens unlocked")
+        screen.showToast(getString(if (on) R.string.pad_screens_locked else R.string.pad_screens_unlocked))
     }
 
     override fun snapWindowsOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).snapWindows
@@ -1662,17 +1662,17 @@ class TrackpadActivity : Activity(), PadHost {
         val store = com.hayeco.flipspaces.spatial.SpaceStore(this)
         val saved = com.hayeco.flipspaces.core.spatial.WindowPresets.save(store.presets, store.layout(), System.currentTimeMillis())
         if (saved == null) {
-            screen.showToast("Open some windows first.")
+            screen.showToast(getString(R.string.pad_open_windows_first))
             return
         }
         store.presets = saved
         Log.i(TAG, "window preset saved: ${saved.first().name}, ${saved.first().apps}")
-        screen.showToast("Saved as ${saved.first().name}.")
+        screen.showToast(getString(R.string.pad_preset_saved, saved.first().name))
     }
 
     override fun openPreset(preset: com.hayeco.flipspaces.core.spatial.WindowPreset) {
         if (!SpaceSession.active) {
-            screen.showToast("Open the Space on the glasses first.")
+            screen.showToast(getString(R.string.pad_open_space_first))
             return
         }
         SpaceSession.send(com.hayeco.flipspaces.spatial.SpaceCommand.OpenPreset(preset))
@@ -1693,18 +1693,18 @@ class TrackpadActivity : Activity(), PadHost {
             addView(input)
         }
         val dialog = android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle("Rename preset")
+            .setTitle(getString(R.string.pad_rename_preset))
             .setView(box)
-            .setPositiveButton("Rename") { _, _ ->
+            .setPositiveButton(getString(R.string.pad_rename)) { _, _ ->
                 val store = com.hayeco.flipspaces.spatial.SpaceStore(this)
                 val renamed = com.hayeco.flipspaces.core.spatial.WindowPresets.rename(store.presets, preset.id, input.text.toString())
                 store.presets = renamed
                 val now = renamed.firstOrNull { it.id == preset.id }?.name ?: preset.name
                 Log.i(TAG, "window preset renamed: ${preset.name} -> $now")
-                screen.showToast(if (now == preset.name) "Name unchanged." else "Renamed to $now.")
+                screen.showToast(if (now == preset.name) getString(R.string.pad_name_unchanged) else getString(R.string.pad_renamed_to, now))
                 done()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(getString(R.string.pad_cancel), null)
             .create()
         dialog.window?.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
         dialog.show()
@@ -1714,7 +1714,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun deletePreset(preset: com.hayeco.flipspaces.core.spatial.WindowPreset) {
         val store = com.hayeco.flipspaces.spatial.SpaceStore(this)
         store.presets = store.presets.filter { it.id != preset.id }
-        screen.showToast("${preset.name} deleted.")
+        screen.showToast(getString(R.string.pad_preset_deleted, preset.name))
     }
 
     override fun cursorFollowsHeadOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).cursorFollowsHead
@@ -1757,7 +1757,7 @@ class TrackpadActivity : Activity(), PadHost {
         val self = java.lang.ref.WeakReference(this)
         com.hayeco.flipspaces.spatial.GlassesPacesetter.onGiveBack = if (on) null else { line ->
             self.get()?.takeIf { !it.isFinishing && !it.isDestroyed }?.let { a ->
-                a.screen.showToast(if (line.contains(com.hayeco.flipspaces.core.spatial.GlassesClock.STUCK_ADVICE)) "Still on the glasses' clock: unplug the glasses, or turn the cover screen off and on." else "The phone sets the frame clock again.")
+                a.screen.showToast(a.getString(if (line.contains(com.hayeco.flipspaces.core.spatial.GlassesClock.STUCK_ADVICE)) R.string.pad_frame_clock_stuck else R.string.pad_frame_clock_back))
                 a.screen.refreshDrawer()
             }
             com.hayeco.flipspaces.spatial.GlassesPacesetter.onGiveBack = null
@@ -1766,9 +1766,9 @@ class TrackpadActivity : Activity(), PadHost {
         if (missing != null) Log.w(TAG, "Glasses set the frame clock (test) turned ${if (on) "on" else "off"} without Shizuku: $missing (${if (cover) "cover" else "main"} screen)")
         screen.showToast(
             when {
-                missing != null -> "$missing: the glasses can't set the frame clock."
-                on -> "The glasses set the frame clock (test)."
-                else -> "Giving the phone its frame clock back…"
+                missing != null -> getString(R.string.pad_frame_clock_missing, missing)
+                on -> getString(R.string.pad_frame_clock_on)
+                else -> getString(R.string.pad_frame_clock_giving_back)
             },
         )
         buzz(PadHaptic.MODE)
@@ -1792,7 +1792,7 @@ class TrackpadActivity : Activity(), PadHost {
         settings = prefs.update { it.copy(mode = if (on) PadMode.SPATIAL_MOUSE else PadMode.VERTICAL) }
         send(pad.changeMode(padMode))
         Log.i(TAG, "Spatial Mouse ${if (on) "on" else "off"} from the cover's Menu (one choice for the cover and the open phone)")
-        screen.showToast(if (on) "Spatial Mouse on: point the phone's top edge, tap to click, hold Home to recenter." else "Cover trackpad back.")
+        screen.showToast(getString(if (on) R.string.pad_cover_spatial_mouse_on else R.string.pad_cover_spatial_mouse_off))
         applyMode()
     }
 
@@ -1802,7 +1802,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun turnDutyChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.SpaceStore(this).turnDuty = on
         Log.i(TAG, "sharper turns (the glasses' duty lowered on fast turns): ${if (on) "on" else "off"} (Developer)")
-        screen.showToast(if (on) "Sharper turns on. The picture dims a little while you turn." else "Sharper turns off.")
+        screen.showToast(getString(if (on) R.string.pad_sharper_turns_on else R.string.pad_sharper_turns_off))
     }
 
     override fun npuHandsOn(): Boolean = com.hayeco.flipspaces.hands.HandsPrefs(this).npuHands
@@ -1813,7 +1813,7 @@ class TrackpadActivity : Activity(), PadHost {
         com.hayeco.flipspaces.spatial.SpaceStore(this).panelsOnVirtualDevice = on
         com.hayeco.flipspaces.spatial.PanelHost.onVirtualDevice = on
         Log.i(TAG, "window displays on a virtual device: ${if (on) "on" else "off"} (Developer; windows opened from now on)")
-        screen.showToast(if (on) "Windows opened from now on stay awake when the phone sleeps (test)." else "Windows opened from now on are plain displays again.")
+        screen.showToast(getString(if (on) R.string.pad_device_windows_on else R.string.pad_device_windows_off))
     }
 
     override fun npuHandsChosen(on: Boolean) {
@@ -1821,7 +1821,7 @@ class TrackpadActivity : Activity(), PadHost {
         // 1.1.15: applied to the running hands between two frames (1.1.14 waited for a hands start that never came).
         com.hayeco.flipspaces.hands.GlassesCameraProvider.npuHandsWanted = on
         Log.i(TAG, "hands on the NPU: ${if (on) "on" else "off"} (Developer; applied now, between two hand frames)")
-        screen.showToast(if (on) "Hands on the NPU: on." else "Hands on the NPU: off.")
+        screen.showToast(getString(if (on) R.string.pad_npu_hands_on else R.string.pad_npu_hands_off))
     }
 
     override fun stillLockOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).stillLock
@@ -1829,7 +1829,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun stillLockChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.SpaceStore(this).stillLock = on
         Log.i(TAG, "still lock: ${if (on) "on" else "off"} (the trackpad's Menu, Developer, ${if (cover) "cover" else "main"} screen)")
-        screen.showToast(if (on) "Still lock on." else "Still lock off.")
+        screen.showToast(getString(if (on) R.string.pad_still_lock_on else R.string.pad_still_lock_off))
     }
 
     override fun drawSmoothingOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).drawSmoothing
@@ -1837,7 +1837,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun drawSmoothingChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.SpaceStore(this).drawSmoothing = on
         Log.i(TAG, "draw smoothing: ${if (on) "on" else "off"} (the trackpad's Menu, Developer, ${if (cover) "cover" else "main"} screen)")
-        screen.showToast(if (on) "Draw smoothing on." else "Draw smoothing off.")
+        screen.showToast(getString(if (on) R.string.pad_draw_smoothing_on else R.string.pad_draw_smoothing_off))
     }
 
     override fun autoGlassesViewOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).autoGlassesView
@@ -1845,7 +1845,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun autoGlassesViewChosen(on: Boolean) {
         com.hayeco.flipspaces.spatial.SpaceStore(this).autoGlassesView = on
         Log.i(TAG, "switch the glasses' 3D / 2D: ${if (on) "on" else "off"} (the trackpad's Menu, Developer, ${if (cover) "cover" else "main"} screen)")
-        screen.showToast(if (on) "Pocket XR switches the glasses' 3D / 2D." else "The glasses' 3D / 2D is left to their own control.")
+        screen.showToast(getString(if (on) R.string.pad_auto_glasses_view_on else R.string.pad_auto_glasses_view_off))
     }
 
     override fun factoryCalibrationOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).factoryCalibration
@@ -1854,7 +1854,7 @@ class TrackpadActivity : Activity(), PadHost {
         com.hayeco.flipspaces.spatial.SpaceStore(this).factoryCalibration = on
         com.hayeco.flipspaces.spatial.HeadTracker.applySettings(this)
         Log.i(TAG, "factory calibration: ${if (on) "on" else "off"} (the trackpad's Menu, Developer, ${if (cover) "cover" else "main"} screen)")
-        screen.showToast(if (on) "Factory calibration on." else "Factory calibration off.")
+        screen.showToast(getString(if (on) R.string.pad_factory_calibration_on else R.string.pad_factory_calibration_off))
     }
 
     override fun distanceFixOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).distanceFix
@@ -1863,7 +1863,7 @@ class TrackpadActivity : Activity(), PadHost {
         com.hayeco.flipspaces.spatial.SpaceStore(this).distanceFix = on
         com.hayeco.flipspaces.spatial.EdgeCheckTest.adjustVersion++
         Log.i(TAG, "each eye centred for the glasses' 3D distance: ${if (on) "on" else "off"} (the trackpad's Menu, ${if (cover) "cover" else "main"} screen)")
-        screen.showToast(if (on) "Each eye centred for the glasses' 3D distance." else "Distance correction off.")
+        screen.showToast(getString(if (on) R.string.pad_distance_correction_on else R.string.pad_distance_correction_off))
     }
 
     override fun pictureAdjust(): com.hayeco.flipspaces.core.spatial.PictureAdjust = com.hayeco.flipspaces.spatial.SpaceStore(this).pictureAdjust
@@ -1894,7 +1894,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun unlockPhone() {
         val keyguard = getSystemService(KeyguardManager::class.java)
         if (keyguard == null || !keyguard.isKeyguardLocked) {
-            screen.showToast("The phone is not locked.")
+            screen.showToast(getString(R.string.pad_phone_not_locked))
             return
         }
         keyguard.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
@@ -1908,7 +1908,7 @@ class TrackpadActivity : Activity(), PadHost {
 
             override fun onDismissError() {
                 Log.w(TAG, "keyguard dismiss refused")
-                runOnUiThread { screen.showToast("Unlock the phone from its own lock screen.") }
+                runOnUiThread { screen.showToast(getString(R.string.pad_unlock_from_lock_screen)) }
             }
         })
     }
@@ -1941,7 +1941,7 @@ class TrackpadActivity : Activity(), PadHost {
         if (heldText.isNotEmpty()) {
             val events = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD).getEvents(heldText.toString().toCharArray())
             if (events == null) {
-                screen.showToast("These characters cannot be typed into the window.")
+                screen.showToast(getString(R.string.pad_cannot_type))
             } else {
                 events.forEach { SpaceSession.send(SpaceCommand.PanelKey(it.action, it.keyCode, it.metaState, it.repeatCount, it.downTime)) }
             }
@@ -2018,7 +2018,7 @@ class TrackpadActivity : Activity(), PadHost {
      */
     override fun pocketMode() {
         if (!SpaceSession.active) {
-            screen.showToast("Open the Space on the glasses first.")
+            screen.showToast(getString(R.string.pad_open_space_first))
             return
         }
         screen.showLock(true, pocket = true)

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pocket XR アドオン</string>
+    <string name="pointer_service_label">Pocket XR ポインター</string>
+    <string name="pointer_service_description">Pocket XR で、手やスマホの画面を使って XR グラスを操作できるようにします。グラスにカーソルを描画し、グラスのディスプレイ上にあるアプリのウィンドウの位置（位置、サイズ、ウィンドウのタイトル）と、そこにある DeX のウィンドウのタイトルバーのボタンのラベルを読み取り、タップやドラッグを行って、ウィンドウのクリック、移動、サイズ変更をできるようにします。スマホ本体の画面では何もせず、入力した内容やアプリのウィンドウの中身は読み取らず、スマホの外には何も送りません。</string>
+    <string name="addon_link_permission_label">Pocket XR アドオン連携</string>
+    <string name="addon_setup_intro">Pocket XR 用の 2 つの任意のサービスです。どちらも、下で同意して Android の設定でオンにするまではオフのままです。</string>
+    <string name="addon_setup_it_reads">読み取る内容:</string>
+    <string name="addon_setup_on">オン。Android の設定でいつでもオフにできます。</string>
+    <string name="addon_setup_open_settings">設定を開く</string>
+    <string name="addon_hand_tip">ピンチでクリック。タイトルバーをピンチしたままで移動、角でサイズ変更。手のひらを開くとドック。</string>
+    <string name="addon_hint_moving">移動中</string>
+    <string name="addon_hint_hold_move">長押しで移動</string>
+    <string name="addon_hint_resizing">サイズ変更中</string>
+    <string name="addon_hint_hold_resize">長押しでサイズ変更</string>
+    <string name="addon_hint_dock">ドック</string>
+    <string name="addon_status_hand">%1$s: 手を検出</string>
+    <string name="addon_status_no_hand">%1$s: 手が見えません</string>
+    <string name="addon_cursor_failed">グラスにカーソルを描画できませんでした: %1$s</string>
+    <string name="addon_gesture_tap_failed">タップのジェスチャーを作成できませんでした: %1$s</string>
+    <string name="addon_gesture_build_failed">%1$s のジェスチャーを作成できませんでした: %2$s</string>
+    <string name="addon_gesture_cancelled">Android がグラスでの %1$s をキャンセルしました（別のタッチまたはシステムジェスチャー）。</string>
+    <string name="addon_gesture_refused">Android がディスプレイ %2$d での %1$s を拒否しました。Pocket XR ポインターサービスはオンになっていますか？</string>
+    <string name="core_disclosure_agree">同意してオンにする</string>
+    <string name="core_disclosure_decline">同意しない</string>
+    <string name="core_disclosure_pointer_title">Pocket XR ポインターはユーザー補助サービス API を使用します</string>
+    <string name="core_disclosure_pointer_intro">Pocket XR はユーザー補助ツールではありません。Android の AccessibilityService API を 1 つの目的にだけ使います: スペースの外で、手やスマホの画面で動かせるカーソルを XR グラスに表示することです。</string>
+    <string name="core_disclosure_pointer_reads_windows">グラスのディスプレイ上にあるアプリのウィンドウの位置: 位置、サイズ、ウィンドウのタイトル。</string>
+    <string name="core_disclosure_pointer_reads_dex">グラスのディスプレイ上にある DeX のウィンドウのタイトルバーのボタンのラベル（全画面ボタンを見つけて押すため）。</string>
+    <string name="core_disclosure_pointer_use">グラスにカーソルを描画し、そこで行ったタップやドラッグを実行して、ウィンドウのクリック、移動、サイズ変更をできるようにします。スマホ本体の画面では何もせず、入力した内容やアプリのウィンドウの中身は読み取りません。</string>
+    <string name="core_disclosure_sharing">読み取った内容は保存、収集されず、スマホの外にも送られません。このスマホの Pocket XR アプリとのみ共有され、それ以外には共有されません。</string>
+    <string name="core_disclosure_pointer_without">なくても、スペース、トラックパッド、ハンドトラッキングは使えます。スペースの外のカーソルだけが使えなくなります。</string>
+    <string name="core_disclosure_notes_title">Pocket XR アドオンは通知へのアクセスを使用します</string>
+    <string name="core_disclosure_notes_intro">Pocket XR は、XR グラスのスペースの通知ページにスマホの通知を表示できます。</string>
+    <string name="core_disclosure_notes_reads_notifications">通知: それぞれのアプリ、タイトル、テキスト、届いた時刻。</string>
+    <string name="core_disclosure_notes_reads_media">再生中のコントロールのため、メディアを再生しているアプリ。</string>
+    <string name="core_disclosure_notes_use">通知をグラスに表示し、押すとその通知のアプリを開き、消去した通知を削除します。</string>
+    <string name="core_disclosure_notes_without">なくても、Pocket XR のほかの機能はすべて使えます。通知ページは空のままです。</string>
+    <string name="core_disclosure_it_reads">読み取る内容:</string>
+</resources>

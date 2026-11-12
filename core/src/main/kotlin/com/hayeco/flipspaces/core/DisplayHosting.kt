@@ -71,8 +71,8 @@ data class HostingAssessment(
 
 /** Decides whether the glasses display is in mirror or extended (DeX) mode from what the app can see. */
 object HostingAssessor {
-    const val MIRROR_MESSAGE =
-        "The glasses are in mirror mode, so apps can't open on them. Turn on DeX (or the extended display mode) and try again."
+    val MIRROR_MESSAGE: String
+        get() = UiText.get("core_mirror_message", "The glasses are in mirror mode, so apps can't open on them. Turn on DeX (or the extended display mode) and try again.")
 
     /**
      * Strongest evidence first: Pocket XR's home already running there proves the display hosts
@@ -123,10 +123,13 @@ data class DisplayInsets(val topPx: Int = 0, val bottomPx: Int = 0) {
 }
 
 /** Screens that can switch the glasses from mirror to extended mode, best first. */
-enum class SettingsTarget(val buttonLabel: String, val hint: String) {
-    DEX("Open Samsung DeX settings", "Turn on Samsung DeX, then come back."),
-    EXTERNAL_DISPLAY("Open external display settings", "Switch the glasses from mirror to extend, then come back."),
-    SETTINGS_HOME("Open Settings", "Go to Connected devices, Samsung DeX, turn it on, then come back.");
+enum class SettingsTarget(private val labelKey: String, private val labelEnglish: String, private val hintKey: String, private val hintEnglish: String) {
+    DEX("core_settings_dex", "Open Samsung DeX settings", "core_settings_dex_hint", "Turn on Samsung DeX, then come back."),
+    EXTERNAL_DISPLAY("core_settings_external", "Open external display settings", "core_settings_external_hint", "Switch the glasses from mirror to extend, then come back."),
+    SETTINGS_HOME("core_settings_home", "Open Settings", "core_settings_home_hint", "Go to Connected devices, Samsung DeX, turn it on, then come back.");
+
+    val buttonLabel: String get() = UiText.get(labelKey, labelEnglish)
+    val hint: String get() = UiText.get(hintKey, hintEnglish)
 
     companion object {
         fun forMirror(dexInstalled: Boolean): List<SettingsTarget> =

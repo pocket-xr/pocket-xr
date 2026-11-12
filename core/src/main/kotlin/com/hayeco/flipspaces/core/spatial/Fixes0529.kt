@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -96,9 +97,9 @@ object ScreenDistance {
     fun note(depthM: Float): List<String>? {
         if (isDefault(depthM)) return null
         return listOf(
-            String.format(Locale.ROOT, "Glasses 3D distance %.1f m, not 4 m", depthM),
-            "Their default 4 m gives the full, centred view",
-            "Glasses menu, by Display size: Distance 4 m",
+            UiText.format("spatial_distance_note_1", "Glasses 3D distance %1\$.1f m, not 4 m", depthM),
+            UiText.get("spatial_distance_note_2", "Their default 4 m gives the full, centred view"),
+            UiText.get("spatial_distance_note_3", "Glasses menu, by Display size: Distance 4 m"),
         )
     }
 }
@@ -130,9 +131,9 @@ object PlacedEdgeCheck {
  */
 object WarpDropNote {
     fun menu(heldMs: Long?, times: Int): String {
-        val held = heldMs?.let { String.format(Locale.ROOT, " after %.1f s", it / 1000.0) } ?: ""
-        val count = if (times > 1) " ($times times this session)" else ""
-        return "Off: the glasses dropped out of warp mode$held$count. Not the Menu or the switch: they leave it by themselves, and the warp then turns off so the picture comes back."
+        val held = heldMs?.let { UiText.format("spatial_warp_drop_after", " after %1\$.1f s", it / 1000.0) } ?: ""
+        val count = if (times > 1) UiText.format("spatial_warp_drop_times", " (%1\$d times this session)", times) else ""
+        return UiText.format("spatial_warp_drop", "Off: the glasses dropped out of warp mode%1\$s%2\$s. Not the Menu or the switch: they leave it by themselves, and the warp then turns off so the picture comes back.", held, count)
     }
 }
 

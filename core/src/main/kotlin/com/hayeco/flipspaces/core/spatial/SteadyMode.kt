@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * Steady mode, a key on the trackpad and a button in the launcher: one button for what the user otherwise sets in the glasses' menu each time. On is
  * Spatial Anchor off, Ultrawide on and the largest screen size Ultrawide offers. Off is Ultrawide off, then 3D as usual.
@@ -69,10 +71,10 @@ object SteadyMode {
     fun appAnchor(model: GlassesModel?): Boolean = model == GlassesModel.AURA
 
     /** 1.4.1: said on the glasses when Steady mode in 6DoF is ready on glasses where the user turns 6DoF on. */
-    const val TURN_ON_6DOF = "Steady mode in 6DoF: turn on 6DoF in your glasses' menu (Spatial Display) so the screen stays put as you move"
+    val TURN_ON_6DOF: String get() = UiText.get("spatial_steady_turn_on_6dof", "Steady mode in 6DoF: turn on 6DoF in your glasses' menu (Spatial Display) so the screen stays put as you move")
 
     /** 1.4.1: said when it ends there, as normal tracking needs the glasses' own anchor off. */
-    const val TURN_OFF_6DOF = "Steady mode is off: turn 6DoF off again in your glasses' menu, and use Follow mode with Stabilizer off"
+    val TURN_OFF_6DOF: String get() = UiText.get("spatial_steady_turn_off_6dof", "Steady mode is off: turn 6DoF off again in your glasses' menu, and use Follow mode with Stabilizer off")
 
     /**
      * 1.4.3 (Mike, 10 November 2026: "everything is upside down"): the Ultrawide canvas's pose from the head's when it is

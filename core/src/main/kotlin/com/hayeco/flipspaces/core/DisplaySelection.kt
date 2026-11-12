@@ -4,13 +4,15 @@ package com.hayeco.flipspaces.core
  * Mirrors the hidden android.view.Display TYPE_* constants (read through Display.getType where
  * the platform lets a normal app call it). [UNKNOWN] means the type could not be read.
  */
-enum class DisplayType(val platformValue: Int, val label: String) {
-    UNKNOWN(0, "unknown type"),
-    INTERNAL(1, "built-in"),
-    EXTERNAL(2, "external wired (USB-C DisplayPort or HDMI)"),
-    WIFI(3, "wireless"),
-    OVERLAY(4, "overlay"),
-    VIRTUAL(5, "virtual");
+enum class DisplayType(val platformValue: Int, private val labelKey: String, private val labelEnglish: String) {
+    UNKNOWN(0, "core_display_type_unknown", "unknown type"),
+    INTERNAL(1, "core_display_type_internal", "built-in"),
+    EXTERNAL(2, "core_display_type_external", "external wired (USB-C DisplayPort or HDMI)"),
+    WIFI(3, "core_display_type_wifi", "wireless"),
+    OVERLAY(4, "core_display_type_overlay", "overlay"),
+    VIRTUAL(5, "core_display_type_virtual", "virtual");
+
+    val label: String get() = UiText.get(labelKey, labelEnglish)
 
     companion object {
         fun fromPlatform(value: Int?): DisplayType = entries.firstOrNull { it.platformValue == value } ?: UNKNOWN
@@ -33,11 +35,14 @@ enum class SinkConnection(val platformValue: Int) {
 }
 
 /** Where a display physically lives, as far as the app can tell. */
-enum class DisplayOrigin(val label: String) {
+enum class DisplayOrigin(private val labelKey: String, private val labelEnglish: String) {
     /** Part of the phone: the main screen or the Flip's cover screen. Never the glasses. */
-    BUILT_IN("built-in screen"),
-    EXTERNAL("external display"),
-    VIRTUAL("virtual display"),
+    BUILT_IN("core_display_origin_built_in", "built-in screen"),
+    EXTERNAL("core_display_origin_external", "external display"),
+    VIRTUAL("core_display_origin_virtual", "virtual display"),
+    ;
+
+    val label: String get() = UiText.get(labelKey, labelEnglish)
 }
 
 /** What the app knows about one android.view.Display, copied out so it can be unit tested. */
@@ -82,10 +87,14 @@ data class DisplayCandidate(
 
     /** Name and type, for example "XREAL Aura, external display (external wired (USB-C DisplayPort or HDMI))". */
     val kindLabel: String
-        get() = if (type == DisplayType.UNKNOWN) "$name, ${origin.label}" else "$name, ${origin.label} (${type.label})"
+        get() = if (type == DisplayType.UNKNOWN) {
+            UiText.format("core_display_kind", "%1\$s, %2\$s", name, origin.label)
+        } else {
+            UiText.format("core_display_kind_type", "%1\$s, %2\$s (%3\$s)", name, origin.label, type.label)
+        }
 
     val summary: String
-        get() = "$name, ${widthPx}x$heightPx at ${refreshRateHz.toInt()} Hz (display $id)"
+        get() = UiText.format("core_display_summary", "%1\$s, %2\$dx%3\$d at %4\$d Hz (display %5\$d)", name, widthPx, heightPx, refreshRateHz.toInt(), id)
 
     companion object {
         const val DEFAULT_DISPLAY_ID = 0

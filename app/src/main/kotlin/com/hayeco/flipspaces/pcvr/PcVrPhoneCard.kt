@@ -11,6 +11,7 @@ import android.view.MotionEvent
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.hayeco.flipspaces.R
 
 /**
  * The phone's screen while PC VR is on the glasses: one large "Back to your Space" button. The screen goes dark to keep
@@ -29,14 +30,14 @@ class PcVrPhoneCard(context: Context) : FrameLayout(context) {
             setPadding(dp(24f).toInt(), 0, dp(24f).toInt(), 0)
         }
         column.addView(TextView(context).apply {
-            text = "PC VR is on your glasses"
+            text = context.getString(R.string.sys_pcvr_card_on_glasses)
             setTextColor(Color.rgb(127, 168, 255))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             letterSpacing = 0.05f
             gravity = Gravity.CENTER
         })
         val back = TextView(context).apply {
-            text = "Back to your Space"
+            text = context.getString(R.string.sys_pcvr_card_back)
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
@@ -54,7 +55,7 @@ class PcVrPhoneCard(context: Context) : FrameLayout(context) {
             topMargin = dp(20f).toInt()
         })
         column.addView(TextView(context).apply {
-            text = "Or hold Home or Capture on a Joy-Con for 2 seconds."
+            text = context.getString(R.string.sys_pcvr_card_hold_hint)
             setTextColor(Color.rgb(140, 150, 170))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             gravity = Gravity.CENTER

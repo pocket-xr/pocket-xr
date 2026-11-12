@@ -1,6 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
 import com.hayeco.flipspaces.core.ShizukuStatus
+import com.hayeco.flipspaces.core.UiText
 
 /** What to put on the glasses when they come up (plug-in, or the glasses' secondary home). */
 enum class GlassesSurface {
@@ -12,10 +13,14 @@ enum class GlassesSurface {
 }
 
 /** The one-tap fix a flat mode banner offers. */
-enum class FlatFix(val buttonLabel: String) {
-    OPEN_SHIZUKU("Open Shizuku"),
-    ALLOW_SHIZUKU("Allow Pocket XR in Shizuku"),
-    GET_SHIZUKU("Get Shizuku"),
+enum class FlatFix(private val key: String, private val english: String) {
+    OPEN_SHIZUKU("spatial_fix_open_shizuku", "Open Shizuku"),
+    ALLOW_SHIZUKU("spatial_fix_allow_shizuku", "Allow Pocket XR in Shizuku"),
+    GET_SHIZUKU("spatial_fix_get_shizuku", "Get Shizuku"),
+    ;
+
+    /** The button's words, in the phone's language. */
+    val buttonLabel: String get() = UiText.get(key, english)
 }
 
 /** Why the glasses show the flat DeX home instead of the Space, and the fix (null: none to offer). */
@@ -25,18 +30,18 @@ data class FlatBanner(val title: String, val reason: String, val fix: FlatFix?) 
         fun of(shizuku: ShizukuStatus): FlatBanner? = when (shizuku) {
             ShizukuStatus.READY -> null
             ShizukuStatus.NOT_RUNNING -> FlatBanner(
-                "Flat mode: Shizuku is not running",
-                "App panels need Shizuku. Open Shizuku on the phone and tap Start (needed after each reboot).",
+                UiText.get("spatial_flat_not_running", "Flat mode: Shizuku is not running"),
+                UiText.get("spatial_flat_not_running_reason", "App panels need Shizuku. Open Shizuku on the phone and tap Start (needed after each reboot)."),
                 FlatFix.OPEN_SHIZUKU,
             )
             ShizukuStatus.NO_PERMISSION -> FlatBanner(
-                "Flat mode: Pocket XR is not allowed in Shizuku",
-                "Shizuku is running but has not allowed Pocket XR yet. Allow it in the Shizuku prompt on the phone.",
+                UiText.get("spatial_flat_no_permission", "Flat mode: Pocket XR is not allowed in Shizuku"),
+                UiText.get("spatial_flat_no_permission_reason", "Shizuku is running but has not allowed Pocket XR yet. Allow it in the Shizuku prompt on the phone."),
                 FlatFix.ALLOW_SHIZUKU,
             )
             ShizukuStatus.NOT_INSTALLED -> FlatBanner(
-                "Flat mode: Shizuku is not installed",
-                "App panels need Shizuku from Google Play, started with Wireless debugging.",
+                UiText.get("spatial_flat_not_installed", "Flat mode: Shizuku is not installed"),
+                UiText.get("spatial_flat_not_installed_reason", "App panels need Shizuku from Google Play, started with Wireless debugging."),
                 FlatFix.GET_SHIZUKU,
             )
         }

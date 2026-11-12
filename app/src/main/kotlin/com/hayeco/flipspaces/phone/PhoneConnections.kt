@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.spatial.BtDevice
 import com.hayeco.flipspaces.core.spatial.BtState
 import com.hayeco.flipspaces.core.spatial.ControlSheets
@@ -63,7 +64,7 @@ object PhoneConnections {
             freq >= 4900 -> "5 GHz"
             else -> "2.4 GHz"
         }
-        val detail = listOfNotNull("Connected", band, speed?.let { "$it Mbps" }).joinToString(" · ")
+        val detail = listOfNotNull(context.getString(R.string.sys_wifi_connected), band, speed?.let { context.getString(R.string.sys_wifi_mbps, it) }).joinToString(" · ")
         return WifiState(true, enabled, ssid, rssi?.let { ControlSheets.bars(it) } ?: 0, detail, saved)
     }
 
@@ -121,7 +122,7 @@ object PhoneConnections {
     fun grantBluetooth(context: Context): String? {
         val r = ShizukuBridge.shell(listOf("pm", "grant", context.packageName, Manifest.permission.BLUETOOTH_CONNECT))
         Log.i(TAG, "Bluetooth access asked for through Shizuku: exit ${r.exitCode} ${r.output.take(200)}")
-        return if (r.exitCode == 0) null else r.output.ifBlank { "Shizuku is not running" }
+        return if (r.exitCode == 0) null else r.output.ifBlank { context.getString(R.string.sys_shizuku_not_running) }
     }
 
     /** Blocking (Shizuku): Wi-Fi or Bluetooth on or off. */
@@ -129,7 +130,7 @@ object PhoneConnections {
         val cmd = if (wifiPage) listOf("cmd", "wifi", "set-wifi-enabled", if (on) "enabled" else "disabled") else listOf("cmd", "bluetooth_manager", if (on) "enable" else "disable")
         val r = ShizukuBridge.shell(cmd)
         Log.i(TAG, "${cmd.joinToString(" ")}: exit ${r.exitCode} ${r.output.take(200)}")
-        return if (r.exitCode == 0) null else r.output.ifBlank { "Shizuku is not running" }
+        return if (r.exitCode == 0) null else r.output.ifBlank { context.getString(R.string.sys_shizuku_not_running) }
     }
 
     /** Blocking (Shizuku): forgets the saved network [id]. */

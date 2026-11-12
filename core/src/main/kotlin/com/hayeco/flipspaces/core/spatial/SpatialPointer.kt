@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import com.hayeco.flipspaces.core.pointer.HandSide
 import com.hayeco.flipspaces.core.pointer.HomeEvent
 import com.hayeco.flipspaces.core.pointer.PadHaptic
@@ -837,7 +838,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
             return out
         }
         if (layout.panels.isEmpty()) {
-            if (!byHands) out += SpaceAction.Notice("Open a window first.")
+            if (!byHands) out += SpaceAction.Notice(UiText.get("spatial_all_open_window_first", "Open a window first."))
             return out
         }
         release(main, layout, out, cancel = true)
@@ -851,8 +852,10 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         allGuideText = null
         out += SpaceAction.Haptic(PadHaptic.HOVER_BUTTON)
         if (!byHands) {
-            val turn = if (padMode == PadMode.SPATIAL_MOUSE) "point the phone" else "move a finger"
-            out += SpaceAction.Notice("All windows held: $turn to turn them, two fingers up or down to push or pull, spread or pinch to resize. Tap to let go, Back to undo.")
+            out += SpaceAction.Notice(
+                if (padMode == PadMode.SPATIAL_MOUSE) UiText.get("spatial_all_held_phone", "All windows held: point the phone to turn them, two fingers up or down to push or pull, spread or pinch to resize. Tap to let go, Back to undo.")
+                else UiText.get("spatial_all_held_finger", "All windows held: move a finger to turn them, two fingers up or down to push or pull, spread or pinch to resize. Tap to let go, Back to undo."),
+            )
         }
         out += SpaceAction.Note("all ${l.panels.size} windows held together (${if (byHands) "both hands up" else "Adjust all"})")
         return out
@@ -897,10 +900,10 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         val k = next.size / next.distance
         val kWas = was.size / was.distance
         when {
-            next.distance > was.distance * 1.0005f -> allGuideText = "FARTHER"
-            next.distance < was.distance / 1.0005f -> allGuideText = "CLOSER"
-            k > kWas * 1.0005f -> allGuideText = "LARGER"
-            k < kWas / 1.0005f -> allGuideText = "SMALLER"
+            next.distance > was.distance * 1.0005f -> allGuideText = UiText.get("spatial_guide_farther", "FARTHER")
+            next.distance < was.distance / 1.0005f -> allGuideText = UiText.get("spatial_guide_closer", "CLOSER")
+            k > kWas * 1.0005f -> allGuideText = UiText.get("spatial_guide_larger", "LARGER")
+            k < kWas / 1.0005f -> allGuideText = UiText.get("spatial_guide_smaller", "SMALLER")
         }
         allGuideMs = clockMs
         allApply(h, layout, out, commit = false)
@@ -1293,7 +1296,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
             val c = CurveControl.move(raw, delta)
             if (c.curve != w.curve) {
                 out += SpaceAction.Layout(SpaceWrap.curveTo(l, c.curve), commit = commit)
-                setGuide("WRAP " + CurveControl.guide(c.curve))
+                setGuide(UiText.format("spatial_guide_wrap", "WRAP %1\$s", CurveControl.guide(c.curve)))
             }
             c.haptic?.let {
                 out += SpaceAction.Haptic(it)
@@ -1344,7 +1347,8 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
     private var wrapTold = false
 
     /** 0.5.28: the held window's curve guide; "WRAP CURVE 100 %" while the whole Space is wrapped. */
-    private fun curveGuide(layout: SpaceLayout, curve: Float): String = (if (layout.wrap != null) "WRAP " else "") + CurveControl.guide(curve)
+    private fun curveGuide(layout: SpaceLayout, curve: Float): String =
+        if (layout.wrap != null) UiText.format("spatial_guide_wrap", "WRAP %1\$s", CurveControl.guide(curve)) else CurveControl.guide(curve)
 
     /**
      * 0.5.17 cover screen: the window buttons ([WindowAction]). Move and Resize toggle a hold of
@@ -1413,7 +1417,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                     out += SpaceAction.Note("window ${p.id} ${p.label} ${if (further) "further" else "closer"}: already at %.2f m, the limit".format(java.util.Locale.ROOT, d))
                     return
                 }
-                if (held != null) setGuide(if (further) "FARTHER" else "CLOSER")
+                if (held != null) setGuide(if (further) UiText.get("spatial_guide_farther", "FARTHER") else UiText.get("spatial_guide_closer", "CLOSER"))
                 out += SpaceAction.Layout(l.replace(PadWindowMath.atDistance(p, d)), commit = held == null)
                 out += SpaceAction.Note(
                     "window ${p.id} ${p.label} %s %.0f %% to %.2f m (%s)".format(
@@ -1453,7 +1457,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
             val s0 = PadWindowMath.scaleOf(p)
             val next = PadWindowMath.scaled(p, (s0 + PadWindowMath.mouseScaleStep(s.dx)) / s0, frustum)
             if (next != p) {
-                setGuide(if (next.widthDeg > p.widthDeg) "LARGER" else "SMALLER")
+                setGuide(if (next.widthDeg > p.widthDeg) UiText.get("spatial_guide_larger", "LARGER") else UiText.get("spatial_guide_smaller", "SMALLER"))
                 out += SpaceAction.Layout(l.replace(next), commit = false)
             }
             return
@@ -1466,14 +1470,14 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
             if (PadWindowMath.mouseSwipeIsDepth(s.dx, s.dy)) {
                 val d = PadWindowMath.clampDistance(p.distanceM, p.distanceM + PadWindowMath.limitStep(PadWindowMath.mouseDepthStep(s.dy), p.distanceM))
                 if (d != p.distanceM) {
-                    setGuide(if (d > p.distanceM) "FARTHER" else "CLOSER")
+                    setGuide(if (d > p.distanceM) UiText.get("spatial_guide_farther", "FARTHER") else UiText.get("spatial_guide_closer", "CLOSER"))
                     out += SpaceAction.Layout(l.replace(PadWindowMath.atDistance(p, d)), commit = false)
                 }
             } else {
                 val s0 = PadWindowMath.scaleOf(p)
                 val next = PadWindowMath.scaled(p, (s0 + PadWindowMath.mouseScaleStep(s.dx)) / s0, frustum)
                 if (next != p) {
-                    setGuide(if (next.widthDeg > p.widthDeg) "LARGER" else "SMALLER")
+                    setGuide(if (next.widthDeg > p.widthDeg) UiText.get("spatial_guide_larger", "LARGER") else UiText.get("spatial_guide_smaller", "SMALLER"))
                     out += SpaceAction.Layout(l.replace(next), commit = false)
                 }
             }
@@ -1515,7 +1519,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                         val start = g.scaleStart ?: p.also { g.scaleStart = it }
                         val next = PadWindowMath.scaled(start, s.spread / g.twoSpread.coerceAtLeast(1e-3f), frustum)
                         if (next != p) {
-                            setGuide(if (next.widthDeg > p.widthDeg) "LARGER" else "SMALLER")
+                            setGuide(if (next.widthDeg > p.widthDeg) UiText.get("spatial_guide_larger", "LARGER") else UiText.get("spatial_guide_smaller", "SMALLER"))
                             out += SpaceAction.Layout(l.replace(next), commit = false)
                         }
                     }
@@ -1540,7 +1544,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         sizing(g, p)
         val next = PadWindowMath.pushPull(p, dy)
         if (next.distanceM == p.distanceM) return
-        setGuide(if (next.distanceM > p.distanceM) "FARTHER" else "CLOSER")
+        setGuide(if (next.distanceM > p.distanceM) UiText.get("spatial_guide_farther", "FARTHER") else UiText.get("spatial_guide_closer", "CLOSER"))
         if (!g.depthMoved) g.depthFrom = p.distanceM
         g.depthMoved = true
         out += SpaceAction.Layout(l.replace(next), commit = false)
@@ -2536,7 +2540,7 @@ const val MOUSE_EDGE_MARGIN_V = 1.5f
 const val DEPTH_LOG_M = 0.01f
 
 /** 0.5.28: said on the glasses when Curve bends a wrapped Space (the trackpad shows a one-tap Unwrap with it). */
-const val WRAP_CURVE_NOTICE = "Wraparound on: Curve bends the whole Space. Unwrap: tap the note on the trackpad"
+val WRAP_CURVE_NOTICE: String get() = UiText.get("spatial_wrap_curve_notice", "Wraparound on: Curve bends the whole Space. Unwrap: tap the note on the trackpad")
 
 /** 0.5.12: at the click freeze's end, the ray's speed is judged over this long (ms); under [FREEZE_SETTLED_DEG_S] the hand has settled. */
 private const val FREEZE_SPEED_MS = 48L

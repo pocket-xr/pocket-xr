@@ -9,6 +9,7 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
 import android.os.Bundle
 import android.util.Log
+import com.hayeco.flipspaces.R
 import androidx.core.app.NotificationManagerCompat
 import com.hayeco.flipspaces.core.spatial.NoteRow
 import com.hayeco.flipspaces.platform.AddonLink
@@ -46,11 +47,11 @@ object PhoneNotifications {
      * (blocking).
      */
     fun grant(context: Context): String? {
-        if (!AddonLink.isInstalled(context)) return "Install the Pocket XR add-on first: ${AddonLink.getUrl(context)}"
-        if (AddonLink.openSetup(context, AddonLink.SETUP_NOTES)) return "finish on the phone's screen"
+        if (!AddonLink.isInstalled(context)) return context.getString(R.string.sys_notes_install_addon, AddonLink.getUrl(context))
+        if (AddonLink.openSetup(context, AddonLink.SETUP_NOTES)) return context.getString(R.string.sys_notes_finish_on_phone)
         val r = ShizukuBridge.shell(listOf("cmd", "notification", "allow_listener", AddonLink.NOTES.flattenToString()))
         Log.i(TAG, "notification access asked for through Shizuku: exit ${r.exitCode} ${r.output.take(200)}")
-        return if (r.exitCode == 0) null else r.output.ifBlank { "Shizuku is not running" }
+        return if (r.exitCode == 0) null else r.output.ifBlank { context.getString(R.string.sys_shizuku_not_running) }
     }
 
     fun packageOf(key: String): String? = rows.firstOrNull { it.key == key }?.packageName

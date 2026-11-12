@@ -84,8 +84,8 @@ class HeadTrackingActivity : ComponentActivity() {
                         vitureLabel = com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel(store.vitureProduct),
                         vitureBeast = store.vitureProduct == com.hayeco.flipspaces.core.spatial.VitureDevices.BEAST,
                         vitureAxes = store.vitureAxes,
-                        recording = com.hayeco.flipspaces.spatial.HidMotionRecorder.busy || motionLine?.startsWith("Recording") == true || motionLine?.startsWith("Allow") == true,
-                        motionLine = motionLine ?: com.hayeco.flipspaces.spatial.HidMotionRecorder.newestLine(this)?.let { "Last recording: $it" },
+                        recording = com.hayeco.flipspaces.spatial.HidMotionRecorder.busy || (motionLine != null && com.hayeco.flipspaces.spatial.HidMotionRecorder.inProgress),
+                        motionLine = motionLine ?: com.hayeco.flipspaces.spatial.HidMotionRecorder.newestLine(this)?.let { getString(R.string.head_last_recording, it) },
                         onViture = { on ->
                             // Off closes the open stream at once and releases the glasses; on asks for USB access if
                             // it is missing and tries now.
@@ -171,7 +171,7 @@ class HeadTrackingActivity : ComponentActivity() {
                     onCopyAll = {
                         val text = HeadDiagnosticsFile.text(this, facts.soc, facts.dynamicSensors, SpaceSession.timingLine)
                         val ok = HeadDiagnosticsFile.copy(this, text)
-                        android.widget.Toast.makeText(this, if (ok) "Copied all of it (${text.lines().size} lines)" else "Android did not allow the copy; try Share", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(this, if (ok) resources.getQuantityString(R.plurals.head_copied_lines, text.lines().size, text.lines().size) else getString(R.string.head_copy_refused), android.widget.Toast.LENGTH_SHORT).show()
                     },
                     onShare = {
                         HeadDiagnosticsFile.share(this, HeadDiagnosticsFile.text(this, facts.soc, facts.dynamicSensors, SpaceSession.timingLine))

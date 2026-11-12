@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.pointer
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 1.2.6 (Mike: the trackpad's Menu "has become congested and feels like too much"): what the Menu shows and in what
  * order, apart from the views that draw it ([com.hayeco.flipspaces.PadScreen] in the app). docs/design/menu-reorganization.md
@@ -12,15 +14,25 @@ package com.hayeco.flipspaces.core.pointer
  */
 object TrackpadMenu {
     /** The Menu's parts, top down. [title] is null for the parts drawn without a heading. */
-    enum class Section(val title: String?, val summary: String, val opensByDefault: Boolean, val collapsible: Boolean) {
-        QUICK(null, "", true, false),
-        THIS_WINDOW("This window", "", true, false),
-        SPACE("Space", "Lock screens, Arrange, presets", true, true),
-        TRACKPAD("Trackpad and controls", "Speeds, scrolling, cursor, game controller", false, true),
-        WINDOWS_GLASSES("Windows and glasses", "Snap, new instances, curve, glasses check", false, true),
-        HELP("Help and more", "How to use, reset, developer settings", false, true),
-        END(null, "", true, false),
+    enum class Section(
+        private val titleKey: String?,
+        private val titleEnglish: String?,
+        private val summaryKey: String?,
+        private val summaryEnglish: String,
+        val opensByDefault: Boolean,
+        val collapsible: Boolean,
+    ) {
+        QUICK(null, null, null, "", true, false),
+        THIS_WINDOW("core_menu_this_window", "This window", null, "", true, false),
+        SPACE("core_menu_space", "Space", "core_menu_space_summary", "Lock screens, Arrange, presets", true, true),
+        TRACKPAD("core_menu_trackpad", "Trackpad and controls", "core_menu_trackpad_summary", "Speeds, scrolling, cursor, game controller", false, true),
+        WINDOWS_GLASSES("core_menu_windows_glasses", "Windows and glasses", "core_menu_windows_glasses_summary", "Snap, new instances, curve, glasses check", false, true),
+        HELP("core_menu_help", "Help and more", "core_menu_help_summary", "How to use, reset, developer settings", false, true),
+        END(null, null, null, "", true, false),
         ;
+
+        val title: String? get() = titleEnglish?.let { UiText.get(titleKey!!, it) }
+        val summary: String get() = summaryKey?.let { UiText.get(it, summaryEnglish) } ?: summaryEnglish
 
         /** Where the section's open or closed state is kept (the "trackpad" preferences), for the collapsible ones. */
         val key: String get() = "menu_open_${name.lowercase()}"

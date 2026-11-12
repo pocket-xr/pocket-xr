@@ -47,16 +47,16 @@ object HandModelStore {
             connection.connectTimeout = 15_000
             connection.readTimeout = 30_000
             try {
-                if (connection.responseCode != 200) return "Download failed: HTTP ${connection.responseCode} ${connection.responseMessage}"
+                if (connection.responseCode != 200) return context.getString(com.hayeco.flipspaces.R.string.hands_download_failed_http, connection.responseCode, connection.responseMessage.orEmpty())
                 connection.inputStream.use { input -> temp.outputStream().use { input.copyTo(it) } }
             } finally {
                 connection.disconnect()
             }
-            if (temp.length() < MIN_BYTES) return "Download was too small (${temp.length()} bytes)"
-            if (!temp.renameTo(target)) return "Could not save the model"
+            if (temp.length() < MIN_BYTES) return temp.length().toInt().let { n -> context.resources.getQuantityString(com.hayeco.flipspaces.R.plurals.hands_download_too_small, n, n) }
+            if (!temp.renameTo(target)) return context.getString(com.hayeco.flipspaces.R.string.hands_could_not_save)
             null
         } catch (e: IOException) {
-            "Download failed: ${e.message}"
+            context.getString(com.hayeco.flipspaces.R.string.hands_download_failed, e.message.toString())
         } finally {
             temp.delete()
         }

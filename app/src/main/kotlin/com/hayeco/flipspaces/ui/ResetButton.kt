@@ -11,6 +11,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.hayeco.flipspaces.R
 
 /**
  * 0.5.101 (Mike: each settings screen needs "a way to reset to Pocket XR default settings"): a button at the bottom of
@@ -19,19 +21,19 @@ import androidx.compose.ui.Modifier
 @Composable
 fun ResetButton(screen: String, what: String, onReset: () -> Unit) {
     var asking by remember { mutableStateOf(false) }
-    OutlinedButton(onClick = { asking = true }, modifier = Modifier.fillMaxWidth()) { Text("Reset to Pocket XR defaults") }
+    OutlinedButton(onClick = { asking = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.home_reset_defaults)) }
     if (asking) {
         AlertDialog(
             onDismissRequest = { asking = false },
-            title = { Text("Reset $screen?") },
+            title = { Text(stringResource(R.string.home_reset_title, screen)) },
             text = { Text(what) },
             confirmButton = {
                 TextButton(onClick = {
                     asking = false
                     onReset()
-                }) { Text("Reset") }
+                }) { Text(stringResource(R.string.home_reset)) }
             },
-            dismissButton = { TextButton(onClick = { asking = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { asking = false }) { Text(stringResource(R.string.home_cancel)) } },
         )
     }
 }

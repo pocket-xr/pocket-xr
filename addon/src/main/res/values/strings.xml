@@ -3,4 +3,44 @@
     <string name="app_name">Pocket XR add-on</string>
     <string name="pointer_service_label">Pocket XR pointer</string>
     <string name="pointer_service_description">Lets you control your XR glasses with your hands or your phone\'s screen in Pocket XR. It draws a cursor on the glasses, reads where app windows are on the glasses display (position, size and window title) and the labels of the buttons in DeX\'s window title bars there, and performs taps and drags there so you can click, move and resize windows. It does nothing on the phone\'s own screen, does not read what you type or what is inside app windows, and sends nothing off the phone.</string>
+    <string name="addon_link_permission_label">Pocket XR add-on link</string>
+    <string name="addon_setup_intro">Two optional services for Pocket XR. Each stays off until you agree below and switch it on in Android\'s settings.</string>
+    <!-- Heading above the list of what the service reads -->
+    <string name="addon_setup_it_reads">It reads:</string>
+    <string name="addon_setup_on">On. You can switch it off in Android\'s settings at any time.</string>
+    <string name="addon_setup_open_settings">Open settings</string>
+    <!-- Shown on the glasses the first time a hand is seen -->
+    <string name="addon_hand_tip">Pinch to click. Pinch and hold a title bar to move, a corner to resize. Open palm for the dock.</string>
+    <!-- Short hints next to the cursor on the glasses -->
+    <string name="addon_hint_moving">Moving</string>
+    <string name="addon_hint_hold_move">Hold to move</string>
+    <string name="addon_hint_resizing">Resizing</string>
+    <string name="addon_hint_hold_resize">Hold to resize</string>
+    <string name="addon_hint_dock">Dock</string>
+    <!-- %1$s: where the hand tracking comes from, e.g. the glasses camera -->
+    <string name="addon_status_hand">%1$s: hand</string>
+    <string name="addon_status_no_hand">%1$s: no hand in view</string>
+    <string name="addon_cursor_failed">Could not draw the cursor on the glasses: %1$s</string>
+    <string name="addon_gesture_tap_failed">Could not build the tap gesture: %1$s</string>
+    <!-- %1$s: the gesture, e.g. "drag start"; %2$s: the error -->
+    <string name="addon_gesture_build_failed">Could not build the %1$s gesture: %2$s</string>
+    <string name="addon_gesture_cancelled">Android cancelled the %1$s on the glasses (another touch or a system gesture).</string>
+    <string name="addon_gesture_refused">Android refused the %1$s on display %2$d. Is the Pocket XR pointer service still on?</string>
+    <!-- The disclosure text, from core's Disclosure (core reads these keys through UiText). -->
+    <string name="core_disclosure_agree">Agree and turn on</string>
+    <string name="core_disclosure_decline">No thanks</string>
+    <string name="core_disclosure_pointer_title">Pocket XR pointer uses the Accessibility service API</string>
+    <string name="core_disclosure_pointer_intro">Pocket XR is not an accessibility tool. It uses Android\'s AccessibilityService API for one job: to give your XR glasses a cursor you move with your hands or the phone\'s screen, outside the Space.</string>
+    <string name="core_disclosure_pointer_reads_windows">Where app windows are on the glasses display: their position, size and window title.</string>
+    <string name="core_disclosure_pointer_reads_dex">The labels of the buttons in DeX\'s window title bars on the glasses display, to find and press its full screen button.</string>
+    <string name="core_disclosure_pointer_use">It draws the cursor on the glasses and performs the taps and drags you make there, so you can click, move and resize windows. It does nothing on the phone\'s own screen, and does not read what you type or what is inside app windows.</string>
+    <string name="core_disclosure_sharing">Nothing it reads is stored, collected or sent off the phone. It is shared only with the Pocket XR app on this phone, and with no one else.</string>
+    <string name="core_disclosure_pointer_without">Without it, the Space, the trackpad and hand tracking still work; only the cursor outside the Space is missing.</string>
+    <string name="core_disclosure_notes_title">Pocket XR add-on uses notification access</string>
+    <string name="core_disclosure_notes_intro">Pocket XR can show your phone\'s notifications on the Space\'s Notifications page in your XR glasses.</string>
+    <string name="core_disclosure_notes_reads_notifications">Your notifications: the app, title and text of each, and when it came.</string>
+    <string name="core_disclosure_notes_reads_media">Which apps are playing media, for the now playing controls.</string>
+    <string name="core_disclosure_notes_use">It shows them in the glasses, opens a notification\'s app when you press it and dismisses the ones you clear.</string>
+    <string name="core_disclosure_notes_without">Without it, everything else in Pocket XR works; the Notifications page stays empty.</string>
+    <string name="core_disclosure_it_reads">It reads:</string>
 </resources>

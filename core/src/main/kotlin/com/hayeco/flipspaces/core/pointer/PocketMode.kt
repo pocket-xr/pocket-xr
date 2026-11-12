@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.pointer
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 1.2.3 (issue 52: "I'd like to put the phone in my pocket and walk around with the glasses on. Turning the phone's screen
  * off also turns off the glasses. Leaving it on means accidental touches, battery drain and burn-in"): Pocket mode, from
@@ -30,8 +32,9 @@ object PocketMode {
     fun showsHint(pocket: Boolean, pressed: Boolean): Boolean = !pocket || pressed
 
     /** The hint under the lock spot. */
-    fun hint(pocket: Boolean): String = if (pocket) "Hold to leave Pocket mode" else "Hold to unlock"
+    fun hint(pocket: Boolean): String =
+        if (pocket) UiText.get("core_pocket_hold_to_leave", "Hold to leave Pocket mode") else UiText.get("core_pocket_hold_to_unlock", "Hold to unlock")
 
-    const val MENU_ROW = "Pocket mode"
-    const val MENU_SUBTITLE = "A black, locked phone screen. The glasses keep running. Hold the lock to leave."
+    val MENU_ROW: String get() = UiText.get("core_pocket_mode", "Pocket mode")
+    val MENU_SUBTITLE: String get() = UiText.get("core_pocket_mode_subtitle", "A black, locked phone screen. The glasses keep running. Hold the lock to leave.")
 }

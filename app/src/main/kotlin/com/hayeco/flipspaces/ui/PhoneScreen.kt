@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.hayeco.flipspaces.R
@@ -133,8 +134,8 @@ fun PhoneScreen(
                             }
                             Spacer(Modifier.height(10.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Button(onClick = { com.hayeco.flipspaces.UpdateChecker.open(context, u) }, shape = RoundedCornerShape(22.dp)) { Text("Update") }
-                                OutlinedButton(onClick = { com.hayeco.flipspaces.UpdateChecker.later(context) }, shape = RoundedCornerShape(22.dp)) { Text("Later") }
+                                Button(onClick = { com.hayeco.flipspaces.UpdateChecker.open(context, u) }, shape = RoundedCornerShape(22.dp)) { Text(stringResource(R.string.home_update)) }
+                                OutlinedButton(onClick = { com.hayeco.flipspaces.UpdateChecker.later(context) }, shape = RoundedCornerShape(22.dp)) { Text(stringResource(R.string.home_later)) }
                             }
                         }
                     }
@@ -143,9 +144,9 @@ fun PhoneScreen(
             item { Header(connected) }
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
-                    Button(onClick = onOpenTrackpad, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(26.dp)) { Text("Open trackpad") }
+                    Button(onClick = onOpenTrackpad, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(26.dp)) { Text(stringResource(R.string.home_open_trackpad)) }
                     if (connected) {
-                        OutlinedButton(onClick = onOpenHome, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(26.dp)) { Text("Show on glasses") }
+                        OutlinedButton(onClick = onOpenHome, modifier = Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(26.dp)) { Text(stringResource(R.string.home_show_on_glasses)) }
                     }
                 }
             }
@@ -154,7 +155,7 @@ fun PhoneScreen(
             if (com.hayeco.flipspaces.UpdateChecker.offered(context)) {
                 item {
                     GlassCard {
-                        ToggleRow("Check for updates", "Version ${com.hayeco.flipspaces.UpdateChecker.installed}. ${updateLine(checkUpdates, updateStatus)}", checkUpdates) {
+                        ToggleRow(stringResource(R.string.home_check_for_updates), stringResource(R.string.home_version_line, com.hayeco.flipspaces.UpdateChecker.installed, updateLine(context, checkUpdates, updateStatus)), checkUpdates) {
                             checkUpdates = it
                             com.hayeco.flipspaces.UpdateChecker.setEnabled(context, it)
                         }
@@ -162,7 +163,7 @@ fun PhoneScreen(
                             TextButton(
                                 onClick = { com.hayeco.flipspaces.UpdateChecker.checkIfDue(context, force = true) },
                                 modifier = Modifier.padding(start = 8.dp, bottom = 4.dp),
-                            ) { Text("Check now") }
+                            ) { Text(stringResource(R.string.home_check_now)) }
                         }
                     }
                 }
@@ -172,17 +173,17 @@ fun PhoneScreen(
             if (hosting?.mode == ContentMode.MIRROR) {
                 item { MirrorCard(hosting, settingsTarget, onOpenSettings, onRetry) }
             }
-            item { SectionTitle("Settings") }
+            item { SectionTitle(stringResource(R.string.home_settings)) }
             item {
                 GlassCard {
                     // 0.5.101 (Mike: each settings screen only what is needed, each with a reset): Track two hands and
                     // Calibrate hand aim are on the Hands screen only; Trackpad opens the trackpad's own Menu, where its
                     // settings are, instead of repeating the Open trackpad button.
-                    NavRow("Spatial windows", "Screen size, 3D, eye distance, window glow and colour, hand pointer; Shizuku setup", onOpenSpatial)
+                    NavRow(stringResource(R.string.home_spatial_windows), stringResource(R.string.home_spatial_windows_detail), onOpenSpatial)
                     RowDivider()
                     ToggleRow(
-                        "Head tracking",
-                        if (headTracking) "On: windows stay put as you turn your head" else "Off: windows stay in front of you and turn with your head",
+                        stringResource(R.string.home_head_tracking),
+                        if (headTracking) stringResource(R.string.home_head_tracking_on) else stringResource(R.string.home_head_tracking_off),
                         headTracking,
                     ) {
                         headTracking = it
@@ -191,8 +192,8 @@ fun PhoneScreen(
                     RowDivider()
                     // 1.2.13 (Discussion #81): a recenter lying back or looking down puts the windows where you look.
                     ToggleRow(
-                        "Recenter follows head tilt",
-                        if (recentreFollowsTilt) "On: recenter puts the windows where you look, up or down" else "Off: recenter keeps the windows on the horizon",
+                        stringResource(R.string.home_recenter_tilt),
+                        if (recentreFollowsTilt) stringResource(R.string.home_recenter_tilt_on) else stringResource(R.string.home_recenter_tilt_off),
                         recentreFollowsTilt,
                     ) {
                         recentreFollowsTilt = it
@@ -202,11 +203,11 @@ fun PhoneScreen(
                     if (sixDofGlasses) {
                         // 1.4.0 (docs/6DOF-PLAN.md): the Aura's Spatial Anchor holds the Steady mode screen in 6DoF.
                         ToggleRow(
-                            "Steady mode in 6DoF",
+                            stringResource(R.string.home_steady_6dof),
                             when {
-                                !steadySixDof -> "Off: Steady mode keeps the wide screen still as you turn your head"
-                                sixDofByUser -> "On: in Steady mode, turn on 6DoF in your glasses' menu (Spatial Display) and the wide screen stays put as you lean and move. New with the XREAL Eye: please tell us how it goes"
-                                else -> "On: in Steady mode the wide screen stays put as you lean and move. The glasses' Spatial Anchor does it, and 3D is off"
+                                !steadySixDof -> stringResource(R.string.home_steady_6dof_off)
+                                sixDofByUser -> stringResource(R.string.home_steady_6dof_on_user)
+                                else -> stringResource(R.string.home_steady_6dof_on)
                             },
                             steadySixDof,
                         ) {
@@ -216,11 +217,11 @@ fun PhoneScreen(
                         RowDivider()
                     }
                     // 1.1.16 (issue 12): the settings these glasses need and the head turn check, at any time.
-                    NavRow("Glasses setup check", "The settings your glasses need, and a 10 second check that windows stay put", onGlassesCheck)
+                    NavRow(stringResource(R.string.home_glasses_setup_check), stringResource(R.string.home_glasses_setup_check_detail), onGlassesCheck)
                     RowDivider()
-                    NavRow("Hands", "Hand tracking, calibrating hand aim, gestures", onOpenHands)
+                    NavRow(stringResource(R.string.home_hands), stringResource(R.string.home_hands_detail), onOpenHands)
                     RowDivider()
-                    NavRow("Trackpad", "Cursor and scroll speeds, scroll strip, window curve, in its Menu", onOpenTrackpadSettings)
+                    NavRow(stringResource(R.string.home_trackpad), stringResource(R.string.home_trackpad_detail), onOpenTrackpadSettings)
                     // 1.1.14: the logs to Mike by email, the one line saying what goes.
                     RowDivider()
                     NavRow(com.hayeco.flipspaces.core.LogBundle.BUTTON, com.hayeco.flipspaces.core.LogBundle.WHAT_IS_SENT, onSendLogs)
@@ -231,17 +232,17 @@ fun PhoneScreen(
                     Modifier.fillMaxWidth().clickable { advanced = !advanced }.padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Advanced", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                    Text(if (advanced) "Hide" else "Show", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.home_advanced), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                    Text(if (advanced) stringResource(R.string.home_hide) else stringResource(R.string.home_show), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 }
             }
             if (advanced) {
                 item {
                     GlassCard {
-                        NavRow("Head tracking diagnostics", "The glasses' sensor stream, delay check and levels", onOpenHeadTracking)
+                        NavRow(stringResource(R.string.home_head_tracking_diagnostics), stringResource(R.string.home_head_tracking_diagnostics_detail), onOpenHeadTracking)
                         RowDivider()
                         // 0.5.102 (Mike): from the trackpad's Menu to here.
-                        NavRow("Glasses report", "What these glasses report and what worked, saved to share", onGlassesReport)
+                        NavRow(stringResource(R.string.home_glasses_report), stringResource(R.string.home_glasses_report_detail), onGlassesReport)
                     }
                 }
                 // 0.5.101 (Mike): the freeform setup card is gone (it asked for adb settings only the old flat DeX windows
@@ -254,7 +255,7 @@ fun PhoneScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(14.dp),
-                        label = { Text("Open an app on the glasses") },
+                        label = { Text(stringResource(R.string.home_open_app_on_glasses)) },
                     )
                 }
                 items(apps, key = { it.key }) { app ->
@@ -287,7 +288,7 @@ private fun Header(connected: Boolean) {
                 StatusDot(if (connected) Color(Look.ACCENT) else Color(Look.INK_3))
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    if (connected) "Glasses connected" else "Plug in your glasses to begin",
+                    if (connected) stringResource(R.string.home_glasses_connected) else stringResource(R.string.home_plug_in_to_begin),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -374,17 +375,15 @@ private fun GlassesCard(glasses: GlassesState, hosting: HostingAssessment?) {
                 is GlassesState.Connected -> {
                     Text(glasses.display.kindLabel, style = MaterialTheme.typography.titleMedium)
                     Text(glasses.display.summary, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    hosting?.let { Text("Mode: ${it.mode.label}", style = MaterialTheme.typography.bodyMedium) }
+                    hosting?.let { Text(stringResource(R.string.home_mode_line, it.mode.label), style = MaterialTheme.typography.bodyMedium) }
                     if (hosting?.dexOwnsDisplay == true) {
-                        Text("Samsung DeX is running the glasses' display.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.home_dex_owns_display), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 is GlassesState.NotConnected -> {
-                    Text("No glasses yet", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.home_no_glasses_yet), style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Plug your XR glasses straight into the phone's USB-C port. If the glasses show a copy of the phone and " +
-                            "nothing appears here, the phone is mirroring: turn on its external display mode (on Samsung, " +
-                            "DeX on an external display).",
+                        stringResource(R.string.home_no_glasses_help),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -407,10 +406,10 @@ private fun MirrorCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("The glasses are mirroring the phone", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.home_mirroring_title), style = MaterialTheme.typography.titleMedium)
             Text(HostingAssessor.MIRROR_MESSAGE, style = MaterialTheme.typography.bodyMedium)
             hosting.lastError?.let {
-                Text("Android said:", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.home_android_said_label), style = MaterialTheme.typography.bodySmall)
                 SelectionContainer {
                     Text(it, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
                 }
@@ -419,22 +418,22 @@ private fun MirrorCard(
                 Text(target.hint, style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = { onOpenSettings(target) }) { Text(target.buttonLabel) }
             }
-            TextButton(onClick = onRetry) { Text("Try again") }
+            TextButton(onClick = onRetry) { Text(stringResource(R.string.home_try_again)) }
         }
     }
 }
 
 /** 0.5.101: the update check's line: what the last check found and when, or that it is off. */
-private fun updateLine(on: Boolean, status: com.hayeco.flipspaces.UpdateChecker.Status?): String {
-    if (!on) return "Off. Turn on to hear about new versions on GitHub Releases"
-    val s = status ?: return "Every 12 hours, on GitHub Releases"
+private fun updateLine(context: android.content.Context, on: Boolean, status: com.hayeco.flipspaces.UpdateChecker.Status?): String {
+    if (!on) return context.getString(R.string.home_update_off)
+    val s = status ?: return context.getString(R.string.home_update_every_12h)
     val now = System.currentTimeMillis()
-    val ago = if (now - s.atMs < 60_000L) "just now" else android.text.format.DateUtils.getRelativeTimeSpanString(s.atMs, now, android.text.format.DateUtils.MINUTE_IN_MILLIS).toString()
+    val ago = if (now - s.atMs < 60_000L) context.getString(R.string.home_just_now) else android.text.format.DateUtils.getRelativeTimeSpanString(s.atMs, now, android.text.format.DateUtils.MINUTE_IN_MILLIS).toString()
     return when (s.result) {
-        com.hayeco.flipspaces.UpdateChecker.Result.CHECKING -> "Checking GitHub Releases..."
-        com.hayeco.flipspaces.UpdateChecker.Result.UP_TO_DATE -> "Up to date. Checked $ago"
-        com.hayeco.flipspaces.UpdateChecker.Result.AVAILABLE -> "A new version is available. Checked $ago"
-        com.hayeco.flipspaces.UpdateChecker.Result.NO_RELEASES -> "No releases published yet. Checked $ago"
-        com.hayeco.flipspaces.UpdateChecker.Result.FAILED -> "Could not reach GitHub. Tried $ago"
+        com.hayeco.flipspaces.UpdateChecker.Result.CHECKING -> context.getString(R.string.home_update_checking)
+        com.hayeco.flipspaces.UpdateChecker.Result.UP_TO_DATE -> context.getString(R.string.home_update_up_to_date, ago)
+        com.hayeco.flipspaces.UpdateChecker.Result.AVAILABLE -> context.getString(R.string.home_update_available, ago)
+        com.hayeco.flipspaces.UpdateChecker.Result.NO_RELEASES -> context.getString(R.string.home_update_no_releases, ago)
+        com.hayeco.flipspaces.UpdateChecker.Result.FAILED -> context.getString(R.string.home_update_failed, ago)
     }
 }

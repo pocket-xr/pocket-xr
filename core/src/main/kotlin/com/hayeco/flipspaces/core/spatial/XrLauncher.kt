@@ -1,6 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
 import com.hayeco.flipspaces.core.AppEntry
+import com.hayeco.flipspaces.core.UiText
 import com.hayeco.flipspaces.core.pointer.Phase
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -304,19 +305,19 @@ data class LauncherPlacement(val yawDeg: Float, val pitchDeg: Float, val distanc
 }
 
 /** 0.5.25: the home tray's round buttons, each mapped to something Pocket XR has. */
-enum class LauncherButton(val label: String) {
+enum class LauncherButton(private val key: String, private val english: String) {
     /**
      * PC VR (private builds with the stream built in): first in the row, a built-in part of Pocket XR rather than an app
      * among the user's (9 November 2026, Mike: "shouldnt the PC VR tile be with the default app launcher buttons so it
      * doesnt look like just another app"). Drawn with a soft breathing glow.
      */
-    PC_VR("PC VR"),
+    PC_VR("spatial_launcher_pc_vr", "PC VR"),
 
     /** Recentre: brings the Space back in front. */
-    RECENTRE("Recentre"),
+    RECENTRE("spatial_launcher_recentre", "Recentre"),
 
     /** Steady mode, beside Recentre, on glasses that have it. */
-    STEADY("Steady"),
+    STEADY("spatial_launcher_steady", "Steady"),
 
     /**
      * Pocket XR's 3D / 2D switch. 0.5.45 (Mike: "when users click 3D, they will think that the media they are watching
@@ -324,17 +325,21 @@ enum class LauncherButton(val label: String) {
      * windows their distance in the room (each eye sees them from its own side); what an app shows stays flat. Named for
      * that, "Depth", and drawn with its state, On or Off.
      */
-    VIEW("Depth (3D side by side)"),
+    VIEW("spatial_launcher_depth", "Depth (3D side by side)"),
 
     /**
      * 0.5.46 (Mike: "since the windows presets circle button and the Control Panel circle button open the same window now,
      * just replace the Windows presets circle button with a Notifications button"): the Control Center's Notifications
      * page ([ControlSheets]). 0.5.45's Window presets button opened the Control Center, whose bottom row keeps them.
      */
-    NOTIFICATIONS("Notifications"),
+    NOTIFICATIONS("spatial_page_notifications", "Notifications"),
 
     /** Opens Pocket XR's Control panel. */
-    CONTROLS("Control panel"),
+    CONTROLS("spatial_launcher_control_panel", "Control panel"),
+    ;
+
+    /** The button's tooltip, in the phone's language. */
+    val label: String get() = UiText.get(key, english)
 }
 
 /** 0.5.25: one thing on a launcher page: an app (All apps, or pinned on the home tray) or a round button. */
@@ -372,10 +377,14 @@ data class PlacedItem(val item: LauncherItem, val look: PageLook, val alpha: Flo
 }
 
 /** 0.5.25: the long press menu's items. Uninstall is left out: Pocket XR cannot start the uninstall flow. */
-enum class LauncherMenuItem(val label: String) {
-    APP_INFO("App Info"),
-    PIN("Pin App"),
-    UNPIN("Unpin App"),
+enum class LauncherMenuItem(private val key: String, private val english: String) {
+    APP_INFO("spatial_launcher_app_info", "App Info"),
+    PIN("spatial_launcher_pin_app", "Pin App"),
+    UNPIN("spatial_launcher_unpin_app", "Unpin App"),
+    ;
+
+    /** The row's words, in the phone's language. */
+    val label: String get() = UiText.get(key, english)
 }
 
 /**

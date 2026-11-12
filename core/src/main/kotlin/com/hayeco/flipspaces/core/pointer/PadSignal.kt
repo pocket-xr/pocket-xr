@@ -1,13 +1,18 @@
 package com.hayeco.flipspaces.core.pointer
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 0.5.17: the phone trackpad's pages: 1 Spatial Mouse (the phone aims like a laser pointer),
  * 2 Vertical Trackpad, 3 Horizontal Trackpad. [pageType] is the number the page is stored as.
  */
-enum class PadMode(val label: String, val pageType: Int) {
-    SPATIAL_MOUSE("Spatial Mouse", 1),
-    VERTICAL("Vertical Trackpad", 2),
-    HORIZONTAL("Horizontal Trackpad", 3),
+enum class PadMode(private val labelKey: String, private val labelEnglish: String, val pageType: Int) {
+    SPATIAL_MOUSE("core_pad_spatial_mouse", "Spatial Mouse", 1),
+    VERTICAL("core_pad_vertical", "Vertical Trackpad", 2),
+    HORIZONTAL("core_pad_horizontal", "Horizontal Trackpad", 3),
+    ;
+
+    val label: String get() = UiText.get(labelKey, labelEnglish)
 }
 
 /** A three finger swipe's direction: up Recent apps, down Control panel. */

@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.Display
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.DisplayCandidate
 import com.hayeco.flipspaces.core.DisplayInfoText
 import com.hayeco.flipspaces.core.DisplayType
@@ -55,7 +56,7 @@ class DisplayMonitor(context: Context) {
         val info = DisplayInfoText.parse(runCatching { display.toString() }.getOrNull())
         return DisplayCandidate(
             id = display.displayId,
-            name = display.name ?: "Display ${display.displayId}",
+            name = display.name ?: appContext.getString(R.string.sys_display_fallback_name, display.displayId),
             widthPx = metrics.widthPixels,
             heightPx = metrics.heightPixels,
             densityDpi = metrics.densityDpi,

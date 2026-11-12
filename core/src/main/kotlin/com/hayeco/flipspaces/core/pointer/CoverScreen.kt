@@ -49,6 +49,10 @@ enum class CoverButton(val label: String, val window: Boolean = false) {
 
     /** 0.5.19: curves the window: a tap holds it to curve with a sideways swipe, a slide along the button curves it directly. */
     CURVE("Curve", window = true),
+    ;
+
+    /** The button's word as shown, in the phone's language; [label] stays the English for the log. */
+    val text: String get() = com.hayeco.flipspaces.core.UiText.get("core_cover_" + name.lowercase(), label)
 }
 
 /**

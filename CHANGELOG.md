@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.4.4: Pocket XR in your language
+
+- **Pocket XR now speaks 11 languages:** English, Korean, Japanese, Chinese (simplified and traditional), Spanish,
+  Portuguese (Brazil), French, German, Italian and Russian. It follows your phone's language. On Android 13 and newer
+  you can also pick a language for Pocket XR alone, in Android's settings for the app (App language).
+- Korean, Japanese and Chinese text uses your phone's own font, on the phone and on the glasses.
+- The add-on (1.2) speaks the same languages.
+- The translations are new. If something reads oddly in your language, tell me in an issue or a discussion.
+
 ## 1.4.3: PC VR from Steady mode, and no more upside down
 
 - **PC VR from Steady mode.** Opening PC VR in Steady mode showed SteamVR as two pictures side by side, because Steady

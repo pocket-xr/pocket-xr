@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.pointer
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * 1.2.3 (issue 59: "The keyboard doesn't work for games, because it sends finished text, not key presses, so holding W or
  * Space does nothing in a game like Terraria"): Game keys, two clusters of keys on the open phone's trackpad, beside the
@@ -12,6 +14,9 @@ package com.hayeco.flipspaces.core.pointer
  */
 data class GameKey(val label: String, val keyCode: Int, val x: Float, val y: Float, val w: Float, val h: Float) {
     fun contains(px: Float, py: Float): Boolean = px >= x && px < x + w && py >= y && py < y + h
+
+    /** The key's cap as shown: the keyboard's own key names stay, the way out (Done) is in the phone's language. */
+    val text: String get() = if (keyCode == GameKeyLayout.EXIT) UiText.get("core_game_keys_done", label) else label
 }
 
 /** A key going down or up. */
@@ -56,8 +61,8 @@ object GameKeyLayout {
             row(1f / 3f, 1f / 3f, "R" to R, "F" to F, "Esc" to ESCAPE, "Done" to EXIT) +
             row(2f / 3f, 1f / 3f, "Space" to SPACE)
 
-    const val MENU_ROW = "Game keys"
-    const val MENU_SUBTITLE = "Keys that games feel held down, beside the trackpad"
+    val MENU_ROW: String get() = UiText.get("core_game_keys", "Game keys")
+    val MENU_SUBTITLE: String get() = UiText.get("core_game_keys_subtitle", "Keys that games feel held down, beside the trackpad")
 }
 
 /**

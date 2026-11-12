@@ -1,5 +1,7 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
+
 /**
  * Spots a panel that only ever shows black because its app protects its window (FLAG_SECURE)
  * or plays DRM video (0.4.1): SurfaceFlinger leaves secure layers out of a display that is not
@@ -92,8 +94,8 @@ object SecureWindows {
 object ProtectedOffer {
     fun message(app: String, secure: Boolean): String =
         if (secure) {
-            "$app protects its screen (FLAG_SECURE), so it shows black on a panel. Pinch here to open it as a DeX window."
+            UiText.format("spatial_protected_secure", "%1\$s protects its screen (FLAG_SECURE), so it shows black on a panel. Pinch here to open it as a DeX window.", app)
         } else {
-            "$app shows only black here, likely protected video (DRM). Pinch here to open it as a DeX window."
+            UiText.format("spatial_protected_drm", "%1\$s shows only black here, likely protected video (DRM). Pinch here to open it as a DeX window.", app)
         }
 }

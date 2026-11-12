@@ -7,6 +7,8 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import com.hayeco.flipspaces.FlipSpacesApp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.Look
 import com.hayeco.flipspaces.core.spatial.ArrangeKind
 import com.hayeco.flipspaces.core.spatial.ControlCenterLayout
@@ -27,6 +29,8 @@ import com.hayeco.flipspaces.core.spatial.FollowMode
  * pointer out of the card in 3D ([SpaceRenderer.drawControls]), so a hover no longer repaints and uploads the whole card.
  */
 internal object ControlCenterPainter {
+    private fun t(id: Int, vararg args: Any): String = FlipSpacesApp.text(id, *args)
+
     private const val ACCENT = Look.ACCENT_DEEP
     private const val ACCENT_HOT = Look.ACCENT
     private const val WHITE = 0xFFFFFFFF.toInt()
@@ -114,7 +118,7 @@ internal object ControlCenterPainter {
                 }
                 val fg = if (selected) Color.rgb(18, 20, 28) else white(0.9f * dim)
                 centred(c, item.mode.label, cx, cy - 2f, 26f, fg)
-                centred(c, if (item.mode == FollowMode.SPACE_LOCKED && !item.mode.available) "6DoF, not on these glasses" else item.mode.dof, cx, cy + 26f, 19f, if (selected) Color.argb(160, 18, 20, 28) else white(0.5f * dim), regular)
+                centred(c, if (item.mode == FollowMode.SPACE_LOCKED && !item.mode.available) t(R.string.space_cc_6dof_unavailable) else item.mode.dof, cx, cy + 26f, 19f, if (selected) Color.argb(160, 18, 20, 28) else white(0.5f * dim), regular)
             }
             is ControlItem.Arrange -> {
                 fill.color = if (hot) ACCENT else white(0.08f)
@@ -149,12 +153,12 @@ internal object ControlCenterPainter {
                 c.drawCircle(bx, cy, 26f, fill)
                 drawToggleGlyph(c, item, bx, cy, white(0.95f * dim))
                 val name = when (item) {
-                    ControlItem.SpatialMouse -> "Spatial Mouse"
-                    ControlItem.Hands -> "Hand tracking"
-                    ControlItem.CursorFollowsHead -> "Cursor follows head"
-                    ControlItem.Wifi -> "Wi-Fi"
-                    ControlItem.Bluetooth -> "Bluetooth"
-                    else -> "Snap windows"
+                    ControlItem.SpatialMouse -> t(R.string.space_cc_spatial_mouse)
+                    ControlItem.Hands -> t(R.string.space_cc_hand_tracking)
+                    ControlItem.CursorFollowsHead -> t(R.string.space_cc_cursor_follows_head)
+                    ControlItem.Wifi -> t(R.string.space_wifi)
+                    ControlItem.Bluetooth -> t(R.string.space_bluetooth)
+                    else -> t(R.string.space_cc_snap_windows)
                 }
                 text.typeface = bold
                 text.textSize = 25f
@@ -165,11 +169,11 @@ internal object ControlCenterPainter {
                 text.color = white(0.65f * dim)
                 val status = when (item) {
                     // 0.5.46: what each is connected to, and a chevron: a press opens its page.
-                    ControlItem.Wifi -> if (!s.wifi.available) "Tap for details" else s.wifi.connected ?: if (s.wifi.enabled) "Not connected" else "Off"
-                    ControlItem.Bluetooth -> if (!s.bt.permitted) "Tap for details" else s.bt.devices.count { it.connected }.let { n -> if (!s.bt.enabled) "Off" else if (n == 0) "No devices connected" else if (n == 1) s.bt.devices.first { it.connected }.name else "$n devices connected" }
+                    ControlItem.Wifi -> if (!s.wifi.available) t(R.string.space_cc_tap_for_details) else s.wifi.connected ?: if (s.wifi.enabled) t(R.string.space_cc_not_connected) else t(R.string.space_off)
+                    ControlItem.Bluetooth -> if (!s.bt.permitted) t(R.string.space_cc_tap_for_details) else s.bt.devices.count { it.connected }.let { n -> if (!s.bt.enabled) t(R.string.space_off) else if (n == 0) t(R.string.space_cc_no_devices) else if (n == 1) s.bt.devices.first { it.connected }.name else FlipSpacesApp.plural(R.plurals.space_cc_devices_connected, n, n) }
                     // 0.5.91: hands need the glasses' camera (the Aura's); the One has none.
-                    ControlItem.Hands -> if (!z.enabled) "No camera on these glasses" else if (on) "On" else "Off"
-                    else -> if (!z.enabled) "Not with Spatial Mouse" else if (on) "On" else "Off"
+                    ControlItem.Hands -> if (!z.enabled) t(R.string.space_cc_no_camera) else if (on) t(R.string.space_on) else t(R.string.space_off)
+                    else -> if (!z.enabled) t(R.string.space_cc_not_with_spatial_mouse) else if (on) t(R.string.space_on) else t(R.string.space_off)
                 }
                 c.drawText(ellipsized(status, r.right - bx - 90f), bx + 42f, cy + 25f, text)
                 if (item == ControlItem.Wifi || item == ControlItem.Bluetooth) chevron(c, r.right - 30f, cy, white(0.7f))
@@ -199,7 +203,7 @@ internal object ControlCenterPainter {
             ControlItem.Recentre -> {
                 fill.color = if (hot) white(0.20f) else white(0.10f)
                 c.drawRoundRect(r, r.height() / 2f, r.height() / 2f, fill)
-                centred(c, "Recenter view", cx, cy + 9f, 25f, WHITE)
+                centred(c, t(R.string.space_cc_recenter_view), cx, cy + 9f, 25f, WHITE)
             }
             // 0.5.99: a red dot and Record; while recording, a red pill with a white square and Stop.
             ControlItem.Record -> {
@@ -218,7 +222,7 @@ internal object ControlCenterPainter {
                     fill.color = Color.rgb(235, 64, 64)
                     c.drawCircle(mx, cy, 11f, fill)
                 }
-                centred(c, if (rec) "Stop" else "Record", cx + r.height() * 0.22f, cy + 9f, 25f, WHITE)
+                centred(c, if (rec) t(R.string.space_cc_stop) else t(R.string.space_cc_record), cx + r.height() * 0.22f, cy + 9f, 25f, WHITE)
             }
             ControlItem.PageBack -> {
                 fill.color = if (hot) white(0.22f) else white(0.10f)
@@ -238,7 +242,7 @@ internal object ControlCenterPainter {
                 fill.color = WHITE
                 val knobR = r.height() / 2f - 8f
                 c.drawCircle(if (on) r.right - r.height() / 2f else r.left + r.height() / 2f, cy, knobR, fill)
-                centred(c, if (on) "On" else "Off", if (on) r.left + (r.width() - r.height()) / 2f else r.right - (r.width() - r.height()) / 2f, cy + 9f, 25f, WHITE)
+                centred(c, if (on) t(R.string.space_on) else t(R.string.space_off), if (on) r.left + (r.width() - r.height()) / 2f else r.right - (r.width() - r.height()) / 2f, cy + 9f, 25f, WHITE)
             }
             is ControlItem.NoteOpen -> {
                 val n = s.notes.getOrNull(item.index) ?: return
@@ -275,12 +279,12 @@ internal object ControlCenterPainter {
                 c.drawLine(cx - k, cy - k, cx + k, cy + k, stroke)
                 c.drawLine(cx + k, cy - k, cx - k, cy + k, stroke)
             }
-            ControlItem.NotesClearAll -> outlineButton(c, z, hot, "Clear all")
-            ControlItem.NotesGrant -> filledButton(c, z, hot, "Allow notification access")
-            ControlItem.BtGrant -> filledButton(c, z, hot, "Allow Bluetooth access")
-            ControlItem.WifiAdd -> filledButton(c, z, hot, if (s.wifi.available) "+ Add a network" else "Open Wi-Fi settings")
-            ControlItem.BtPair -> filledButton(c, z, hot, "+ Pair a new device")
-            is ControlItem.WifiForget -> outlineButton(c, z, hot, if (r.width() > 300f) "Forget ${item.ssid}" else "Forget")
+            ControlItem.NotesClearAll -> outlineButton(c, z, hot, t(R.string.space_cc_clear_all))
+            ControlItem.NotesGrant -> filledButton(c, z, hot, t(R.string.space_cc_allow_notification_access))
+            ControlItem.BtGrant -> filledButton(c, z, hot, t(R.string.space_cc_allow_bluetooth_access))
+            ControlItem.WifiAdd -> filledButton(c, z, hot, if (s.wifi.available) t(R.string.space_cc_add_network) else t(R.string.space_cc_open_wifi_settings))
+            ControlItem.BtPair -> filledButton(c, z, hot, t(R.string.space_cc_pair_device))
+            is ControlItem.WifiForget -> outlineButton(c, z, hot, if (r.width() > 300f) t(R.string.space_cc_forget_named, item.ssid) else t(R.string.space_cc_forget))
             ControlItem.WifiCurrent -> {
                 fill.color = white(0.07f)
                 c.drawRoundRect(r, 26f, 26f, fill)
@@ -289,11 +293,11 @@ internal object ControlCenterPainter {
                 text.typeface = bold
                 text.textSize = 28f
                 text.color = WHITE
-                c.drawText(ellipsized(s.wifi.connected ?: if (s.wifi.enabled) "Not connected" else "Wi-Fi is off", r.right - gx - 70f), gx + 46f, cy - 2f, text)
+                c.drawText(ellipsized(s.wifi.connected ?: if (s.wifi.enabled) t(R.string.space_cc_not_connected) else t(R.string.space_cc_wifi_off), r.right - gx - 70f), gx + 46f, cy - 2f, text)
                 text.typeface = regular
                 text.textSize = 21f
                 text.color = white(0.65f)
-                c.drawText(ellipsized(if (s.wifi.connected != null) s.wifi.detail else "Pick a saved network or add one", r.right - gx - 70f), gx + 46f, cy + 28f, text)
+                c.drawText(ellipsized(if (s.wifi.connected != null) s.wifi.detail else t(R.string.space_cc_pick_network), r.right - gx - 70f), gx + 46f, cy + 28f, text)
             }
             is ControlItem.WifiSaved -> {
                 fill.color = white(0.05f)
@@ -321,7 +325,7 @@ internal object ControlCenterPainter {
                 text.typeface = regular
                 text.textSize = 20f
                 text.color = if (on) Look.ACCENT else white(0.55f)
-                c.drawText(if (on) "Connected" else "Paired", gx + 40f, cy + 24f, text)
+                c.drawText(if (on) t(R.string.space_cc_connected) else t(R.string.space_cc_paired), gx + 40f, cy + 24f, text)
             }
             is ControlItem.Preset -> {
                 // 0.5.45: a saved preset, its name; a press opens its windows.
@@ -342,7 +346,7 @@ internal object ControlCenterPainter {
                 stroke.color = white(0.35f * dim)
                 stroke.strokeWidth = 2.5f
                 c.drawRoundRect(rect(z, 1.5f), 26f, 26f, stroke)
-                centred(c, if (s.presets.isEmpty()) "+ Save these windows" else "+ Save current", cx, cy + 9f, 25f, white(dim))
+                centred(c, if (s.presets.isEmpty()) t(R.string.space_cc_save_windows) else t(R.string.space_cc_save_current), cx, cy + 9f, 25f, white(dim))
             }
         }
     }

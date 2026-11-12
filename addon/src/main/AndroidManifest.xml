@@ -5,7 +5,7 @@
          granted whichever of the two is installed first. -->
     <permission
         android:name="com.hayeco.flipspaces.permission.ADDON_LINK"
-        android:label="Pocket XR add-on link"
+        android:label="@string/addon_link_permission_label"
         android:protectionLevel="signature" />
 
     <!-- The app names on the Notifications page (package visibility, API 30+). -->
@@ -20,6 +20,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
+        android:localeConfig="@xml/locales_config"
         android:label="@string/app_name"
         android:supportsRtl="true">
 

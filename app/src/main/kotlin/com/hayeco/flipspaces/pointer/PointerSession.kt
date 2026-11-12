@@ -9,6 +9,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import com.hayeco.flipspaces.GlassesHomeActivity
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.SpacesLauncher
 import com.hayeco.flipspaces.SpacesState
 import com.hayeco.flipspaces.core.AppCatalog
@@ -134,7 +135,7 @@ class PointerSession(private val context: Context) {
 
     fun onSignal(signal: PointerSignal, from: HandProviderKind) {
         val c = controller ?: run {
-            if (signal is PointerSignal.Down || (signal as? PointerSignal.ForHand)?.signal is PointerSignal.Down) PointerHub.report("No glasses display, so there is nowhere to click.")
+            if (signal is PointerSignal.Down || (signal as? PointerSignal.ForHand)?.signal is PointerSignal.Down) PointerHub.report(context.getString(R.string.sys_pointer_no_display))
             return
         }
         source = from
@@ -277,7 +278,7 @@ class PointerSession(private val context: Context) {
         Thread {
             val placed = SpacesState.choices.value.occupied.values.toList()
             val apps = (placed + catalog).distinctBy { it.key }.take(DOCK_APPS)
-            val items = listOf(DockItem("Pocket XR home", null) { openHome(display) }) +
+            val items = listOf(DockItem(context.getString(R.string.sys_pointer_home), null) { openHome(display) }) +
                 apps.map { app -> DockItem(app.label, installedApps.icon(app, ICON_PX)) { launch(app, display) } }
             main.post {
                 showDockItems(items)
@@ -289,7 +290,7 @@ class PointerSession(private val context: Context) {
 
     private fun openHome(display: DisplayCandidate) {
         val failure = AppLauncher.openGlassesHome(context, display.id)
-        flash(failure?.let { "Could not open Pocket XR home: ${it.message}" } ?: "Pocket XR home")
+        flash(failure?.let { context.getString(R.string.sys_pointer_home_failed, it.message.toString()) } ?: context.getString(R.string.sys_pointer_home))
     }
 
     private fun launch(app: AppEntry, display: DisplayCandidate) {
@@ -300,9 +301,9 @@ class PointerSession(private val context: Context) {
             val failure = AppLauncher.openGlassesHome(context, display.id)
             if (failure == null) {
                 SpacesState.queue(SpacesState.PendingLaunch(app, display.id, SystemClock.elapsedRealtime()))
-                "Opening Pocket XR home, then ${app.label}."
+                context.getString(R.string.sys_pointer_opening_home_then, app.label)
             } else {
-                "Could not open ${app.label}: ${failure.message}"
+                context.getString(R.string.sys_pointer_open_failed, app.label, failure.message.toString())
             }
         }
         flash(message)

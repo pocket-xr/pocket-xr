@@ -51,7 +51,7 @@ class GlassesReadyService : Service() {
     private fun notification(): Notification {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL, "Ready for the glasses", NotificationManager.IMPORTANCE_LOW).apply {
+            NotificationChannel(CHANNEL, getString(R.string.home_channel_glasses_ready), NotificationManager.IMPORTANCE_LOW).apply {
                 setShowBadge(false)
                 setSound(null, null)
                 enableVibration(false)

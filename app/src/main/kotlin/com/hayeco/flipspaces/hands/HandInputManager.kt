@@ -45,9 +45,14 @@ object HandInputManager {
     val statuses: Flow<Map<HandProviderKind, ProviderStatus>> =
         combine(xreal, GlassesCameraProvider.status, _trackpadOpen) { sdk, camera, pad ->
             mapOf(
-                HandProviderKind.XREAL_SDK to sdk,
+                // The reason in the phone's language, read when shown (not at class init).
+                HandProviderKind.XREAL_SDK to if (sdk is ProviderStatus.Unavailable && sdk.reason == XREAL_SDK_REASON) {
+                    ProviderStatus.Unavailable(com.hayeco.flipspaces.FlipSpacesApp.text(com.hayeco.flipspaces.R.string.hands_xreal_sdk_reason))
+                } else {
+                    sdk
+                },
                 HandProviderKind.GLASSES_CAMERA to camera,
-                HandProviderKind.TRACKPAD to if (pad) ProviderStatus.Running("Trackpad open on the Flip") else ProviderStatus.Ready,
+                HandProviderKind.TRACKPAD to if (pad) ProviderStatus.Running(com.hayeco.flipspaces.FlipSpacesApp.text(com.hayeco.flipspaces.R.string.hands_trackpad_open)) else ProviderStatus.Ready,
             )
         }
 
@@ -148,7 +153,7 @@ object HandInputManager {
                 null
             }
             is ProviderStatus.Running -> null
-            is ProviderStatus.NeedsPermission -> "Hand tracking needs: ${s.what}"
+            is ProviderStatus.NeedsPermission -> context.getString(com.hayeco.flipspaces.R.string.hands_needs_what, s.what)
             is ProviderStatus.Unavailable -> s.reason
         }
     }

@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.tan
 
 /**
@@ -67,7 +68,7 @@ object WideCanvas {
  * shows nothing.
  */
 object DepthPress {
-    const val GLASSES_MENU = "Turn on 3D in your glasses menu first"
+    val GLASSES_MENU: String get() = UiText.get("spatial_depth_glasses_menu", "Turn on 3D in your glasses menu first")
 
     sealed interface Result {
         data object Toggle : Result

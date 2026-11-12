@@ -9,6 +9,8 @@ import android.graphics.Typeface
 import android.opengl.GLES30
 import android.opengl.GLUtils
 import android.util.Log
+import com.hayeco.flipspaces.FlipSpacesApp
+import com.hayeco.flipspaces.R
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.atan2
@@ -114,12 +116,12 @@ class PcVrLoading {
         if (key == cardKey) return
         cardKey = key
         val (title, line) = when (phase) {
-            Phase.FINDING_PC -> words ?: if (slow) "Still looking for your PC" to "Check the Pocket XR PC helper is running and both are on the same Wi-Fi."
-            else "Connecting to your PC" to "This takes a few seconds."
-            Phase.STARTING -> "Starting SteamVR" to "Almost there."
-            Phase.RECONNECTING -> "Reconnecting to your PC" to "Your game keeps running."
-            Phase.LEAVING -> "Going back to your Space" to "Keep holding, or let go to stay."
-            Phase.STALLED -> "Waiting for your PC" to "The picture paused. It comes back by itself."
+            Phase.FINDING_PC -> words ?: if (slow) FlipSpacesApp.text(R.string.sys_pcvr_still_looking) to FlipSpacesApp.text(R.string.sys_pcvr_still_looking_line)
+            else FlipSpacesApp.text(R.string.sys_pcvr_connecting) to FlipSpacesApp.text(R.string.sys_pcvr_few_seconds)
+            Phase.STARTING -> FlipSpacesApp.text(R.string.sys_pcvr_starting_steamvr) to FlipSpacesApp.text(R.string.sys_pcvr_almost_there)
+            Phase.RECONNECTING -> FlipSpacesApp.text(R.string.sys_pcvr_reconnecting) to FlipSpacesApp.text(R.string.sys_pcvr_reconnecting_line)
+            Phase.LEAVING -> FlipSpacesApp.text(R.string.sys_pcvr_leaving) to FlipSpacesApp.text(R.string.sys_pcvr_leaving_line)
+            Phase.STALLED -> FlipSpacesApp.text(R.string.sys_pcvr_stalled) to FlipSpacesApp.text(R.string.sys_pcvr_stalled_line)
         }
         paintCard(title, line, left, right, phase != Phase.LEAVING && phase != Phase.STALLED)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, cardTex)
@@ -145,7 +147,7 @@ class PcVrLoading {
         paint.textSize = 30f
         paint.letterSpacing = 0.25f
         paint.color = Color.rgb(127, 168, 255)
-        canvas.drawText("PC VR", cx, 92f, paint)
+        canvas.drawText(FlipSpacesApp.text(R.string.sys_pcvr_name), cx, 92f, paint)
         paint.letterSpacing = 0f
 
         paint.textSize = 66f
@@ -163,9 +165,9 @@ class PcVrLoading {
         val both = left == Pad.RESTED && right == Pad.RESTED
         paint.textSize = 30f
         paint.color = if (both) Color.rgb(140, 220, 170) else Color.rgb(170, 180, 200)
-        canvas.drawText(if (both) "Joy-Cons ready" else "While you wait, set both Joy-Cons down flat", cx, 530f, paint)
-        pill(cx - 120f, 588f, "Left", left, paint)
-        pill(cx + 120f, 588f, "Right", right, paint)
+        canvas.drawText(FlipSpacesApp.text(if (both) R.string.sys_pcvr_joycons_ready else R.string.sys_pcvr_joycons_rest), cx, 530f, paint)
+        pill(cx - 120f, 588f, FlipSpacesApp.text(R.string.sys_pcvr_pad_left), left, paint)
+        pill(cx + 120f, 588f, FlipSpacesApp.text(R.string.sys_pcvr_pad_right), right, paint)
     }
 
     private fun pill(cx: Float, cy: Float, name: String, pad: Pad, paint: Paint) {
@@ -188,7 +190,7 @@ class PcVrLoading {
             Pad.AWAKE -> ""
             Pad.NONE -> ""
         }
-        canvas.drawText(if (pad == Pad.NONE) "$name: off" else mark + name, cx, cy + 10f, paint)
+        canvas.drawText(if (pad == Pad.NONE) FlipSpacesApp.text(R.string.sys_pcvr_pad_off, name) else mark + name, cx, cy + 10f, paint)
     }
 
     private fun link(vsSrc: String, fsSrc: String): Int {

@@ -69,7 +69,7 @@ class GlassesHomeActivity : ComponentActivity() {
                 }
 
                 GlassesHomeScreen(
-                    displaySummary = me?.summary ?: "Display $displayId",
+                    displaySummary = me?.summary ?: getString(R.string.home_display_number, displayId),
                     choices = choices,
                     apps = apps,
                     status = status,
@@ -138,7 +138,7 @@ class GlassesHomeActivity : ComponentActivity() {
     private fun launchHere(app: AppEntry, source: LaunchSource): String {
         val id = display?.displayId ?: Display.DEFAULT_DISPLAY
         val target = monitor.snapshot().firstOrNull { it.id == id }
-            ?: return "The glasses display went away.".also { status = it }
+            ?: return getString(R.string.home_display_went_away).also { status = it }
         val windowing = FreeformSetup.evaluate(WindowingProbe.read(this))
         return SpaceRouting.launch(this, app, target, windowing, source) { d ->
             SpacesLauncher.launchFromHome(this, app, d, windowing)

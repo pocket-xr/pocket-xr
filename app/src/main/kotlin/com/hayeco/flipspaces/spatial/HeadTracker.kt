@@ -9,6 +9,8 @@ import android.net.NetworkRequest
 import android.os.Build
 import android.os.SystemClock
 import android.util.Log
+import com.hayeco.flipspaces.FlipSpacesApp
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.ShizukuStatus
 import com.hayeco.flipspaces.core.spatial.AirImuProtocol
 import com.hayeco.flipspaces.core.spatial.BiasSavePolicy
@@ -735,7 +737,7 @@ object HeadTracker {
                 val names = scan.networks.map { n -> (listOf(n.iface) + n.addresses.filter { '.' in it }).joinToString(" ") } +
                     scan.kernel.map { "${it.first} ${it.second.hostAddress} (no Android network)" }
                 report(HeadTrackingStatus.NoRoute(names))
-                _answer.value = "No route to ${OneImuProtocol.HOST} on ${names.joinToString(", ")}: nothing is tried until the glasses' network changes or they are plugged in again."
+                _answer.value = FlipSpacesApp.text(R.string.head_no_route, OneImuProtocol.HOST, names.joinToString(", "))
                 Log.i(TAG, "head tracking: no route to ${OneImuProtocol.HOST} on ${names.joinToString(", ")}; waiting for a network change")
                 if (!waitFor(Long.MAX_VALUE, scan.fingerprint, context)) return
                 continue
@@ -763,7 +765,7 @@ object HeadTracker {
                     if (plain != null && (why == null || GlassesReach.noAnswer(error))) why = plain
                     tried += "${route.label}: $error"
                     _attempts.value = tried.toList()
-                    _connectResult.value = "Failed over ${route.label}: $error" + (explained?.let { "\n$it" } ?: "")
+                    _connectResult.value = FlipSpacesApp.text(R.string.head_failed_over, route.label, error) + (explained?.let { "\n$it" } ?: "")
                     Log.i(TAG, "connect over ${route.label} failed: $error" + (explained?.let { " ($it)" } ?: ""))
                     report(HeadTrackingStatus.ConnectFailed(route.label, error + (explained?.let { ". $it" } ?: "")))
                     continue
@@ -771,8 +773,8 @@ object HeadTracker {
                 tried += "${route.label}: connected"
                 _attempts.value = tried.toList()
                 _route.value = route.label
-                _answer.value = "The glasses answered on ${route.host}:${OneImuProtocol.STREAM_PORT} over ${route.label}."
-                _connectResult.value = "Connected over ${route.label} (${link.local})"
+                _answer.value = FlipSpacesApp.text(R.string.head_answered, route.host, OneImuProtocol.STREAM_PORT.toString(), route.label)
+                _connectResult.value = FlipSpacesApp.text(R.string.head_connected_over, route.label, link.local.toString())
                 Log.i(TAG, "head tracking route: connected over ${route.label} (${link.local})")
                 openLink = link
                 sourceLine = "TCP ${OneImuProtocol.HOST}:${OneImuProtocol.STREAM_PORT} over ${route.label}"
@@ -790,13 +792,13 @@ object HeadTracker {
                 if (Thread.currentThread().isInterrupted) return
                 // A stream that worked starts the backoff over; one that never sent a report does not.
                 if (streamed) backoff.reset()
-                why = if (streamed) "The stream stopped." else "The glasses accepted the connection but sent no head tracking reports."
+                why = FlipSpacesApp.text(if (streamed) R.string.head_stream_stopped else R.string.head_no_reports)
                 break
             }
             if (why != null) _answer.value = why
             val delay = backoff.nextDelayMs()
             val last = _status.value
-            val reason = why ?: (last as? HeadTrackingStatus.ConnectFailed)?.let { "Could not connect over ${it.network}." } ?: "Could not connect."
+            val reason = why ?: (last as? HeadTrackingStatus.ConnectFailed)?.let { FlipSpacesApp.text(R.string.head_could_not_connect_over, it.network) } ?: FlipSpacesApp.text(R.string.head_could_not_connect)
             report(HeadTrackingStatus.RetryLater(reason, (delay / 1000).toInt()))
             Log.i(TAG, "head tracking: next try in ${delay / 1000} s (failed round ${backoff.failures}; ${GlassesNetwork.ShellHelper.started} shell helpers started so far)")
             if (!waitFor(delay, scan.fingerprint, context)) return
@@ -931,7 +933,7 @@ object HeadTracker {
         if (Thread.currentThread().isInterrupted) return false
         if (streamed) backoff.reset()
         val delay = backoff.nextDelayMs()
-        val why = if (streamed) "The stream stopped." else "The $name took the start command but sent no head tracking reports."
+        val why = if (streamed) FlipSpacesApp.text(R.string.head_stream_stopped) else FlipSpacesApp.text(R.string.head_air_no_reports, name)
         _answer.value = why
         report(HeadTrackingStatus.RetryLater(why, (delay / 1000).toInt()))
         return waitFor(delay, print, context)
@@ -1007,8 +1009,9 @@ object HeadTracker {
         if (streamed) backoff.reset()
         val delay = backoff.nextDelayMs()
         if (streamed) {
-            _answer.value = "The stream stopped."
-            report(HeadTrackingStatus.RetryLater("The stream stopped.", (delay / 1000).toInt()))
+            val stopped = FlipSpacesApp.text(R.string.head_stream_stopped)
+            _answer.value = stopped
+            report(HeadTrackingStatus.RetryLater(stopped, (delay / 1000).toInt()))
         } else {
             _answer.value = HeadTrackingStatus.VITURE_HINT
             report(HeadTrackingStatus.VitureNotYet(device.productId, experimentalOn = true))
@@ -1135,7 +1138,7 @@ object HeadTracker {
     /** Takes the level calibration on the next IMU read: the display is held level now. Any thread. */
     fun takeLevelCalibration() {
         if (!tracking) {
-            _level.value = "Not saved: head tracking is not running."
+            _level.value = FlipSpacesApp.text(R.string.head_level_not_running)
             return
         }
         levelRequested.set(true)
@@ -1145,7 +1148,7 @@ object HeadTracker {
     fun clearLevelCalibration(context: Context) {
         SpaceStore(context).clearLevel()
         applySettings(context)
-        _level.value = "Level calibration cleared."
+        _level.value = context.getString(R.string.head_level_cleared)
         Log.i(TAG, "level calibration: cleared")
     }
 
@@ -1154,13 +1157,13 @@ object HeadTracker {
         val r = fusion.levelReading()
         val c = appContext
         val msg = when {
-            r == null -> "Not saved: hold your head still for a moment first (gravity was not steady or the head was turning)."
+            r == null -> FlipSpacesApp.text(R.string.head_level_not_steady)
             // 0.5.16: pitch up to 25 degrees (the Aura's IMU sits about 14.5 pitched), roll up to 10. 1.1.7: pitch up to 40 (a One Pro).
             !com.hayeco.flipspaces.core.spatial.LevelCalibration.plausible(r.first, r.second) ->
-                "Not saved: the glasses read roll %.1f, pitch %.1f degrees: %s; is the line really on a level edge at eye height?".format(
-                    java.util.Locale.ROOT, r.first, r.second, com.hayeco.flipspaces.core.spatial.LevelCalibration.refusal(r.first, r.second),
+                FlipSpacesApp.text(
+                    R.string.head_level_implausible, r.first, r.second, com.hayeco.flipspaces.core.spatial.LevelCalibration.refusal(r.first, r.second).orEmpty(),
                 )
-            c == null -> "Not saved: no app context."
+            c == null -> FlipSpacesApp.text(R.string.head_level_no_context)
             else -> {
                 val store = SpaceStore(c)
                 store.mountRollDeg = r.first
@@ -1168,7 +1171,7 @@ object HeadTracker {
                 settings = settings.copy(mountRollDeg = r.first, mountPitchDeg = r.second)
                 fusion.settings = settings
                 restartPrediction(fusion)
-                "Saved: the IMU reads roll %.2f, pitch %.2f degrees while the display is level; applied from now on.".format(java.util.Locale.ROOT, r.first, r.second)
+                c.getString(R.string.head_level_saved, r.first, r.second)
             }
         }
         Log.i(TAG, "level calibration: $msg")
@@ -1322,7 +1325,7 @@ object HeadTracker {
                 return everStreamed
             }
             if (n < 0) {
-                report(if (everStreamed) HeadTrackingStatus.Lost(label, "the glasses closed the connection")
+                report(if (everStreamed) HeadTrackingStatus.Lost(label, FlipSpacesApp.text(R.string.head_closed_connection))
                 else HeadTrackingStatus.NoReports(label, ((SystemClock.elapsedRealtime() - startMs) / 1000).toInt(), source.counts.bytes, source.counts, source.noReportsHint))
                 return everStreamed
             }

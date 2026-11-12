@@ -31,8 +31,14 @@ import com.hayeco.flipspaces.core.Look
 class SetupActivity : Activity() {
     private lateinit var column: LinearLayout
 
+    @android.annotation.SuppressLint("DiscouragedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Core's disclosure words in the phone's language: core names a string in this add-on's strings.xml.
+        val res = applicationContext.resources
+        com.hayeco.flipspaces.core.UiText.lookup = { key ->
+            res.getIdentifier(key, "string", packageName).takeIf { it != 0 }?.let { res.getString(it) }
+        }
         column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(28), dp(20), dp(28))
@@ -57,8 +63,8 @@ class SetupActivity : Activity() {
 
     private fun render() {
         column.removeAllViews()
-        column.addView(text("Pocket XR add-on", 26f, Look.INK, bold = true))
-        column.addView(text("Two optional services for Pocket XR. Each stays off until you agree below and switch it on in Android's settings.", 15f, Look.INK_2), gap(16))
+        column.addView(text(getString(R.string.app_name), 26f, Look.INK, bold = true))
+        column.addView(text(getString(R.string.addon_setup_intro), 15f, Look.INK_2), gap(16))
         val only = kindOf(intent)
         for (kind in Disclosure.Kind.entries) if (only == null || only == kind) column.addView(card(kind), gap(16))
     }
@@ -76,14 +82,14 @@ class SetupActivity : Activity() {
             }
             addView(text(t.title, 19f, Look.INK, bold = true))
             addView(text(t.intro, 15f, Look.INK), gap(10))
-            addView(text("It reads:", 15f, Look.INK, bold = true), gap(10))
+            addView(text(getString(R.string.addon_setup_it_reads), 15f, Look.INK, bold = true), gap(10))
             for (line in t.reads) addView(text("•  $line", 15f, Look.INK), gap(4))
             addView(text(t.use, 15f, Look.INK), gap(10))
             addView(text(t.sharing, 15f, Look.INK, bold = true), gap(10))
             addView(text(t.withoutIt, 14f, Look.INK_2), gap(10))
             if (on) {
-                addView(text("On. You can switch it off in Android's settings at any time.", 15f, Look.ACCENT, bold = true), gap(14))
-                addView(button("Open settings", filled = false) { openSettings(kind) }, gap(8))
+                addView(text(getString(R.string.addon_setup_on), 15f, Look.ACCENT, bold = true), gap(14))
+                addView(button(getString(R.string.addon_setup_open_settings), filled = false) { openSettings(kind) }, gap(8))
             } else {
                 addView(button(Disclosure.AGREE, filled = true) { answer(kind, agreed = true) }, gap(14))
                 addView(button(Disclosure.DECLINE, filled = false) { answer(kind, agreed = false) }, gap(8))

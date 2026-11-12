@@ -1,5 +1,6 @@
 package com.hayeco.flipspaces.core.spatial
 
+import com.hayeco.flipspaces.core.UiText
 import kotlin.math.sqrt
 
 /**
@@ -129,10 +130,10 @@ object WideView {
     /** How long the tip stays on the window. */
     const val NOTICE_MS = 4000L
 
-    const val LABEL = "Wide view"
+    val LABEL: String get() = UiText.get("spatial_wide_view", "Wide view")
     // 0.5.96: written fresh (the audit found the earlier two were another product's wording).
-    const val TIP = "Wide view gives this app a landscape screen. Some apps don't lay out well; tap again to turn it off."
-    const val CANNOT_DISABLE = "This app only runs in landscape, so Wide view stays on."
+    val TIP: String get() = UiText.get("spatial_wide_view_tip", "Wide view gives this app a landscape screen. Some apps don't lay out well; tap again to turn it off.")
+    val CANNOT_DISABLE: String get() = UiText.get("spatial_wide_view_cannot_disable", "This app only runs in landscape, so Wide view stays on.")
 
     /** The window's shape for Wide view [on] and what the app asks for (null: not read yet). */
     enum class Shape { FREE, PORTRAIT, LANDSCAPE }

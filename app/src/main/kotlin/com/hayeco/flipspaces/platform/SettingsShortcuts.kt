@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.SettingsTarget
 
 /** Opens the screen that switches the glasses from mirror to extended (DeX) mode. */
@@ -29,7 +30,7 @@ object SettingsShortcuts {
                 lastError = e.message
             }
         }
-        return "Could not open Settings: $lastError"
+        return context.getString(R.string.sys_settings_open_failed, lastError.toString())
     }
 
     private fun resolves(context: Context, target: SettingsTarget): Boolean =
