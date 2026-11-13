@@ -207,6 +207,11 @@
     <string name="pad_direction_inverted">반대</string>
     <string name="pad_cursor_follows_head">커서가 머리를 따라감</string>
     <string name="pad_keeps_screen_on">트랙패드 사용 중 화면 켜짐 유지</string>
+    <string name="pad_head_scroll">머리로 스크롤</string>
+    <string name="pad_head_scroll_subtitle">머리를 살짝 돌리면 화면이 그쪽으로 넘어가요. Steady 모드와 부드럽게 따라가기에서 작동해요.</string>
+    <string name="space_head_scroll_on">머리로 스크롤이 켜졌어요. 머리를 살짝 돌리면 화면이 넘어가요.</string>
+    <string name="space_head_scroll_where">머리로 스크롤이 켜졌어요. Steady 모드와 부드럽게 따라가기에서 작동해요.</string>
+    <string name="space_head_scroll_off">머리로 스크롤이 꺼졌어요</string>
     <string name="pad_controller_subtitle">%1$s. 탭하면 %2$s.</string>
     <string name="pad_set_touch_spots">터치 위치 설정</string>
     <string name="pad_set_touch_spots_subtitle">점을 게임 버튼에 맞춘 다음 해당 컨트롤을 1초 동안 누르세요</string>

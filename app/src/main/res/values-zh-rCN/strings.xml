@@ -207,6 +207,11 @@
     <string name="pad_direction_inverted">反向</string>
     <string name="pad_cursor_follows_head">光标跟随头部</string>
     <string name="pad_keeps_screen_on">触控板保持屏幕常亮</string>
+    <string name="pad_head_scroll">头部滚动</string>
+    <string name="pad_head_scroll_subtitle">稍微转头即可滑动屏幕。适用于 Steady 模式和平滑跟随。</string>
+    <string name="space_head_scroll_on">头部滚动已开启。稍微转头即可滑动屏幕。</string>
+    <string name="space_head_scroll_where">头部滚动已开启。它在 Steady 模式和平滑跟随中有效。</string>
+    <string name="space_head_scroll_off">头部滚动已关闭</string>
     <string name="pad_controller_subtitle">%1$s。点按切换到%2$s。</string>
     <string name="pad_set_touch_spots">设置触控点</string>
     <string name="pad_set_touch_spots_subtitle">把圆点对准游戏自带的按钮，然后按住对应的控制键一秒钟</string>

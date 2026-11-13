@@ -221,6 +221,11 @@
     <string name="pad_direction_inverted">Invertida</string>
     <string name="pad_cursor_follows_head">Cursor sigue la cabeza</string>
     <string name="pad_keeps_screen_on">El panel táctil mantiene la pantalla encendida</string>
+    <string name="pad_head_scroll">Desplazar con la cabeza</string>
+    <string name="pad_head_scroll_subtitle">Gira un poco la cabeza para deslizar tus pantallas. En modo Steady y Seguimiento suave.</string>
+    <string name="space_head_scroll_on">Desplazar con la cabeza activado. Gira un poco la cabeza para deslizar tus pantallas.</string>
+    <string name="space_head_scroll_where">Desplazar con la cabeza activado. Funciona en modo Steady y Seguimiento suave.</string>
+    <string name="space_head_scroll_off">Desplazar con la cabeza desactivado</string>
     <string name="pad_controller_subtitle">%1$s. Toca para cambiar a %2$s.</string>
     <string name="pad_set_touch_spots">Definir puntos táctiles</string>
     <string name="pad_set_touch_spots_subtitle">Apunta el punto al botón del propio juego y mantén el control correspondiente un segundo</string>

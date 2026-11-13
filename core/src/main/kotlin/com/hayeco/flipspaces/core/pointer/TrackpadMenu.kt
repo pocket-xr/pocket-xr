@@ -59,6 +59,8 @@ object TrackpadMenu {
 
         SPACE_TRACKING(Section.SPACE),
         LOCK_SCREENS(Section.SPACE),
+        // 1.4.6 (John Davis): a small head turn slides the screens ([com.hayeco.flipspaces.core.spatial.HeadScroll]).
+        HEAD_SCROLL(Section.SPACE),
         ARRANGE(Section.SPACE),
         ADJUST_ALL(Section.SPACE),
         PRESETS(Section.SPACE),
@@ -138,7 +140,7 @@ object TrackpadMenu {
         // Snap windows and Cursor follows head are the Control Center's on the glasses, so the Menu leaves them out.
         // Arrange and presets stay in both (Mike). [CONTROL_CENTER_ONLY] keeps the list; their rows stay in the app.
         Item.SPACE_TRACKING, Item.SNAP_WINDOWS, Item.CURSOR_FOLLOWS_HEAD -> false
-        Item.LOCK_SCREENS, Item.PRESETS -> true
+        Item.LOCK_SCREENS, Item.PRESETS, Item.HEAD_SCROLL -> true
         Item.ARRANGE, Item.ADJUST_ALL -> s.windowCount > 0
         Item.CURSOR_SPEED, Item.SCROLL_SPEED, Item.STRIP_SPEED, Item.ONE_FINGER_SCROLL -> true
         Item.STRIP_SIDE -> !s.cover

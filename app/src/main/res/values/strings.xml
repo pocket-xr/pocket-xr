@@ -283,6 +283,11 @@
     <string name="pad_direction_inverted">Inverted</string>
     <string name="pad_cursor_follows_head">Cursor follows head</string>
     <string name="pad_keeps_screen_on">Trackpad keeps screen on</string>
+    <string name="pad_head_scroll">Head scroll</string>
+    <string name="pad_head_scroll_subtitle">Turn your head a little to slide your screens. In Steady mode and Smooth Follow.</string>
+    <string name="space_head_scroll_on">Head scroll on. Turn your head a little to slide your screens.</string>
+    <string name="space_head_scroll_where">Head scroll on. It works in Steady mode and Smooth Follow.</string>
+    <string name="space_head_scroll_off">Head scroll off</string>
     <!-- The game controller row's subtitle: %1$s is what the current mode does, %2$s the next mode's name -->
     <string name="pad_controller_subtitle">%1$s. Tap for %2$s.</string>
     <string name="pad_set_touch_spots">Set touch spots</string>

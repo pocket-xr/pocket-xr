@@ -214,6 +214,11 @@
     <string name="pad_direction_inverted">Umgekehrt</string>
     <string name="pad_cursor_follows_head">Cursor folgt Kopf</string>
     <string name="pad_keeps_screen_on">Trackpad hält Bildschirm an</string>
+    <string name="pad_head_scroll">Kopf-Scrollen</string>
+    <string name="pad_head_scroll_subtitle">Dreh den Kopf ein wenig, um deine Bildschirme zu verschieben. Im Steady-Modus und bei Sanftes Folgen.</string>
+    <string name="space_head_scroll_on">Kopf-Scrollen an. Dreh den Kopf ein wenig, um deine Bildschirme zu verschieben.</string>
+    <string name="space_head_scroll_where">Kopf-Scrollen an. Es wirkt im Steady-Modus und bei Sanftes Folgen.</string>
+    <string name="space_head_scroll_off">Kopf-Scrollen aus</string>
     <string name="pad_controller_subtitle">%1$s. Tippen für %2$s.</string>
     <string name="pad_set_touch_spots">Touch-Punkte festlegen</string>
     <string name="pad_set_touch_spots_subtitle">Richte den Punkt auf die Taste im Spiel und halte dann die passende Steuerung eine Sekunde</string>

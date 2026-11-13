@@ -207,6 +207,11 @@
     <string name="pad_direction_inverted">反轉</string>
     <string name="pad_cursor_follows_head">游標跟隨頭部</string>
     <string name="pad_keeps_screen_on">觸控板保持螢幕開啟</string>
+    <string name="pad_head_scroll">頭部捲動</string>
+    <string name="pad_head_scroll_subtitle">稍微轉頭即可滑動螢幕。適用於 Steady 模式和平滑跟隨。</string>
+    <string name="space_head_scroll_on">頭部捲動已開啟。稍微轉頭即可滑動螢幕。</string>
+    <string name="space_head_scroll_where">頭部捲動已開啟。它在 Steady 模式和平滑跟隨中有效。</string>
+    <string name="space_head_scroll_off">頭部捲動已關閉</string>
     <string name="pad_controller_subtitle">%1$s。輕觸切換為%2$s。</string>
     <string name="pad_set_touch_spots">設定觸控點</string>
     <string name="pad_set_touch_spots_subtitle">把圓點對準遊戲本身的按鈕，然後按住對應的控制鍵一秒</string>
