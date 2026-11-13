@@ -221,6 +221,11 @@
     <string name="pad_direction_inverted">Invertida</string>
     <string name="pad_cursor_follows_head">Cursor segue a cabeça</string>
     <string name="pad_keeps_screen_on">Trackpad mantém a tela ligada</string>
+    <string name="pad_head_scroll">Rolar com a cabeça</string>
+    <string name="pad_head_scroll_subtitle">Vire um pouco a cabeça para deslizar suas telas. No modo Steady e em Seguir suave.</string>
+    <string name="space_head_scroll_on">Rolar com a cabeça ligado. Vire um pouco a cabeça para deslizar suas telas.</string>
+    <string name="space_head_scroll_where">Rolar com a cabeça ligado. Funciona no modo Steady e em Seguir suave.</string>
+    <string name="space_head_scroll_off">Rolar com a cabeça desligado</string>
     <string name="pad_controller_subtitle">%1$s. Toque para %2$s.</string>
     <string name="pad_set_touch_spots">Definir pontos de toque</string>
     <string name="pad_set_touch_spots_subtitle">Mire o ponto no botão do próprio jogo e segure o controle correspondente por um segundo</string>

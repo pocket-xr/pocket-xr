@@ -207,6 +207,11 @@
     <string name="pad_direction_inverted">反転</string>
     <string name="pad_cursor_follows_head">カーソルを頭に追従</string>
     <string name="pad_keeps_screen_on">トラックパッド中は画面をオンのまま</string>
+    <string name="pad_head_scroll">頭でスクロール</string>
+    <string name="pad_head_scroll_subtitle">頭を少し回すと画面がスライドします。Steady モードとスムーズフォローで使えます。</string>
+    <string name="space_head_scroll_on">頭でスクロールをオンにしました。頭を少し回すと画面がスライドします。</string>
+    <string name="space_head_scroll_where">頭でスクロールをオンにしました。Steady モードとスムーズフォローで使えます。</string>
+    <string name="space_head_scroll_off">頭でスクロールをオフにしました</string>
     <string name="pad_controller_subtitle">%1$s。タップで %2$s。</string>
     <string name="pad_set_touch_spots">タッチ位置を設定</string>
     <string name="pad_set_touch_spots_subtitle">ドットをゲーム内のボタンに合わせ、対応する操作を 1 秒長押ししてください</string>

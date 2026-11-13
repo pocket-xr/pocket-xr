@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.4.6: scroll your screens with your head
+
+- **Head scroll**, in the Menu under Space (off until you turn it on). In Steady mode and Smooth Follow, turn your
+  head a little left or right and hold it there: your screens slide that way, faster the further you turn. Look back
+  to the middle to stop. Reading the window in front never scrolls, looking down at your phone doesn't either, and the
+  row stops when its last window reaches the middle. Recenter works as before.
+- In Smooth Follow, with Head scroll on, the screens follow your head a little more slowly, so a small turn has time to
+  scroll them before they catch up.
+
 ## 1.4.5: take your layouts to the Steam Deck
 
 - **Share layouts and Import layouts**, under Window presets in the Menu. Share layouts saves your window presets to

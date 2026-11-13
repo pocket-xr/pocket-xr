@@ -221,6 +221,11 @@
     <string name="pad_direction_inverted">Inversé</string>
     <string name="pad_cursor_follows_head">Curseur suit la tête</string>
     <string name="pad_keeps_screen_on">Le pavé tactile garde l\'écran allumé</string>
+    <string name="pad_head_scroll">Défilement par la tête</string>
+    <string name="pad_head_scroll_subtitle">Tournez un peu la tête pour faire glisser vos écrans. En mode Steady et en Suivi fluide.</string>
+    <string name="space_head_scroll_on">Défilement par la tête activé. Tournez un peu la tête pour faire glisser vos écrans.</string>
+    <string name="space_head_scroll_where">Défilement par la tête activé. Il fonctionne en mode Steady et en Suivi fluide.</string>
+    <string name="space_head_scroll_off">Défilement par la tête désactivé</string>
     <string name="pad_controller_subtitle">%1$s. Touchez pour %2$s.</string>
     <string name="pad_set_touch_spots">Définir les points tactiles</string>
     <string name="pad_set_touch_spots_subtitle">Placez le point sur le bouton du jeu, puis maintenez la commande correspondante une seconde</string>

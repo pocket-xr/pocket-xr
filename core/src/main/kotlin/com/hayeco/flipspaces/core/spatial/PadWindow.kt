@@ -504,6 +504,9 @@ enum class FollowMode(private val key: String, private val english: String, val 
  */
 class FollowView {
     var mode: FollowMode = FollowMode.BODY_ANCHOR
+
+    /** 1.4.6: how fast the anchor eases to the head, a second; slower while Head scroll is on ([HeadScroll.FOLLOW_RATE]). */
+    var rate: Float = FOLLOW_RATE
     private var anchor: Quat = Quat.IDENTITY
     private var lastMs = Long.MIN_VALUE
 
@@ -528,7 +531,7 @@ class FollowView {
             start = it
             anchor = Quat.IDENTITY
         }
-        anchor = anchor.slerp((q * s.conjugate()).normalized(), 1f - exp(-dt * FOLLOW_RATE)).normalized()
+        anchor = anchor.slerp((q * s.conjugate()).normalized(), 1f - exp(-dt * rate)).normalized()
     }
 
     /** 0.5.40: Recentre: Smooth Follow starts again from the next pose (the head tracker's new straight ahead). */

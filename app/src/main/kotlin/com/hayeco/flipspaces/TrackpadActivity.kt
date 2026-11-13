@@ -1758,6 +1758,14 @@ class TrackpadActivity : Activity(), PadHost {
         setTurnScreenOn(on)
     }
 
+    override fun headScrollOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).headScroll
+
+    override fun headScrollChosen(on: Boolean) {
+        com.hayeco.flipspaces.spatial.SpaceStore(this).headScroll = on
+        Log.i(TAG, "Head scroll ${if (on) "on" else "off"} (Menu)")
+        buzz(PadHaptic.MODE)
+    }
+
     override fun keepsScreenOnOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).trackpadKeepsScreenOn
 
     override fun keepsScreenOnChosen(on: Boolean) {

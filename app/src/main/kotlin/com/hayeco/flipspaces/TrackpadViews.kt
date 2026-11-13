@@ -913,6 +913,10 @@ interface PadHost {
     fun windowsLockedOn(): Boolean = false
     fun windowsLockedChosen(on: Boolean) {}
 
+    /** 1.4.6 (John Davis): Head scroll ([com.hayeco.flipspaces.core.spatial.HeadScroll]), from the Menu. */
+    fun headScrollOn(): Boolean = false
+    fun headScrollChosen(on: Boolean) {}
+
     /** 0.5.37: window snapping, a new instance for a running app, and the window presets. */
     fun snapWindowsOn(): Boolean
     fun snapWindowsChosen(on: Boolean)
@@ -2319,6 +2323,14 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                     refreshCover()
                     buildDrawer()
                 }.apply { tag = LockKey.MENU_TAG })
+            }
+            // 1.4.6 (John Davis): Head scroll, with where it works under it.
+            MenuItem.HEAD_SCROLL -> {
+                val on = host.headScrollOn()
+                listOf(row(R.drawable.ic_scroll_right, onOff(c.getString(R.string.pad_head_scroll), on), tick = on, subtitle = c.getString(R.string.pad_head_scroll_subtitle)) {
+                    host.headScrollChosen(!on)
+                    buildDrawer()
+                })
             }
             // 0.5.32 (Mike: more premade Arrange Windows layouts, knowing how many windows are open): the layouts that fit.
             MenuItem.ARRANGE -> com.hayeco.flipspaces.core.spatial.ArrangeLayouts.forCount(state.windowCount).map { choice ->

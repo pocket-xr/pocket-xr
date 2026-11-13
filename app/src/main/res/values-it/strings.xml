@@ -221,6 +221,11 @@
     <string name="pad_direction_inverted">Invertita</string>
     <string name="pad_cursor_follows_head">Cursore segue la testa</string>
     <string name="pad_keeps_screen_on">Il trackpad tiene lo schermo acceso</string>
+    <string name="pad_head_scroll">Scorrimento con la testa</string>
+    <string name="pad_head_scroll_subtitle">Gira un po\' la testa per far scorrere i tuoi schermi. In modalità Steady e Segui fluido.</string>
+    <string name="space_head_scroll_on">Scorrimento con la testa attivo. Gira un po\' la testa per far scorrere i tuoi schermi.</string>
+    <string name="space_head_scroll_where">Scorrimento con la testa attivo. Funziona in modalità Steady e Segui fluido.</string>
+    <string name="space_head_scroll_off">Scorrimento con la testa disattivato</string>
     <string name="pad_controller_subtitle">%1$s. Tocca per %2$s.</string>
     <string name="pad_set_touch_spots">Imposta punti di tocco</string>
     <string name="pad_set_touch_spots_subtitle">Punta il punto sul pulsante del gioco, poi tieni premuto il comando corrispondente per un secondo</string>

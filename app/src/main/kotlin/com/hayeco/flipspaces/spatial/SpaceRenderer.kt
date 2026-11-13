@@ -438,6 +438,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private var windowGlowPercent = store.windowGlowPercent
     private var windowGlowColor = store.windowGlowColor
     private var manualYaw = 0f
+
+    /** 1.4.6 (John Davis): Head scroll ([com.hayeco.flipspaces.core.spatial.HeadScroll]), from the Menu; read each settings beat. */
+    private val headScroll = com.hayeco.flipspaces.core.spatial.HeadScroll()
+    private var headScrollOn = store.headScroll
+    private var headScrollLastMs = 0L
+    private var headScrollLogged = false
     private var mode: ModeChoice? = null
     private var shizuku = ShizukuStatus.NOT_INSTALLED
     private var modeCheckedMs = 0L
@@ -1147,7 +1153,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         val tracked = if (ultrawide) canvasPose else live
         follow.mode = SpaceSession.follow
+        follow.rate = if (headScrollOn) com.hayeco.flipspaces.core.spatial.HeadScroll.FOLLOW_RATE else com.hayeco.flipspaces.core.spatial.FollowView.FOLLOW_RATE
         follow.update(tracked, nowMs)
+        scrollHead(live, nowMs)
         var head = HeadView.pose(follow.relative(tracked), manualYaw)
         this.head = head
         setHeadPos(headPositionAt(presentNs, hoverLocked))
@@ -1224,6 +1232,19 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             GlassesDisplayControl.configure(context, spaceUp = true, turnDuty = store.turnDuty, picture32by9 = StereoLayout.isSbsMode(viewport.surfaceWidth, viewport.surfaceHeight))
             // 0.5.36: the trackpad cursor anchored in the room or following the head (the trackpad's chip).
             pointer.snapWindows = store.snapWindows
+            // 1.4.6: Head scroll switched in the Menu, said on the glasses with where it works.
+            val scrollOn = store.headScroll
+            if (scrollOn != headScrollOn) {
+                headScrollOn = scrollOn
+                headScroll.stop()
+                val line = when {
+                    !scrollOn -> str(R.string.space_head_scroll_off)
+                    headScrollApplies() -> str(R.string.space_head_scroll_on)
+                    else -> str(R.string.space_head_scroll_where)
+                }
+                noticeQueue.add(line)
+                Log.i(tag, "Head scroll ${if (scrollOn) "on" else "off"}; said on the glasses: $line")
+            }
             // 1.1.15: Lock screens, from the trackpad's Lock button or its Menu.
             val locked = store.windowsLocked
             if (pointer.windowsLocked != locked) {
@@ -3968,7 +3989,38 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
     }
 
+    /**
+     * 1.4.6 (John Davis): where the screens are held still in front (Steady mode's canvas, Smooth Follow), a small head
+     * turn slides the row that way ([com.hayeco.flipspaces.core.spatial.HeadScroll]). Not while a window is held, the
+     * launcher or the Control Center is open, or Immersive is on: there a turn of the head is for those.
+     */
+    private fun scrollHead(live: com.hayeco.flipspaces.core.spatial.Quat?, nowMs: Long) {
+        val dtS = if (headScrollLastMs == 0L) 0f else (nowMs - headScrollLastMs) / 1000f
+        headScrollLastMs = nowMs
+        val rel = if (!headScrollOn || live == null || !headScrollApplies() || pointer.busy || launcher.isOpen || controls.isOpen || immersive.active) null
+        else if (ultrawide) canvasPose?.let { (it.conjugate() * live).normalized() }
+        else follow.relative(live)
+        if (rel == null) {
+            headScroll.stop()
+            return
+        }
+        val a = com.hayeco.flipspaces.core.spatial.Angles.of(rel.forward)
+        val d = headScroll.step(a.yawDeg, a.pitchDeg, dtS)
+        if (d != 0f) {
+            manualYaw = com.hayeco.flipspaces.core.spatial.HeadScroll.clamp(manualYaw, d, layout.panels)
+            if (!headScrollLogged) {
+                headScrollLogged = true
+                Log.i(tag, "Head scroll: first scroll this run (head %.1f deg off, %s)".format(java.util.Locale.ROOT, a.yawDeg, if (ultrawide) "Steady canvas" else "Smooth Follow"))
+            }
+        }
+    }
+
+    /** Head scroll moves the screens only where they are held in front: Steady mode's canvas and Smooth Follow. */
+    private fun headScrollApplies(): Boolean =
+        !GlassesDisplayControl.hoverHeadLocked && (ultrawide || follow.mode == com.hayeco.flipspaces.core.spatial.FollowMode.SMOOTH_FOLLOW)
+
     private fun recentre() {
+        headScroll.stop()
         HeadTracker.recentre()
         follow.recentre()
         // 0.5.40 (Mike, vc60: Recentre "pushes everything to the right"): the windows' middle in front, not the room's 0.

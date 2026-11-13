@@ -597,6 +597,14 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(com.hayeco.flipspaces.core.spatial.WindowLock.KEY, false)
         set(value) = prefs.edit().putBoolean(com.hayeco.flipspaces.core.spatial.WindowLock.KEY, value).apply()
 
+    /**
+     * 1.4.6 (John Davis): Head scroll, off by default. In Steady mode and Smooth Follow a small head turn slides the row of
+     * screens that way ([com.hayeco.flipspaces.core.spatial.HeadScroll]).
+     */
+    var headScroll: Boolean
+        get() = prefs.getBoolean(KEY_HEAD_SCROLL, false)
+        set(value) = prefs.edit().putBoolean(KEY_HEAD_SCROLL, value).apply()
+
     /** 0.5.37 (Mike: snap a dragged window to the one it nears, with a setting to turn it off): on by default. */
     var snapWindows: Boolean
         get() = prefs.getBoolean(KEY_SNAP_WINDOWS, true)
@@ -744,6 +752,7 @@ class SpaceStore(context: Context) {
         private const val KEY_PANELS_ON_VIRTUAL_DEVICE = "panels_on_virtual_device_0552"
         private const val KEY_GLASSES_SET_FRAME_CLOCK = "glasses_set_frame_clock_0554"
         private const val KEY_SNAP_WINDOWS = "snap_windows_0537"
+        private const val KEY_HEAD_SCROLL = "head_scroll_146"
         private const val KEY_NEW_INSTANCE = "new_instance_0537"
         private const val KEY_PRESETS = "window_presets_0537"
         private const val KEY_LATE_WARP_SBS = "late_warp_sbs_0525"

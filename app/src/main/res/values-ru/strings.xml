@@ -228,6 +228,11 @@
     <string name="pad_direction_inverted">Обратное</string>
     <string name="pad_cursor_follows_head">Курсор следует за головой</string>
     <string name="pad_keeps_screen_on">Трекпад не даёт экрану гаснуть</string>
+    <string name="pad_head_scroll">Прокрутка головой</string>
+    <string name="pad_head_scroll_subtitle">Слегка поверните голову, чтобы сдвинуть экраны. В режиме Steady и при плавном следовании.</string>
+    <string name="space_head_scroll_on">Прокрутка головой включена. Слегка поверните голову, чтобы сдвинуть экраны.</string>
+    <string name="space_head_scroll_where">Прокрутка головой включена. Она работает в режиме Steady и при плавном следовании.</string>
+    <string name="space_head_scroll_off">Прокрутка головой выключена</string>
     <string name="pad_controller_subtitle">%1$s. Нажмите для режима «%2$s».</string>
     <string name="pad_set_touch_spots">Задать точки касания</string>
     <string name="pad_set_touch_spots_subtitle">Наведите точку на кнопку самой игры, затем удерживайте нужный элемент управления секунду</string>
