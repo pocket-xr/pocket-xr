@@ -180,6 +180,40 @@
     <string name="pad_presets_empty_with_windows">Сохраните открытые окна, а потом открывайте их снова одним нажатием, каждое на своём месте.</string>
     <string name="pad_presets_empty_no_windows">Откройте несколько окон и сохраните их здесь, чтобы снова открывать их одним нажатием, каждое на своём месте.</string>
     <string name="pad_save_preset">Сохранить текущие окна как набор</string>
+    <string name="pad_share_layouts">Поделиться наборами окон</string>
+    <string name="pad_share_layouts_subtitle">Отправить наборы на другой телефон или Steam Deck</string>
+    <string name="pad_import_layouts">Импортировать наборы окон</string>
+    <string name="pad_import_layouts_subtitle">Добавить наборы из файла</string>
+    <string name="pad_layouts_nothing_to_share">Пока нет наборов, чтобы поделиться</string>
+    <string name="pad_layouts_not_shared">Наборы не отправлены: %1$s</string>
+    <string name="pad_layouts_in_downloads">Копия сохранена в «Загрузки»: %1$s</string>
+    <string name="pad_layouts_not_layouts_file">Это не файл наборов окон Pocket XR.</string>
+    <string name="pad_layouts_newer_file">Этот файл из более новой версии Pocket XR. Обновите Pocket XR, чтобы импортировать его.</string>
+    <string name="pad_layouts_cannot_open">Не удалось открыть файл.</string>
+    <string name="pad_layouts_empty_file">В этом файле нет наборов окон.</string>
+    <plurals name="pad_layouts_added">
+        <item quantity="one">Добавлен %1$d набор.</item>
+        <item quantity="few">Добавлено %1$d набора.</item>
+        <item quantity="many">Добавлено %1$d наборов.</item>
+        <item quantity="other">Добавлено %1$d набора.</item>
+    </plurals>
+    <string name="pad_layouts_none_added">Наборы не добавлены.</string>
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="one">%1$d окно пропущено</item>
+        <item quantity="few">%1$d окна пропущено</item>
+        <item quantity="many">%1$d окон пропущено</item>
+        <item quantity="other">%1$d окна пропущено</item>
+    </plurals>
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="one">%1$s нет на этом телефоне.</item>
+        <item quantity="few">%1$s нет на этом телефоне.</item>
+        <item quantity="many">%1$s нет на этом телефоне.</item>
+        <item quantity="other">%1$s нет на этом телефоне.</item>
+    </plurals>
+    <string name="pad_layouts_left_out">%1$s: %2$s</string>
+    <string name="pad_layouts_summary">%1$s %2$s</string>
+    <string name="pad_list_two">%1$s и %2$s</string>
+    <string name="pad_list_more">%1$s, %2$s</string>
     <string name="pad_cursor_speed">Скорость курсора</string>
     <string name="pad_scroll_speed">Скорость прокрутки двумя пальцами</string>
     <string name="pad_strip_speed">Скорость полосы прокрутки</string>

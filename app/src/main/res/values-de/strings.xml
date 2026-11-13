@@ -172,6 +172,34 @@
     <string name="pad_presets_empty_with_windows">Speichere deine offenen Fenster und öffne sie später alle mit einem Tippen wieder, jedes an seinem Platz.</string>
     <string name="pad_presets_empty_no_windows">Öffne ein paar Fenster und speichere sie hier, um sie später alle mit einem Tippen wieder zu öffnen, jedes an seinem Platz.</string>
     <string name="pad_save_preset">Aktuelle Fenster als Preset speichern</string>
+    <string name="pad_share_layouts">Layouts teilen</string>
+    <string name="pad_share_layouts_subtitle">Presets an ein anderes Handy oder ein Steam Deck senden</string>
+    <string name="pad_import_layouts">Layouts importieren</string>
+    <string name="pad_import_layouts_subtitle">Presets aus einer Layout-Datei hinzufügen</string>
+    <string name="pad_layouts_nothing_to_share">Noch keine Presets zum Teilen</string>
+    <string name="pad_layouts_not_shared">Layouts nicht geteilt: %1$s</string>
+    <string name="pad_layouts_in_downloads">Eine Kopie liegt in Downloads: %1$s</string>
+    <string name="pad_layouts_not_layouts_file">Das ist keine Pocket XR Layout-Datei.</string>
+    <string name="pad_layouts_newer_file">Diese Datei stammt von einem neueren Pocket XR. Aktualisiere Pocket XR, um sie zu importieren.</string>
+    <string name="pad_layouts_cannot_open">Die Datei konnte nicht geöffnet werden.</string>
+    <string name="pad_layouts_empty_file">In dieser Datei sind keine Layouts.</string>
+    <plurals name="pad_layouts_added">
+        <item quantity="one">%1$d Layout hinzugefügt.</item>
+        <item quantity="other">%1$d Layouts hinzugefügt.</item>
+    </plurals>
+    <string name="pad_layouts_none_added">Keine Layouts hinzugefügt.</string>
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="one">%1$d Fenster wurde ausgelassen</item>
+        <item quantity="other">%1$d Fenster wurden ausgelassen</item>
+    </plurals>
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="one">%1$s ist nicht auf diesem Handy.</item>
+        <item quantity="other">%1$s sind nicht auf diesem Handy.</item>
+    </plurals>
+    <string name="pad_layouts_left_out">%1$s: %2$s</string>
+    <string name="pad_layouts_summary">%1$s %2$s</string>
+    <string name="pad_list_two">%1$s und %2$s</string>
+    <string name="pad_list_more">%1$s, %2$s</string>
     <string name="pad_cursor_speed">Cursor-Tempo</string>
     <string name="pad_scroll_speed">Scrolltempo mit zwei Fingern</string>
     <string name="pad_strip_speed">Tempo der Scrollleiste</string>

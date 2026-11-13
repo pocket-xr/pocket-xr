@@ -168,6 +168,31 @@
     <string name="pad_presets_empty_with_windows">儲存目前開啟的視窗，之後輕觸一下就能全部重新開啟，每個都在原來的位置。</string>
     <string name="pad_presets_empty_no_windows">先開啟幾個視窗，再儲存到這裡，之後輕觸一下就能全部重新開啟，每個都在原來的位置。</string>
     <string name="pad_save_preset">將目前的視窗儲存為組合</string>
+    <string name="pad_share_layouts">分享版面配置</string>
+    <string name="pad_share_layouts_subtitle">將組合傳送到另一支手機或 Steam Deck</string>
+    <string name="pad_import_layouts">匯入版面配置</string>
+    <string name="pad_import_layouts_subtitle">從版面配置檔案新增組合</string>
+    <string name="pad_layouts_nothing_to_share">還沒有可以分享的組合</string>
+    <string name="pad_layouts_not_shared">版面配置未分享：%1$s</string>
+    <string name="pad_layouts_in_downloads">下載資料夾裡也存了一份：%1$s</string>
+    <string name="pad_layouts_not_layouts_file">這不是 Pocket XR 版面配置檔案。</string>
+    <string name="pad_layouts_newer_file">這個檔案來自較新版本的 Pocket XR。請先更新 Pocket XR 再匯入。</string>
+    <string name="pad_layouts_cannot_open">無法開啟檔案。</string>
+    <string name="pad_layouts_empty_file">這個檔案裡沒有版面配置。</string>
+    <plurals name="pad_layouts_added">
+        <item quantity="other">已新增 %1$d 個版面配置。</item>
+    </plurals>
+    <string name="pad_layouts_none_added">沒有新增任何版面配置。</string>
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="other">有 %1$d 個視窗未匯入</item>
+    </plurals>
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="other">這支手機上沒有 %1$s。</item>
+    </plurals>
+    <string name="pad_layouts_left_out">%1$s：%2$s</string>
+    <string name="pad_layouts_summary">%1$s%2$s</string>
+    <string name="pad_list_two">%1$s和%2$s</string>
+    <string name="pad_list_more">%1$s、%2$s</string>
     <string name="pad_cursor_speed">游標速度</string>
     <string name="pad_scroll_speed">雙指捲動速度</string>
     <string name="pad_strip_speed">捲動條速度</string>

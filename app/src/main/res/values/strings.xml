@@ -232,6 +232,43 @@
     <string name="pad_presets_empty_with_windows">Save the windows you have open, then open them all again with one tap, each where it was.</string>
     <string name="pad_presets_empty_no_windows">Open some windows, then save them here to open them all again with one tap, each where it was.</string>
     <string name="pad_save_preset">Save current windows as a preset</string>
+    <!-- 1.4.5: Share layouts and Import layouts, the presets as a file Pocket XR for Steam Deck also reads -->
+    <string name="pad_share_layouts">Share layouts</string>
+    <string name="pad_share_layouts_subtitle">Send your presets to another phone or a Steam Deck</string>
+    <string name="pad_import_layouts">Import layouts</string>
+    <string name="pad_import_layouts_subtitle">Add presets from a layouts file</string>
+    <string name="pad_layouts_nothing_to_share">No presets to share yet</string>
+    <!-- %1$s: the error -->
+    <string name="pad_layouts_not_shared">Layouts not shared: %1$s</string>
+    <!-- %1$s: the file's name in Downloads -->
+    <string name="pad_layouts_in_downloads">A copy is in Downloads: %1$s</string>
+    <string name="pad_layouts_not_layouts_file">This isn\'t a Pocket XR layouts file.</string>
+    <string name="pad_layouts_newer_file">This file is from a newer Pocket XR. Update Pocket XR to import it.</string>
+    <string name="pad_layouts_cannot_open">The file could not be opened.</string>
+    <string name="pad_layouts_empty_file">There are no layouts in this file.</string>
+    <!-- %1$d: layouts added by Import layouts -->
+    <plurals name="pad_layouts_added">
+        <item quantity="one">Added %1$d layout.</item>
+        <item quantity="other">Added %1$d layouts.</item>
+    </plurals>
+    <string name="pad_layouts_none_added">No layouts were added.</string>
+    <!-- %1$d: windows left out because their apps are not on the phone -->
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="one">%1$d window was left out</item>
+        <item quantity="other">%1$d windows were left out</item>
+    </plurals>
+    <!-- %1$s: the missing apps (pad_list_two); the quantity is how many apps -->
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="one">%1$s isn\'t on this phone.</item>
+        <item quantity="other">%1$s aren\'t on this phone.</item>
+    </plurals>
+    <!-- %1$s: pad_layouts_windows_left_out, %2$s: pad_layouts_not_on_phone -->
+    <string name="pad_layouts_left_out">%1$s: %2$s</string>
+    <!-- Import layouts' message: %1$s what was added, %2$s pad_layouts_left_out -->
+    <string name="pad_layouts_summary">%1$s %2$s</string>
+    <!-- Lists of names: the last two (Messages and Phone), and the ones before them (Messages, Phone) -->
+    <string name="pad_list_two">%1$s and %2$s</string>
+    <string name="pad_list_more">%1$s, %2$s</string>
     <string name="pad_cursor_speed">Cursor Speed</string>
     <string name="pad_scroll_speed">Two-finger scroll speed</string>
     <string name="pad_strip_speed">Scroll strip speed</string>

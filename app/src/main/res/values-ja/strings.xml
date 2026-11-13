@@ -168,6 +168,31 @@
     <string name="pad_presets_empty_with_windows">開いているウィンドウを保存すると、次からワンタップで全部を元の位置に開けます。</string>
     <string name="pad_presets_empty_no_windows">ウィンドウをいくつか開いてここに保存すると、次からワンタップで全部を元の位置に開けます。</string>
     <string name="pad_save_preset">現在のウィンドウをプリセットとして保存</string>
+    <string name="pad_share_layouts">レイアウトを共有</string>
+    <string name="pad_share_layouts_subtitle">プリセットを別のスマホや Steam Deck に送ります</string>
+    <string name="pad_import_layouts">レイアウトを読み込む</string>
+    <string name="pad_import_layouts_subtitle">レイアウトファイルからプリセットを追加します</string>
+    <string name="pad_layouts_nothing_to_share">共有するプリセットがまだありません</string>
+    <string name="pad_layouts_not_shared">レイアウトを共有できませんでした: %1$s</string>
+    <string name="pad_layouts_in_downloads">ダウンロードにもコピーを保存しました: %1$s</string>
+    <string name="pad_layouts_not_layouts_file">Pocket XR のレイアウトファイルではありません。</string>
+    <string name="pad_layouts_newer_file">新しい Pocket XR で作られたファイルです。読み込むには Pocket XR を更新してください。</string>
+    <string name="pad_layouts_cannot_open">ファイルを開けませんでした。</string>
+    <string name="pad_layouts_empty_file">このファイルにはレイアウトがありません。</string>
+    <plurals name="pad_layouts_added">
+        <item quantity="other">%1$d 個のレイアウトを追加しました。</item>
+    </plurals>
+    <string name="pad_layouts_none_added">追加されたレイアウトはありません。</string>
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="other">%1$d 個のウィンドウを除きました</item>
+    </plurals>
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="other">%1$s はこのスマホにありません。</item>
+    </plurals>
+    <string name="pad_layouts_left_out">%1$s: %2$s</string>
+    <string name="pad_layouts_summary">%1$s%2$s</string>
+    <string name="pad_list_two">%1$s、%2$s</string>
+    <string name="pad_list_more">%1$s、%2$s</string>
     <string name="pad_cursor_speed">カーソルの速度</string>
     <string name="pad_scroll_speed">2 本指スクロールの速度</string>
     <string name="pad_strip_speed">スクロールストリップの速度</string>

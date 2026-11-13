@@ -923,6 +923,10 @@ interface PadHost {
     fun openPreset(preset: com.hayeco.flipspaces.core.spatial.WindowPreset)
     fun deletePreset(preset: com.hayeco.flipspaces.core.spatial.WindowPreset)
 
+    /** 1.4.5: Share layouts (the share sheet with the presets' file) and Import layouts (the file picker) ([LayoutsShare]). */
+    fun shareLayouts() {}
+    fun importLayouts() {}
+
     /** 0.5.47: asks for a new name for [preset], then [done] (the Menu builds its list again). */
     fun renamePreset(preset: com.hayeco.flipspaces.core.spatial.WindowPreset, done: () -> Unit)
 
@@ -2354,6 +2358,15 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 if (state.windowCount > 0) out += row(R.drawable.ic_arrange, c.getString(R.string.pad_save_preset)) {
                     host.savePreset()
                     buildDrawer()
+                }
+                // 1.4.5 (a Reddit user: do layouts carry over to the Steam Deck?): the presets as a file both apps read.
+                if (presets.isNotEmpty()) out += row(R.drawable.ic_arrange, c.getString(R.string.pad_share_layouts), subtitle = c.getString(R.string.pad_share_layouts_subtitle)) {
+                    closeDrawer()
+                    host.shareLayouts()
+                }
+                out += row(R.drawable.ic_arrange, c.getString(R.string.pad_import_layouts), subtitle = c.getString(R.string.pad_import_layouts_subtitle)) {
+                    closeDrawer()
+                    host.importLayouts()
                 }
                 out
             }

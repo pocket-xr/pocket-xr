@@ -176,6 +176,37 @@
     <string name="pad_presets_empty_with_windows">Guarda las ventanas que tienes abiertas y vuelve a abrirlas todas con un toque, cada una donde estaba.</string>
     <string name="pad_presets_empty_no_windows">Abre algunas ventanas y guárdalas aquí para volver a abrirlas todas con un toque, cada una donde estaba.</string>
     <string name="pad_save_preset">Guardar las ventanas actuales como grupo</string>
+    <string name="pad_share_layouts">Compartir diseños</string>
+    <string name="pad_share_layouts_subtitle">Envía tus grupos a otro teléfono o a una Steam Deck</string>
+    <string name="pad_import_layouts">Importar diseños</string>
+    <string name="pad_import_layouts_subtitle">Añade grupos desde un archivo de diseños</string>
+    <string name="pad_layouts_nothing_to_share">Aún no hay grupos para compartir</string>
+    <string name="pad_layouts_not_shared">Diseños no compartidos: %1$s</string>
+    <string name="pad_layouts_in_downloads">Hay una copia en Descargas: %1$s</string>
+    <string name="pad_layouts_not_layouts_file">Este no es un archivo de diseños de Pocket XR.</string>
+    <string name="pad_layouts_newer_file">Este archivo es de un Pocket XR más nuevo. Actualiza Pocket XR para importarlo.</string>
+    <string name="pad_layouts_cannot_open">No se pudo abrir el archivo.</string>
+    <string name="pad_layouts_empty_file">Este archivo no tiene diseños.</string>
+    <plurals name="pad_layouts_added">
+        <item quantity="one">Se añadió %1$d diseño.</item>
+        <item quantity="many">Se añadieron %1$d diseños.</item>
+        <item quantity="other">Se añadieron %1$d diseños.</item>
+    </plurals>
+    <string name="pad_layouts_none_added">No se añadió ningún diseño.</string>
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="one">Se omitió %1$d ventana</item>
+        <item quantity="many">Se omitieron %1$d ventanas</item>
+        <item quantity="other">Se omitieron %1$d ventanas</item>
+    </plurals>
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="one">%1$s no está en este teléfono.</item>
+        <item quantity="many">%1$s no están en este teléfono.</item>
+        <item quantity="other">%1$s no están en este teléfono.</item>
+    </plurals>
+    <string name="pad_layouts_left_out">%1$s: %2$s</string>
+    <string name="pad_layouts_summary">%1$s %2$s</string>
+    <string name="pad_list_two">%1$s y %2$s</string>
+    <string name="pad_list_more">%1$s, %2$s</string>
     <string name="pad_cursor_speed">Velocidad del cursor</string>
     <string name="pad_scroll_speed">Velocidad de desplazamiento con dos dedos</string>
     <string name="pad_strip_speed">Velocidad de la barra de desplazamiento</string>
