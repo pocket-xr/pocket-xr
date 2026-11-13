@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.4.5: take your layouts to the Steam Deck
+
+- **Share layouts and Import layouts**, under Window presets in the Menu. Share layouts saves your window presets to
+  one small file (with the share sheet, and a copy in Downloads). Import layouts reads a file from Pocket XR on
+  another phone or from [Pocket XR for Steam Deck](https://github.com/pocket-xr/pocket-xr-deck), so your windows come
+  back in the same places, sizes and curves. Each window finds the same app by name; apps that aren't on this phone
+  are left out, and Pocket XR says which.
+
 ## 1.4.4: Pocket XR in your language
 
 - **Pocket XR now speaks 11 languages:** English, Korean, Japanese, Chinese (simplified and traditional), Spanish,
