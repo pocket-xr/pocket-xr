@@ -182,9 +182,9 @@ object LayoutsImport {
      */
     val ALIASES: List<Set<String>> = listOf(
         setOf("chrome", "googlechrome"),
-        setOf("firefox", "mozillafirefox"),
+        setOf("firefox", "mozillafirefox", "firefoxwebbrowser"),
         setOf("edge", "microsoftedge"),
-        setOf("brave", "bravebrowser"),
+        setOf("brave", "bravebrowser", "bravewebbrowser"),
         setOf("vlc", "vlcmediaplayer"),
         setOf("telegram", "telegramdesktop"),
     )

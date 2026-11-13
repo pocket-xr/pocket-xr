@@ -93,6 +93,26 @@ class LayoutsFile145Test {
         assertEquals(0.5f, desk.layout.panels[1].curve, 0f)
     }
 
+    /** A file written by the Deck's own export on a real Deck: its menu calls Firefox "Firefox Web Browser". */
+    @Test
+    fun aRealDeckFileKeepsFirefoxAndChrome() {
+        val deck = """
+            {"format":"pocket-xr-layouts","version":1,"made_by":"deck","app_version":"0.3.0","presets":[
+             {"name":"Deck desk","windows":[
+              {"app":{"name":"Firefox Web Browser","android":null,"deck":"firefox"},"yaw_deg":30.0,"pitch_deg":-5.0,"distance_m":1.5,"width_deg":45.0,"height_deg":25.0,"curve":0.3},
+              {"app":{"name":"Google Chrome","android":null,"deck":"Google-chrome"},"yaw_deg":-30.0,"pitch_deg":0.0,"distance_m":1.5,"width_deg":40.0,"height_deg":22.5,"curve":0.0},
+              {"app":{"name":"Steam_app_1245620","android":null,"deck":"steam_app_1245620"},"yaw_deg":0.0,"pitch_deg":10.0,"distance_m":2.0,"width_deg":60.0,"height_deg":34.0,"curve":1.0}
+             ]}]}
+        """.trimIndent()
+        val r = LayoutsImport.import(emptyList(), ok(deck), phone, 5L)
+        assertEquals(1, r.added)
+        assertEquals(listOf("Steam_app_1245620"), r.missingApps)
+        val desk = r.presets.single()
+        assertEquals(listOf("org.mozilla.firefox", "com.android.chrome"), desk.layout.panels.map { it.packageName })
+        assertEquals(-30f, desk.layout.panels[0].yawDeg, 0f) // the Deck's left is the phone's negative yaw
+        assertEquals(45f, desk.layout.panels[0].widthDeg, 0f)
+    }
+
     @Test
     fun matchingIsByPackageThenNameThenAlias() {
         assertEquals("org.videolan.vlc", LayoutsImport.match(LayoutsFile.App("Anything", "org.videolan.vlc", null), phone)?.packageName)
