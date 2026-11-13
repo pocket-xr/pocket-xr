@@ -168,6 +168,31 @@
     <string name="pad_presets_empty_with_windows">保存你当前打开的窗口，之后点一下就能把它们全部在原位置重新打开。</string>
     <string name="pad_presets_empty_no_windows">先打开一些窗口，再在这里保存，之后点一下就能把它们全部在原位置重新打开。</string>
     <string name="pad_save_preset">将当前窗口保存为预设</string>
+    <string name="pad_share_layouts">分享布局</string>
+    <string name="pad_share_layouts_subtitle">把预设发送到另一部手机或 Steam Deck</string>
+    <string name="pad_import_layouts">导入布局</string>
+    <string name="pad_import_layouts_subtitle">从布局文件添加预设</string>
+    <string name="pad_layouts_nothing_to_share">还没有可分享的预设</string>
+    <string name="pad_layouts_not_shared">布局未分享：%1$s</string>
+    <string name="pad_layouts_in_downloads">下载文件夹里也存了一份：%1$s</string>
+    <string name="pad_layouts_not_layouts_file">这不是 Pocket XR 布局文件。</string>
+    <string name="pad_layouts_newer_file">这个文件来自更新版本的 Pocket XR。请先更新 Pocket XR 再导入。</string>
+    <string name="pad_layouts_cannot_open">无法打开文件。</string>
+    <string name="pad_layouts_empty_file">这个文件里没有布局。</string>
+    <plurals name="pad_layouts_added">
+        <item quantity="other">已添加 %1$d 个布局。</item>
+    </plurals>
+    <string name="pad_layouts_none_added">没有添加布局。</string>
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="other">有 %1$d 个窗口未导入</item>
+    </plurals>
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="other">这部手机上没有 %1$s。</item>
+    </plurals>
+    <string name="pad_layouts_left_out">%1$s：%2$s</string>
+    <string name="pad_layouts_summary">%1$s%2$s</string>
+    <string name="pad_list_two">%1$s和%2$s</string>
+    <string name="pad_list_more">%1$s、%2$s</string>
     <string name="pad_cursor_speed">光标速度</string>
     <string name="pad_scroll_speed">双指滚动速度</string>
     <string name="pad_strip_speed">滚动条速度</string>

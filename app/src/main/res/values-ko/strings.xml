@@ -168,6 +168,31 @@
     <string name="pad_presets_empty_with_windows">열려 있는 창을 저장하면 탭 한 번으로 모두 원래 위치에 다시 열 수 있어요.</string>
     <string name="pad_presets_empty_no_windows">창을 몇 개 연 다음 여기에 저장하면 탭 한 번으로 모두 원래 위치에 다시 열 수 있어요.</string>
     <string name="pad_save_preset">현재 창을 프리셋으로 저장</string>
+    <string name="pad_share_layouts">레이아웃 공유</string>
+    <string name="pad_share_layouts_subtitle">프리셋을 다른 휴대전화나 Steam Deck으로 보내요</string>
+    <string name="pad_import_layouts">레이아웃 가져오기</string>
+    <string name="pad_import_layouts_subtitle">레이아웃 파일에서 프리셋을 추가해요</string>
+    <string name="pad_layouts_nothing_to_share">아직 공유할 프리셋이 없어요</string>
+    <string name="pad_layouts_not_shared">레이아웃을 공유하지 못했어요: %1$s</string>
+    <string name="pad_layouts_in_downloads">다운로드에도 사본을 저장했어요: %1$s</string>
+    <string name="pad_layouts_not_layouts_file">Pocket XR 레이아웃 파일이 아니에요.</string>
+    <string name="pad_layouts_newer_file">더 새로운 Pocket XR에서 만든 파일이에요. 가져오려면 Pocket XR을 업데이트하세요.</string>
+    <string name="pad_layouts_cannot_open">파일을 열 수 없어요.</string>
+    <string name="pad_layouts_empty_file">이 파일에는 레이아웃이 없어요.</string>
+    <plurals name="pad_layouts_added">
+        <item quantity="other">레이아웃 %1$d개를 추가했어요.</item>
+    </plurals>
+    <string name="pad_layouts_none_added">추가된 레이아웃이 없어요.</string>
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="other">창 %1$d개를 빼고 가져왔어요</item>
+    </plurals>
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="other">이 휴대전화에 %1$s 앱이 없어요.</item>
+    </plurals>
+    <string name="pad_layouts_left_out">%1$s: %2$s</string>
+    <string name="pad_layouts_summary">%1$s %2$s</string>
+    <string name="pad_list_two">%1$s, %2$s</string>
+    <string name="pad_list_more">%1$s, %2$s</string>
     <string name="pad_cursor_speed">커서 속도</string>
     <string name="pad_scroll_speed">두 손가락 스크롤 속도</string>
     <string name="pad_strip_speed">스크롤 바 속도</string>

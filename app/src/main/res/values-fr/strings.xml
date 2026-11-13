@@ -176,6 +176,37 @@
     <string name="pad_presets_empty_with_windows">Enregistrez les fenêtres ouvertes, puis rouvrez-les toutes d\'un seul geste, chacune à sa place.</string>
     <string name="pad_presets_empty_no_windows">Ouvrez quelques fenêtres, puis enregistrez-les ici pour toutes les rouvrir d\'un seul geste, chacune à sa place.</string>
     <string name="pad_save_preset">Enregistrer les fenêtres actuelles comme préréglage</string>
+    <string name="pad_share_layouts">Partager les dispositions</string>
+    <string name="pad_share_layouts_subtitle">Envoyez vos préréglages vers un autre téléphone ou un Steam Deck</string>
+    <string name="pad_import_layouts">Importer des dispositions</string>
+    <string name="pad_import_layouts_subtitle">Ajoutez des préréglages depuis un fichier de dispositions</string>
+    <string name="pad_layouts_nothing_to_share">Aucun préréglage à partager pour l\'instant</string>
+    <string name="pad_layouts_not_shared">Dispositions non partagées : %1$s</string>
+    <string name="pad_layouts_in_downloads">Une copie est dans Téléchargements : %1$s</string>
+    <string name="pad_layouts_not_layouts_file">Ce n\'est pas un fichier de dispositions Pocket XR.</string>
+    <string name="pad_layouts_newer_file">Ce fichier vient d\'une version plus récente de Pocket XR. Mettez Pocket XR à jour pour l\'importer.</string>
+    <string name="pad_layouts_cannot_open">Impossible d\'ouvrir le fichier.</string>
+    <string name="pad_layouts_empty_file">Ce fichier ne contient aucune disposition.</string>
+    <plurals name="pad_layouts_added">
+        <item quantity="one">%1$d disposition ajoutée.</item>
+        <item quantity="many">%1$d dispositions ajoutées.</item>
+        <item quantity="other">%1$d dispositions ajoutées.</item>
+    </plurals>
+    <string name="pad_layouts_none_added">Aucune disposition ajoutée.</string>
+    <plurals name="pad_layouts_windows_left_out">
+        <item quantity="one">%1$d fenêtre a été laissée de côté</item>
+        <item quantity="many">%1$d fenêtres ont été laissées de côté</item>
+        <item quantity="other">%1$d fenêtres ont été laissées de côté</item>
+    </plurals>
+    <plurals name="pad_layouts_not_on_phone">
+        <item quantity="one">%1$s n\'est pas sur ce téléphone.</item>
+        <item quantity="many">%1$s ne sont pas sur ce téléphone.</item>
+        <item quantity="other">%1$s ne sont pas sur ce téléphone.</item>
+    </plurals>
+    <string name="pad_layouts_left_out">%1$s : %2$s</string>
+    <string name="pad_layouts_summary">%1$s %2$s</string>
+    <string name="pad_list_two">%1$s et %2$s</string>
+    <string name="pad_list_more">%1$s, %2$s</string>
     <string name="pad_cursor_speed">Vitesse du curseur</string>
     <string name="pad_scroll_speed">Vitesse du défilement à deux doigts</string>
     <string name="pad_strip_speed">Vitesse de la bande de défilement</string>

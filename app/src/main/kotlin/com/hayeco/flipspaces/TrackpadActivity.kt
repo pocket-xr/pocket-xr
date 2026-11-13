@@ -999,12 +999,41 @@ class TrackpadActivity : Activity(), PadHost {
         runCatching { startActivityForResult(pick, PICK_RESTORE) }.onFailure { toast(getString(R.string.pad_no_file_picker)) }
     }
 
+    // 1.4.5: Share layouts and Import layouts, the presets as a file Pocket XR for Steam Deck also reads ([LayoutsShare]).
+    override fun shareLayouts() {
+        runCatching { LayoutsShare.share(this) }
+            .onSuccess { copy -> if (copy != null) toast(getString(R.string.pad_layouts_in_downloads, copy)) }
+            .onFailure {
+                Log.w(TAG, "layouts not shared: ${it.message}")
+                toast(if (it is IllegalArgumentException) it.message.orEmpty() else getString(R.string.pad_layouts_not_shared, it.message.orEmpty()))
+            }
+    }
+
+    override fun importLayouts() {
+        val pick = android.content.Intent(android.content.Intent.ACTION_OPEN_DOCUMENT)
+            .addCategory(android.content.Intent.CATEGORY_OPENABLE)
+            .setType("*/*")
+            // A file that came by cloud drive, USB or KDE Connect is not always typed as JSON.
+            .putExtra(android.content.Intent.EXTRA_MIME_TYPES, arrayOf(com.hayeco.flipspaces.core.spatial.LayoutsFile.MIME, "text/plain", "application/octet-stream"))
+        runCatching { startActivityForResult(pick, PICK_LAYOUTS) }.onFailure { toast(getString(R.string.pad_no_file_picker)) }
+    }
+
     @Deprecated("Activity results, for the settings file picker")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         val uri = data?.data
         if (resultCode != RESULT_OK || uri == null) return
         when (requestCode) {
+            PICK_LAYOUTS -> {
+                val summary = runCatching { LayoutsShare.import(this, uri) }
+                    .onFailure { Log.w(TAG, "layouts import failed: ${it.message}") }
+                    .getOrElse { getString(R.string.pad_layouts_cannot_open) }
+                android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(getString(R.string.pad_import_layouts))
+                    .setMessage(summary)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            }
             PICK_BACKUP -> runCatching { SettingsBackup.save(this, uri) }
                 .onSuccess { toast(getString(R.string.pad_backup_saved)) }
                 .onFailure { toast(getString(R.string.pad_backup_failed, it.message.orEmpty())) }
@@ -2091,6 +2120,7 @@ class TrackpadActivity : Activity(), PadHost {
         private const val TEXT_SIZE_REFRESH_MS = 200L
         private const val PICK_BACKUP = 41
         private const val PICK_RESTORE = 42
+        private const val PICK_LAYOUTS = 43
         private const val RESTORE_CLOSE_MS = 1_500L
 
         /** 0.5.19: a touch or tick that keeps the UI thread this long is logged. */
