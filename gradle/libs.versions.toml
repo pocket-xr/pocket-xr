@@ -1,15 +1,15 @@
 [versions]
-agp = "9.5.0"
+agp = "9.5.1"
 kotlin = "2.4.21"
 composeBom = "2026.09.00"
 coreKtx = "1.19.1"
 activityCompose = "1.12.4"
 lifecycle = "2.10.0"
 junit = "4.13.2"
-robolectric = "4.16.1"
+robolectric = "4.17"
 androidxTestCore = "1.7.0"
 shizuku = "13.1.5"
-mediapipe = "1.1.1"
+mediapipe = "1.2.2"
 graphicsCore = "1.0.4"
 
 [libraries]
