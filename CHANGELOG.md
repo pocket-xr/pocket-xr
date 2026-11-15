@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.4.7: back in 3D after a quick replug
+
+- Unplug your glasses and plug them straight back in, and Pocket XR now switches them back to 3D. Before, a replug
+  within about 10 seconds could leave them in 2D until the next one.
+- When hand tracking can't find the glasses' camera, the log now lists the USB features the glasses offer, so camera
+  problems are quicker to track down.
+
 ## 1.4.6: scroll your screens with your head
 
 - **Head scroll**, in the Menu under Space (off until you turn it on). In Steady mode and Smooth Follow, turn your

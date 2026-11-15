@@ -52,7 +52,12 @@ class UvcCameraSession(private val usb: UsbManager, private val device: UsbDevic
         val c = usb.openDevice(device) ?: throw IOException("Android would not open ${device.deviceName}; USB permission missing or the device went away")
         connection = c
         val raw = c.rawDescriptors ?: throw IOException("The device returned no USB descriptors")
-        camera = UvcDescriptorParser.parse(raw) ?: throw IOException("No USB Video Class interface on this device")
+        // 1.4.7: with the device's version and USB setup names, which differ between Aura firmwares (16.1.03 lists a
+        // "uvc_bulk" function, 16.1.04 on a Fold4 showed no camera).
+        camera = UvcDescriptorParser.parse(raw) ?: throw IOException(
+            "No USB Video Class interface on this device (USB version ${device.version}, setups: " +
+                (0 until device.configurationCount).joinToString("; ") { device.getConfiguration(it).name ?: "unnamed" } + ")",
+        )
         return camera
     }
 

@@ -124,6 +124,20 @@ object GlassesDisplayControl {
     }
 
     /**
+     * 1.4.7 (Mike, 15 November 2026: re-plugged within 9 s, the glasses came back in 2D and stayed there): the glasses
+     * left USB, a real unplug. Only a display re-plug (a mode change, Ultrawide) keeps the glasses on USB, so this is always
+     * a new plug-in, whatever [NEW_PLUG_MS] says.
+     */
+    fun usbUnplugged(name: String) {
+        stereoAsked = false
+        stereoRefused = null
+        stereoWant = null
+        stereoFallbacks = 0
+        synchronized(lock) { commands.followReset() }
+        Log.i(TAG, "$name unplugged on USB: the next plug-in asks for 3D and follow again, however soon it comes")
+    }
+
+    /**
      * 1.2.3 (issue 58): the user turned on something that needs 3D (Side by side 3D), so the next [requestStereo] asks the
      * glasses again even though 3D was asked for on this plug-in already. One ask, from the user's own action.
      */
