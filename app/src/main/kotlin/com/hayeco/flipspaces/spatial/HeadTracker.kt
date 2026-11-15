@@ -855,6 +855,11 @@ object HeadTracker {
     private val vitureUsbWatch = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: Context, intent: android.content.Intent) {
             val device = androidx.core.content.IntentCompat.getParcelableExtra(intent, android.hardware.usb.UsbManager.EXTRA_DEVICE, android.hardware.usb.UsbDevice::class.java) ?: return
+            // 1.4.7: XREAL glasses leaving USB are a real unplug, so the next plug-in asks for 3D again (GlassesDisplayControl).
+            if (intent.action == android.hardware.usb.UsbManager.ACTION_USB_DEVICE_DETACHED && com.hayeco.flipspaces.core.hands.GlassesUsb.isXreal(device.vendorId)) {
+                GlassesDisplayControl.usbUnplugged(device.productName ?: "XREAL glasses")
+                return
+            }
             if (!com.hayeco.flipspaces.core.spatial.VitureImuProtocol.isViture(device.vendorId)) return
             if (!com.hayeco.flipspaces.core.spatial.VitureDevices.carriesImu(device.productId, device.productName)) return
             val name = VitureImuLink.glassesName(device)
