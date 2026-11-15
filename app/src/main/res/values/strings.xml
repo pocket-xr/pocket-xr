@@ -642,6 +642,7 @@
     <string name="hands_ready">Ready</string>
     <string name="hands_running">Running: %1$s</string>
     <string name="hands_failed">Failed: %1$s</string>
+    <string name="hands_aura_no_camera">Your Aura\'s firmware doesn\'t share its camera with phones (seen on 16.1.04), so hand tracking can\'t work. Everything else in Pocket XR does.</string>
     <string name="hands_camera_title">2. Glasses camera hand tracking</string>
     <string name="hands_camera_explain">Reads the standard UVC camera in the glasses over USB (no XREAL software) and finds your hand with Google\'s MediaPipe Hand Landmarker, all on the phone.</string>
     <!-- %1$s: the USB camera's name and id, or "not found" -->

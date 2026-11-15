@@ -342,6 +342,13 @@ object GlassesCameraProvider {
                     link.needsPermission(now)
                     continue
                 }
+                // 1.4.7: Aura firmware 16.1.04 turns its camera's USB function off for phones (a tester's Fold4, 15 November
+                // 2026; 16.1.03 still offers it), and no command brings it back. Say so plainly rather than retrying.
+                if (com.hayeco.flipspaces.core.hands.GlassesUsb.isAura(device.vendorId, device.productId) && !GlassesUsbAccess.hasVideo(device)) {
+                    val setups = (0 until device.configurationCount).joinToString("; ") { device.getConfiguration(it).name ?: "unnamed" }
+                    Log.i(TAG, "Hands: ${GlassesUsbAccess.label(device)} offers no camera on USB (setups: $setups); its firmware keeps it for the puck")
+                    return fail(context, context.getString(R.string.hands_aura_no_camera))
+                }
                 link.connecting()
                 _status.value = ProviderStatus.Running(link.message)
                 try {
