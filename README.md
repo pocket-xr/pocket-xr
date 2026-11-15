@@ -48,7 +48,7 @@ This list only says what someone has actually seen working. Thanks to everyone w
 
 | Glasses | Head tracking | Hand tracking | Notes |
 | --- | --- | --- | --- |
-| XREAL Aura | Yes | Yes, through its camera | The glasses Pocket XR was built on. |
+| XREAL Aura | Yes | Yes, through its camera, on firmware 16.1.03 and older (see below) | The glasses Pocket XR was built on. |
 | XREAL One | Yes | Not yet: possible with the XREAL Eye add-on (help wanted) | Use **Follow mode** with **Stabilizer off** ([Setup](#set-up-your-glasses)). |
 
 **Confirmed by community testers**
@@ -69,7 +69,10 @@ This list only says what someone has actually seen working. Thanks to everyone w
 | Other VITURE glasses | Not tried yet. Experimental VITURE head tracking is on the head tracking screen, off by default ([Discussion #24](https://github.com/pocket-xr/pocket-xr/discussions/24)). |
 | Other glasses | Help wanted. Windows are drawn with plain fallbacks; head tracking works only if they send it the way a known model does. |
 
-Hand tracking works on the XREAL Aura only for now. Details and settings for each model:
+Hand tracking works on the XREAL Aura only for now. **Aura firmware 16.1.04 turns the camera off for phones** (the
+puck still uses it), so on that firmware hand tracking can't see your hands, and no setting from the phone turns it
+back on. Everything else works. If you use hand tracking, hold off on updating your Aura until XREAL brings the camera
+back; Pocket XR will use it again by itself. Details and settings for each model:
 [docs/GLASSES.md](docs/GLASSES.md).
 
 ### Phones

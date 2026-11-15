@@ -8,6 +8,9 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   within about 10 seconds could leave them in 2D until the next one.
 - When hand tracking can't find the glasses' camera, the log now lists the USB features the glasses offer, so camera
   problems are quicker to track down.
+- **XREAL Aura on firmware 16.1.04:** that firmware turns the glasses' camera off for phones, so hand tracking can't
+  work there. The Hands screen now says so plainly. Everything else works. If you use hand tracking, hold off on
+  updating your Aura for now.
 
 ## 1.4.6: scroll your screens with your head
 

@@ -505,6 +505,7 @@
     <string name="hands_ready">就绪</string>
     <string name="hands_running">运行中：%1$s</string>
     <string name="hands_failed">失败：%1$s</string>
+    <string name="hands_aura_no_camera">这副 Aura 的固件不向手机提供摄像头(在 16.1.04 上发现),所以无法使用手部追踪。Pocket XR 的其他功能都能正常使用。</string>
     <string name="hands_camera_title">2. 眼镜摄像头手部追踪</string>
     <string name="hands_camera_explain">通过 USB 读取眼镜中的标准 UVC 摄像头（无需 XREAL 软件），并用 Google 的 MediaPipe Hand Landmarker 识别你的手，全部在手机上完成。</string>
     <string name="hands_usb_camera">USB 摄像头：%1$s</string>

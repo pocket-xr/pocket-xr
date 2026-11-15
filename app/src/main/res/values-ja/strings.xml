@@ -505,6 +505,7 @@
     <string name="hands_ready">準備完了</string>
     <string name="hands_running">動作中: %1$s</string>
     <string name="hands_failed">失敗: %1$s</string>
+    <string name="hands_aura_no_camera">このAuraのファームウェアはカメラをスマートフォンに提供しないため(16.1.04で確認)、ハンドトラッキングは使えません。Pocket XRのほかの機能はすべて使えます。</string>
     <string name="hands_camera_title">2. グラスのカメラでハンドトラッキング</string>
     <string name="hands_camera_explain">グラスの標準 UVC カメラを USB 経由で読み取り（XREAL のソフトウェアは不要）、Google の MediaPipe Hand Landmarker で手を検出します。すべてスマホ上で処理します。</string>
     <string name="hands_usb_camera">USB カメラ: %1$s</string>

@@ -505,6 +505,7 @@
     <string name="hands_ready">준비됨</string>
     <string name="hands_running">실행 중: %1$s</string>
     <string name="hands_failed">실패: %1$s</string>
+    <string name="hands_aura_no_camera">이 Aura의 펌웨어는 휴대폰에 카메라를 제공하지 않아(16.1.04에서 확인) 손 추적을 사용할 수 없어요. Pocket XR의 다른 기능은 모두 작동해요.</string>
     <string name="hands_camera_title">2. 글래스 카메라 핸드 트래킹</string>
     <string name="hands_camera_explain">USB로 글래스의 표준 UVC 카메라를 읽고(XREAL 소프트웨어 없이) Google의 MediaPipe Hand Landmarker로 손을 찾아요. 모두 휴대전화 안에서 처리돼요.</string>
     <string name="hands_usb_camera">USB 카메라: %1$s</string>

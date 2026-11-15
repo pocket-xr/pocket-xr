@@ -513,6 +513,7 @@
     <string name="hands_ready">Bereit</string>
     <string name="hands_running">Läuft: %1$s</string>
     <string name="hands_failed">Fehlgeschlagen: %1$s</string>
+    <string name="hands_aura_no_camera">Die Firmware deiner Aura gibt ihre Kamera nicht an Handys weiter (gesehen bei 16.1.04), daher funktioniert die Handerkennung nicht. Alles andere in Pocket XR funktioniert.</string>
     <string name="hands_camera_title">2. Hand-Tracking mit der Brillenkamera</string>
     <string name="hands_camera_explain">Liest die Standard-UVC-Kamera der Brille über USB (keine XREAL-Software) und findet deine Hand mit Googles MediaPipe Hand Landmarker, alles auf dem Handy.</string>
     <string name="hands_usb_camera">USB-Kamera: %1$s</string>

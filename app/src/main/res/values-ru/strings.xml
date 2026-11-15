@@ -529,6 +529,7 @@
     <string name="hands_ready">Готово</string>
     <string name="hands_running">Работает: %1$s</string>
     <string name="hands_failed">Ошибка: %1$s</string>
+    <string name="hands_aura_no_camera">Прошивка ваших Aura не передаёт камеру телефону (замечено в 16.1.04), поэтому отслеживание рук не работает. Всё остальное в Pocket XR работает.</string>
     <string name="hands_camera_title">2. Отслеживание рук камерой очков</string>
     <string name="hands_camera_explain">Читает стандартную камеру UVC в очках по USB (без ПО XREAL) и находит вашу руку с помощью Google MediaPipe Hand Landmarker, всё на телефоне.</string>
     <string name="hands_usb_camera">USB-камера: %1$s</string>

@@ -521,6 +521,7 @@
     <string name="hands_ready">Listo</string>
     <string name="hands_running">En marcha: %1$s</string>
     <string name="hands_failed">Error: %1$s</string>
+    <string name="hands_aura_no_camera">El firmware de tus Aura no comparte la cámara con el teléfono (visto en la 16.1.04), así que el seguimiento de manos no funciona. Todo lo demás de Pocket XR sí.</string>
     <string name="hands_camera_title">2. Seguimiento de manos con la cámara de las gafas</string>
     <string name="hands_camera_explain">Lee la cámara UVC estándar de las gafas por USB (sin software de XREAL) y encuentra tu mano con MediaPipe Hand Landmarker de Google, todo en el teléfono.</string>
     <string name="hands_usb_camera">Cámara USB: %1$s</string>

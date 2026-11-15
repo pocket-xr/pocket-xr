@@ -521,6 +521,7 @@
     <string name="hands_ready">Pronto</string>
     <string name="hands_running">In esecuzione: %1$s</string>
     <string name="hands_failed">Non riuscito: %1$s</string>
+    <string name="hands_aura_no_camera">Il firmware dei tuoi Aura non condivide la fotocamera con il telefono (visto con la 16.1.04), quindi il tracciamento delle mani non può funzionare. Tutto il resto di Pocket XR funziona.</string>
     <string name="hands_camera_title">2. Tracciamento mani con la fotocamera degli occhiali</string>
     <string name="hands_camera_explain">Legge la fotocamera UVC standard degli occhiali tramite USB (senza software XREAL) e trova la tua mano con MediaPipe Hand Landmarker di Google, tutto sul telefono.</string>
     <string name="hands_usb_camera">Fotocamera USB: %1$s</string>
