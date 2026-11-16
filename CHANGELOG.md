@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.5.1: the tour in your language
+
+- **The tour now speaks every language Pocket XR does:** Korean, Japanese, Chinese (simplified and traditional),
+  Spanish, Portuguese (Brazil), French, German, Italian and Russian, as well as English. In 1.5.0 its steps were in
+  English everywhere.
+- It uses the same words as the rest of the app in each language (the Space, the trackpad, Recentre, Steady mode).
+- The translations are new and were not checked by native speakers. If a line reads oddly in your language, tell me in
+  an issue or a discussion.
+
 ## 1.5.0: a tour of Pocket XR
 
 - **A two-minute tour**, shown once when you first open Pocket XR. Nine short steps, each with a moving picture: what

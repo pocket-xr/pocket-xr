@@ -161,8 +161,7 @@ The [Roadmap](https://github.com/pocket-xr/pocket-xr/issues/11) has the full lis
 
 The first time you open Pocket XR, a two-minute **tour** walks through this setup (with a live checklist for the
 glasses, Shizuku and the add-on), the trackpad, moving windows, Recentre, 3D and Steady mode. Open it again any time
-from the trackpad's Menu (Help and more, "Tour of Pocket XR") or from Pocket XR Settings. Its text is in English for
-now.
+from the trackpad's Menu (Help and more, "Tour of Pocket XR") or from Pocket XR Settings.
 
 ### Set up your glasses
 
