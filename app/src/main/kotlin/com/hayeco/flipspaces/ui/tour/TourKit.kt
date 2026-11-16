@@ -314,37 +314,47 @@ internal fun DrawScope.phone(rect: Rect, alpha: Float = 1f) {
     drawRoundRect(RimFocus, rect.topLeft, rect.size, r, alpha = alpha, style = Stroke(1.5.dp.toPx()))
 }
 
-/** The trackpad's bar as it is on the open phone: Back, Recentre, Steady mode, Home. Returns Recentre's middle. */
+/**
+ * The trackpad's bar as it is on the open phone: Back, Recentre, Home (glasses with Steady mode get its key too, left
+ * out here). Returns Recentre's middle.
+ */
 internal fun DrawScope.padBar(rect: Rect, recentreLit: Float = 0f, alpha: Float = 1f): Offset {
-    val r = CornerRadius(rect.height / 2f)
+    val r = CornerRadius(rect.height * 0.36f)
     drawRoundRect(GlassRaised, rect.topLeft, rect.size, r, alpha = alpha)
     drawRoundRect(Rim, rect.topLeft, rect.size, r, alpha = alpha, style = Stroke(1.dp.toPx()))
-    val slot = rect.width / 4f
+    val slot = rect.width / 3f
     val cy = rect.center.y
-    val s = Stroke(1.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+    val s = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
     val u = rect.height * 0.2f
     fun mid(i: Int) = Offset(rect.left + slot * (i + 0.5f), cy)
-    // Back: a chevron.
+    // Back: an arrow to the left.
     mid(0).let { m ->
-        drawPath(Path().apply { moveTo(m.x + u * 0.4f, m.y - u); lineTo(m.x - u * 0.6f, m.y); lineTo(m.x + u * 0.4f, m.y + u) }, Ink2, alpha = alpha, style = s)
+        drawLine(Ink, Offset(m.x - u, m.y), Offset(m.x + u, m.y), s.width, StrokeCap.Round, alpha = alpha)
+        drawPath(Path().apply { moveTo(m.x - u * 0.2f, m.y - u * 0.8f); lineTo(m.x - u, m.y); lineTo(m.x - u * 0.2f, m.y + u * 0.8f) }, Ink, alpha = alpha, style = s)
     }
     // Recentre: a ring with four ticks and a centre dot (ic_cover_recentre).
     val rc = mid(1)
-    if (recentreLit > 0.01f) drawCircle(Accent.copy(alpha = 0.28f * recentreLit), rect.height * 0.46f, rc, alpha = alpha)
-    val ink = mix(Ink2, Color.White, recentreLit)
-    drawCircle(ink, u * 1.05f, rc, alpha = alpha, style = s)
-    drawCircle(ink, u * 0.3f, rc, alpha = alpha)
+    if (recentreLit > 0.01f) drawCircle(Accent.copy(alpha = 0.3f * recentreLit), rect.height * 0.44f, rc, alpha = alpha)
+    drawCircle(Ink, u * 0.8f, rc, alpha = alpha, style = s)
+    drawCircle(Ink, u * 0.24f, rc, alpha = alpha)
     for ((dx, dy) in listOf(0f to -1f, 0f to 1f, -1f to 0f, 1f to 0f)) {
-        drawLine(ink, Offset(rc.x + dx * u * 1.25f, rc.y + dy * u * 1.25f), Offset(rc.x + dx * u * 1.7f, rc.y + dy * u * 1.7f), s.width, StrokeCap.Round, alpha = alpha)
+        drawLine(Ink, Offset(rc.x + dx * u * 0.8f, rc.y + dy * u * 0.8f), Offset(rc.x + dx * u * 1.3f, rc.y + dy * u * 1.3f), s.width, StrokeCap.Round, alpha = alpha)
     }
-    // Steady mode: one wide screen on a foot (ic_cover_steady).
+    // Home: a house.
     mid(2).let { m ->
-        drawRoundRect(Ink2, Offset(m.x - u * 1.6f, m.y - u * 0.75f), Size(u * 3.2f, u * 1.3f), CornerRadius(u * 0.25f), alpha = alpha, style = s)
-        drawLine(Ink2, Offset(m.x - u * 0.7f, m.y + u * 1.15f), Offset(m.x + u * 0.7f, m.y + u * 1.15f), s.width, StrokeCap.Round, alpha = alpha)
+        drawPath(
+            Path().apply {
+                moveTo(m.x - u * 0.85f, m.y + u)
+                lineTo(m.x - u * 0.85f, m.y - u * 0.2f)
+                lineTo(m.x, m.y - u)
+                lineTo(m.x + u * 0.85f, m.y - u * 0.2f)
+                lineTo(m.x + u * 0.85f, m.y + u)
+                close()
+            },
+            Ink, alpha = alpha, style = s,
+        )
     }
-    // Home: a ring.
-    drawCircle(Ink2, u * 0.95f, mid(3), alpha = alpha, style = s)
-    for (i in 1..3) {
+    for (i in 1..2) {
         val x = rect.left + slot * i
         drawLine(Rim, Offset(x, rect.top + rect.height * 0.3f), Offset(x, rect.bottom - rect.height * 0.3f), 1.dp.toPx(), alpha = alpha)
     }

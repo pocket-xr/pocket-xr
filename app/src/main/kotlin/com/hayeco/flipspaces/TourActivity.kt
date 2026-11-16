@@ -53,7 +53,9 @@ class TourActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // A dark page whatever the phone's theme: light icons in the status bar.
+        val bars = androidx.activity.SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        enableEdgeToEdge(bars, bars)
         if (savedInstanceState == null) {
             // However it was opened, it has been seen now: the offer to someone updating is not made after this.
             TourPrefs(this).apply { memory = Tour.afterOpenedByUser(memory) }

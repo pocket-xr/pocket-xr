@@ -392,7 +392,7 @@ private fun DrawScope.look(t: Float) {
 
     // The trackpad's bar, and a finger on Recentre.
     val barW = min(size.width * 0.62f, 260.dp.toPx())
-    val barH = min(46.dp.toPx(), size.height * 0.15f)
+    val barH = min(52.dp.toPx(), size.height * 0.16f)
     val bar = Rect(Offset(size.width / 2f - barW / 2f, size.height * 0.97f - barH), Size(barW, barH))
     val press = burst(lt, 4.05f, 0.5f)?.let { sin(PI.toFloat() * it) } ?: 0f
     val rc = padBar(bar, recentreLit = maxOf(press, span(lt, 3.5f, 4f) * (1f - span(lt, 5f, 5.5f)) * 0.5f), alpha = alpha)

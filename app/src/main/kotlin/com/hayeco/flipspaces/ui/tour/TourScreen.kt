@@ -47,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -136,7 +137,18 @@ fun TourScreen(
                     }
                 }
                 val words: @Composable (Modifier) -> Unit = { m ->
-                    Column(m.verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(top = 4.dp, bottom = 8.dp)) {
+                    val scroll = rememberScrollState()
+                    // More below: the words fade out at the bottom edge until they are scrolled to their end.
+                    val more by animateFloatAsState(if (scroll.canScrollForward) 1f else 0f, tween(QUICK_MS), label = "more below")
+                    Column(
+                        m.drawWithContent {
+                            drawContent()
+                            if (more > 0.01f) {
+                                val h = 36.dp.toPx()
+                                drawRect(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color.Transparent, Page), size.height - h, size.height), Offset(0f, size.height - h), androidx.compose.ui.geometry.Size(size.width, h), alpha = more)
+                            }
+                        }.verticalScroll(scroll).padding(horizontal = 24.dp).padding(top = 4.dp, bottom = 8.dp),
+                    ) {
                         // The theme's body style spaces its letters out; the tour's words sit closer, as the trackpad's do.
                         androidx.compose.material3.ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp)) {
                             StepWords(shown, state, if (state.reducedMotion) -1 else phase, practice, { seconds.floatValue }, onStep, onShizuku, onAddon)
@@ -297,14 +309,24 @@ private fun StepWords(
                 )
                 state.addon?.let { addon ->
                     RowRule()
+                    // Before anything was asked of it, the row says what the add-on is and offers Install (which asks for
+                    // "Install unknown apps" first where that is needed). Once something is going on, the installer's own
+                    // line and its one main button.
+                    val idle = addon.state == AddonSetup.State.NOT_INSTALLED || addon.state == AddonSetup.State.NEEDS_PERMISSION
+                    val main = addon.buttons.firstOrNull { it.primary }
                     SetupRow(
                         done = addon.done,
                         optional = true,
                         title = stringResource(R.string.tour_addon),
-                        line = addon.line,
-                        detail = if (addon.done) null else AddonSetup.WHAT,
+                        line = if (idle) AddonSetup.WHAT else addon.line,
+                        detail = null,
                         reduced = reduced,
-                        buttons = addon.buttons.map { b -> b.label to { onAddon(b.action) } },
+                        buttons = when {
+                            addon.state == AddonSetup.State.ACCESS_ON -> emptyList()
+                            idle -> listOf(AddonSetup.INSTALL to { onAddon(AddonSetup.Action.INSTALL) })
+                            main != null -> listOf(main.label to { onAddon(main.action) })
+                            else -> emptyList()
+                        },
                     )
                 }
             }
@@ -417,12 +439,16 @@ private fun supportLine(model: GlassesModel?, name: String?): String? = when (To
     Tour.Support.UNLISTED -> stringResource(R.string.tour_support_unlisted)
 }
 
+/** A text size that stays the same whatever the phone's font size: for a number inside a badge of a fixed size. */
+@Composable
+private fun fixedSp(dp: Float) = with(androidx.compose.ui.platform.LocalDensity.current) { dp.dp.toSp() }
+
 /** The step's number in the accent, as in the demo video, and its title: a heading for screen readers. */
 @Composable
 private fun Title(step: Tour.Step, text: String, reduced: Boolean) {
     Row(Modifier.arrive(1, reduced).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(30.dp).clip(RoundedCornerShape(Look.RADIUS_S.dp)).background(Accent).clearAndSetSemantics { }, contentAlignment = Alignment.Center) {
-            Text("${step.ordinal + 1}", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            Text("${step.ordinal + 1}", color = Color.White, fontSize = fixedSp(16f), fontWeight = FontWeight.Medium)
         }
         Spacer(Modifier.width(12.dp))
         Text(
@@ -463,7 +489,7 @@ private fun Line(number: Int, text: String, lit: Boolean, done: Boolean = false)
             if (tick > 0.01f) {
                 Canvas(Modifier.size(22.dp)) { tickRing(Offset(size.width / 2f, size.height / 2f), size.width * 0.36f, 0f, tick, Color.White, widthDp = 2f) }
             } else {
-                Text("$number", color = mix(Ink2, Color.White, on), fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.clearAndSetSemantics { })
+                Text("$number", color = mix(Ink2, Color.White, on), fontSize = fixedSp(12f), lineHeight = fixedSp(14f), fontWeight = FontWeight.Medium, modifier = Modifier.clearAndSetSemantics { })
             }
         }
         Spacer(Modifier.width(12.dp))
