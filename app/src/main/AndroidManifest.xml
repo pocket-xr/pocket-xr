@@ -190,6 +190,12 @@
             android:exported="false"
             android:label="@string/manifest_spatial_windows" />
 
+        <!-- 1.5.0: the tour, the tutorial a new install sees once and the Menu and Settings open at any time. -->
+        <activity
+            android:name=".TourActivity"
+            android:exported="false"
+            android:label="@string/manifest_tour" />
+
         <!-- Diagnostics for the glasses' head tracking stream. -->
         <activity
             android:name=".HeadTrackingActivity"

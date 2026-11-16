@@ -86,6 +86,8 @@ object TrackpadMenu {
         AIR_DISPLAY(Section.WINDOWS_GLASSES),
         AIR_DISPLAY_MODE(Section.WINDOWS_GLASSES),
 
+        // 1.5.0: the tour of Pocket XR ([com.hayeco.flipspaces.core.tutorial.Tour]), over the gesture cards' row.
+        TOUR(Section.HELP),
         HOW_TO(Section.HELP),
         // 1.3.3: settings to a file and back, to move between the GitHub and Google Play builds.
         BACKUP_SETTINGS(Section.HELP),
@@ -153,6 +155,8 @@ object TrackpadMenu {
         Item.GLASSES_CHECK -> s.glassesKnown
         Item.AIR_DISPLAY -> s.airOffered
         Item.AIR_DISPLAY_MODE -> s.airOffered && s.airOn
+        // The tour is for the main screen; the cover is too small for it and keeps the gesture cards.
+        Item.TOUR -> !s.cover
         Item.HOW_TO, Item.RESET, Item.DEVELOPER, Item.BACKUP_SETTINGS, Item.RESTORE_SETTINGS -> true
         Item.DEVELOPER_CARD -> s.developerShown
         Item.EXIT -> true

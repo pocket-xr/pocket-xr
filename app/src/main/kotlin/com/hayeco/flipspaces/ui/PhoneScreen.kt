@@ -90,6 +90,7 @@ fun PhoneScreen(
     onGlassesReport: () -> Unit,
     onSendLogs: () -> Unit = {},
     onGlassesCheck: () -> Unit = {},
+    onOpenTour: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(message) {
@@ -179,6 +180,9 @@ fun PhoneScreen(
                     // 0.5.101 (Mike: each settings screen only what is needed, each with a reset): Track two hands and
                     // Calibrate hand aim are on the Hands screen only; Trackpad opens the trackpad's own Menu, where its
                     // settings are, instead of repeating the Open trackpad button.
+                    // 1.5.0: the tour first, where someone looking for help looks.
+                    NavRow(stringResource(R.string.tour_row), stringResource(R.string.tour_row_detail), onOpenTour)
+                    RowDivider()
                     NavRow(stringResource(R.string.home_spatial_windows), stringResource(R.string.home_spatial_windows_detail), onOpenSpatial)
                     RowDivider()
                     ToggleRow(

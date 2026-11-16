@@ -211,9 +211,22 @@ class TrackpadActivity : Activity(), PadHost {
         // 0.5.17 cover screen: not over a trackpad that opened by itself (the glasses plugged in folded).
         // 1.1.9: the plugged-in glasses' setup first when they have one (issue 31), and Spatial Mouse for this device (issue 33).
         // 1.1.16 (issue 12): the glasses' setup is the setup check now, which opens by itself once the tutorial closes.
-        if (!prefs.introShown && !intent.getBooleanExtra(EXTRA_AUTO, false)) {
-            prefs.introShown = true
-            screen.showIntro(com.hayeco.flipspaces.core.pointer.IntroPages.firstRun(prefs.landscapeDevice, rotation != null, settings.oneFingerScroll))
+        // 1.5.0: a new install gets the tour instead, once, on the main screen (the cover keeps the cards); someone
+        // updating is never shown it by itself, only offered it once ([com.hayeco.flipspaces.core.tutorial.Tour]).
+        val tourPrefs = TourPrefs(this)
+        // Opened by Settings for its Menu or the glasses check, the trackpad is there for that: the tour waits, as it does
+        // when the trackpad opened by itself.
+        val forSomethingElse = intent.getBooleanExtra(EXTRA_AUTO, false) || intent.getBooleanExtra(EXTRA_MENU, false) || intent.getBooleanExtra(EXTRA_GLASSES_CHECK, false)
+        val opening = com.hayeco.flipspaces.core.tutorial.Tour.onTrackpadOpen(tourPrefs.memory, openedByItself = forSomethingElse, cover = cover)
+        tourPrefs.memory = com.hayeco.flipspaces.core.tutorial.Tour.after(tourPrefs.memory, opening)
+        Log.i(TAG, "tour at the trackpad's open: $opening")
+        when (opening) {
+            com.hayeco.flipspaces.core.tutorial.Tour.Opening.SHOW -> openTour()
+            com.hayeco.flipspaces.core.tutorial.Tour.Opening.OFFER ->
+                screen.showDialog(getString(R.string.tour_offer), ok = getString(R.string.tour_offer_take), cancel = getString(R.string.tour_offer_not_now)) { openTour() }
+            com.hayeco.flipspaces.core.tutorial.Tour.Opening.GESTURE_CARDS ->
+                screen.showIntro(com.hayeco.flipspaces.core.pointer.IntroPages.firstRun(prefs.landscapeDevice, rotation != null, settings.oneFingerScroll))
+            com.hayeco.flipspaces.core.tutorial.Tour.Opening.NOTHING -> Unit
         }
         // 1.1.16: Settings' "Glasses setup check" row.
         if (intent?.getBooleanExtra(EXTRA_GLASSES_CHECK, false) == true) {
@@ -1126,6 +1139,11 @@ class TrackpadActivity : Activity(), PadHost {
         val line = if (version != null) getString(R.string.pad_seen_as_version, name, d.vendorId, d.productId, version) else getString(R.string.pad_seen_as, name, d.vendorId, d.productId)
         Plugged(model, d.productId, line)
     }.getOrNull()
+
+    /** 1.5.0: the tour, over the trackpad; it comes back here when it closes. */
+    override fun openTour() {
+        startActivity(Intent(this, TourActivity::class.java))
+    }
 
     override fun introPages(): List<com.hayeco.flipspaces.core.pointer.IntroPage> =
         com.hayeco.flipspaces.core.pointer.IntroPages.trackpad(prefs.landscapeDevice, rotation != null, settings.oneFingerScroll)

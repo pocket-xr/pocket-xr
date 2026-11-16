@@ -1570,4 +1570,104 @@
     <string name="spatial_axes_xleft_ydown_zback">x left, y down, z back</string>
     <string name="spatial_axes_xright_zdown_yback">x right, y back, z down</string>
     <string name="spatial_axes_xup_yleft_zback">x up, y left, z back</string>
+
+    <!-- The tour (1.5.0): the tutorial for new installs, also in the Menu and in Settings. TourActivity, ui/tour -->
+    <string name="manifest_tour">Tour of Pocket XR</string>
+    <!-- The Menu's and Settings' row that opens the tour, and its second line -->
+    <string name="tour_row">Tour of Pocket XR</string>
+    <string name="tour_row_detail">Two minutes: setup, the trackpad, your windows</string>
+    <!-- Shown once on the trackpad to someone who updated from a version without the tour -->
+    <string name="tour_offer">New: a two-minute tour of Pocket XR, from setup to moving windows, Recentre, 3D and Steady mode. It is always in the Menu, under Help and more.</string>
+    <string name="tour_offer_take">Take the tour</string>
+    <string name="tour_offer_not_now">Not now</string>
+    <string name="tour_skip">Skip</string>
+    <string name="tour_back">Back</string>
+    <!-- Read out by screen readers: %1$d the step's number, %2$d how many steps -->
+    <string name="tour_step_of">Step %1$d of %2$d</string>
+
+    <string name="tour_welcome_title">Your apps, all around you</string>
+    <string name="tour_welcome_body">Pocket XR opens your phone\'s apps as windows floating in your glasses. They stay where you put them as you look around, and your phone is the controller.</string>
+    <string name="tour_welcome_note">This tour takes about two minutes. Skip it any time: it stays in the Menu.</string>
+    <string name="tour_welcome_picture">Picture: app windows floating in an arc around you, the middle one lit.</string>
+
+    <string name="tour_setup_title">Get set up</string>
+    <string name="tour_setup_body">Two things are needed, one is optional. You can finish them after the tour.</string>
+    <string name="tour_setup_picture_connected">Picture: a phone joined to glasses by a cable, with light running along it.</string>
+    <string name="tour_setup_picture_unplugged">Picture: a phone and glasses, the cable not plugged in yet.</string>
+    <string name="tour_setup_done">Done</string>
+    <string name="tour_setup_to_do">To do</string>
+    <string name="tour_setup_optional">Optional</string>
+    <string name="tour_glasses">Glasses</string>
+    <string name="tour_glasses_unplugged">Not plugged in yet. Plug them into the phone\'s USB-C port and the Space opens on them by itself.</string>
+    <!-- %1$s: the glasses' name, such as XREAL One -->
+    <string name="tour_glasses_connected">Connected: %1$s.</string>
+    <string name="tour_glasses_last_used">Not plugged in now. Last used: %1$s.</string>
+    <!-- How well Pocket XR is known to work with the glasses. %1$s: the glasses' name -->
+    <string name="tour_support_tested">%1$s: tested by the Pocket XR project.</string>
+    <string name="tour_support_community">%1$s: confirmed working by community testers.</string>
+    <string name="tour_support_air">XREAL Air family: the Air 2 is confirmed by a tester. The Air, Air 2 Pro and Air 2 Ultra use the same head tracking and have no tester yet.</string>
+    <string name="tour_support_viture">VITURE: the Beast is confirmed by a tester. Other VITURE glasses have not been tried yet.</string>
+    <string name="tour_support_early">%1$s: early support. A tester\'s retest is pending, so some things may be off.</string>
+    <string name="tour_support_unlisted">These glasses are not on the list yet. Windows will show, but head tracking only works if they send it the way a known model does. A Glasses report (Pocket XR Settings, Advanced) helps add them.</string>
+    <string name="tour_shizuku">Shizuku</string>
+    <string name="tour_shizuku_what">A free app Pocket XR uses to give each app its own floating window. Without it, apps open as ordinary desktop windows.</string>
+    <string name="tour_shizuku_not_installed">Not installed yet.</string>
+    <string name="tour_shizuku_not_running">Installed, but not running. Open Shizuku and start it; its own app shows how. After the phone restarts, start it again.</string>
+    <string name="tour_shizuku_no_permission">Running. Now allow Pocket XR to use it.</string>
+    <string name="tour_shizuku_ready">Ready.</string>
+    <string name="tour_shizuku_get">Get Shizuku</string>
+    <string name="tour_shizuku_open">Open Shizuku</string>
+    <string name="tour_shizuku_allow">Allow Pocket XR</string>
+    <string name="tour_addon">The add-on</string>
+
+    <string name="tour_point_body">The phone\'s screen is your trackpad. Try it on the pad below: the dot moves in your glasses.</string>
+    <string name="tour_point_pad">Practice pad</string>
+    <string name="tour_point_pad_description">Practice pad. Slide one finger to move the dot, tap to click, slide two fingers to scroll. Practice is optional.</string>
+    <string name="tour_point_picture">Picture: a window as your glasses show it, with the dot you move and a button to click.</string>
+    <string name="tour_point_done">That\'s it. The real trackpad works the same way.</string>
+
+    <string name="tour_three_body">Three shortcuts, anywhere on the pad.</string>
+    <string name="tour_three_picture">Picture: three fingers swipe on the pad. Up opens your apps, down opens the Control Center, sideways goes back.</string>
+
+    <string name="tour_windows_title">Move and resize windows</string>
+    <string name="tour_windows_move">To move a window, point at it and click the bar above it. Swipe to carry it, tap to drop it.</string>
+    <string name="tour_windows_keys">The keys above the trackpad\'s bar do the same for the window you point at: Move, Resize, Further, Closer and Curve.</string>
+    <string name="tour_windows_picture">Picture: the dot clicks the bar above a window and carries it, then holds on the blue corner handle until it fills and stretches the window.</string>
+
+    <string name="tour_look_title">Look around</string>
+    <string name="tour_look_body">Windows stay where you put them as you turn your head.</string>
+    <string name="tour_look_recentre">Lost them, or sitting somewhere new? Tap Recentre in the trackpad\'s bar and they come back in front of you.</string>
+    <string name="tour_look_picture">Picture: the view turns away and the windows slide out of sight. A tap on Recentre brings them back in front.</string>
+
+    <string name="tour_depth_title">3D and Steady mode</string>
+    <string name="tour_depth_3d">3D</string>
+    <string name="tour_depth_3d_line">Each eye gets its own picture, so windows sit at real depth.</string>
+    <string name="tour_depth_by_itself">Pocket XR switches your glasses to 3D by itself where they allow it. The Depth button beside your apps turns it on and off.</string>
+    <string name="tour_depth_glasses_menu">On VITURE glasses, turn 3D on in the glasses\' menu first, then use the Depth button beside your apps.</string>
+    <string name="tour_depth_not_yet">Pocket XR can\'t switch XREAL Air glasses to 3D by itself yet.</string>
+    <string name="tour_steady_line">For reading and working: your windows line up in a row and the picture holds completely still. It has its own key in the trackpad\'s bar.</string>
+    <string name="tour_steady_which">For the XREAL Aura and One series. It is tested on the Aura.</string>
+    <!-- %1$s: the glasses' name -->
+    <string name="tour_steady_here">It works on your %1$s.</string>
+    <string name="tour_steady_here_untested">It is offered on your %1$s. It is tested on the Aura; on the One series it is new, so tell us how it goes.</string>
+    <string name="tour_steady_not_here">Your %1$s can\'t use it: it needs an XREAL Aura or One series.</string>
+    <string name="tour_depth_picture">Picture: two pictures, one for each eye, come together into windows at different depths. Then the windows line up in a row that holds still.</string>
+
+    <string name="tour_more_title">More ways to control</string>
+    <string name="tour_more_mouse_line">Point the phone like a remote. Pick it at the top of the trackpad.</string>
+    <string name="tour_more_hands_line">Point, pinch and drag with your hands. XREAL Aura only for now, on glasses firmware 16.1.03 or older: 16.1.04 turns the camera off for phones.</string>
+    <string name="tour_more_pcvr_line">Play SteamVR games from your Windows PC. It needs the free Pocket XR PC helper on the PC. It is new, so testers are welcome.</string>
+    <string name="tour_more_picture">Picture: the phone aimed like a remote moves the dot, a pinch carries a window, and a PC sends a game to the glasses.</string>
+
+    <string name="tour_done_title">You\'re set</string>
+    <string name="tour_done_title_open">Almost there</string>
+    <string name="tour_done_body_ready">Your glasses are connected and everything is ready. Tap Done and look up.</string>
+    <string name="tour_done_body_open">That\'s the tour. Here is what is still to do:</string>
+    <string name="tour_done_plug_in">Plug in your glasses. The Space opens on them by itself.</string>
+    <string name="tour_done_shizuku">Set up Shizuku, for floating windows.</string>
+    <string name="tour_done_to_setup">Back to setup</string>
+    <string name="tour_done_check">The first time new glasses connect, a short setup check opens to make sure head tracking is right.</string>
+    <string name="tour_done_again">This tour is always in the Menu, under Help and more.</string>
+    <string name="tour_done_picture_ready">Picture: your windows around you, and a tick.</string>
+    <string name="tour_done_picture_open">Picture: your windows around you.</string>
 </resources>

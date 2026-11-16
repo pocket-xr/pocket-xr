@@ -132,6 +132,18 @@ class DebugReceiver : BroadcastReceiver() {
     }
 
     private fun open(context: Context, intent: Intent) {
+        // 1.5.0: --es what tour [--es step WINDOWS] [--es shizuku READY] [--es model AURA] [--ez connected true] opens the
+        // tour on the phone at a step, in a state an emulator cannot be put in.
+        if (intent.getStringExtra("what") == "tour") {
+            val tour = Intent(context, com.hayeco.flipspaces.TourActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            intent.getStringExtra("step")?.let { tour.putExtra(com.hayeco.flipspaces.TourActivity.EXTRA_STEP, it) }
+            intent.getStringExtra("shizuku")?.let { tour.putExtra("debug_shizuku", it) }
+            intent.getStringExtra("model")?.let { tour.putExtra("debug_model", it) }
+            if (intent.hasExtra("connected")) tour.putExtra("debug_connected", intent.getBooleanExtra("connected", false))
+            context.startActivity(tour, android.app.ActivityOptions.makeBasic().setLaunchDisplayId(android.view.Display.DEFAULT_DISPLAY).toBundle())
+            Log.i(TAG, "Opened the tour at ${intent.getStringExtra("step") ?: "its first step"}")
+            return
+        }
         val displays = DisplayMonitor(context).snapshot()
         val id = number(intent, "display")?.toInt()
             ?: displays.filter(DisplaySelector::isEligible).maxByOrNull { it.widthPx.toLong() * it.heightPx }?.id

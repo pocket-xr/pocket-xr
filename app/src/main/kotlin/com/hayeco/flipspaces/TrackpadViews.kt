@@ -733,6 +733,9 @@ interface PadHost {
     /** 0.5.101: the Menu's settings back to Pocket XR's defaults (the pad type, presets and windows stay). */
     fun resetSettings()
 
+    /** 1.5.0: the Menu's "Tour of Pocket XR". */
+    fun openTour()
+
     /** 1.1.9: the Menu's "How to use the trackpad" pages, for this device ([com.hayeco.flipspaces.core.pointer.IntroPages.trackpad]). */
     fun introPages(): List<com.hayeco.flipspaces.core.pointer.IntroPage>
 
@@ -2501,6 +2504,10 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 closeDrawer()
                 host.airDisplaySwitch()
             })
+            MenuItem.TOUR -> listOf(row(R.drawable.ic_usage_intro, c.getString(R.string.tour_row), subtitle = c.getString(R.string.tour_row_detail)) {
+                closeDrawer()
+                host.openTour()
+            }.apply { tag = MENU_TOUR })
             MenuItem.HOW_TO -> listOf(row(R.drawable.ic_usage_intro, c.getString(R.string.pad_how_to_use)) {
                 closeDrawer()
                 showIntro(host.introPages())
@@ -3372,6 +3379,9 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         const val MENU_KO_FI = "menu:ko-fi"
         const val MENU_UPDATE = "menu:update"
         const val MENU_GLASSES_CHECK = "menu:glasses-check"
+
+        /** 1.5.0: the Menu's "Tour of Pocket XR" row. */
+        const val MENU_TOUR = "menu:tour"
 
         /** 1.2.6: a quick tile's tag is this and its item's name ("menu:tile:pocket_mode"). */
         const val MENU_TILE = "menu:tile:"
