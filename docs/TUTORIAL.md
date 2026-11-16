@@ -53,6 +53,9 @@ keep what they have (the setup check, the notices).
 - **No Shizuku, not running, or not allowed:** the row says which, what Pocket XR does without it (apps open as
   ordinary desktop windows), and has the one button: get it, open it, or allow Pocket XR. The last step repeats what is
   still open, with a button back to the checklist.
+- **Glasses connected but no Space on them** (the Space was closed, another copy of Pocket XR has the glasses, or
+  Android refused it): the last step does not say "You're set". It says the Space is not open yet and has an
+  "Open the Space" button; once the Space is up the step turns to "You're set" by itself.
 - **Glasses Pocket XR supports only partly:** the glasses row and steps 7 and 8 say what is known for that model, in
   the README's own tiers: tested by the project, confirmed by community testers, early, or not on the list. Hand
   tracking is only offered for glasses with a camera, and the Aura's firmware 16.1.04 note is said.

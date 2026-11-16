@@ -1665,6 +1665,8 @@
     <string name="tour_done_body_open">That\'s the tour. Here is what is still to do:</string>
     <string name="tour_done_plug_in">Plug in your glasses. The Space opens on them by itself.</string>
     <string name="tour_done_shizuku">Set up Shizuku, for floating windows.</string>
+    <string name="tour_done_open_space">Your glasses are connected, but the Space is not open on them yet.</string>
+    <string name="tour_done_open_space_button">Open the Space</string>
     <string name="tour_done_to_setup">Back to setup</string>
     <string name="tour_done_check">The first time new glasses connect, a short setup check opens to make sure head tracking is right.</string>
     <string name="tour_done_again">This tour is always in the Menu, under Help and more.</string>

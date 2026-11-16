@@ -140,6 +140,7 @@ class DebugReceiver : BroadcastReceiver() {
             intent.getStringExtra("shizuku")?.let { tour.putExtra("debug_shizuku", it) }
             intent.getStringExtra("model")?.let { tour.putExtra("debug_model", it) }
             if (intent.hasExtra("connected")) tour.putExtra("debug_connected", intent.getBooleanExtra("connected", false))
+            if (intent.hasExtra("space")) tour.putExtra("debug_space", intent.getBooleanExtra("space", false))
             context.startActivity(tour, android.app.ActivityOptions.makeBasic().setLaunchDisplayId(android.view.Display.DEFAULT_DISPLAY).toBundle())
             Log.i(TAG, "Opened the tour at ${intent.getStringExtra("step") ?: "its first step"}")
             return

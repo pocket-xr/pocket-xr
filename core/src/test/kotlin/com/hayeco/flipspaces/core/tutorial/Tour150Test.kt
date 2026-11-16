@@ -122,10 +122,19 @@ class Tour150Test {
 
     @Test
     fun `the last step lists what is still open, and nothing once it is all there`() {
-        assertEquals(listOf(Tour.Remaining.SHIZUKU, Tour.Remaining.PLUG_IN_GLASSES), Tour.remaining(false, ShizukuStatus.NOT_INSTALLED))
-        assertEquals(listOf(Tour.Remaining.SHIZUKU), Tour.remaining(true, ShizukuStatus.NO_PERMISSION))
-        assertEquals(listOf(Tour.Remaining.PLUG_IN_GLASSES), Tour.remaining(false, ShizukuStatus.READY))
-        assertTrue(Tour.remaining(true, ShizukuStatus.READY).isEmpty())
+        assertEquals(listOf(Tour.Remaining.SHIZUKU, Tour.Remaining.PLUG_IN_GLASSES), Tour.remaining(false, ShizukuStatus.NOT_INSTALLED, spaceUp = false))
+        assertEquals(listOf(Tour.Remaining.SHIZUKU), Tour.remaining(true, ShizukuStatus.NO_PERMISSION, spaceUp = true))
+        assertEquals(listOf(Tour.Remaining.PLUG_IN_GLASSES), Tour.remaining(false, ShizukuStatus.READY, spaceUp = false))
+        assertTrue(Tour.remaining(true, ShizukuStatus.READY, spaceUp = true).isEmpty())
+    }
+
+    @Test
+    fun `glasses connected with no Space on them are not called ready`() {
+        // Mike's Flip 7, 15 November 2026: glasses and Shizuku fine, this copy's Space not open, "look up" at nothing.
+        assertEquals(listOf(Tour.Remaining.OPEN_SPACE), Tour.remaining(true, ShizukuStatus.READY, spaceUp = false))
+        assertEquals(listOf(Tour.Remaining.SHIZUKU, Tour.Remaining.OPEN_SPACE), Tour.remaining(true, ShizukuStatus.NOT_RUNNING, spaceUp = false))
+        // Nothing to open while no glasses are plugged in, whatever is remembered of a Space.
+        assertEquals(listOf(Tour.Remaining.PLUG_IN_GLASSES), Tour.remaining(false, ShizukuStatus.READY, spaceUp = true))
     }
 
     // ---- glasses: the README's tiers ----

@@ -84,6 +84,8 @@ data class TourState(
     /** The glasses plugged in, else the last ones used; null when none are known. */
     val model: GlassesModel? = null,
     val shizuku: ShizukuStatus = ShizukuStatus.NOT_INSTALLED,
+    /** This copy's Space is up on the glasses now. */
+    val spaceUp: Boolean = false,
     val addon: AddonSetup.Step? = null,
     /** The phone can aim (it has the rotation sensor), so Spatial Mouse is offered. */
     val spatialMouse: Boolean = true,
@@ -103,6 +105,7 @@ fun TourScreen(
     onClose: () -> Unit,
     onShizuku: (Tour.ShizukuAction) -> Unit,
     onAddon: (AddonSetup.Action) -> Unit,
+    onOpenSpace: () -> Unit = {},
 ) {
     val haptics = LocalHapticFeedback.current
     fun tick() = haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -128,7 +131,7 @@ fun TourScreen(
                 val seconds = rememberSceneSeconds(shown, state.reducedMotion, scenePoster(shown))
                 val practice = remember { PracticeState() }
                 val link by animateFloatAsState(if (state.glassesConnected) 1f else 0f, tween(600, easing = EnterEasing), label = "link")
-                val complete = Tour.remaining(state.glassesConnected, state.shizuku).isEmpty()
+                val complete = Tour.remaining(state.glassesConnected, state.shizuku, state.spaceUp).isEmpty()
                 val phase by remember(shown, state.spatialMouse) { derivedStateOf { scenePhase(shown, seconds.floatValue, state.spatialMouse) } }
                 val picture = pictureText(shown, state, complete)
                 val stage: @Composable (Modifier) -> Unit = { m ->
@@ -151,7 +154,7 @@ fun TourScreen(
                     ) {
                         // The theme's body style spaces its letters out; the tour's words sit closer, as the trackpad's do.
                         androidx.compose.material3.ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(letterSpacing = 0.sp)) {
-                            StepWords(shown, state, if (state.reducedMotion) -1 else phase, practice, { seconds.floatValue }, onStep, onShizuku, onAddon)
+                            StepWords(shown, state, if (state.reducedMotion) -1 else phase, practice, { seconds.floatValue }, onStep, onShizuku, onAddon, onOpenSpace)
                         }
                     }
                 }
@@ -257,6 +260,7 @@ private fun StepWords(
     onStep: (Tour.Step) -> Unit,
     onShizuku: (Tour.ShizukuAction) -> Unit,
     onAddon: (AddonSetup.Action) -> Unit,
+    onOpenSpace: () -> Unit,
 ) {
     val reduced = state.reducedMotion
     val name = state.model?.takeIf { it != GlassesModel.UNKNOWN }?.label ?: state.glassesName
@@ -407,7 +411,7 @@ private fun StepWords(
             }
         }
         Tour.Step.DONE -> {
-            val open = Tour.remaining(state.glassesConnected, state.shizuku)
+            val open = Tour.remaining(state.glassesConnected, state.shizuku, state.spaceUp)
             Title(step, stringResource(if (open.isEmpty()) R.string.tour_done_title else R.string.tour_done_title_open), reduced)
             if (open.isEmpty()) {
                 Body(stringResource(R.string.tour_done_body_ready), 2, reduced)
@@ -415,11 +419,23 @@ private fun StepWords(
                 Body(stringResource(R.string.tour_done_body_open), 2, reduced)
                 Column(Modifier.arrive(3, reduced).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     open.forEachIndexed { i, r ->
-                        Line(i + 1, stringResource(if (r == Tour.Remaining.SHIZUKU) R.string.tour_done_shizuku else R.string.tour_done_plug_in), lit = false)
+                        Line(
+                            i + 1,
+                            stringResource(
+                                when (r) {
+                                    Tour.Remaining.SHIZUKU -> R.string.tour_done_shizuku
+                                    Tour.Remaining.PLUG_IN_GLASSES -> R.string.tour_done_plug_in
+                                    Tour.Remaining.OPEN_SPACE -> R.string.tour_done_open_space
+                                },
+                            ),
+                            lit = false,
+                        )
                     }
                 }
-                if (Tour.Remaining.SHIZUKU in open) {
-                    PillButton(stringResource(R.string.tour_done_to_setup), primary = false, modifier = Modifier.arrive(3, reduced).padding(top = 10.dp)) { onStep(Tour.Step.SETUP) }
+                Row(Modifier.arrive(3, reduced).padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // The Space can be opened from here; the step turns to "You're set" by itself once it is up.
+                    if (Tour.Remaining.OPEN_SPACE in open) PillButton(stringResource(R.string.tour_done_open_space_button), primary = true, onClick = onOpenSpace)
+                    if (Tour.Remaining.SHIZUKU in open) PillButton(stringResource(R.string.tour_done_to_setup), primary = false) { onStep(Tour.Step.SETUP) }
                 }
             }
             Note(stringResource(R.string.tour_done_check), 4, reduced)

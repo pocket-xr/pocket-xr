@@ -105,11 +105,16 @@ object Tour {
     }
 
     /** What is still open at the end. The add-on is optional, so it is never on the list. */
-    enum class Remaining { PLUG_IN_GLASSES, SHIZUKU }
+    enum class Remaining { PLUG_IN_GLASSES, SHIZUKU, OPEN_SPACE }
 
-    fun remaining(glassesConnected: Boolean, shizuku: ShizukuStatus): List<Remaining> = buildList {
+    /**
+     * What is still open. 1.5.0 (Mike, 15 November 2026, on his Flip 7: the last step said everything was ready while
+     * the glasses showed nothing of this copy's): glasses that are connected with no Space up on them ([spaceUp]) are
+     * not ready, so the step never says "look up" at an empty view; it offers to open the Space instead.
+     */
+    fun remaining(glassesConnected: Boolean, shizuku: ShizukuStatus, spaceUp: Boolean): List<Remaining> = buildList {
         if (shizuku != ShizukuStatus.READY) add(Remaining.SHIZUKU)
-        if (!glassesConnected) add(Remaining.PLUG_IN_GLASSES)
+        if (!glassesConnected) add(Remaining.PLUG_IN_GLASSES) else if (!spaceUp) add(Remaining.OPEN_SPACE)
     }
 
     // ---- what is known for these glasses (the README's tiers; change both together) ----

@@ -91,11 +91,22 @@ class TourActivity : ComponentActivity() {
                 val shizuku = remember(asked) { debugShizuku() ?: ShizukuBridge.status(this@TourActivity) }
                 val addon = remember(asked) { AddonInstaller.step(this@TourActivity) }
                 val model = remember(asked, glasses?.display?.id) { debugModel() ?: knownModel() }
+                // This copy's own Space on the glasses, asked again with the rest: another copy's Space does not count.
+                // Without Shizuku the button puts the flat home on the glasses, not the Space; that display then counts as
+                // opened too (the step still lists Shizuku), so a tap that worked never looks as if it did nothing.
+                var openedOn by rememberSaveable { mutableStateOf<Int?>(null) }
+                val spaceUp = remember(asked, glasses?.display?.id, openedOn) {
+                    debugSpace() ?: (glasses != null && (
+                        com.hayeco.flipspaces.spatial.SpaceActivity.runningOn(glasses.display.id) != null ||
+                            com.hayeco.flipspaces.spatial.SpaceSession.active || openedOn == glasses.display.id
+                        ))
+                }
                 val state = TourState(
                     glassesConnected = debugConnected() ?: (glasses != null),
                     glassesName = glasses?.display?.kindLabel.takeIf { debugConnected() != false },
                     model = model,
                     shizuku = shizuku,
+                    spaceUp = spaceUp,
                     addon = addon,
                     spatialMouse = spatialMouse,
                     reducedMotion = animationsRemoved(this@TourActivity),
@@ -111,6 +122,15 @@ class TourActivity : ComponentActivity() {
                     },
                     onShizuku = { action -> shizukuAction(action); asked++ },
                     onAddon = { action -> AddonInstaller.run(this@TourActivity, action); asked++ },
+                    onOpenSpace = {
+                        // As Pocket XR Settings' "Show on glasses" does; what Android answers is logged, and the step
+                        // shows by itself whether the Space came up.
+                        val failure = glasses?.let { SpaceRouting.openOnGlasses(this@TourActivity, it.display, "the tour") }
+                        Log.i(TAG, "tour: open the Space: ${failure ?: if (glasses != null) "asked" else "no glasses"}")
+                        failure?.let { android.widget.Toast.makeText(this@TourActivity, it, android.widget.Toast.LENGTH_LONG).show() }
+                        if (failure == null) openedOn = glasses?.display?.id
+                        asked++
+                    },
                 )
             }
         }
@@ -150,6 +170,9 @@ class TourActivity : ComponentActivity() {
 
     private fun debugModel(): GlassesModel? =
         if (BuildConfig.DEBUG) intent?.getStringExtra("debug_model")?.let { name -> GlassesModel.entries.firstOrNull { it.name == name } } else null
+
+    private fun debugSpace(): Boolean? =
+        if (BuildConfig.DEBUG && intent?.hasExtra("debug_space") == true) intent.getBooleanExtra("debug_space", false) else null
 
     private fun debugConnected(): Boolean? =
         if (BuildConfig.DEBUG && intent?.hasExtra("debug_connected") == true) intent.getBooleanExtra("debug_connected", false) else null
