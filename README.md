@@ -159,6 +159,11 @@ The [Roadmap](https://github.com/pocket-xr/pocket-xr/issues/11) has the full lis
    Pocket XR Settings or the trackpad's Menu ("Glasses setup check"). It shows only the steps your glasses need, then
    asks you to turn your head for 10 seconds and say what the windows did. Once it passes it never comes up again.
 
+The first time you open Pocket XR, a two-minute **tour** walks through this setup (with a live checklist for the
+glasses, Shizuku and the add-on), the trackpad, moving windows, Recentre, 3D and Steady mode. Open it again any time
+from the trackpad's Menu (Help and more, "Tour of Pocket XR") or from Pocket XR Settings. Its text is in English for
+now.
+
 ### Set up your glasses
 
 Pocket XR holds the windows in place as you turn your head. Glasses that can do this on their own must leave it to

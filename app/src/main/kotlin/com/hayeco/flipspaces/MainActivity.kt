@@ -167,6 +167,7 @@ class MainActivity : ComponentActivity() {
                         message = if (file != null) getString(R.string.home_glasses_report_saved, file.name) else getString(R.string.home_glasses_report_not_saved)
                     },
                     onSendLogs = { SendLogs.send(this, this) },
+                    onOpenTour = { startActivity(Intent(this, TourActivity::class.java)) },
                     onGlassesCheck = { startActivity(Intent(this, TrackpadActivity::class.java).putExtra(TrackpadActivity.EXTRA_GLASSES_CHECK, true)) },
                 )
             }

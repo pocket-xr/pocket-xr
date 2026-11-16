@@ -111,6 +111,15 @@ the activity once it is up. To remove the second display again:
 
 ## 3. Opening the Spaces home or a Space without the glasses
 
+1.5.0: the tour (docs/TUTORIAL.md) opens on the phone at any step, in states an emulator cannot be put in:
+
+```
+adb shell am broadcast -a com.hayeco.flipspaces.debug.OPEN -p com.hayeco.flipspaces --es what tour --es step WINDOWS
+# steps: WELCOME SETUP POINT THREE_FINGERS WINDOWS LOOK DEPTH MORE DONE
+# optional: --es shizuku NOT_INSTALLED|NOT_RUNNING|NO_PERMISSION|READY   --es model AURA|ONE|ONE_PRO|AIR|VITURE|UNKNOWN
+#           --ez connected true|false   --ez space true|false (this copy's Space up on the glasses)
+```
+
 ```
 adb shell am broadcast -a com.hayeco.flipspaces.debug.OPEN -p com.hayeco.flipspaces --es what home
 adb shell am broadcast -a com.hayeco.flipspaces.debug.OPEN -p com.hayeco.flipspaces --es what space

@@ -2,6 +2,29 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.5.0: a tour of Pocket XR
+
+- **A two-minute tour**, shown once when you first open Pocket XR. Nine short steps, each with a moving picture: what
+  Pocket XR is, getting set up, the trackpad, three-finger swipes, moving and resizing windows, Recentre, 3D and Steady
+  mode, other ways to control it, and what to do next. Skip, Back and Next are on every step.
+- **A live setup checklist** in the tour: whether your glasses are connected, where Shizuku stands (not installed, not
+  running, not allowed yet, or ready) with one button for the next thing to do, and the optional add-on. Nothing waits
+  for any of it; the last step lists what is still open, and if your glasses are connected with no Space on them it has
+  an "Open the Space" button instead of saying you are set.
+- **A practice pad**: move your own finger and the dot moves, tap to click, two fingers to scroll, before you try it in
+  the glasses.
+- The tour says what is known for your glasses: tested by the project, confirmed by community testers, early, or not on
+  the list yet, and which of 3D, Steady mode and hand tracking they have.
+- **Open it again any time**: "Tour of Pocket XR" in the trackpad's Menu under Help and more, and at the top of the
+  settings list in Pocket XR Settings. "How to use the trackpad" is still there beside it.
+- **If you already use Pocket XR**, the tour never opens by itself. The trackpad offers it once ("Take the tour" or
+  "Not now") and then leaves you alone.
+- It works with TalkBack (every picture is described, and setup states are read out as they change) and with Android's
+  "Remove animations" (the pictures become stills).
+- The Flip's cover screen keeps the short gesture cards; the tour is for the main screen.
+- The tour's text is in English for now in every language. Translations for Korean, Japanese, Chinese (simplified and
+  traditional), Spanish, Portuguese, French, German, Italian and Russian are still to come.
+
 ## 1.4.7: back in 3D after a quick replug
 
 - Unplug your glasses and plug them straight back in, and Pocket XR now switches them back to 3D. Before, a replug
