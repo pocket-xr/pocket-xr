@@ -2,6 +2,19 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.5.3: help for phones that mirror the glasses
+
+- **Phones without Samsung DeX** that copy their screen to the glasses (mirror mode) now get the right advice. Before,
+  Pocket XR told them to turn on Samsung DeX, which they don't have. Now it says the phone has to extend its screen to
+  the glasses, and opens Developer options with the switches to turn on: "Force desktop mode", "Enable freeform
+  windows", "Force activities to be resizable" and, if listed, "Enable desktop experience features", then a restart.
+  Seen on a vivo V2562 with Android 17; whether those switches help on a vivo is not yet known.
+- **A log that doesn't stop after a second:** on some phones Android stopped handing Pocket XR its own log lines a
+  moment after it started, so Send logs had almost nothing in it. Pocket XR now notices, reads the log another way, and
+  says so in the file if Android still gives it nothing.
+- The new words are in every language Pocket XR speaks; the option names stay in English, as phones name them
+  differently.
+
 ## 1.5.2: Steady mode your way, and the VITURE Beast 1201
 
 - **Screen gap in Steady mode:** choose the space between your screens, from touching to wide, in Settings straight

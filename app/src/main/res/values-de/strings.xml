@@ -844,6 +844,10 @@
     <string name="core_settings_external_hint">Stell die Brille von Spiegeln auf Erweitern um und komm dann zurück.</string>
     <string name="core_settings_home">Einstellungen öffnen</string>
     <string name="core_settings_home_hint">Geh zu Verbundene Geräte, Samsung DeX, schalte es ein und komm dann zurück.</string>
+    <string name="core_mirror_message_other">Die Brille spiegelt den Bildschirm, daher können sich darauf keine Apps öffnen. Dein Handy muss seinen Bildschirm auf die Brille erweitern statt ihn zu kopieren: Die Schritte stehen unten.</string>
+    <string name="core_settings_developer">Entwickleroptionen öffnen</string>
+    <string name="core_settings_developer_hint">Schalte in den Entwickleroptionen \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\" ein, und \"Enable desktop experience features\", falls vorhanden. Starte dann das Handy neu und schließe die Brille an. Auf deinem Handy können die Namen etwas anders lauten.</string>
+    <string name="core_settings_home_other_hint">Suche die Einstellungen für externe Displays oder den Desktop-Modus und stelle die Brille von Spiegeln auf Erweitern. Gibt es keine, schalte die Entwickleroptionen ein und nutze die dort genannten Schalter.</string>
     <string name="core_display_type_unknown">unbekannter Typ</string>
     <string name="core_display_type_internal">eingebaut</string>
     <string name="core_display_type_external">extern per Kabel (USB-C DisplayPort oder HDMI)</string>

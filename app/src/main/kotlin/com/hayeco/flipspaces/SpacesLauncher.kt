@@ -160,7 +160,7 @@ object SpacesLauncher {
         // %2$s in the messages below: this " Android said: ..." sentence, or nothing.
         val error = stop.error?.let { " " + FlipSpacesApp.text(R.string.home_android_said, it) }.orEmpty()
         return when (stop.reason) {
-            StopReason.MIRROR_MODE -> HostingAssessor.MIRROR_MESSAGE + error
+            StopReason.MIRROR_MODE -> HostingAssessor.mirrorMessage(WindowingProbe.dexInstalled(FlipSpacesApp.app)) + error
             StopReason.SHIZUKU_NEEDS_PERMISSION -> {
                 ShizukuBridge.requestPermission()
                 FlipSpacesApp.text(R.string.home_refused_allow_shizuku, app.label, error)

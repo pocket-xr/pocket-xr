@@ -95,11 +95,24 @@ class DisplayHostingTest {
     fun settingsTargetsPreferDexWhenInstalled() {
         assertEquals(SettingsTarget.DEX, SettingsTarget.forMirror(dexInstalled = true).first())
         assertFalse(SettingsTarget.DEX in SettingsTarget.forMirror(dexInstalled = false))
-        assertEquals(SettingsTarget.SETTINGS_HOME, SettingsTarget.forMirror(false).last())
+        assertEquals(SettingsTarget.SETTINGS_HOME_OTHER, SettingsTarget.forMirror(false).last())
+    }
+
+    /** 1.5.3: a phone without DeX (a vivo on Android 17) was told to turn on Samsung DeX. */
+    @Test
+    fun phonesWithoutDexAreNeverToldAboutDex() {
+        val other = SettingsTarget.forMirror(dexInstalled = false)
+        assertEquals(listOf(SettingsTarget.EXTERNAL_DISPLAY, SettingsTarget.DEVELOPER_OPTIONS, SettingsTarget.SETTINGS_HOME_OTHER), other)
+        other.forEach { assertFalse(it.hint, it.hint.contains("DeX")) }
+        assertFalse(HostingAssessor.mirrorMessage(dexInstalled = false).contains("DeX"))
+        assertTrue(HostingAssessor.mirrorMessage(dexInstalled = true).contains("DeX"))
+        assertTrue(SettingsTarget.DEVELOPER_OPTIONS.hint.contains("Force desktop mode"))
     }
 
     @Test
     fun mirrorMessageHasNoDashes() {
-        assertFalse(HostingAssessor.MIRROR_MESSAGE.contains('\u2014') || HostingAssessor.MIRROR_MESSAGE.contains('\u2013'))
+        for (m in listOf(HostingAssessor.MIRROR_MESSAGE, HostingAssessor.MIRROR_MESSAGE_OTHER) + SettingsTarget.entries.map { it.hint }) {
+            assertFalse(m, m.contains('\u2014') || m.contains('\u2013'))
+        }
     }
 }

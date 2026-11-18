@@ -451,7 +451,9 @@ private fun MirrorCard(
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(stringResource(R.string.home_mirroring_title), style = MaterialTheme.typography.titleMedium)
-            Text(HostingAssessor.MIRROR_MESSAGE, style = MaterialTheme.typography.bodyMedium)
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val dex = androidx.compose.runtime.remember { com.hayeco.flipspaces.platform.WindowingProbe.dexInstalled(context) }
+            Text(HostingAssessor.mirrorMessage(dex), style = MaterialTheme.typography.bodyMedium)
             hosting.lastError?.let {
                 Text(stringResource(R.string.home_android_said_label), style = MaterialTheme.typography.bodySmall)
                 SelectionContainer {
