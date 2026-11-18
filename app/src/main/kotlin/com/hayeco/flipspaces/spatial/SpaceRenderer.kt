@@ -3873,7 +3873,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                         com.hayeco.flipspaces.pcvr.PcVrSession.open("the launcher's PC VR button")
                     }
                     com.hayeco.flipspaces.core.spatial.LauncherButton.RECENTRE -> recentre()
-                    com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY -> GlassesDisplayControl.steady(context, !GlassesDisplayControl.steadyOn)
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY -> GlassesDisplayControl.userSteady(context, !GlassesDisplayControl.steadyOn, "the launcher's button")
                     com.hayeco.flipspaces.core.spatial.LauncherButton.VIEW -> SpaceActivity.alive()?.let { a -> a.runOnUiThread { a.switchView("the launcher's 3D / 2D button") } }
                         ?: Log.w(tag, "3D / 2D button: no Space activity to ask for the display mode")
                     // 0.5.45 (Mike: the Calibrate Hands button becomes Window Presets): the Control Center, whose bottom row is the presets.
@@ -4096,6 +4096,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     seeThrough = store.seeThrough
                     windowGlowPercent = store.windowGlowPercent
                     windowGlowColor = store.windowGlowColor
+                    // Steady mode's Screen gap: the windows on the canvas are arranged again at once with it.
+                    val gap = store.steadyScreenGap
+                    if (gap != steadyGap) {
+                        steadyGap = gap
+                        steadyRearrange = ultrawide && store.steadyLayout != null
+                    }
                     HeadTracker.applySettings(context)
                 }
             }
@@ -5050,6 +5056,16 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** The windows Steady mode last arranged, -1 before; a window opened or closed there arranges them again. */
     private var steadyCount = -1
 
+    /** Settings' Screen gap for Steady mode ([com.hayeco.flipspaces.core.spatial.SteadyArrange.clampGap]), read again on [SpaceCommand.SettingsChanged]. */
+    private var steadyGap = store.steadyScreenGap
+
+    /** The Screen gap changed in Steady mode: the windows are arranged again around [steadyCentre]. */
+    private var steadyRearrange = false
+
+    /** Where Steady mode last arranged the windows, yaw and pitch, and with what gap; null before, in this Space. */
+    private var steadyCentre: Pair<Float, Float>? = null
+    private var steadyArrangedGap = steadyGap
+
     /**
      * Each settings beat: going into Ultrawide, the windows as they are saved and arranged on the canvas; coming out, put
      * back. The saved layout outlives the Space, which restarts with each change of display, and an unplug in Steady mode.
@@ -5059,7 +5075,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         if (ultrawide) {
             if (canvasPose == null) return
             if (saved != null && steadyCount < 0) steadyCount = layout.panels.size
-            if (saved != null && steadyCount == layout.panels.size) return
+            if (saved != null && steadyCount == layout.panels.size && !steadyRearrange) return
             // Only when the windows are about to be arranged: Immersive is free to run once they are.
             if (immersive.active) {
                 immersive.exit(frameClockMs - 10_000L)
@@ -5067,14 +5083,28 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 return
             }
             if (saved == null) store.steadyLayout = com.hayeco.flipspaces.core.spatial.LayoutCodec.encode(layout)
-            val (yaw, pitch) = gaze()
-            setLayout(com.hayeco.flipspaces.core.spatial.SteadyArrange.arrange(layout, yaw, pitch, frustum.horizontalFovDeg, frustum.verticalFovDeg), commit = true)
+            // A new Screen gap keeps the row where it is now; otherwise the windows go where the head looks, as before.
+            val centre = steadyCentre
+            val gapOnly = steadyRearrange && steadyCount == layout.panels.size && centre != null
+            steadyRearrange = false
+            if (gapOnly && centre != null) {
+                val (arranged, at) = com.hayeco.flipspaces.core.spatial.SteadyArrange.regapped(layout, centre.first, centre.second, frustum.horizontalFovDeg, frustum.verticalFovDeg, steadyArrangedGap, steadyGap)
+                setLayout(arranged, commit = true)
+                steadyCentre = at
+            } else {
+                val (yaw, pitch) = gaze()
+                setLayout(com.hayeco.flipspaces.core.spatial.SteadyArrange.arrange(layout, yaw, pitch, frustum.horizontalFovDeg, frustum.verticalFovDeg, steadyGap), commit = true)
+                steadyCentre = yaw to pitch
+            }
+            steadyArrangedGap = steadyGap
             steadyCount = layout.panels.size
-            Log.i(PANEL_TAG, "Steady mode: $steadyCount windows arranged on the canvas")
+            Log.i(PANEL_TAG, "Steady mode: $steadyCount windows arranged on the canvas${if (gapOnly) " again" else ""}, screen gap %.2f".format(java.util.Locale.ROOT, steadyGap))
         } else if (saved != null && (GlassesDisplayControl.ultrawideRead == 0 || (GlassesDisplayControl.ultrawideRead == null && !StereoLayout.isSbsMode(viewport.surfaceWidth, viewport.surfaceHeight)))) {
             setLayout(com.hayeco.flipspaces.core.spatial.SteadyArrange.restored(layout, com.hayeco.flipspaces.core.spatial.LayoutCodec.decode(saved)), commit = true)
             store.steadyLayout = null
             steadyCount = -1
+            steadyCentre = null
+            steadyRearrange = false
             Log.i(PANEL_TAG, "Steady mode over: the windows are back as they were")
         }
     }

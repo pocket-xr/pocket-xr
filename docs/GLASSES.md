@@ -81,6 +81,11 @@ the glasses' own settings works too: Pocket XR sees the change and draws the can
 - It is flat, so there is no depth.
 - Windows fill the canvas side by side, and go back where you had them when you leave. In Ultrawide
   set from the glasses' own menu they do the same. **Recentre** brings the canvas in front of you, and the glasses slide it there.
+- **Screen gap** in Settings sets the space between the windows, from none (touching) to a tenth of each window's place
+  (0.04 unless changed). Changing it arranges the windows again at once.
+- Steady mode is remembered. Pocket XR saves it on or off each time you turn it on or off, and when the glasses are
+  plugged in, or the app starts with them plugged in, it turns Steady mode back on if you left it on. Unplugging or
+  closing the app doesn't change what is saved.
 
 Android shows Ultrawide and 3D as the same 3840 x 1080, so the app reads the glasses' own 2D or 3D state each time the
 display changes. It sends the glasses no mode in Ultrawide: any space mode or 3D request switches it off. So the app asks

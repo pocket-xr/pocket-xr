@@ -1521,7 +1521,8 @@ class TrackpadActivity : Activity(), PadHost {
                 submit(PadSignal.Home(HomeEvent.LONG_PRESS))
             }
             CoverButton.STEADY -> if (!down) {
-                com.hayeco.flipspaces.spatial.GlassesDisplayControl.steady(this, !steadyOn())
+                // The key, the portrait bar's button and the Menu's tile all come here: the user's choice, remembered.
+                com.hayeco.flipspaces.spatial.GlassesDisplayControl.userSteady(this, !steadyOn(), "the trackpad")
                 screen.refreshCover()
             }
             CoverButton.KEYBOARD -> if (!down) screen.showText(true)
