@@ -34,6 +34,12 @@ object AppExit {
         private set
 
     private val activities = mutableListOf<WeakReference<Activity>>()
+
+    /** 1.5.5: Pocket XR screens showing now (started, not stopped), for the camera service ([showing]). */
+    private val screens = com.hayeco.flipspaces.core.ScreenCount()
+
+    /** A Pocket XR screen is showing now: the only time Android lets the camera service start. */
+    val showing: Boolean get() = screens.showing
     private val main = Handler(Looper.getMainLooper())
 
     /** Keeps a list of the open Pocket XR screens, so Exit can finish each one. Once, from the Application. */
@@ -50,10 +56,10 @@ object AppExit {
                 synchronized(activities) { activities.removeAll { it.get() == null || it.get() === activity } }
             }
 
-            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityStarted(activity: Activity) = screens.onStart()
             override fun onActivityResumed(activity: Activity) = Unit
             override fun onActivityPaused(activity: Activity) = Unit
-            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = screens.onStop()
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
         })
     }

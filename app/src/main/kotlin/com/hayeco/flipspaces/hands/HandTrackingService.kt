@@ -78,8 +78,18 @@ class HandTrackingService : Service() {
         private const val ACTION_STOP = "com.hayeco.flipspaces.STOP_HANDS"
 
         /** Call from a visible activity: Android only lets camera services start from the foreground. */
-        fun start(context: Context) {
+        /**
+         * 1.5.5 (Google Play: "restricted foreground service types" from BOOT_COMPLETED): asks for the camera service
+         * only while a Pocket XR screen is showing ([com.hayeco.flipspaces.AppExit.showing]), the only time Android
+         * allows it, and never from a start that came from a boot. Returns false, and starts nothing, otherwise.
+         */
+        fun start(context: Context): Boolean {
+            if (!com.hayeco.flipspaces.AppExit.showing) {
+                android.util.Log.i("FlipSpacesHands", "hand tracking not started: no Pocket XR screen is showing, and Android lets the camera service start only from one")
+                return false
+            }
             context.startForegroundService(Intent(context, HandTrackingService::class.java))
+            return true
         }
 
         fun stop(context: Context) {

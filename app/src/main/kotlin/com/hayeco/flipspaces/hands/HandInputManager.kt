@@ -133,7 +133,7 @@ object HandInputManager {
         Log.i(TAG, "Hands for PC VR: ${HandAutoStart.line(step, "PC VR")}")
         return when (step) {
             AutoStartStep.Start, AutoStartStep.AskUsb -> runCatching { HandTrackingService.start(context) }
-                .onFailure { Log.w(TAG, "Hands for PC VR: Android refused the camera service: ${it.message}") }.isSuccess
+                .onFailure { Log.w(TAG, "Hands for PC VR: Android refused the camera service: ${it.message}") }.getOrDefault(false)
             is AutoStartStep.NeedsSetup, is AutoStartStep.Nothing -> false
         }
     }
