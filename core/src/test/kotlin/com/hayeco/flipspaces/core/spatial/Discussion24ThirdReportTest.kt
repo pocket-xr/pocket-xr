@@ -19,21 +19,21 @@ class Discussion24ThirdReportTest {
 
     @Test fun onByDefaultOnTheBeastOnly() {
         assertTrue(VitureDevices.headTrackingByDefault(VitureDevices.BEAST))
-        assertFalse(VitureDevices.headTrackingByDefault(0x1201))
+        assertFalse(VitureDevices.headTrackingByDefault(0x1301))
         assertFalse(VitureDevices.headTrackingByDefault(null))
         assertTrue(VitureDevices.headTrackingOn(null, VitureDevices.BEAST))
-        assertFalse(VitureDevices.headTrackingOn(null, 0x1201))
+        assertFalse(VitureDevices.headTrackingOn(null, 0x1301))
     }
 
     @Test fun aSavedChoiceWins() {
         assertFalse(VitureDevices.headTrackingOn(false, VitureDevices.BEAST))
-        assertTrue(VitureDevices.headTrackingOn(true, 0x1201))
+        assertTrue(VitureDevices.headTrackingOn(true, 0x1301))
         assertTrue(VitureDevices.headTrackingOn(true, null))
     }
 
     @Test fun theSwitchNameDropsExperimentalOnTheBeastOnly() {
         assertEquals("VITURE head tracking", VitureDevices.switchLabel(VitureDevices.BEAST))
-        assertEquals("Experimental VITURE head tracking", VitureDevices.switchLabel(0x1201))
+        assertEquals("Experimental VITURE head tracking", VitureDevices.switchLabel(0x1301))
         assertEquals("Experimental VITURE head tracking", VitureDevices.switchLabel(null))
     }
 
@@ -41,7 +41,7 @@ class Discussion24ThirdReportTest {
         val beast = HeadTrackingStatus.VitureNotYet(VitureDevices.BEAST).summary
         assertTrue(beast, beast.contains("turned off"))
         assertFalse(beast, beast.contains("isn't supported"))
-        assertTrue(HeadTrackingStatus.VitureNotYet(0x1201).summary.contains("isn't supported yet"))
+        assertTrue(HeadTrackingStatus.VitureNotYet(0x1301).summary.contains("isn't supported yet"))
         assertTrue(HeadTrackingStatus.VitureNotYet(VitureDevices.BEAST, experimentalOn = true).summary.contains("Record motion"))
     }
 

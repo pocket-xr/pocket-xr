@@ -15,6 +15,21 @@ object VitureDevices {
     /** The VITURE Beast XR Glasses. */
     const val BEAST = 0x1211
 
+    /**
+     * 1.5.3 (a vivo V2562 on Android 17, Pocket XR 1.5.1: "Unknown glasses" with the Beast plugged in, head tracking off
+     * and marked Experimental): the same glasses on another USB product, 35CA:1201. Their Glasses report showed the
+     * display "VITURE Beast" (EDID product 288), USB 35CA:1201 named "VITURE Beast XR Glasses" with its HID on interface 5
+     * (64 byte interrupt IN and OUT), and the microphone 35CA:1102 beside it: the layout the 0x1211 Beast showed. Only
+     * 0x1211 counted as the Beast, so these took the defaults of untested VITURE glasses.
+     */
+    const val BEAST_1201 = 0x1201
+
+    /** Every USB product the VITURE Beast XR Glasses have shown. */
+    val BEAST_PRODUCTS: Set<Int> = setOf(BEAST, BEAST_1201)
+
+    /** Whether [productId] (on VITURE's vendor id) is a VITURE Beast. */
+    fun isBeast(productId: Int?): Boolean = productId in BEAST_PRODUCTS
+
     /** VITURE devices with no motion sensor: the Beast's microphone. */
     val NO_IMU: Set<Int> = setOf(0x1102)
 
@@ -39,7 +54,7 @@ object VitureDevices {
      * layout takes it on to (x, -y, -z). With the switches off, this layout is the whole of it. Other VITURE models
      * keep the default axes and the two switches.
      */
-    fun defaultAxes(productId: Int?): AxisMap = if (productId == BEAST) AxisMap.XRIGHT_YDOWN_ZFRONT else GlassesModel.VITURE.defaultAxes
+    fun defaultAxes(productId: Int?): AxisMap = if (isBeast(productId)) AxisMap.XRIGHT_YDOWN_ZFRONT else GlassesModel.VITURE.defaultAxes
 
     /** The two switches VITURE glasses start with: both off, the Beast's included (its layout does the turning). */
     fun defaultSwitches(@Suppress("UNUSED_PARAMETER") productId: Int?): VitureAxes = VitureAxes()
@@ -49,13 +64,13 @@ object VitureDevices {
      * first"): VITURE head tracking with nothing saved. On for the Beast, which the tester has run since 1.2.8; off on
      * other VITURE models, where the reader is still a first try.
      */
-    fun headTrackingByDefault(productId: Int?): Boolean = productId == BEAST
+    fun headTrackingByDefault(productId: Int?): Boolean = isBeast(productId)
 
     /** The VITURE head tracking switch: the [saved] one when the user set it (on or off), else the model's default. */
     fun headTrackingOn(saved: Boolean?, productId: Int?): Boolean = saved ?: headTrackingByDefault(productId)
 
     /** The switch's name: plain on the Beast, still marked Experimental on other VITURE models. */
-    fun switchLabel(productId: Int?): String = if (productId == BEAST) UiText.get("spatial_viture_switch", "VITURE head tracking") else UiText.get("spatial_viture_switch_experimental", "Experimental VITURE head tracking")
+    fun switchLabel(productId: Int?): String = if (isBeast(productId)) UiText.get("spatial_viture_switch", "VITURE head tracking") else UiText.get("spatial_viture_switch_experimental", "Experimental VITURE head tracking")
 }
 
 /**

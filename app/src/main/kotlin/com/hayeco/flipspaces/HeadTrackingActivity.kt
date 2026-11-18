@@ -82,7 +82,7 @@ class HeadTrackingActivity : ComponentActivity() {
                         viture = pick?.vendorId == com.hayeco.flipspaces.core.spatial.VitureImuProtocol.VENDOR || store.model == com.hayeco.flipspaces.core.spatial.GlassesModel.VITURE,
                         vitureOn = store.vitureHeadTracking,
                         vitureLabel = com.hayeco.flipspaces.core.spatial.VitureDevices.switchLabel(store.vitureProduct),
-                        vitureBeast = store.vitureProduct == com.hayeco.flipspaces.core.spatial.VitureDevices.BEAST,
+                        vitureBeast = com.hayeco.flipspaces.core.spatial.VitureDevices.isBeast(store.vitureProduct),
                         vitureAxes = store.vitureAxes,
                         recording = com.hayeco.flipspaces.spatial.HidMotionRecorder.busy || (motionLine != null && com.hayeco.flipspaces.spatial.HidMotionRecorder.inProgress),
                         motionLine = motionLine ?: com.hayeco.flipspaces.spatial.HidMotionRecorder.newestLine(this)?.let { getString(R.string.head_last_recording, it) },

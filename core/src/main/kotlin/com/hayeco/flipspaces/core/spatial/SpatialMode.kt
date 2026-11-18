@@ -52,7 +52,7 @@ sealed interface HeadTrackingStatus {
      */
     data class VitureNotYet(val productId: Int, val experimentalOn: Boolean = false) : HeadTrackingStatus {
         // 1.2.12: the Beast is read by default; with its switch turned off, the status says so rather than "not supported".
-        override val summary: String get() = if (productId == VitureDevices.BEAST && !experimentalOn) {
+        override val summary: String get() = if (VitureDevices.isBeast(productId) && !experimentalOn) {
             UiText.format("spatial_head_viture_beast_off", "VITURE head tracking is turned off for the VITURE Beast (USB %1\$04X:%2\$04X), so the Space stays in front of you and turns with your head. Turn on VITURE head tracking on the head tracking screen to look around the Space.", VitureImuProtocol.VENDOR, productId)
         } else {
             UiText.format("spatial_head_viture_not_yet", "Head tracking isn't supported yet on VITURE glasses (USB %1\$04X:%2\$04X). The Space stays in front of you and turns with your head.", VitureImuProtocol.VENDOR, productId) + " " +
