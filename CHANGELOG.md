@@ -2,7 +2,21 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## 1.5.2: ready for 16 KB phones
+## 1.5.2: Steady mode your way, and the VITURE Beast 1201
+
+- **Screen gap in Steady mode:** choose the space between your screens, from touching to wide, in Settings straight
+  after "Steady mode in 6DoF". It starts where it was. Asked for by a tester using Pocket XR on Windows.
+- **Steady mode is remembered:** if you left it on, it comes back on by itself the next time your glasses connect or
+  Pocket XR starts. Turning it off is remembered too.
+- **VITURE Beast with USB id 35CA:1201** is now recognised as a Beast, like the 35CA:1211 Beast testers confirmed. A
+  tester's Beast reported the 1201 id, so Pocket XR treated it as unknown VITURE glasses, with head tracking off. Not yet
+  confirmed on a 1201 itself.
+- VITURE glasses show as "VITURE glasses" rather than "Unknown glasses" before a Space has opened on them.
+- The new words are translated into every language Pocket XR speaks; the translations were not checked by native
+  speakers.
+- None of this has been tried with glasses yet.
+
+### Ready for 16 KB phones
 
 - **Pocket XR now runs on phones that use 16 KB memory pages**, which newer Android phones are moving to and Google
   Play requires. Three of its native libraries (the frame timing helper, the PC VR bridge and ALVR's client library)

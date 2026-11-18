@@ -639,6 +639,8 @@
     <string name="home_steady_6dof_off">Desactivado: el modo Steady mantiene quieta la pantalla ancha al girar la cabeza</string>
     <string name="home_steady_6dof_on_user">Activado: en modo Steady, activa 6DoF en el menú de tus gafas (Spatial Display) y la pantalla ancha se queda en su sitio al inclinarte y moverte. Nuevo con las XREAL Eye: cuéntanos qué tal funciona</string>
     <string name="home_steady_6dof_on">Activado: en modo Steady la pantalla ancha se queda en su sitio al inclinarte y moverte. Lo hace el Spatial Anchor de las gafas, y el 3D se desactiva</string>
+    <string name="home_steady_screen_gap">Separación entre pantallas</string>
+    <string name="home_steady_screen_gap_detail">El espacio entre las pantallas en el modo Steady.</string>
     <string name="home_glasses_setup_check">Comprobar configuración de las gafas</string>
     <string name="home_glasses_setup_check_detail">Los ajustes que necesitan tus gafas y una comprobación de 10 segundos de que las ventanas se quedan en su sitio</string>
     <string name="home_hands">Manos</string>

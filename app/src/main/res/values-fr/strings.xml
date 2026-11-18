@@ -639,6 +639,8 @@
     <string name="home_steady_6dof_off">Désactivé : le mode Steady garde l\'écran large immobile quand vous tournez la tête</string>
     <string name="home_steady_6dof_on_user">Activé : en mode Steady, activez le 6DoF dans le menu de vos lunettes (Spatial Display) et l\'écran large reste en place quand vous vous penchez et bougez. Nouveau avec les XREAL Eye : dites-nous comment ça se passe</string>
     <string name="home_steady_6dof_on">Activé : en mode Steady, l\'écran large reste en place quand vous vous penchez et bougez. C\'est le Spatial Anchor des lunettes qui s\'en charge, et la 3D est désactivée</string>
+    <string name="home_steady_screen_gap">Écart entre écrans</string>
+    <string name="home_steady_screen_gap_detail">L'espace entre les écrans en mode Steady.</string>
     <string name="home_glasses_setup_check">Vérification des lunettes</string>
     <string name="home_glasses_setup_check_detail">Les réglages dont vos lunettes ont besoin, et une vérification de 10 secondes que les fenêtres restent en place</string>
     <string name="home_hands">Mains</string>

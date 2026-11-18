@@ -621,6 +621,8 @@
     <string name="home_steady_6dof_off">关：Steady 模式下，转头时宽屏保持不动</string>
     <string name="home_steady_6dof_on_user">开：在 Steady 模式下，在眼镜菜单（Spatial Display）中开启 6DoF，身体倾斜和移动时宽屏会保持在原位。XREAL Eye 新功能：请告诉我们效果如何</string>
     <string name="home_steady_6dof_on">开：在 Steady 模式下，身体倾斜和移动时宽屏会保持在原位。由眼镜的 Spatial Anchor 实现，3D 会关闭</string>
+    <string name="home_steady_screen_gap">屏幕间距</string>
+    <string name="home_steady_screen_gap_detail">Steady 模式下屏幕之间的距离。</string>
     <string name="home_glasses_setup_check">眼镜设置检查</string>
     <string name="home_glasses_setup_check_detail">你的眼镜需要的设置，以及一项 10 秒钟的检查，确认窗口保持在原位</string>
     <string name="home_hands">手部</string>

@@ -621,6 +621,8 @@
     <string name="home_steady_6dof_off">オフ: Steady モードでは頭を回してもワイド画面が静止します</string>
     <string name="home_steady_6dof_on_user">オン: Steady モードでグラスのメニュー（Spatial Display）で 6DoF をオンにすると、体を傾けたり動いたりしてもワイド画面がその場に留まります。XREAL Eye での新機能です。使い心地をぜひお知らせください</string>
     <string name="home_steady_6dof_on">オン: Steady モードでは、体を傾けたり動いたりしてもワイド画面がその場に留まります。グラスの Spatial Anchor が処理し、3D はオフになります</string>
+    <string name="home_steady_screen_gap">画面の間隔</string>
+    <string name="home_steady_screen_gap_detail">Steady モードでの画面と画面の間隔です。</string>
     <string name="home_glasses_setup_check">グラスの設定チェック</string>
     <string name="home_glasses_setup_check_detail">グラスに必要な設定と、ウィンドウが静止しているかの 10 秒間のチェック</string>
     <string name="home_hands">ハンド</string>
