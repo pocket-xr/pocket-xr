@@ -2,7 +2,7 @@ package com.hayeco.flipspaces.ui
 
 import android.content.Context
 import android.graphics.Typeface
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.R
 import java.util.Locale
 

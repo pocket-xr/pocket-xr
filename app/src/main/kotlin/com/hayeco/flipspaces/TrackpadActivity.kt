@@ -23,7 +23,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.DisplayMetrics
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.Gravity
 import android.view.KeyCharacterMap
 import android.view.KeyEvent

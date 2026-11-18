@@ -1,6 +1,6 @@
 package com.hayeco.flipspaces.spatial
 
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder

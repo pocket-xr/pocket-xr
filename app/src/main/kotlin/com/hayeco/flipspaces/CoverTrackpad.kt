@@ -8,7 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.util.DisplayMetrics
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.Display
 import com.hayeco.flipspaces.core.ShizukuStatus
 import com.hayeco.flipspaces.core.spatial.FoldHandover

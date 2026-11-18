@@ -2,7 +2,7 @@ package com.hayeco.flipspaces.spatial
 
 import android.content.Context
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.ControlFramer
 import com.hayeco.flipspaces.core.spatial.GlassesDisplayCommands
 import java.util.concurrent.LinkedBlockingQueue

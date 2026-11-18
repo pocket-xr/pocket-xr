@@ -7,7 +7,7 @@ import android.content.Intent
 import android.graphics.Rect
 import android.hardware.display.DisplayManager
 import android.util.DisplayMetrics
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.AppEntry
 import com.hayeco.flipspaces.core.Bounds
 import com.hayeco.flipspaces.GlassesHomeActivity

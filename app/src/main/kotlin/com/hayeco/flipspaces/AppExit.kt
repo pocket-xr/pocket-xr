@@ -8,7 +8,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.GlassesReady
 import com.hayeco.flipspaces.hands.HandTrackingService
 import com.hayeco.flipspaces.spatial.HeadTracker

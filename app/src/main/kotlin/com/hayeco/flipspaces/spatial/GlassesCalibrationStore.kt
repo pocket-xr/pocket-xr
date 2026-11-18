@@ -1,7 +1,7 @@
 package com.hayeco.flipspaces.spatial
 
 import android.content.Context
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.FactoryCalibration
 import java.io.File
 

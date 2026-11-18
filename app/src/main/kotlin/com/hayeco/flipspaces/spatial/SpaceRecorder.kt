@@ -22,7 +22,7 @@ import android.os.HandlerThread
 import android.os.Looper
 import android.os.SystemClock
 import android.provider.MediaStore
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.Surface
 import com.hayeco.flipspaces.core.spatial.EglConfigSizes
 import com.hayeco.flipspaces.core.spatial.RecordSurface

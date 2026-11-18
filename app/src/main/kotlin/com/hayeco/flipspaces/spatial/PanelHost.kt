@@ -7,7 +7,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.Surface
 import com.hayeco.flipspaces.FlipSpacesApp
 import com.hayeco.flipspaces.R

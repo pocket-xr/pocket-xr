@@ -464,9 +464,43 @@ private fun MirrorCard(
                 Text(target.hint, style = MaterialTheme.typography.bodySmall)
                 OutlinedButton(onClick = { onOpenSettings(target) }) { Text(target.buttonLabel) }
             }
+            // 1.5.4: phones without DeX may hide those switches (a vivo V2562 does). Pocket XR can write the same settings
+            // itself through Shizuku, as adb would.
+            if (!dex) ShizukuDesktopRow(context)
             TextButton(onClick = onRetry) { Text(stringResource(R.string.home_try_again)) }
         }
     }
+}
+
+/** 1.5.4: "Turn on with Shizuku" for the external display settings, and what came of it. */
+@Composable
+private fun ShizukuDesktopRow(context: android.content.Context) {
+    var busy by remember { mutableStateOf(false) }
+    var said by remember { mutableStateOf<String?>(null) }
+    Text(stringResource(R.string.home_desktop_shizuku_note), style = MaterialTheme.typography.bodySmall)
+    Button(
+        enabled = !busy,
+        onClick = {
+            busy = true
+            said = context.getString(R.string.home_desktop_shizuku_working)
+            val main = android.os.Handler(android.os.Looper.getMainLooper())
+            Thread {
+                val result = com.hayeco.flipspaces.platform.DesktopModeSetter.turnOn(context.applicationContext)
+                val text = when (result) {
+                    com.hayeco.flipspaces.platform.DesktopModeSetter.Result.NoShizuku -> context.getString(R.string.home_desktop_shizuku_not_running)
+                    com.hayeco.flipspaces.platform.DesktopModeSetter.Result.NeedsPermission -> context.getString(R.string.home_desktop_shizuku_permission)
+                    com.hayeco.flipspaces.platform.DesktopModeSetter.Result.AlreadyOn -> context.getString(R.string.home_desktop_shizuku_already)
+                    is com.hayeco.flipspaces.platform.DesktopModeSetter.Result.TurnedOn -> context.getString(R.string.home_desktop_shizuku_done)
+                    is com.hayeco.flipspaces.platform.DesktopModeSetter.Result.Failed -> context.getString(R.string.home_desktop_shizuku_failed, result.why)
+                }
+                main.post {
+                    said = text
+                    busy = false
+                }
+            }.start()
+        },
+    ) { Text(stringResource(R.string.home_desktop_shizuku_button)) }
+    said?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
 }
 
 /** 0.5.101: the update check's line: what the last check found and when, or that it is off. */

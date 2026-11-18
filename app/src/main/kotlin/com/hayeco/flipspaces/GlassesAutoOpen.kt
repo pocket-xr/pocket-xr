@@ -5,7 +5,7 @@ import android.content.Context
 import android.hardware.display.DisplayManager
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.ContentMode
 import com.hayeco.flipspaces.core.DisplayCandidate
 import com.hayeco.flipspaces.core.DisplaySelector

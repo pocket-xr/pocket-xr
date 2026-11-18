@@ -74,4 +74,17 @@ object FreeformSetup {
 
     /** Every setting Pocket XR uses, for the docs and the copy-all button. */
     val all: List<GlobalSetting> = listOf(enableFreeform, forceResizable, desktopOnExternal)
+
+    /**
+     * 1.5.4 (a vivo V2562 hides these switches in Developer options): Pocket XR can write them itself through Shizuku,
+     * with the same rights as adb. [current] is each key's value as `settings get global` printed it (null when it
+     * could not be read); the ones not already on are returned.
+     */
+    fun toTurnOn(current: Map<String, String?>): List<GlobalSetting> =
+        all.filter { current[it.key]?.trim() != it.value.toString() }
+
+    fun getCommand(setting: GlobalSetting): List<String> = listOf("settings", "get", "global", setting.key)
+
+    fun putCommand(setting: GlobalSetting): List<String> =
+        listOf("settings", "put", "global", setting.key, setting.value.toString())
 }

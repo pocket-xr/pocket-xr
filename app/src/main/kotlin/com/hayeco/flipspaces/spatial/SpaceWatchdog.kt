@@ -3,7 +3,7 @@ package com.hayeco.flipspaces.spatial
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.FrameStallGuard
 
 /**

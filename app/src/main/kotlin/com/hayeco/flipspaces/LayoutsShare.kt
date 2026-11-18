@@ -7,7 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.AppCatalog
 import com.hayeco.flipspaces.core.spatial.LayoutsFile
 import com.hayeco.flipspaces.core.spatial.LayoutsImport

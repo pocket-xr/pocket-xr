@@ -1,7 +1,7 @@
 package com.hayeco.flipspaces.spatial
 
 import android.content.Context
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.platform.AddonLink
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService

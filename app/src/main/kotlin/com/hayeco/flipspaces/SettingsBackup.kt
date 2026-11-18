@@ -3,7 +3,7 @@ package com.hayeco.flipspaces
 import android.content.Context
 import android.net.Uri
 import android.util.Base64
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File

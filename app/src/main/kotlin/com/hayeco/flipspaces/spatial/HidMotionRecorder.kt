@@ -4,7 +4,7 @@ import android.content.Context
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbInterface
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.spatial.GlassesVendors
 import com.hayeco.flipspaces.core.spatial.HidRecording

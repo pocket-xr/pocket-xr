@@ -6,7 +6,7 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import androidx.core.content.FileProvider
 import com.hayeco.flipspaces.BuildConfig
 import com.hayeco.flipspaces.R

@@ -1,7 +1,7 @@
 package com.hayeco.flipspaces.spatial
 
 import android.opengl.GLSurfaceView
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import javax.microedition.khronos.egl.EGL10
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.egl.EGLContext

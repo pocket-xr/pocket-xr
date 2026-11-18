@@ -2,7 +2,7 @@ package com.hayeco.flipspaces.pcvr
 
 import android.content.Context
 import android.os.Build
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader

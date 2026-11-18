@@ -10,7 +10,7 @@ import android.opengl.GLES30
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.Surface
 import androidx.opengl.EGLExt
 import androidx.opengl.EGLImageKHR

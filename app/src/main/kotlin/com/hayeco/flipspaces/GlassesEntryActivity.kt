@@ -2,7 +2,7 @@ package com.hayeco.flipspaces
 
 import android.app.Activity
 import android.os.Bundle
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.Display
 import com.hayeco.flipspaces.platform.DisplayMonitor
 

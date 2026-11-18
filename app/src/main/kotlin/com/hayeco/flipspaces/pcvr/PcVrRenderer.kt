@@ -5,7 +5,7 @@ import android.opengl.GLES11Ext
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.openxr.OpenXrPads
 import com.hayeco.flipspaces.spatial.HeadTracker

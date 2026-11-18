@@ -1,7 +1,7 @@
 package com.hayeco.flipspaces.spatial
 
 import android.opengl.EGL14
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.GlassesFrameClock
 
 /**

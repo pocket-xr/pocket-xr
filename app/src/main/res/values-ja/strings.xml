@@ -838,6 +838,14 @@
     <string name="core_settings_developer">開発者向けオプションを開く</string>
     <string name="core_settings_developer_hint">開発者向けオプションで \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\" をオンにし、\"Enable desktop experience features\" があればそれもオンにします。スマホを再起動してからグラスをつないでください。スマホによって名前が少し違うことがあります。</string>
     <string name="core_settings_home_other_hint">外部ディスプレイまたはデスクトップモードの設定を探し、グラスをミラーから拡張に切り替えてください。見つからない場合は、開発者向けオプションをオンにして、そこにあるスイッチを使ってください。</string>
+    <string name="home_desktop_shizuku_note">見つからない場合は、Pocket XR が Shizuku を使って同じ設定をオンにできます。</string>
+    <string name="home_desktop_shizuku_button">Shizuku でオンにする</string>
+    <string name="home_desktop_shizuku_working">オンにしています</string>
+    <string name="home_desktop_shizuku_done">完了しました。スマホを再起動してから、グラスをつないでください。</string>
+    <string name="home_desktop_shizuku_already">これらの設定はすでにオンです。再起動後もグラスがスマホの画面をコピーする場合、このスマホではグラスでアプリを開けません。</string>
+    <string name="home_desktop_shizuku_not_running">Shizuku が動いていません。Shizuku を開いて起動してから、もう一度お試しください。</string>
+    <string name="home_desktop_shizuku_permission">Shizuku の確認画面で Pocket XR を許可してから、もう一度お試しください。</string>
+    <string name="home_desktop_shizuku_failed">設定を変更できませんでした: %1$s</string>
     <string name="core_display_type_unknown">不明な種類</string>
     <string name="core_display_type_internal">内蔵</string>
     <string name="core_display_type_external">外部有線（USB-C DisplayPort または HDMI）</string>

@@ -1,7 +1,7 @@
 package com.hayeco.flipspaces.openxr
 
 import android.content.Context
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.JoyConArm
 import com.hayeco.flipspaces.core.spatial.JoyConClock
 import com.hayeco.flipspaces.core.spatial.JoyConPose

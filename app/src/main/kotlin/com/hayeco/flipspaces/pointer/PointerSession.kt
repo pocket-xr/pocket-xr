@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.GlassesHomeActivity
 import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.SpacesLauncher

@@ -6,7 +6,7 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.system.ErrnoException
 import android.system.Os
 import android.system.OsConstants

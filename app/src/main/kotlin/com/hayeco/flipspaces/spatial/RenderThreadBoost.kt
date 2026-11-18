@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.PerformanceHintManager
 import android.os.Process
-import android.util.Log
+import com.hayeco.flipspaces.Log
 
 /**
  * 0.5.55 (findings-choppiness-vc70-vc74 9.3 item 2, Mike's OK of 10/28): the Space's GL render thread at
