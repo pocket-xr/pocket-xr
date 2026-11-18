@@ -648,6 +648,8 @@
     <string name="home_steady_6dof_off">Выкл.: режим Steady держит широкий экран неподвижным, когда вы поворачиваете голову</string>
     <string name="home_steady_6dof_on_user">Вкл.: в режиме Steady включите 6DoF в меню очков (Spatial Display), и широкий экран останется на месте, когда вы наклоняетесь и двигаетесь. Новое для XREAL Eye: расскажите нам, как работает</string>
     <string name="home_steady_6dof_on">Вкл.: в режиме Steady широкий экран остаётся на месте, когда вы наклоняетесь и двигаетесь. Это делает Spatial Anchor очков, а 3D выключено</string>
+    <string name="home_steady_screen_gap">Расстояние между экранами</string>
+    <string name="home_steady_screen_gap_detail">Расстояние между экранами в режиме Steady.</string>
     <string name="home_glasses_setup_check">Проверка настройки очков</string>
     <string name="home_glasses_setup_check_detail">Нужные очкам настройки и проверка за 10 секунд, что окна стоят на месте</string>
     <string name="home_hands">Руки</string>

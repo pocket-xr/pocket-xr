@@ -639,6 +639,8 @@
     <string name="home_steady_6dof_off">Desligado: o modo Steady mantém a tela larga parada quando você vira a cabeça</string>
     <string name="home_steady_6dof_on_user">Ligado: no modo Steady, ative o 6DoF no menu dos óculos (Spatial Display) e a tela larga fica parada quando você se inclina e se move. Novo com o XREAL Eye: conte para nós como foi</string>
     <string name="home_steady_6dof_on">Ligado: no modo Steady a tela larga fica parada quando você se inclina e se move. O Spatial Anchor dos óculos faz isso, e o 3D fica desligado</string>
+    <string name="home_steady_screen_gap">Espaço entre telas</string>
+    <string name="home_steady_screen_gap_detail">O espaço entre as telas no modo Steady.</string>
     <string name="home_glasses_setup_check">Verificação dos óculos</string>
     <string name="home_glasses_setup_check_detail">As configurações de que seus óculos precisam e uma verificação de 10 segundos de que as janelas ficam paradas</string>
     <string name="home_hands">Mãos</string>

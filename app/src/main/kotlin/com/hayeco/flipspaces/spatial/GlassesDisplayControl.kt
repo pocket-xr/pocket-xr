@@ -133,6 +133,7 @@ object GlassesDisplayControl {
         stereoRefused = null
         stereoWant = null
         stereoFallbacks = 0
+        rememberSettled = false
         synchronized(lock) { commands.followReset() }
         Log.i(TAG, "$name unplugged on USB: the next plug-in asks for 3D and follow again, however soon it comes")
     }
@@ -215,6 +216,47 @@ object GlassesDisplayControl {
     /** 1.4.3: a Steady mode change is under way. */
     val steadyChanging: Boolean get() = steadyWant != null
 
+    /**
+     * The user turned Steady mode [on] or off with one of its controls ([from]: the trackpad's key, bar or Menu tile, the
+     * launcher's button): their choice is saved for the next start ([SpaceStore.steadyRemembered]), then made as before.
+     * Pocket XR's own changes (PC VR leaving it and coming back) call [steady] and are not saved.
+     */
+    fun userSteady(context: Context, on: Boolean, from: String) {
+        SpaceStore(context).steadyRemembered = on
+        Log.i(TAG, "Steady mode ${if (on) "on" else "off"} by the user ($from): remembered for the next start")
+        steady(context, on)
+    }
+
+    /** The saved Steady mode choice was dealt with on this plug-in ([com.hayeco.flipspaces.core.spatial.SteadyRemember.settled]). */
+    @Volatile private var rememberSettled = false
+
+    /**
+     * The control loop, each tick with the link open: Steady mode turned on once a plug-in when the user left it on
+     * ([com.hayeco.flipspaces.core.spatial.SteadyRemember]), through [steady] as the user's button does. Nothing else is sent.
+     */
+    private fun rememberedSteady(now: Long) {
+        if (rememberSettled) return
+        val c = app ?: return
+        val store = SpaceStore(c)
+        val n = com.hayeco.flipspaces.core.spatial.SteadyRemember.Now(
+            saved = store.steadyRemembered,
+            offered = com.hayeco.flipspaces.core.spatial.SteadyMode.offeredOn(store.model),
+            tried = rememberSettled,
+            spaceUp = spaceUp,
+            busy = steadyWant != null || steadyHeld || hoverTestWanted || SpaceSession.gameOwnsGlasses,
+            steadyOn = steadyOn,
+            readsSettings = auraLink,
+            ultrawide = commands.ultrawide,
+            sinceLinkMs = now - linkOpenedMs,
+        )
+        val turnOn = com.hayeco.flipspaces.core.spatial.SteadyRemember.turnOn(n)
+        if (com.hayeco.flipspaces.core.spatial.SteadyRemember.settled(n)) rememberSettled = true
+        if (turnOn) {
+            Log.i(TAG, "Steady mode was on when the user last used it: turning it on again for ${store.model.label}")
+            steady(c, true)
+        }
+    }
+
     fun steady(context: Context, on: Boolean) {
         app = context.applicationContext
         steadyWant = on
@@ -267,6 +309,8 @@ object GlassesDisplayControl {
             // 1.4.3 (Mike, 10 November 2026: plugged in to 2D and the glasses' own anchor mode): a Space back after
             // [NEW_PLUG_MS] is a new plug-in, so what the last one gave up on is tried again. A 3D read back too soon had
             // counted as a refusal, and with it 3D was never asked for after the re-plug; the follow tries had run out too.
+            // A new plug-in: a remembered Steady mode is looked at again too.
+            if (nowMs - spaceSeenMs >= NEW_PLUG_MS) rememberSettled = false
             if (nowMs - spaceSeenMs >= NEW_PLUG_MS && (stereoRefused != null || stereoAsked)) {
                 stereoRefused = null
                 stereoWant = null
@@ -426,6 +470,7 @@ object GlassesDisplayControl {
                     close(l, "no longer wanted")
                 }
                 l != null -> {
+                    rememberedSteady(now)
                     synchronized(lock) {
                         if (stereoReadWanted) {
                             stereoReadWanted = false
@@ -484,6 +529,8 @@ object GlassesDisplayControl {
                                 steadyHeld = false
                                 stereoWant = null
                                 stereoAsked = false
+                                // The user's own way out (their button twice), so it is remembered like the trackpad's key.
+                                app?.let { SpaceStore(it).steadyRemembered = false }
                                 Log.i(TAG, "Steady mode: the glasses left Ultrawide again within ${com.hayeco.flipspaces.core.spatial.SteadyMode.SECOND_DROP_MS / 1000} s; ending Steady mode properly")
                             }
                         }

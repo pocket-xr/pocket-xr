@@ -639,6 +639,8 @@
     <string name="home_steady_6dof_off">Off: la modalità Steady tiene fermo lo schermo largo quando giri la testa</string>
     <string name="home_steady_6dof_on_user">On: in modalità Steady, attiva il 6DoF nel menu degli occhiali (Spatial Display) e lo schermo largo resta fermo mentre ti sporgi e ti muovi. Novità con XREAL Eye: facci sapere come va</string>
     <string name="home_steady_6dof_on">On: in modalità Steady lo schermo largo resta fermo mentre ti sporgi e ti muovi. Lo fa lo Spatial Anchor degli occhiali, e il 3D è disattivato</string>
+    <string name="home_steady_screen_gap">Spazio tra gli schermi</string>
+    <string name="home_steady_screen_gap_detail">Lo spazio tra gli schermi in modalità Steady.</string>
     <string name="home_glasses_setup_check">Verifica configurazione occhiali</string>
     <string name="home_glasses_setup_check_detail">Le impostazioni che servono ai tuoi occhiali e una verifica di 10 secondi che le finestre restino ferme</string>
     <string name="home_hands">Mani</string>

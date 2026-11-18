@@ -801,6 +801,8 @@
     <string name="home_steady_6dof_off">Off: Steady mode keeps the wide screen still as you turn your head</string>
     <string name="home_steady_6dof_on_user">On: in Steady mode, turn on 6DoF in your glasses\' menu (Spatial Display) and the wide screen stays put as you lean and move. New with the XREAL Eye: please tell us how it goes</string>
     <string name="home_steady_6dof_on">On: in Steady mode the wide screen stays put as you lean and move. The glasses\' Spatial Anchor does it, and 3D is off</string>
+    <string name="home_steady_screen_gap">Screen gap</string>
+    <string name="home_steady_screen_gap_detail">The space between screens in Steady mode.</string>
     <string name="home_glasses_setup_check">Glasses setup check</string>
     <string name="home_glasses_setup_check_detail">The settings your glasses need, and a 10 second check that windows stay put</string>
     <string name="home_hands">Hands</string>

@@ -630,6 +630,8 @@
     <string name="home_steady_6dof_off">Aus: der Steady-Modus hält den breiten Bildschirm still, wenn du den Kopf drehst</string>
     <string name="home_steady_6dof_on_user">An: schalte im Steady-Modus 6DoF im Menü deiner Brille ein (Spatial Display), dann bleibt der breite Bildschirm an seinem Platz, wenn du dich neigst und bewegst. Neu mit der XREAL Eye: sag uns bitte, wie es klappt</string>
     <string name="home_steady_6dof_on">An: im Steady-Modus bleibt der breite Bildschirm an seinem Platz, wenn du dich neigst und bewegst. Das übernimmt der Spatial Anchor der Brille, und 3D ist aus</string>
+    <string name="home_steady_screen_gap">Bildschirmabstand</string>
+    <string name="home_steady_screen_gap_detail">Der Abstand zwischen den Bildschirmen im Steady-Modus.</string>
     <string name="home_glasses_setup_check">Brillen-Setup prüfen</string>
     <string name="home_glasses_setup_check_detail">Die Einstellungen, die deine Brille braucht, und ein 10-Sekunden-Check, ob Fenster an ihrem Platz bleiben</string>
     <string name="home_hands">Hände</string>

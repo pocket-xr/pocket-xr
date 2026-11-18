@@ -16,8 +16,18 @@ object SteadyArrange {
     const val WIDTH_FIT = 0.96f
     const val HEIGHT_FIT = 0.78f
 
-    /** A share of each cell left between windows. */
+    /** A share of each cell left between windows: the Screen gap setting's default. */
     const val GAP_SHARE = 0.04f
+
+    /**
+     * The Screen gap setting's range (a user on Windows asked for it): 0, screens touching, to [MAX_GAP], a tenth of each
+     * cell. The default, [GAP_SHARE], is the gap Steady mode always had.
+     */
+    const val MIN_GAP = 0f
+    const val MAX_GAP = 0.10f
+
+    /** [gap] within the setting's range; a saved value that is not a number is the default. */
+    fun clampGap(gap: Float): Float = if (gap.isNaN()) GAP_SHARE else gap.coerceIn(MIN_GAP, MAX_GAP)
     const val ROW_LIMIT = 3
 
     /** The window shape aimed for, width over height. */
@@ -50,10 +60,14 @@ object SteadyArrange {
         return List(count) { i -> base + if (i < n % count) 1 else 0 }
     }
 
-    /** [layout]'s windows filling a [viewWDeg] by [viewHDeg] canvas centred on [yawDeg], [pitchDeg]. */
-    fun arrange(layout: SpaceLayout, yawDeg: Float, pitchDeg: Float, viewWDeg: Float, viewHDeg: Float): SpaceLayout {
+    /**
+     * [layout]'s windows filling a [viewWDeg] by [viewHDeg] canvas centred on [yawDeg], [pitchDeg], with [gapShare] of each
+     * cell left between them ([clampGap]).
+     */
+    fun arrange(layout: SpaceLayout, yawDeg: Float, pitchDeg: Float, viewWDeg: Float, viewHDeg: Float, gapShare: Float = GAP_SHARE): SpaceLayout {
         val rows = rows(layout.panels.size, viewWDeg, viewHDeg)
         if (rows.isEmpty()) return layout
+        val gap = clampGap(gapShare)
         val tanW = tan(viewWDeg * WIDTH_FIT * DEG / 2f)
         val tanH = tan(viewHDeg * HEIGHT_FIT * DEG / 2f)
         // Even on the flat canvas, so the edges are spaced by tangent, not by angle.
@@ -63,7 +77,7 @@ object SteadyArrange {
         rows.forEachIndexed { r, cols ->
             val top = -edge(r, rows.size, tanH)
             val bottom = -edge(r + 1, rows.size, tanH)
-            val cellH = (top - bottom) * (1f - GAP_SHARE)
+            val cellH = (top - bottom) * (1f - gap)
             for (c in 0 until cols) {
                 val left = edge(c, cols, tanW)
                 val right = edge(c + 1, cols, tanW)
@@ -71,7 +85,7 @@ object SteadyArrange {
                     yawDeg = wrapDegrees(yawDeg + (left + right) / 2f),
                     pitchDeg = pitchDeg + (top + bottom) / 2f,
                     distanceM = PanelLimits.DEFAULT_DISTANCE,
-                    widthDeg = (right - left) * (1f - GAP_SHARE),
+                    widthDeg = (right - left) * (1f - gap),
                     heightDeg = cellH,
                     curve = 0f,
                 )
@@ -90,6 +104,19 @@ object SteadyArrange {
             }
         }
         return layout.copy(panels = out, wrap = null)
+    }
+
+    /**
+     * [layout], arranged at [yawDeg], [pitchDeg] with [oldGap], arranged again with [newGap] where it is now: a Recentre or
+     * Head scroll since then moved the row, so the new centre is the old one moved as far as the first window moved.
+     * Returns the layout and its new centre.
+     */
+    fun regapped(layout: SpaceLayout, yawDeg: Float, pitchDeg: Float, viewWDeg: Float, viewHDeg: Float, oldGap: Float, newGap: Float): Pair<SpaceLayout, Pair<Float, Float>> {
+        val first = layout.panels.firstOrNull()
+        val was = first?.let { arrange(layout, yawDeg, pitchDeg, viewWDeg, viewHDeg, oldGap).panel(it.id) }
+        val yaw = if (first != null && was != null) wrapDegrees(yawDeg + wrapDegrees(first.yawDeg - was.yawDeg)) else yawDeg
+        val pitch = if (first != null && was != null) pitchDeg + first.pitchDeg - was.pitchDeg else pitchDeg
+        return arrange(layout, yaw, pitch, viewWDeg, viewHDeg, newGap) to (yaw to pitch)
     }
 
     /** [current] with each window that was in [saved] back as it was there; one opened since stays where it is. */

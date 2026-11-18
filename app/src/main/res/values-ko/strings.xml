@@ -621,6 +621,8 @@
     <string name="home_steady_6dof_off">꺼짐: Steady 모드에서 고개를 돌려도 와이드 화면이 고정돼요</string>
     <string name="home_steady_6dof_on_user">켜짐: Steady 모드에서 글래스 메뉴(Spatial Display)의 6DoF를 켜면 몸을 기울이거나 움직여도 와이드 화면이 제자리에 있어요. XREAL Eye와 함께 새로 추가된 기능이에요. 사용해 보고 어땠는지 알려 주세요</string>
     <string name="home_steady_6dof_on">켜짐: Steady 모드에서 몸을 기울이거나 움직여도 와이드 화면이 제자리에 있어요. 글래스의 Spatial Anchor가 처리하며 3D는 꺼져요</string>
+    <string name="home_steady_screen_gap">화면 간격</string>
+    <string name="home_steady_screen_gap_detail">Steady 모드에서 화면 사이의 간격입니다.</string>
     <string name="home_glasses_setup_check">글래스 설정 확인</string>
     <string name="home_glasses_setup_check_detail">글래스에 필요한 설정과 창이 제자리에 있는지 보는 10초 확인</string>
     <string name="home_hands">손</string>

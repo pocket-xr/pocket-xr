@@ -537,6 +537,23 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(KEY_STEADY_SIX_DOF, true)
         set(value) = prefs.edit().putBoolean(KEY_STEADY_SIX_DOF, value).apply()
 
+    /**
+     * Steady mode's Screen gap (a user on Windows asked for it): the share of each window's place left between the windows,
+     * 0 (touching) to 0.10, 0.04 by default, the gap Steady mode always had ([com.hayeco.flipspaces.core.spatial.SteadyArrange]).
+     */
+    var steadyScreenGap: Float
+        get() = com.hayeco.flipspaces.core.spatial.SteadyArrange.clampGap(prefs.getFloat(KEY_STEADY_SCREEN_GAP, com.hayeco.flipspaces.core.spatial.SteadyArrange.GAP_SHARE))
+        set(value) = prefs.edit().putFloat(KEY_STEADY_SCREEN_GAP, com.hayeco.flipspaces.core.spatial.SteadyArrange.clampGap(value)).apply()
+
+    /**
+     * Steady mode as the user last turned it, on or off, with any of its controls (a user on Windows asked for Steady mode
+     * to be remembered); off until they first do. An unplug or the app closing leaves it as it is
+     * ([com.hayeco.flipspaces.core.spatial.SteadyRemember]).
+     */
+    var steadyRemembered: Boolean
+        get() = prefs.getBoolean(KEY_STEADY_REMEMBERED, false)
+        set(value) = prefs.edit().putBoolean(KEY_STEADY_REMEMBERED, value).apply()
+
     /** 0.5.64: the drawn orientation's One Euro filter (Developer); on by default. */
     var drawSmoothing: Boolean
         get() = prefs.getBoolean(KEY_DRAW_SMOOTHING, true)
@@ -746,6 +763,8 @@ class SpaceStore(context: Context) {
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
         private const val KEY_RECENTRE_FOLLOWS_TILT = "recentre_follows_tilt_1213"
         private const val KEY_STEADY_SIX_DOF = "steady_six_dof_140"
+        private const val KEY_STEADY_SCREEN_GAP = "steady_screen_gap"
+        private const val KEY_STEADY_REMEMBERED = "steady_remembered"
         // 0.5.96: the key keeps its saved name, so the setting carries over.
         private const val KEY_WARP_NO_LSR = "warp_nebula_0532"
         private const val KEY_WARP_REENTER = "warp_reenter_0532"
