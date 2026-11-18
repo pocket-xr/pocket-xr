@@ -858,6 +858,14 @@
     <string name="core_settings_developer">Ouvrir les Options pour les développeurs</string>
     <string name="core_settings_developer_hint">Dans les Options pour les développeurs, activez \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\", et \"Enable desktop experience features\" si vous le voyez. Redémarrez ensuite le téléphone et branchez les lunettes. Votre téléphone peut les nommer un peu différemment.</string>
     <string name="core_settings_home_other_hint">Cherchez les réglages d\'écran externe ou de mode bureau et passez les lunettes de la recopie à l\'extension. S\'il n\'y en a pas, activez les Options pour les développeurs et utilisez les interrupteurs indiqués.</string>
+    <string name="home_desktop_shizuku_note">Introuvables ? Pocket XR peut activer ces mêmes réglages pour vous via Shizuku.</string>
+    <string name="home_desktop_shizuku_button">Activer avec Shizuku</string>
+    <string name="home_desktop_shizuku_working">Activation en cours</string>
+    <string name="home_desktop_shizuku_done">C\'est fait. Redémarrez le téléphone, puis branchez les lunettes.</string>
+    <string name="home_desktop_shizuku_already">Ces réglages sont déjà activés. Si les lunettes copient encore l\'écran du téléphone après un redémarrage, ce téléphone ne permet pas d\'y ouvrir des apps.</string>
+    <string name="home_desktop_shizuku_not_running">Shizuku n\'est pas lancé. Ouvrez Shizuku, démarrez-le, puis réessayez.</string>
+    <string name="home_desktop_shizuku_permission">Autorisez Pocket XR dans la demande de Shizuku, puis réessayez.</string>
+    <string name="home_desktop_shizuku_failed">Les réglages n\'ont pas pu être modifiés : %1$s</string>
     <string name="core_display_type_unknown">type inconnu</string>
     <string name="core_display_type_internal">intégré</string>
     <string name="core_display_type_external">externe filaire (USB-C DisplayPort ou HDMI)</string>

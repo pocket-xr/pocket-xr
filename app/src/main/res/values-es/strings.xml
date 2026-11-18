@@ -858,6 +858,14 @@
     <string name="core_settings_developer">Abrir Opciones para desarrolladores</string>
     <string name="core_settings_developer_hint">En Opciones para desarrolladores, activa \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\", y \"Enable desktop experience features\" si aparece. Después reinicia el teléfono y conecta las gafas. Tu teléfono puede llamarlas de forma un poco distinta.</string>
     <string name="core_settings_home_other_hint">Busca los ajustes de pantalla externa o de modo escritorio y cambia las gafas de duplicar a extender. Si no los hay, activa Opciones para desarrolladores y usa los interruptores indicados allí.</string>
+    <string name="home_desktop_shizuku_note">¿No los encuentras? Pocket XR puede activar los mismos ajustes por ti a través de Shizuku.</string>
+    <string name="home_desktop_shizuku_button">Activar con Shizuku</string>
+    <string name="home_desktop_shizuku_working">Activándolos</string>
+    <string name="home_desktop_shizuku_done">Listo. Reinicia el teléfono y después conecta las gafas.</string>
+    <string name="home_desktop_shizuku_already">Estos ajustes ya están activados. Si las gafas siguen copiando la pantalla del teléfono después de reiniciar, este teléfono no permite abrir apps en ellas.</string>
+    <string name="home_desktop_shizuku_not_running">Shizuku no se está ejecutando. Abre Shizuku, inícialo y vuelve a intentarlo.</string>
+    <string name="home_desktop_shizuku_permission">Permite Pocket XR en el aviso de Shizuku y vuelve a intentarlo.</string>
+    <string name="home_desktop_shizuku_failed">No se pudieron cambiar los ajustes: %1$s</string>
     <string name="core_display_type_unknown">tipo desconocido</string>
     <string name="core_display_type_internal">integrada</string>
     <string name="core_display_type_external">externa por cable (USB-C DisplayPort o HDMI)</string>

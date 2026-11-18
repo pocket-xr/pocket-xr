@@ -8,7 +8,7 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.RectF
 import android.os.Bundle
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.R
 import androidx.core.app.NotificationManagerCompat
 import com.hayeco.flipspaces.core.spatial.NoteRow

@@ -6,7 +6,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.InputDevice
 import android.view.InputEvent
 import android.view.KeyCharacterMap

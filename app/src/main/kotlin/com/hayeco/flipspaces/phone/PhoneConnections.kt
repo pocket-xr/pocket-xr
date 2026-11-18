@@ -7,7 +7,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.spatial.BtDevice
 import com.hayeco.flipspaces.core.spatial.BtState

@@ -8,7 +8,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.opengl.GLES30
 import android.opengl.GLUtils
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.FlipSpacesApp
 import com.hayeco.flipspaces.R
 import kotlin.math.PI

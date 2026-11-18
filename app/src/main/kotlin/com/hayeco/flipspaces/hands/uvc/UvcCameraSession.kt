@@ -7,7 +7,7 @@ import android.hardware.usb.UsbInterface
 import android.hardware.usb.UsbManager
 import android.hardware.usb.UsbRequest
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.uvc.UvcBulkPayloadSplitter
 import com.hayeco.flipspaces.core.uvc.UvcBulkReadPlan
 import com.hayeco.flipspaces.core.uvc.UvcCamera

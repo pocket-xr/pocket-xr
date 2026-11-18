@@ -858,6 +858,14 @@
     <string name="core_settings_developer">Apri Opzioni sviluppatore</string>
     <string name="core_settings_developer_hint">In Opzioni sviluppatore, attiva \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\", e \"Enable desktop experience features\" se lo vedi. Poi riavvia il telefono e collega gli occhiali. Il tuo telefono potrebbe chiamarli in modo un po\' diverso.</string>
     <string name="core_settings_home_other_hint">Cerca le impostazioni del display esterno o della modalità desktop e passa gli occhiali da duplica a estendi. Se non ci sono, attiva Opzioni sviluppatore e usa gli interruttori indicati lì.</string>
+    <string name="home_desktop_shizuku_note">Non li trovi? Pocket XR può attivare le stesse impostazioni per te tramite Shizuku.</string>
+    <string name="home_desktop_shizuku_button">Attiva con Shizuku</string>
+    <string name="home_desktop_shizuku_working">Attivazione in corso</string>
+    <string name="home_desktop_shizuku_done">Fatto. Riavvia il telefono, poi collega gli occhiali.</string>
+    <string name="home_desktop_shizuku_already">Queste impostazioni sono già attive. Se dopo il riavvio gli occhiali copiano ancora lo schermo del telefono, questo telefono non permette di aprirci app.</string>
+    <string name="home_desktop_shizuku_not_running">Shizuku non è in esecuzione. Apri Shizuku, avvialo e riprova.</string>
+    <string name="home_desktop_shizuku_permission">Consenti Pocket XR nella richiesta di Shizuku, poi riprova.</string>
+    <string name="home_desktop_shizuku_failed">Non è stato possibile cambiare le impostazioni: %1$s</string>
     <string name="core_display_type_unknown">tipo sconosciuto</string>
     <string name="core_display_type_internal">integrato</string>
     <string name="core_display_type_external">esterno via cavo (USB-C DisplayPort o HDMI)</string>

@@ -868,6 +868,14 @@
     <string name="core_settings_developer">Открыть «Для разработчиков»</string>
     <string name="core_settings_developer_hint">В разделе «Для разработчиков» включите \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\", а также \"Enable desktop experience features\", если он есть. Затем перезагрузите телефон и подключите очки. На вашем телефоне названия могут немного отличаться.</string>
     <string name="core_settings_home_other_hint">Найдите настройки внешнего дисплея или режима рабочего стола и переключите очки с дублирования на расширение. Если их нет, включите раздел «Для разработчиков» и используйте указанные там переключатели.</string>
+    <string name="home_desktop_shizuku_note">Не нашли их? Pocket XR может включить эти же настройки за вас через Shizuku.</string>
+    <string name="home_desktop_shizuku_button">Включить через Shizuku</string>
+    <string name="home_desktop_shizuku_working">Включаем</string>
+    <string name="home_desktop_shizuku_done">Готово. Перезагрузите телефон, затем подключите очки.</string>
+    <string name="home_desktop_shizuku_already">Эти настройки уже включены. Если после перезагрузки очки всё ещё копируют экран телефона, этот телефон не позволяет открывать в них приложения.</string>
+    <string name="home_desktop_shizuku_not_running">Shizuku не запущен. Откройте Shizuku, запустите его и попробуйте снова.</string>
+    <string name="home_desktop_shizuku_permission">Разрешите Pocket XR в запросе Shizuku и попробуйте снова.</string>
+    <string name="home_desktop_shizuku_failed">Не удалось изменить настройки: %1$s</string>
     <string name="core_display_type_unknown">неизвестный тип</string>
     <string name="core_display_type_internal">встроенный</string>
     <string name="core_display_type_external">внешний проводной (USB-C DisplayPort или HDMI)</string>

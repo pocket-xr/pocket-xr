@@ -10,7 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.GlassesReady
 import com.hayeco.flipspaces.core.pointer.IntroPages
 

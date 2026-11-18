@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.SpacesLauncher
 import com.hayeco.flipspaces.SpacesState
 import com.hayeco.flipspaces.core.ContentMode

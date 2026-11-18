@@ -4,7 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.HeadDiagnosticsText
 import com.hayeco.flipspaces.core.spatial.HeadImuTransport
 import com.hayeco.flipspaces.core.spatial.HeadTrackingStatus

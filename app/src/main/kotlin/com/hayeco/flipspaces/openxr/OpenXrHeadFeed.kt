@@ -1,6 +1,6 @@
 package com.hayeco.flipspaces.openxr
 
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.DrawSmoothing
 import com.hayeco.flipspaces.core.spatial.Quat
 import com.hayeco.flipspaces.spatial.HeadPositionFeed

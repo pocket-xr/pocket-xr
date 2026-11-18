@@ -21,6 +21,11 @@ import java.io.File
  * ([LogStallWatch]) logs a check line after 30 quiet seconds. If logcat does not hand it back, the reader stops
  * following logcat and reads it in short dumps every 2 seconds instead. If that brings nothing either, the file says
  * once that Android is not giving the app its lines on this phone.
+ *
+ * 1.5.4 (the same vivo: its file then had only those notes): Pocket XR's own lines also come here by way of
+ * [com.hayeco.flipspaces.Log] ([direct]). The latest [KEEP] are kept in memory; once Android is found not to give the
+ * app its lines, they and every line after go straight into the file. On phones where logcat works nothing is written
+ * twice.
  */
 object AppLogFile {
     private const val TAG = "FlipSpaces/LogFile"
@@ -36,6 +41,51 @@ object AppLogFile {
     @Volatile private var dumps = false
     /** The logcat being followed now, so the watchdog can stop it. */
     @Volatile private var following: java.lang.Process? = null
+
+    /** 1.5.4: Pocket XR's own lines written straight to the file (logcat gives the app nothing on this phone). */
+    @Volatile private var directToFile = false
+    private const val KEEP = 600
+    private val kept = ArrayDeque<String>()
+    private val stamp = java.text.SimpleDateFormat("MM-dd HH:mm:ss.SSS", java.util.Locale.ROOT)
+
+    /**
+     * One of Pocket XR's own lines ([com.hayeco.flipspaces.Log]), as `logcat -v threadtime` prints it. Kept in memory,
+     * and written to the file once [directToFile] is on.
+     */
+    fun direct(priority: Int, tag: String, text: String) {
+        val level = when (priority) {
+            android.util.Log.VERBOSE -> 'V'
+            android.util.Log.DEBUG -> 'D'
+            android.util.Log.INFO -> 'I'
+            android.util.Log.WARN -> 'W'
+            android.util.Log.ERROR -> 'E'
+            else -> 'F'
+        }
+        val head = synchronized(stamp) { stamp.format(java.util.Date()) } +
+            String.format(java.util.Locale.ROOT, " %5d %5d %c %s: ", Process.myPid(), Process.myTid(), level, tag)
+        val lines = text.split('\n').map { head + it }
+        val target = file
+        synchronized(kept) {
+            if (directToFile && target != null) {
+                lines.forEach { target.write(it) }
+                return
+            }
+            lines.forEach { kept.addLast(it) }
+            while (kept.size > KEEP) kept.removeFirst()
+        }
+    }
+
+    /** From now on Pocket XR's own lines go straight to the file, starting with the ones kept so far. */
+    private fun startDirect(file: RotatingLogFile) {
+        synchronized(kept) {
+            if (directToFile) return
+            file.write("---- log file: the last ${kept.size} lines Pocket XR logged before this note, and every line after it, are written here directly ----")
+            kept.forEach { file.write(it) }
+            kept.clear()
+            directToFile = true
+        }
+        file.flush()
+    }
 
     @Volatile private var started = false
 
@@ -111,8 +161,8 @@ object AppLogFile {
                     runCatching { following?.destroy() }
                 }
                 is LogStallWatch.Step.NoLines -> {
-                    file.write("---- log file: Android on this phone is not giving Pocket XR its own log lines (${step.misses} checks in a row came back empty), so this file has little in it. Some phone makers limit app logs. ----")
-                    file.flush()
+                    file.write("---- log file: Android on this phone is not giving Pocket XR its own log lines (${step.misses} checks in a row came back empty). Some phone makers limit app logs. ----")
+                    startDirect(file)
                 }
                 LogStallWatch.Step.Wait -> Unit
             }

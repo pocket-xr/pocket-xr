@@ -8,7 +8,7 @@ import android.net.NetworkCapabilities
 import android.os.BatteryManager
 import android.os.SystemClock
 import android.telephony.TelephonyManager
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.PhoneStatus
 import java.util.concurrent.Executors
 

@@ -12,7 +12,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.spatial.HeadDiagnosticsFile
 import com.hayeco.flipspaces.spatial.HeadTracker
 import com.hayeco.flipspaces.spatial.SpaceSession

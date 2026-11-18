@@ -7,7 +7,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager

@@ -1,7 +1,7 @@
 package com.hayeco.flipspaces.pcvr
 
 import android.content.Context
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.spatial.SpaceRenderer
 import com.hayeco.flipspaces.spatial.SpaceStore
 import kotlin.math.atan

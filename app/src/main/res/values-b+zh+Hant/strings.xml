@@ -838,6 +838,14 @@
     <string name="core_settings_developer">開啟開發人員選項</string>
     <string name="core_settings_developer_hint">在開發人員選項中，開啟 \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\"，如果看到 \"Enable desktop experience features\" 也一併開啟。然後重新啟動手機並連接眼鏡。你的手機上的名稱可能略有不同。</string>
     <string name="core_settings_home_other_hint">尋找外接顯示器或桌面模式設定，把眼鏡從鏡像改為延伸。如果沒有，請開啟開發人員選項，使用那裡提到的開關。</string>
+    <string name="home_desktop_shizuku_note">找不到這些選項？Pocket XR 可以透過 Shizuku 幫你開啟同樣的設定。</string>
+    <string name="home_desktop_shizuku_button">用 Shizuku 開啟</string>
+    <string name="home_desktop_shizuku_working">正在開啟</string>
+    <string name="home_desktop_shizuku_done">完成。請重新啟動手機，然後連接眼鏡。</string>
+    <string name="home_desktop_shizuku_already">這些設定已經開啟。如果重新啟動後眼鏡仍然複製手機螢幕，表示這支手機不允許在眼鏡上開啟應用程式。</string>
+    <string name="home_desktop_shizuku_not_running">Shizuku 沒有在執行。請開啟 Shizuku 並啟動它，然後再試一次。</string>
+    <string name="home_desktop_shizuku_permission">請在 Shizuku 的提示中允許 Pocket XR，然後再試一次。</string>
+    <string name="home_desktop_shizuku_failed">無法變更設定：%1$s</string>
     <string name="core_display_type_unknown">不明類型</string>
     <string name="core_display_type_internal">內建</string>
     <string name="core_display_type_external">外接有線 (USB-C DisplayPort 或 HDMI)</string>

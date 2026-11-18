@@ -4,7 +4,7 @@ import android.graphics.PixelFormat
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View

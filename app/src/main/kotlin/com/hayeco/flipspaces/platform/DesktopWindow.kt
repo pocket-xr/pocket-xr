@@ -5,7 +5,7 @@ import android.content.res.Configuration
 import android.graphics.Rect
 import android.os.Build
 import android.os.OutcomeReceiver
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import com.hayeco.flipspaces.core.Bounds

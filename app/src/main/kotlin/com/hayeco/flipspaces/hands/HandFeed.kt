@@ -1,7 +1,7 @@
 package com.hayeco.flipspaces.hands
 
 import android.content.Context
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.SpacesState
 import com.hayeco.flipspaces.core.DisplaySelector
 import com.hayeco.flipspaces.core.hands.CameraModel

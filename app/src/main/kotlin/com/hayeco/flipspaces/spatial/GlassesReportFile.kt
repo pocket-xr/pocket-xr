@@ -3,7 +3,7 @@ package com.hayeco.flipspaces.spatial
 import android.content.Context
 import android.content.Intent
 import android.hardware.display.DisplayManager
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.Display
 import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.hands.ProviderStatus

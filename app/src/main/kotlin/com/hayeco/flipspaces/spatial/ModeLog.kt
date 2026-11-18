@@ -1,6 +1,6 @@
 package com.hayeco.flipspaces.spatial
 
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.spatial.ModeChoice
 import com.hayeco.flipspaces.core.spatial.ModeDecision
 

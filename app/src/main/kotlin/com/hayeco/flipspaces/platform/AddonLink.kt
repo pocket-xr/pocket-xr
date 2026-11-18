@@ -9,7 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.addon.IAddon
 import com.hayeco.flipspaces.addon.IAddonCallback
 import com.hayeco.flipspaces.phone.PhoneNotifications

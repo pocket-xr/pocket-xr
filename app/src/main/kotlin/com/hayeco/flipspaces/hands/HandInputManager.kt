@@ -3,7 +3,7 @@ package com.hayeco.flipspaces.hands
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.core.hands.AutoStartFacts
 import com.hayeco.flipspaces.core.hands.AutoStartStep
 import com.hayeco.flipspaces.core.hands.HandAutoStart

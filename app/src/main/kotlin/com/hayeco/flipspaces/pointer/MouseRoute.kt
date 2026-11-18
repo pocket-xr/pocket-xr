@@ -2,7 +2,7 @@ package com.hayeco.flipspaces.pointer
 
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.PointerIcon

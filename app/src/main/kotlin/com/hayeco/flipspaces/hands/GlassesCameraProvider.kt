@@ -14,7 +14,7 @@ import android.graphics.Paint
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.os.SystemClock
-import android.util.Log
+import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.R
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
