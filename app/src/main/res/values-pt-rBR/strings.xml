@@ -854,6 +854,10 @@
     <string name="core_settings_external_hint">Mude os óculos de espelhar para estender e volte aqui.</string>
     <string name="core_settings_home">Abrir Configurações</string>
     <string name="core_settings_home_hint">Vá em Dispositivos conectados, Samsung DeX, ative-o e volte aqui.</string>
+    <string name="core_mirror_message_other">Os óculos estão no modo espelho, então os apps não podem abrir neles. O celular precisa estender a tela para os óculos em vez de copiá-la: os passos estão abaixo.</string>
+    <string name="core_settings_developer">Abrir Opções do desenvolvedor</string>
+    <string name="core_settings_developer_hint">Em Opções do desenvolvedor, ative \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\", e \"Enable desktop experience features\" se aparecer. Depois reinicie o celular e conecte os óculos. Seu celular pode chamá-las de um jeito um pouco diferente.</string>
+    <string name="core_settings_home_other_hint">Procure as configurações de tela externa ou de modo desktop e mude os óculos de espelhar para estender. Se não houver, ative as Opções do desenvolvedor e use as chaves indicadas lá.</string>
     <string name="core_display_type_unknown">tipo desconhecido</string>
     <string name="core_display_type_internal">integrada</string>
     <string name="core_display_type_external">externa com fio (USB-C DisplayPort ou HDMI)</string>

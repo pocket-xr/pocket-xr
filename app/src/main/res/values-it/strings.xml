@@ -854,6 +854,10 @@
     <string name="core_settings_external_hint">Passa gli occhiali da duplicazione a estensione, poi torna qui.</string>
     <string name="core_settings_home">Apri Impostazioni</string>
     <string name="core_settings_home_hint">Vai in Dispositivi connessi, Samsung DeX, attivalo, poi torna qui.</string>
+    <string name="core_mirror_message_other">Gli occhiali sono in modalità specchio, quindi le app non possono aprirsi su di essi. Il telefono deve estendere lo schermo agli occhiali invece di copiarlo: i passaggi sono qui sotto.</string>
+    <string name="core_settings_developer">Apri Opzioni sviluppatore</string>
+    <string name="core_settings_developer_hint">In Opzioni sviluppatore, attiva \"Force desktop mode\", \"Enable freeform windows\", \"Force activities to be resizable\", e \"Enable desktop experience features\" se lo vedi. Poi riavvia il telefono e collega gli occhiali. Il tuo telefono potrebbe chiamarli in modo un po\' diverso.</string>
+    <string name="core_settings_home_other_hint">Cerca le impostazioni del display esterno o della modalità desktop e passa gli occhiali da duplica a estendi. Se non ci sono, attiva Opzioni sviluppatore e usa gli interruttori indicati lì.</string>
     <string name="core_display_type_unknown">tipo sconosciuto</string>
     <string name="core_display_type_internal">integrato</string>
     <string name="core_display_type_external">esterno via cavo (USB-C DisplayPort o HDMI)</string>

@@ -3,6 +3,7 @@ package com.hayeco.flipspaces
 import android.content.Context
 import android.os.Process
 import android.util.Log
+import com.hayeco.flipspaces.core.LogStallWatch
 import com.hayeco.flipspaces.core.RotatingLogFile
 import java.io.File
 
@@ -15,6 +16,11 @@ import java.io.File
  * `flipspaces.1.log` to `flipspaces.7.log`, 8 MB each ([RotatingLogFile]). A log pull reads them with
  * `adb pull /sdcard/Android/data/com.hayeco.flipspaces/files/logs`, no recorder needed. Logcat itself is untouched.
  * If the reader stops it starts again a second later from the last line's time.
+ *
+ * 1.5.3 (a vivo V2562 on Android 17: logcat printed its buffer and then nothing, without ending): a watchdog
+ * ([LogStallWatch]) logs a check line after 30 quiet seconds. If logcat does not hand it back, the reader stops
+ * following logcat and reads it in short dumps every 2 seconds instead. If that brings nothing either, the file says
+ * once that Android is not giving the app its lines on this phone.
  */
 object AppLogFile {
     private const val TAG = "FlipSpaces/LogFile"
@@ -22,6 +28,14 @@ object AppLogFile {
     /** The flush interval: at most this much is lost with a killed process. */
     private const val FLUSH_MS = 1_000L
     private const val RESTART_MS = 1_000L
+    /** How often the dump reader asks logcat for new lines, once following it has stalled. */
+    private const val DUMP_MS = 2_000L
+
+    private val watch = LogStallWatch()
+    /** Following logcat stalled: read it in dumps instead. */
+    @Volatile private var dumps = false
+    /** The logcat being followed now, so the watchdog can stop it. */
+    @Volatile private var following: java.lang.Process? = null
 
     @Volatile private var started = false
 
@@ -73,12 +87,65 @@ object AppLogFile {
             priority = Thread.MIN_PRIORITY
             start()
         }
+        Thread({ watchdog(file) }, "fs-log-watch").apply {
+            isDaemon = true
+            priority = Thread.MIN_PRIORITY
+            start()
+        }
         Log.i(TAG, "this process's log lines also go to ${dir?.absolutePath} (8 files of 8 MB, flipspaces.log the newest; adb pull /sdcard/Android/data/${context.packageName}/files/logs)")
+    }
+
+    private fun now(): Long = android.os.SystemClock.elapsedRealtime()
+
+    /** Checks every second that logcat still hands lines back (see [LogStallWatch]). */
+    private fun watchdog(file: RotatingLogFile) {
+        watch.started(now())
+        while (true) {
+            Thread.sleep(1_000L)
+            when (val step = watch.tick(now())) {
+                is LogStallWatch.Step.SendCheck -> Log.i(TAG, step.line)
+                is LogStallWatch.Step.Stalled -> {
+                    file.write("---- log file: logcat sent nothing for ${step.quietForMs / 1000} s, not even this file's own check line; reading it every ${DUMP_MS / 1000} s instead ----")
+                    file.flush()
+                    dumps = true
+                    runCatching { following?.destroy() }
+                }
+                is LogStallWatch.Step.NoLines -> {
+                    file.write("---- log file: Android on this phone is not giving Pocket XR its own log lines (${step.misses} checks in a row came back empty), so this file has little in it. Some phone makers limit app logs. ----")
+                    file.flush()
+                }
+                LogStallWatch.Step.Wait -> Unit
+            }
+        }
     }
 
     private fun run(file: RotatingLogFile, pid: Int) {
         var since: String? = null
+        // The dump reader asks again from the last line's time, so the lines at that time come again: skip the ones
+        // already written.
+        val recent = ArrayDeque<String>()
+        fun take(line: String): Boolean {
+            if (dumps && line in recent) return false
+            recent.addLast(line)
+            if (recent.size > 200) recent.removeFirst()
+            file.write(line)
+            watch.onLine(line, now())
+            // threadtime: "MM-DD HH:MM:SS.mmm ..." (18 characters).
+            if (line.length >= 18 && line[2] == '-' && line[5] == ' ') since = line.substring(0, 18)
+            return true
+        }
         while (true) {
+            if (dumps) {
+                val cmd = mutableListOf("logcat", "-d", "-v", "threadtime", "--pid=$pid")
+                since?.let { cmd += listOf("-T", it) }
+                val proc = runCatching { ProcessBuilder(cmd).redirectErrorStream(true).start() }.getOrNull()
+                if (proc != null) {
+                    runCatching { proc.inputStream.bufferedReader().useLines { lines -> lines.forEach { take(it) } } }
+                    runCatching { proc.destroy() }
+                }
+                Thread.sleep(DUMP_MS)
+                continue
+            }
             val cmd = mutableListOf("logcat", "-v", "threadtime", "--pid=$pid")
             // After a restart, from the last line's time on (that one line may come twice).
             since?.let { cmd += listOf("-T", it) }
@@ -89,16 +156,15 @@ object AppLogFile {
                 Thread.sleep(RESTART_MS * 10)
                 continue
             }
+            following = proc
             runCatching {
                 proc.inputStream.bufferedReader().useLines { lines ->
-                    for (line in lines) {
-                        file.write(line)
-                        // threadtime: "MM-DD HH:MM:SS.mmm ..." (18 characters).
-                        if (line.length >= 18 && line[2] == '-' && line[5] == ' ') since = line.substring(0, 18)
-                    }
+                    for (line in lines) take(line)
                 }
             }
+            following = null
             runCatching { proc.destroy() }
+            if (dumps) continue
             file.write("---- log file: logcat stopped; starting it again ----")
             file.flush()
             Thread.sleep(RESTART_MS)

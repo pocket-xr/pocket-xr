@@ -8,7 +8,7 @@ import android.provider.Settings
 import com.hayeco.flipspaces.R
 import com.hayeco.flipspaces.core.SettingsTarget
 
-/** Opens the screen that switches the glasses from mirror to extended (DeX) mode. */
+/** Opens the screen that switches the glasses from mirror to extended mode (DeX on Samsung, Developer options elsewhere). */
 object SettingsShortcuts {
 
     /** First target whose screen exists on this phone, in [SettingsTarget.forMirror] order. */
@@ -45,6 +45,7 @@ object SettingsShortcuts {
             ComponentName(WindowingProbe.DEX_PACKAGE, "com.sec.android.desktopmode.uiservice.activity.settings.SettingsActivity"),
         )
         SettingsTarget.EXTERNAL_DISPLAY -> Intent("android.settings.EXTERNAL_DISPLAY_SETTINGS")
-        SettingsTarget.SETTINGS_HOME -> Intent(Settings.ACTION_SETTINGS)
+        SettingsTarget.DEVELOPER_OPTIONS -> Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+        SettingsTarget.SETTINGS_HOME, SettingsTarget.SETTINGS_HOME_OTHER -> Intent(Settings.ACTION_SETTINGS)
     }
 }

@@ -75,6 +75,16 @@ object HostingAssessor {
         get() = UiText.get("core_mirror_message", "The glasses are in mirror mode, so apps can't open on them. Turn on DeX (or the extended display mode) and try again.")
 
     /**
+     * 1.5.3 (a vivo V2562 on Android 17, 18 Nov 2026: the glasses mirrored the phone, and the advice named Samsung DeX,
+     * which that phone does not have): phones without DeX are told to extend the screen, with the steps under it.
+     */
+    val MIRROR_MESSAGE_OTHER: String
+        get() = UiText.get("core_mirror_message_other", "The glasses are in mirror mode, so apps can't open on them. Your phone has to extend its screen to the glasses instead of copying it: the steps are below.")
+
+    /** The mirror message for this phone: the DeX one only where DeX is installed. */
+    fun mirrorMessage(dexInstalled: Boolean): String = if (dexInstalled) MIRROR_MESSAGE else MIRROR_MESSAGE_OTHER
+
+    /**
      * Strongest evidence first: Pocket XR's home already running there proves the display hosts
      * tasks; then the platform's canHostTasks; DeX running on the display; a recorded denial of
      * our own home screen; the mirror setting. Anything else is [ContentMode.UNKNOWN].
@@ -126,13 +136,29 @@ data class DisplayInsets(val topPx: Int = 0, val bottomPx: Int = 0) {
 enum class SettingsTarget(private val labelKey: String, private val labelEnglish: String, private val hintKey: String, private val hintEnglish: String) {
     DEX("core_settings_dex", "Open Samsung DeX settings", "core_settings_dex_hint", "Turn on Samsung DeX, then come back."),
     EXTERNAL_DISPLAY("core_settings_external", "Open external display settings", "core_settings_external_hint", "Switch the glasses from mirror to extend, then come back."),
-    SETTINGS_HOME("core_settings_home", "Open Settings", "core_settings_home_hint", "Go to Connected devices, Samsung DeX, turn it on, then come back.");
+    SETTINGS_HOME("core_settings_home", "Open Settings", "core_settings_home_hint", "Go to Connected devices, Samsung DeX, turn it on, then come back."),
+
+    /**
+     * 1.5.3: phones without DeX. Android's own switches for apps on an external display, in Developer options (their
+     * English names in AOSP; a phone's maker may rename or hide them). The same settings as [FreeformSetup].
+     */
+    DEVELOPER_OPTIONS(
+        "core_settings_developer", "Open Developer options", "core_settings_developer_hint",
+        "In Developer options, turn on \"Force desktop mode\", \"Enable freeform windows\" and \"Force activities to be resizable\", and \"Enable desktop experience features\" if you see it. Then restart the phone and plug in the glasses. Your phone may name them a little differently.",
+    ),
+
+    /** 1.5.3: Settings home on a phone without DeX, when neither screen above opens. */
+    SETTINGS_HOME_OTHER(
+        "core_settings_home", "Open Settings", "core_settings_home_other_hint",
+        "Look for the external display or desktop mode settings and switch the glasses from mirror to extend. If there are none, turn on Developer options and use the switches named there.",
+    );
 
     val buttonLabel: String get() = UiText.get(labelKey, labelEnglish)
     val hint: String get() = UiText.get(hintKey, hintEnglish)
 
     companion object {
         fun forMirror(dexInstalled: Boolean): List<SettingsTarget> =
-            if (dexInstalled) listOf(DEX, EXTERNAL_DISPLAY, SETTINGS_HOME) else listOf(EXTERNAL_DISPLAY, SETTINGS_HOME)
+            if (dexInstalled) listOf(DEX, EXTERNAL_DISPLAY, SETTINGS_HOME)
+            else listOf(EXTERNAL_DISPLAY, DEVELOPER_OPTIONS, SETTINGS_HOME_OTHER)
     }
 }
