@@ -74,6 +74,10 @@ ALVR is MIT. Keep its notice in the app's licences screen. Nothing here goes pub
   NDK r27c for Linux. `alvr_client_core` (21.0.0-dev14, matching the PC streamer) builds with
   `cargo ndk -t arm64-v8a --platform 28` after `git submodule update --init --depth 1 openvr`. It needs
   `libc++_shared.so` beside it, and has no soname, so CMake links it with `IMPORTED_NO_SONAME`.
+  Since 1.5.2 it is linked for 16 KB pages (Google Play requires it): build with
+  `CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS="-C link-arg=-Wl,-z,max-page-size=16384 -C link-arg=-Wl,-z,common-page-size=16384"`,
+  then `llvm-strip` it into jniLibs, and check the bundle with `tools/check-16kb.sh`. The WSL copy carries one local
+  addition to `alvr/client_core/src/c_api.rs`, `alvr_get_total_prediction_offset_ns`, which the bridge calls.
 - Step 2 done: `app/src/main/cpp/pocketxr_alvr.cpp` and `pcvr/AlvrBridge.kt`, tested with debug `PcVrTestActivity`. The
   PC trusted the phone (shown as "Pocket XR", `9784.client.local.`) through ALVR's own API, and SteamVR Home showed in
   stereo on the phone at 60 new frames a second.

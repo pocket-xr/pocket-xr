@@ -19,10 +19,18 @@ android {
         resValue("string", "app_label", if (findProperty("pocketxr.dev") == "true") "Pocket XR Test" else "Pocket XR")
         minSdk = 30
         targetSdk = 36
-        versionCode = 181
-        versionName = "1.5.1"
+        versionCode = 182
+        versionName = "1.5.2"
         // The Flip 7 is arm64; MediaPipe's native code for other ABIs only adds size.
         ndk { abiFilters += "arm64-v8a" }
+        // 1.5.2: Google Play requires every native library to load on 16 KB memory pages. NDK r27 still links with 4 KB
+        // pages unless this is on (r28 does it by default). libalvr_client_core.so in jniLibs is linked the same way
+        // (docs/PCVR-PLAN.md); tools/check-16kb.sh checks a bundle.
+        externalNativeBuild {
+            cmake {
+                arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+            }
+        }
         // 1.0.1: the Google Play build (-Ppocketxr.play=true) hides the Ko-fi row (1.1.15: atop the trackpad's Menu), as Play's payments
         // policy does not allow a link to tip the developer ([com.hayeco.flipspaces.core.Support]). Every other build,
         // the GitHub release included, shows it.
