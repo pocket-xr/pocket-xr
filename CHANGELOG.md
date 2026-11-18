@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.5.4: Pocket XR turns the settings on for you
+
+- **"Turn on with Shizuku":** some phones (a vivo X300 Ultra, for one) hide the Developer options switches that let
+  apps open on the glasses. Pocket XR can now turn the same settings on itself through Shizuku, with one tap in the
+  card that says the glasses copy the phone screen. Then restart the phone and plug in the glasses. Whether a phone's
+  maker lets them work is up to the phone.
+- **Logs that get through on every phone:** 1.5.3 found that some phones give an app none of its own log lines. Pocket
+  XR now writes its lines straight into its own log file there, so Send logs to Mike has what's needed.
+- Not yet tried on a phone that mirrors.
+
 ## 1.5.3: help for phones that mirror the glasses
 
 - **Phones without Samsung DeX** that copy their screen to the glasses (mirror mode) now get the right advice. Before,
