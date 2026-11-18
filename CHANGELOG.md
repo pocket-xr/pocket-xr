@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.5.5: hand tracking starts only when Android allows it
+
+- **Hand tracking now asks Android for the camera only while a Pocket XR screen is showing.** Android 15 and later
+  refuse a camera service that starts from the phone booting, and Google Play flagged a path where hands could start
+  that way: the phone starts, Pocket XR's glasses service starts, a screen opens on the glasses, hands start by
+  themselves. Pocket XR already caught that refusal; now it doesn't ask at all unless one of its screens is on show,
+  and says so in its log.
+- Not tried on a phone yet.
+
 ## 1.5.4: Pocket XR turns the settings on for you
 
 - **"Turn on with Shizuku":** some phones (a vivo X300 Ultra, for one) hide the Developer options switches that let
