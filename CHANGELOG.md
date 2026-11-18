@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.5.2: ready for 16 KB phones
+
+- **Pocket XR now runs on phones that use 16 KB memory pages**, which newer Android phones are moving to and Google
+  Play requires. Three of its native libraries (the frame timing helper, the PC VR bridge and ALVR's client library)
+  were built for 4 KB pages only; all of them are now built for both.
+- Nothing else changes: the PC VR library is the same ALVR build (21.0.0-dev14) as before, rebuilt with the new page
+  size.
+
 ## 1.5.1: the tour in your language
 
 - **The tour now speaks every language Pocket XR does:** Korean, Japanese, Chinese (simplified and traditional),
