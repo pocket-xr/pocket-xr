@@ -159,7 +159,12 @@ enum class GlassesModel(
          * had no name at all. A phone that names the glasses' display itself (not from the EDID) made them UNKNOWN, and
          * UNKNOWN takes the Aura's axes. Now any glasses on XREAL's USB vendor id are at least [OTHER_XREAL].
          */
-        fun detect(id: GlassesId?, usbProduct: Int? = null): GlassesModel {
+        /*
+         * 1.5.3 (a vivo V2562's Send logs said "Unknown glasses" with a VITURE Beast plugged in): [vitureOnUsb], VITURE
+         * glasses on USB, names them when nothing else does. Before a Space has opened on them there is no saved display
+         * name, and only XREAL's vendor id was looked at on USB, so the zip and the head axes said "Unknown glasses".
+         */
+        fun detect(id: GlassesId?, usbProduct: Int? = null, vitureOnUsb: Boolean = false): GlassesModel {
             val name = id?.name?.trim().orEmpty()
             val lower = name.lowercase()
             return when {
@@ -175,6 +180,7 @@ enum class GlassesModel(
                 usbProduct == USB_ONE_PRO_PLUS -> ONE_PRO_PLUS
                 usbProduct?.let(AirImuProtocol::modelName) != null || lower.contains("xreal air") || lower.contains("nreal air") -> AIR
                 lower.contains("xreal") || lower.contains("nreal") || usbProduct != null -> OTHER_XREAL
+                vitureOnUsb -> VITURE
                 else -> UNKNOWN
             }
         }

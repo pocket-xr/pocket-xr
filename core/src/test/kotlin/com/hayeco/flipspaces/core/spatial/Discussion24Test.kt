@@ -97,11 +97,11 @@ class Discussion24Test {
         assertEquals(ImuTransport.UNKNOWN, HeadImuTransport.choose(0x18D1, 0x1301, listOf(hid)))
         val beast = GlassesReport.Usb(0x35CA, 0x1201, "VITURE Beast", emptyList(), listOf(hid))
         assertEquals(beast, HeadImuTransport.vitureGlasses(listOf(GlassesReport.Usb(0x046D, 1, "Keyboard", emptyList(), listOf(hid)), beast)))
-        val off = HeadTrackingStatus.VitureNotYet(0x1201).summary
+        val off = HeadTrackingStatus.VitureNotYet(0x1301).summary
         assertTrue(off, off.startsWith("Head tracking isn't supported yet on VITURE glasses"))
         assertFalse(off.contains("NCM"))
-        assertFalse(HeadTrackingStatus.VitureNotYet(0x1201).tracking)
-        assertTrue(HeadTrackingStatus.VitureNotYet(0x1201, experimentalOn = true).summary.contains("Record motion"))
+        assertFalse(HeadTrackingStatus.VitureNotYet(0x1301).tracking)
+        assertTrue(HeadTrackingStatus.VitureNotYet(0x1301, experimentalOn = true).summary.contains("Record motion"))
         assertEquals(GlassesModel.VITURE, GlassesModel.detect(GlassesId("VITURE Beast", "288")))
         assertFalse(GlassesModel.VITURE.isXreal)
         assertTrue(GlassesModel.ONE.isXreal)

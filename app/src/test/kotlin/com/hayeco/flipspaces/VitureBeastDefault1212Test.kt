@@ -44,8 +44,14 @@ class VitureBeastDefault1212Test {
         assertTrue(s.vitureHeadTracking)
     }
 
+    @Test fun theBeastOn1201IsOnByDefaultToo() {
+        // 1.5.3: the same glasses on another USB product.
+        prefs.edit().putInt("viture_product_1212", VitureDevices.BEAST_1201).commit()
+        assertTrue(SpaceStore(app).vitureHeadTracking)
+    }
+
     @Test fun otherVitureModelsStayOffByDefault() {
-        prefs.edit().putInt("viture_product_1212", 0x1201).commit()
+        prefs.edit().putInt("viture_product_1212", 0x1301).commit()
         assertFalse(SpaceStore(app).vitureHeadTracking)
     }
 
@@ -59,7 +65,7 @@ class VitureBeastDefault1212Test {
 
     @Test fun aSavedOnFromOlderVersionsCarriesOver() {
         // 1.2.8 to 1.2.11 saved the switch under this key; on another model it stays on.
-        prefs.edit().putInt("viture_product_1212", 0x1201).putBoolean("viture_head_tracking", true).commit()
+        prefs.edit().putInt("viture_product_1212", 0x1301).putBoolean("viture_head_tracking", true).commit()
         assertTrue(SpaceStore(app).vitureHeadTracking)
     }
 
@@ -73,6 +79,8 @@ class VitureBeastDefault1212Test {
             }
         }
         assertTrue(ids.toString(), (0x35CA to VitureDevices.BEAST) in ids)
+        // 1.5.3: the Beast on 35CA:1201 (a vivo V2562's Glasses report) too.
+        assertTrue(ids.toString(), (0x35CA to VitureDevices.BEAST_1201) in ids)
         // XREAL's are still there (the Aura first).
         assertTrue((0x3318 to 0x043A) in ids)
         // The microphone has no motion and is not offered.
