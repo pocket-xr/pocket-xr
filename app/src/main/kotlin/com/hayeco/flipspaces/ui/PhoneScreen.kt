@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -57,6 +58,7 @@ import com.hayeco.flipspaces.core.Look
 import com.hayeco.flipspaces.core.SettingsTarget
 import com.hayeco.flipspaces.core.spatial.FlatBanner
 import com.hayeco.flipspaces.core.spatial.FlatFix
+import kotlin.math.roundToInt
 
 /*
  * 0.5.87 (Pocket XR; Mike: "do those now", the phone's settings screens of the redesign): the app's home on the phone. It was a
@@ -118,6 +120,9 @@ fun PhoneScreen(
         com.hayeco.flipspaces.core.spatial.SteadyMode.sixDofOn(glassesModel, com.hayeco.flipspaces.core.spatial.XrealEye.seen(glassesModel, com.hayeco.flipspaces.spatial.GlassesUsbList.read(context)))
     }
     val sixDofByUser = !com.hayeco.flipspaces.core.spatial.SteadyMode.appAnchor(glassesModel)
+    // Steady mode's Screen gap (a user on Windows asked for it), for the glasses that get Steady mode.
+    val steadyGlasses = com.hayeco.flipspaces.core.spatial.SteadyMode.offeredOn(glassesModel)
+    var steadyGap by remember { mutableStateOf(com.hayeco.flipspaces.spatial.SpaceStore(context).steadyScreenGap) }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -217,6 +222,24 @@ fun PhoneScreen(
                         ) {
                             steadySixDof = it
                             com.hayeco.flipspaces.spatial.SpaceStore(context).steadySixDof = it
+                        }
+                        RowDivider()
+                    }
+                    if (steadyGlasses) {
+                        // The gap between the windows Steady mode lines up; a running Space arranges them again at once.
+                        SliderRow(
+                            stringResource(R.string.home_steady_screen_gap),
+                            stringResource(R.string.home_steady_screen_gap_detail),
+                            steadyGap,
+                            com.hayeco.flipspaces.core.spatial.SteadyArrange.MIN_GAP..com.hayeco.flipspaces.core.spatial.SteadyArrange.MAX_GAP,
+                            STEADY_GAP_STEPS,
+                        ) {
+                            val gap = steadyGapStep(it)
+                            if (gap != steadyGap) {
+                                steadyGap = gap
+                                com.hayeco.flipspaces.spatial.SpaceStore(context).steadyScreenGap = gap
+                                com.hayeco.flipspaces.spatial.SpaceSession.send(com.hayeco.flipspaces.spatial.SpaceCommand.SettingsChanged)
+                            }
                         }
                         RowDivider()
                     }
@@ -354,6 +377,23 @@ private fun ToggleRow(title: String, detail: String, checked: Boolean, onChange:
         Switch(checked = checked, onCheckedChange = onChange)
     }
 }
+
+/** A setting with a slider under its title and note, laid out like [ToggleRow]. */
+@Composable
+private fun SliderRow(title: String, detail: String, value: Float, range: ClosedFloatingPointRange<Float>, steps: Int, onChange: (Float) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Text(detail, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Slider(value = value, onValueChange = onChange, valueRange = range, steps = steps)
+    }
+}
+
+/** Screen gap's slider stops between 0 and 0.10, every 0.01. */
+internal const val STEADY_GAP_STEPS = 9
+
+/** The slider's position [value] as a Screen gap on its 0.01 stops. */
+internal fun steadyGapStep(value: Float): Float =
+    com.hayeco.flipspaces.core.spatial.SteadyArrange.clampGap((value * 100f).roundToInt() / 100f)
 
 /** Why the glasses show the flat DeX home instead of the Space, with the one-tap fix. Shared with the glasses home. */
 @Composable
