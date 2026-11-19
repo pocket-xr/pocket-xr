@@ -4756,6 +4756,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private fun checkProtected(p: PanelGl, nowMs: Long) {
         // 0.5.2: the frame thread samples the brightness about once a second (PanelFrameThread).
         val s = p.src
+        // PC screens: while the stream is drawn straight from the decoder, the window's own display is black by design
+        // (its picture no longer passes through it). Not protected video: no check, no banner (Mike's phone test).
+        if (p.stream != null && (p.streamLive || p.stream.copies > 0)) {
+            p.offer = null
+            return
+        }
         if (p.offerDismissed || s.lumaSeq == p.lumaSeen) return
         p.lumaSeen = s.lumaSeq
         val wasLong = p.black.blackLongEnough

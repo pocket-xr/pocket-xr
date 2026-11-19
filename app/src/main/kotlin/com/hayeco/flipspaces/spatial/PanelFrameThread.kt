@@ -50,7 +50,28 @@ internal class CopyToken(val sync: Long, val eglImage: EGLImageKHR?, val buffer:
  * GPU graph) the display's queue filled and SurfaceFlinger's main thread waited in dequeueBuffer
  * until its watchdog reset the phone's graphics.
  */
-internal class PanelSource(width: Int, height: Int, decoded: Boolean = false) {
+internal class PanelSource(width: Int, height: Int, val decoded: Boolean = false) {
+    /**
+     * PC screens: for a decoded source, how long each picture took from going into the PC screen's decoder (its
+     * timestamp, System.nanoTime there, the same clock here) to the Space copying it, logged every 5 s. Render thread.
+     */
+    private val decodedAges = ArrayList<Float>()
+    private var decodedSinceMs = 0L
+
+    fun decodedAge(ms: Float) {
+        decodedAges += ms
+        val now = SystemClock.uptimeMillis()
+        if (decodedSinceMs == 0L) decodedSinceMs = now
+        if (now - decodedSinceMs < 5000) return
+        decodedAges.sort()
+        val p50 = decodedAges[decodedAges.size / 2]
+        val p95 = decodedAges[(decodedAges.size * 95 / 100).coerceAtMost(decodedAges.size - 1)]
+        Log.i("PcScreen", "into the Space: ${decodedAges.size} pictures copied in 5 s; decoder in to Space copy p50 %.1f ms, p95 %.1f ms, max %.1f ms"
+            .format(java.util.Locale.ROOT, p50, p95, decodedAges.last()))
+        decodedAges.clear()
+        decodedSinceMs = now
+    }
+
     // PC screens: a decoded source takes a video decoder's own buffers (ImageFormat.PRIVATE, often YUV), which the copy
     // reads through its external texture like any other; an app's display draws RGBA as before.
     val reader: ImageReader = if (decoded) {
@@ -258,6 +279,7 @@ internal object PanelImport {
             val stamps = waiting.map { runCatching { it.timestamp }.getOrDefault(0L) }
             synchronized(s.latch) { s.latch.pick(stamps, presentNs, latchNs) }
         } else s.mailbox.lease()) ?: return false
+        if (s.decoded) runCatching { image.timestamp }.getOrNull()?.takeIf { it > 0 }?.let { s.decodedAge((latchNs - it) / 1e6f) }
         var buffer: HardwareBuffer? = null
         var eglImage: EGLImageKHR? = null
         var oes = 0
