@@ -97,6 +97,27 @@ class PcVrHelper(context: Context) {
         ask(pc, JSONObject().put("op", "idr").put("token", token), CONNECT_MS)
     }
 
+    /** This phone has been allowed on [pc] before. */
+    fun knows(pc: Pc): Boolean = tokenFor(pc) != null
+
+    /**
+     * PC screens: the helper types [pin] into the Apollo on HTTP port [port] for the user, and gives this phone the
+     * permissions a PC screen needs. Null when it worked, else why not.
+     */
+    fun apolloPin(pc: Pc, pin: String, port: Int): String? {
+        val token = tokenFor(pc) ?: return "not paired"
+        val answer = ask(pc, JSONObject().put("op", "apollo-pin").put("token", token).put("pin", pin).put("name", phoneName()).put("port", port), APOLLO_WAIT_MS)
+            ?: return "no answer"
+        if (answer.optString("why") == "not paired") prefs.edit().remove("token:${pc.name}").apply()
+        return if (answer.optBoolean("ok")) null else answer.optString("why", "refused")
+    }
+
+    /** PC screens: the helper asks the PC's user, then runs the PC screens setup there. True when it started. */
+    fun screensSetup(pc: Pc): Boolean {
+        val token = tokenFor(pc) ?: return false
+        return ask(pc, JSONObject().put("op", "screens-setup").put("token", token).put("phone", phoneName()), SETUP_WAIT_MS)?.optBoolean("ok") == true
+    }
+
     /** The PC found by the last [startSteamVr], for later requests. */
     @Volatile var lastPc: Pc? = null
         private set
@@ -169,5 +190,12 @@ class PcVrHelper(context: Context) {
         private const val START_WAIT_MS = 8_000
         private const val POLL_MS = 1_000L
         private const val READY_WAIT_MS = 120_000L
+        /** Apollo takes the PIN and the permissions in a few seconds; the helper tries for up to 20. */
+        private const val APOLLO_WAIT_MS = 30_000
+        /** The PC's user has two minutes to say yes to the setup. */
+        private const val SETUP_WAIT_MS = 125_000
+
+        /** Where the PC helper is downloaded (its releases, tagged pc-helper-v*). */
+        const val DOWNLOAD_URL = "https://github.com/pocket-xr/pocket-xr/releases?q=pc-helper"
     }
 }

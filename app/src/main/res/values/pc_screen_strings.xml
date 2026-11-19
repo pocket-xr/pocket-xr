@@ -14,6 +14,17 @@
     <string name="pc_screen_paired_shared">Paired with %1$s. PC screen %2$d uses the same host, and a host streams one screen at a time. For both at once, run Pocket XR\'s \"Set up PC screens\" on the PC once, then tap Forget this PC here.</string>
     <string name="pc_screen_address_needed">Type the PC\'s address first.</string>
     <string name="pc_screen_pair">Pair</string>
+    <string name="pc_screen_pairing">Pairing with %1$s… If your PC asks, click Yes there.</string>
+    <string name="pc_screen_helper_allow">Click Yes on %1$s to let Pocket XR use it.</string>
+    <string name="pc_screen_helper_tip">With the Pocket XR PC helper on your PC, there is no PIN to type: tap Set up my PC.</string>
+    <string name="pc_screen_setup_button">Set up my PC</string>
+    <string name="pc_screen_setup_looking">Looking for the Pocket XR PC helper on your PC…</string>
+    <string name="pc_screen_setup_no_helper">Your PC needs the Pocket XR PC helper once. Send yourself the link, open it on the PC, run the helper, then tap Set up my PC again.</string>
+    <string name="pc_screen_setup_share_subject">Pocket XR PC helper</string>
+    <string name="pc_screen_setup_share_text">Open this on your PC and run the Pocket XR PC helper: %1$s</string>
+    <string name="pc_screen_setup_asked">Click Yes on %1$s to set up PC screens.</string>
+    <string name="pc_screen_setup_running">Setup is running on %1$s: answer its questions there. Then tap your PC above.</string>
+    <string name="pc_screen_setup_refused">%1$s did not say yes. Tap Set up my PC to ask again.</string>
     <string name="wake_relay_title">PC wake relay</string>
     <string name="wake_relay_row_subtitle">Use this phone at home to wake your PC from away</string>
     <string name="wake_relay_explain">A sleeping PC can only be woken from its own home network. Leave this phone at home on the Wi-Fi, plugged in, with this switched on and Tailscale on (signed in to the same account as your PC and your other phone). Then Pocket XR on your other phone wakes the PC through it from anywhere. Open a PC screen on your other phone once at home so it finds this phone.</string>

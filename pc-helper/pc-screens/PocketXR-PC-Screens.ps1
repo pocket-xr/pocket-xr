@@ -256,6 +256,69 @@ function Install-Task {
     Say "Added the sign-in task ""$TaskName""."
 }
 
+# ---- Apollo's web login, for the Pocket XR PC helper ----
+#
+# The PC helper types a phone's pairing PIN into Apollo for the user (its "apollo-pin" request), signed in to Apollo's web
+# page. This saves that login for it, the password protected by Windows for this user only (DPAPI). A fresh Apollo with
+# no login yet gets one made here; an Apollo that has one asks for it once.
+
+$LoginFile = Join-Path $env:APPDATA 'PocketXR\apollo-login.json'
+
+function Test-ApolloLogin($port, $user, $password) {
+    Add-Type -AssemblyName System.Net.Http -ErrorAction SilentlyContinue
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    [Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+    try {
+        $body = @{ username = $user; password = $password } | ConvertTo-Json -Compress
+        $r = Invoke-WebRequest -Uri "https://localhost:$($port + 1)/api/login" -Method Post -Body $body -ContentType 'application/json' -UseBasicParsing -TimeoutSec 5
+        return $r.StatusCode -eq 200
+    } catch { return $false } finally { [Net.ServicePointManager]::ServerCertificateValidationCallback = $null }
+}
+
+function Save-ApolloLogin($user, [Security.SecureString]$secure) {
+    New-Item -ItemType Directory -Force -Path (Split-Path $LoginFile) | Out-Null
+    $out = [ordered]@{ username = $user; password = (ConvertFrom-SecureString -SecureString $secure) }
+    [IO.File]::WriteAllText($LoginFile, ($out | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))
+}
+
+function Ensure-ApolloLogin($apollo) {
+    $configDir = Join-Path $apollo 'config'
+    $main = Read-Conf (Join-Path $configDir 'sunshine.conf')
+    $port = if ($main.ContainsKey('port')) { [int]$main['port'] } else { 47989 }
+    $state = Read-Json (Get-MainStatePath $apollo)
+    if (Test-Path $LoginFile) {
+        try {
+            $saved = Get-Content $LoginFile -Raw | ConvertFrom-Json
+            $plain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR((ConvertTo-SecureString $saved.password)))
+            if (Test-ApolloLogin $port $saved.username $plain) { Say 'Apollo login: saved for the PC helper already.'; return }
+        } catch {}
+    }
+    if (-not ($state -and $state.username)) {
+        # No login yet (a fresh Apollo): make one, so nobody has to.
+        $user = 'pocketxr'
+        $plain = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 20 | ForEach-Object { [char]$_ })
+        & (Join-Path $apollo 'sunshine.exe') (Join-Path $configDir 'sunshine.conf') --creds $user $plain | Out-Null
+        Restart-Service 'ApolloService' -ErrorAction SilentlyContinue
+        Start-Sleep -Seconds 3
+        Save-ApolloLogin $user (ConvertTo-SecureString $plain -AsPlainText -Force)
+        Say "Made Apollo's web login (user ""$user"", password ""$plain""). Pocket XR's PC helper uses it to pair phones for you."
+        return
+    }
+    Say 'Pocket XR''s PC helper can pair your phone with Apollo for you (no PIN to type) if it has Apollo''s web login.'
+    for ($try = 0; $try -lt 3; $try++) {
+        $user = Read-Host 'Apollo web login user name (leave empty to skip)'
+        if (-not $user) { Say 'Skipped: pairing will show a PIN to type in Apollo''s web page.'; return }
+        $secure = Read-Host 'Apollo web login password' -AsSecureString
+        $plain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure))
+        if (Test-ApolloLogin $port $user $plain) {
+            Save-ApolloLogin $user $secure
+            Say 'Apollo login saved for the PC helper (only this Windows user can read it).'
+            return
+        }
+        Say 'That login did not work. Try again.'
+    }
+}
+
 # ---- away from home (Tailscale) ----
 #
 # Pocket XR reaches the PC away from home over Tailscale, by the PC's Tailscale name, which this makes the Windows
@@ -379,6 +442,7 @@ try {
         Say "Apollo: $apollo"
         $svc = Get-Service -Name 'ApolloService' -ErrorAction SilentlyContinue
         if ($svc -and $svc.Status -ne 'Running') { Start-Service 'ApolloService'; Say 'Started Apollo.' }
+        Ensure-ApolloLogin $apollo
         foreach ($s in $Screens) { New-Screen $apollo $s }
         Install-Task
         # Start now, without waiting for the next sign-in.
@@ -387,12 +451,14 @@ try {
         $away = Read-Host 'Use PC screens away from home too, for example from a cafe? This adds Tailscale (free). (Y/N)'
         if ($away -match '^[Yy]') { Enable-Away }
         Say ''
-        Say 'Done. On your phone, open PC screen in Pocket XR and tap this PC.'
-        Say 'The first time, Pocket XR shows a PIN: type it in Apollo''s web page (it opens next).'
+        Say 'Done. On your phone, open PC screen in Pocket XR and tap this PC, then click Yes on this PC.'
         Say 'After that, PC screen 2 and PC screen 3 connect by themselves.'
-        $main = Read-Conf (Join-Path (Join-Path $apollo 'config') 'sunshine.conf')
-        $mainPort = if ($main.ContainsKey('port')) { [int]$main['port'] } else { 47989 }
-        Start-Process "https://localhost:$($mainPort + 1)/pin"
+        if (-not (Test-Path $LoginFile)) {
+            # No saved login: pairing shows a PIN to type in Apollo's web page, so open it.
+            $main = Read-Conf (Join-Path (Join-Path $apollo 'config') 'sunshine.conf')
+            $mainPort = if ($main.ContainsKey('port')) { [int]$main['port'] } else { 47989 }
+            Start-Process "https://localhost:$($mainPort + 1)/pin"
+        }
     }
 } catch {
     Say "Setup stopped: $($_.Exception.Message)"

@@ -229,6 +229,68 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
 
     private fun macOf(info: String): String? = Regex("<mac>([^<]*)</mac>").find(info)?.groupValues?.get(1)?.trim()
 
+    /** The PC helper on the PC at [address], if it answers there. Blocking. */
+    private fun helperAt(address: String): Pair<com.hayeco.flipspaces.pcvr.PcVrHelper, com.hayeco.flipspaces.pcvr.PcVrHelper.Pc>? {
+        val helper = com.hayeco.flipspaces.pcvr.PcVrHelper(this)
+        val pc = runCatching { helper.find() }.getOrNull() ?: return null
+        val host = PcScreenAddress.parse(address)?.first
+        if (host != null && pc.address.hostAddress != host && runCatching { java.net.InetAddress.getByName(host).hostAddress }.getOrNull() != pc.address.hostAddress) return null
+        return helper to pc
+    }
+
+    /** Pairing: the PC helper types [pin] for the user; if there is none, or it cannot, the PIN is shown to type. Blocking. */
+    private fun pinThroughHelper(address: String, pin: String) {
+        val found = helperAt(address)
+        val why: String? = when {
+            found == null -> "no PC helper"
+            else -> {
+                val (helper, pc) = found
+                var allowed = helper.knows(pc)
+                if (!allowed) {
+                    say(getString(R.string.pc_screen_helper_allow, pc.name))
+                    allowed = helper.pair(pc)
+                }
+                if (!allowed) "not allowed on the PC"
+                else helper.apolloPin(pc, pin, PcScreenAddress.parse(address)?.second ?: PcScreenAddress.DEFAULT_PORT)
+            }
+        }
+        Log.i(TAG, "pairing through the PC helper: ${why ?: "PIN typed for the user"}")
+        if (why != null && !store.paired) {
+            say(getString(R.string.pc_screen_enter_pin, pin) + "\n" + webPage(address) + "\n\n" + getString(R.string.pc_screen_helper_tip))
+        }
+    }
+
+    /** "Set up my PC": through the PC helper when it answers, else the helper's download link to send to the PC. */
+    private fun setUpPc() {
+        say(getString(R.string.pc_screen_setup_looking))
+        Thread({
+            val address = store.address.ifEmpty { lastHosts.firstOrNull()?.typed ?: "" }
+            val helper = com.hayeco.flipspaces.pcvr.PcVrHelper(this)
+            val pc = runCatching { helper.find() }.getOrNull()
+            if (pc == null) {
+                say(getString(R.string.pc_screen_setup_no_helper))
+                main.post {
+                    runCatching {
+                        startActivity(android.content.Intent.createChooser(android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(android.content.Intent.EXTRA_SUBJECT, getString(R.string.pc_screen_setup_share_subject))
+                            putExtra(android.content.Intent.EXTRA_TEXT, getString(R.string.pc_screen_setup_share_text, com.hayeco.flipspaces.pcvr.PcVrHelper.DOWNLOAD_URL))
+                        }, getString(R.string.pc_screen_setup_share_subject)))
+                    }
+                }
+                return@Thread
+            }
+            if (!helper.knows(pc)) {
+                say(getString(R.string.pc_screen_helper_allow, pc.name))
+                if (!helper.pair(pc)) return@Thread say(getString(R.string.pc_screen_setup_refused, pc.name))
+            }
+            say(getString(R.string.pc_screen_setup_asked, pc.name))
+            if (!helper.screensSetup(pc)) say(getString(R.string.pc_screen_setup_refused, pc.name))
+            else say(getString(R.string.pc_screen_setup_running, pc.name))
+            Log.i(TAG, "set up my PC: through the helper on ${pc.name} ($address)")
+        }, "PcScreen-setup").start()
+    }
+
     /** Apollo's web page for this host: its port plus one, over HTTPS. */
     private fun webPage(address: String): String {
         val (host, port) = PcScreenAddress.parse(address) ?: (address to PcScreenAddress.DEFAULT_PORT)
@@ -262,6 +324,12 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 text = if (slot == 0) getString(R.string.pc_screen_title) else getString(R.string.pc_screen_title_n, slot + 1)
                 textSize = 24f
                 setTextColor(Color.WHITE)
+            })
+            // One tap from the phone: the PC helper sets the PC up (more screens, away from home), or its download link.
+            addView(Button(context).apply {
+                text = getString(R.string.pc_screen_setup_button)
+                isAllCaps = false
+                setOnClickListener { setUpPc() }
             })
             // PCs on the Wi-Fi ([PcScreenFinder]): a tap pairs (or connects, when the PC already knows the phone).
             foundTitle = TextView(context).apply {
@@ -387,7 +455,10 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     main.post { connect() }
                     return@Thread
                 }
-                say(getString(R.string.pc_screen_enter_pin, pin) + "\n" + webPage(address))
+                say(getString(R.string.pc_screen_pairing, PcScreenAddress.parse(address)?.first ?: address))
+                // The PC helper types the PIN into Apollo for the user (one Yes on the PC the first time); without it,
+                // the PIN to type in Apollo's web page.
+                Thread({ pinThroughHelper(address, pin) }, "PcScreen-helper").start()
                 val http = NvHTTP(tuple(address), 0, store.uniqueId, null, crypto)
                 val info = http.getServerInfo(true)
                 val details = http.getComputerDetails(info)
