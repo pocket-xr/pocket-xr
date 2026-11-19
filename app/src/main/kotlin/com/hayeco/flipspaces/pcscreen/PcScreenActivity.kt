@@ -76,6 +76,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     @Volatile private var shapedToWindow = false
 
     private var lastKeyLogMs = 0L
+
+    /** The trackpad's Win stand-in is down: keys meanwhile go with Win held. */
+    private var winHeld = false
     private val keys by lazy { com.limelight.binding.input.KeyboardTranslator() }
     private val reshape = Runnable {
         if (connection != null && shapedToWindow && PcScreenShape.reshapeNeeded(root.width, root.height, streamW, streamH)) {
@@ -450,7 +453,11 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     return@Thread
                 }
                 connection = NvConnection(applicationContext, tuple(address), store.httpsPort, store.uniqueId, config, crypto, cert)
-                    .also { it.start(AndroidAudioRenderer(applicationContext, false), d, this) }
+                    .also {
+                        // One PC screen plays the PC's sound; the others would play the same sound again ([PcScreenAudio]).
+                        val sound = if (PcScreenAudio.claim(applicationContext)) AndroidAudioRenderer(applicationContext, false) else PcScreenAudio.Silent()
+                        it.start(sound, d, this)
+                    }
             } catch (e: Exception) {
                 Log.w(TAG, "connect: $e")
                 showSetup(trouble(PcScreenTrouble.of(e), getString(R.string.pc_screen_connect_failed, e.message ?: e.toString())))
@@ -526,6 +533,15 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         val fromKeyboard = (event.source and android.view.InputDevice.SOURCE_KEYBOARD) == android.view.InputDevice.SOURCE_KEYBOARD &&
             event.device?.keyboardType == android.view.InputDevice.KEYBOARD_TYPE_ALPHABETIC
         if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && !fromKeyboard) return super.dispatchKeyEvent(event)
+        // The trackpad's Win key ([com.hayeco.flipspaces.ShortcutKeys]): Android keeps a real Win (Meta) key for itself and
+        // never passed it on (phone test, 19 Nov 2026), so the trackpad sends a stand-in, which goes to the PC as Win.
+        if (event.keyCode == com.hayeco.flipspaces.ShortcutKeys.WIN_STAND_IN && event.deviceId == android.view.KeyCharacterMap.VIRTUAL_KEYBOARD) {
+            winHeld = event.action == android.view.KeyEvent.ACTION_DOWN
+            val mods = (if (winHeld) com.limelight.nvstream.input.KeyboardPacket.MODIFIER_META.toInt() else 0).toByte()
+            val action = if (winHeld) com.limelight.nvstream.input.KeyboardPacket.KEY_DOWN else com.limelight.nvstream.input.KeyboardPacket.KEY_UP
+            MoonBridge.sendKeyboardInput(VK_LWIN, action, mods, 0.toByte())
+            return true
+        }
         val code = keys.translate(event.keyCode, event.deviceId)
         if (code.toInt() == 0) {
             val ch = event.unicodeChar
@@ -537,7 +553,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         if (event.isShiftPressed) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_SHIFT.toInt()
         if (event.isCtrlPressed) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_CTRL.toInt()
         if (event.isAltPressed) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_ALT.toInt()
-        if (event.isMetaPressed) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_META.toInt()
+        if (event.isMetaPressed || winHeld) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_META.toInt()
         val flags = if (keys.hasNormalizedMapping(event.keyCode, event.deviceId)) 0 else MoonBridge.SS_KBE_FLAG_NON_NORMALIZED.toInt()
         when (event.action) {
             android.view.KeyEvent.ACTION_DOWN -> if (event.repeatCount == 0) {
@@ -553,7 +569,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         generation++
         starting = false
         streaming = false
-        connection?.let { c -> Thread({ c.stop() }, "PcScreen-stop").start() }
+        connection?.let { c -> Thread({ c.stop(); PcScreenAudio.release() }, "PcScreen-stop").start() }
         connection = null
         decoder = null
     }
@@ -666,6 +682,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private companion object {
         const val BASE_TAG = "PcScreen"
         const val BITRATE_KBPS = 40_000
+        const val VK_LWIN: Short = 0x5b
 
         /** Apollo's permission bits a PC screen needs: launch apps (0x4000000), mouse (0x800) and keyboard (0x1000). */
         const val PERMS_NEEDED = 0x4000000L or 0x800L or 0x1000L

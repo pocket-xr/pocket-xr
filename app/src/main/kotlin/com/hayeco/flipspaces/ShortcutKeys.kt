@@ -14,8 +14,13 @@ object ShortcutKeys {
         CTRL(KeyEvent.META_CTRL_ON or KeyEvent.META_CTRL_LEFT_ON, KeyEvent.KEYCODE_CTRL_LEFT),
         ALT(KeyEvent.META_ALT_ON or KeyEvent.META_ALT_LEFT_ON, KeyEvent.KEYCODE_ALT_LEFT),
         SHIFT(KeyEvent.META_SHIFT_ON or KeyEvent.META_SHIFT_LEFT_ON, KeyEvent.KEYCODE_SHIFT_LEFT),
-        WIN(KeyEvent.META_META_ON or KeyEvent.META_META_LEFT_ON, KeyEvent.KEYCODE_META_LEFT),
+        // Android keeps a real Win (Meta) key, and keys with Meta held, for itself: none reached the PC screen (phone
+        // test, 19 Nov 2026). Win goes as a stand-in key with no meta bit, which a PC screen sends to the PC as Win.
+        WIN(0, WIN_STAND_IN),
     }
+
+    /** The Win key's stand-in: a gamepad button no keyboard sends, from the virtual keyboard device only. */
+    const val WIN_STAND_IN = KeyEvent.KEYCODE_BUTTON_16
 
     /** One key event to send: [KeyEvent.ACTION_DOWN] or [KeyEvent.ACTION_UP], the key, and the meta state with it. */
     data class Key(val action: Int, val keyCode: Int, val metaState: Int)
@@ -52,7 +57,7 @@ object ShortcutKeys {
 
     /** A modifier on its own (Win alone opens the Start menu): down and up. */
     fun alone(mod: Mod): List<Key> = listOf(
-        Key(KeyEvent.ACTION_DOWN, mod.keyCode, mod.meta),
+        Key(KeyEvent.ACTION_DOWN, mod.keyCode, mod.meta),  // (Win's meta is 0: see WIN)
         Key(KeyEvent.ACTION_UP, mod.keyCode, 0),
     )
 
