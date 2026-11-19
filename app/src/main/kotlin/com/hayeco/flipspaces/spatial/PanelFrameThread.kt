@@ -77,7 +77,10 @@ internal class PanelSource(width: Int, height: Int, val decoded: Boolean = false
     val reader: ImageReader = if (decoded) {
         ImageReader.newInstance(
             width.coerceAtLeast(1), height.coerceAtLeast(1), android.graphics.ImageFormat.PRIVATE,
-            PanelImageMailbox.DEFAULT_MAX_IMAGES + 2, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE,
+            // The decoder draws its output, reference pictures included, from this reader's buffers: with too few it
+            // waits for the Space to give one back. Decode read 13.5 ms with 2 more than an app display's (Mike's
+            // phone, 18 Nov 2026) against 3 to 6 ms into a window. 8 more gives it room.
+            PanelImageMailbox.DEFAULT_MAX_IMAGES + 8, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE,
         )
     } else {
         ImageReader.newInstance(
