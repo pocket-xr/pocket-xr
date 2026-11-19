@@ -2,7 +2,8 @@
 
 Pocket XR is written from scratch. It contains no code from XREAL's apps or SDK, or from any other proprietary
 software. GPL and unlicensed projects listed in `docs/SPATIAL.md` were read as references only; nothing from them is
-in this repository.
+in this repository. The one exception is Moonlight's streaming code for PC screens (below), which is GPLv3, the same
+licence as Pocket XR, and is included with its notices.
 
 ## Libraries (Maven, from google() and mavenCentral())
 
@@ -16,6 +17,20 @@ in this repository.
   Flip 7's NPU (and the LiteRT build that runs them) are not in the public repository yet; without them hand tracking
   runs MediaPipe on the GPU or CPU. The official GitHub release APK includes them (docs/RELEASE.md); the Google Play
   build does not.
+
+## Moonlight (PC screens)
+
+- moonlight-common-c (https://github.com/moonlight-stream/moonlight-common-c, at 874ac95, with its `enet` and
+  `nanors` submodules) and part of moonlight-android (https://github.com/moonlight-stream/moonlight-android, at
+  b48494c): its native core (`simplejni.c`, `callbacks.c`, `minisdl`) in `app/src/main/cpp/moonlight`, and its Java
+  stream, crypto, audio and keyboard code in `app/src/moonlight/java/com/limelight`, with the changes listed in that
+  folder's README. GNU General Public License v3.0, Copyright the Moonlight Game Streaming Project
+  (`app/src/main/cpp/moonlight/LICENSE-moonlight-android.txt`). enet: MIT License, Copyright (c) 2002-2024 Lee
+  Salzman. nanors: MIT License.
+- OpenSSL 4.0.2 (libcrypto, prebuilt by moonlight-android): Apache License 2.0.
+- Opus (prebuilt by moonlight-android): BSD 3-Clause License, Copyright Xiph.Org Foundation and contributors.
+- OkHttp 5.5.0 (`com.squareup.okhttp3:okhttp`): Apache License 2.0. Bouncy Castle (`org.bouncycastle:bcprov-jdk18on`,
+  `bcpkix-jdk18on`): Bouncy Castle Licence (MIT style).
 
 ## ALVR (PC VR)
 
