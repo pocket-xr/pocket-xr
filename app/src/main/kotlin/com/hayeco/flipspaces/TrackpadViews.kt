@@ -1162,6 +1162,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
      * and a change places the field again (keyboardCover). One comparison a frame while the field is open.
      */
     private var placedKeyboardCover = -1
+    private var lastKeyboardSeen = ""
     private val keyboardWatch = android.view.ViewTreeObserver.OnPreDrawListener {
         if (textOpen) {
             val kb = keyboardCover()
@@ -1750,10 +1751,16 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             val r = android.graphics.Rect().also { getWindowVisibleDisplayFrame(it) }
             ime = (rootView.height - r.bottom).coerceAtLeast(0)
         }
-        if (ime <= 0) return 0
         val at = IntArray(2).also { getLocationInWindow(it) }
         val belowView = (rootView.height - (at[1] + height)).coerceAtLeast(0)
-        return (ime - belowView).coerceIn(0, height)
+        val cover = if (ime <= 0) 0 else (ime - belowView).coerceIn(0, height)
+        // Phone test (18 Nov 2026: the field stayed at the top): what the keyboard's size was read as, on each change.
+        val seen = "ime $ime visible ${insets.isVisible(android.view.WindowInsets.Type.ime())} view y ${at[1]} h $height root ${rootView.height} cover $cover"
+        if (seen != lastKeyboardSeen) {
+            lastKeyboardSeen = seen
+            com.hayeco.flipspaces.Log.i("FlipSpaces/Trackpad", "keyboard field: $seen")
+        }
+        return cover
     }
 
     /** The gesture hint shows only while gestures are on (state 2). */
