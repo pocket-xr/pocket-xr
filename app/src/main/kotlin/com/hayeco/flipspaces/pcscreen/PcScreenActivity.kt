@@ -155,7 +155,8 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
 
     private fun showFound(hosts: List<PcScreenFinder.Host>) {
         lastHosts = hosts
-        foundTitle.text = getString(if (hosts.isEmpty()) R.string.pc_screen_none_found else R.string.pc_screen_found)
+        foundTitle.text = getString(R.string.pc_screen_none_found)
+        foundTitle.visibility = if (hosts.isEmpty()) View.VISIBLE else View.GONE
         foundList.removeAllViews()
         val usedBy = (0 until PcScreenSlots.COUNT).filter { it != slot }
             .associateBy { PcScreenAddress.parse(PcScreenStore(this, it).address) }
@@ -445,7 +446,11 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         val paired = store.paired
         connectButton.visibility = if (paired) View.VISIBLE else View.GONE
         forgetLink.visibility = if (paired) View.VISIBLE else View.GONE
-        (connectButton as? TextView)?.text = pcName()?.let { getString(R.string.pc_screen_connect_to, PcScreenPick.pcName(it)) } ?: getString(R.string.pc_screen_connect)
+        // The name as the PC gives it ("Mike"), from the PCs found; the saved one is lower case (serverinfo's, lowered).
+        val shown = lastHosts.firstOrNull { PcScreenAddress.parse(it.typed)?.first == PcScreenAddress.parse(store.address)?.first }
+            ?.let { PcScreenPick.pcName(it.service) }
+            ?: pcName()?.let { PcScreenPick.pcName(it).replaceFirstChar { c -> c.titlecase() } }
+        (connectButton as? TextView)?.text = shown?.let { getString(R.string.pc_screen_connect_to, it) } ?: getString(R.string.pc_screen_connect)
     }
 
     private fun say(text: String) {
@@ -594,6 +599,21 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 if (store.pcName == null && address == home) xml(info, "hostname")?.let { store.pcName = it }
                 // Apollo says what this phone may do: without launching, or the mouse and keyboard, say how to fix it
                 // before trying (a refused launch is a bare 403).
+                // The PC no longer knows this phone (Apollo reinstalled, or the phone removed from it): serverinfo came
+                // over plain HTTP, with Permission 0 (Mike's PC, 19 Nov 2026: "Apollo is blocking this phone" after a
+                // fresh Apollo). Pair again by itself, the PC helper typing the PIN.
+                if (xml(info, "PairStatus") != "1") {
+                    Log.i(TAG, "the PC does not know this phone any more: pairing again")
+                    main.post {
+                        stopStream()
+                        store.unpair()
+                        surface.visibility = View.GONE
+                        setup.visibility = View.VISIBLE
+                        addressField.setText(home)
+                        pair()
+                    }
+                    return@Thread
+                }
                 xml(info, "Permission")?.toLongOrNull()?.let { perm ->
                     Log.i(TAG, "permission 0x${java.lang.Long.toHexString(perm)}")
                     if (perm and PERMS_NEEDED != PERMS_NEEDED) {

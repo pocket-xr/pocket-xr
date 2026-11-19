@@ -77,6 +77,11 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
             .commit()
     }
 
+    /** The pairing only (port and certificate), the PC kept: for pairing again with the same PC. */
+    fun unpair() {
+        prefs.edit().remove(KEY_HTTPS).remove(KEY_CERT).commit()
+    }
+
     /** This PC screen's PC forgotten: address, port, certificate and MAC. The phone's own id stays. */
     fun forget() {
         prefs.edit().remove(KEY_ADDRESS).remove(KEY_HTTPS).remove(KEY_CERT).remove(KEY_MAC).remove(KEY_PC_NAME).commit()
