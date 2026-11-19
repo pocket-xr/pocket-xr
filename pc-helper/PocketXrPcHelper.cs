@@ -15,7 +15,8 @@
 //        {"op":"idr","token":"..."}                        asks the streamer for a fresh full frame
 //        {"op":"apollo-pin","token":"...","pin":"1234","name":"...","port":47989}
 //            PC screens: types the phone's pairing PIN into Apollo for the user and gives the phone the permissions a PC
-//            screen needs (launch, mouse, keyboard); {"ok":true} or {"ok":false,"why":"..."}
+//            screen needs (launch, mouse, keyboard); with "virtual":true (Moonlight on Linux and macOS, which cannot ask for
+//            one) also Apollo's "always use virtual display"; {"ok":true} or {"ok":false,"why":"..."}
 //        {"op":"screens-setup","token":"...","phone":"..."}  asks the PC's user, then runs the PC screens setup
 // A phone is allowed once on the PC (pair); its token is enough after that. Tokens live in
 // %APPDATA%\PocketXR\pc-helper.json; "Forget phones" in the tray menu clears them.
@@ -656,7 +657,7 @@ namespace PocketXr
         static Dictionary<string, object> No(string why) { Log.Line("apollo: " + why); return new Dictionary<string, object> { { "ok", false }, { "why", why } }; }
 
         /** Types [pin] into the Apollo instance on HTTP port [port] (its web page is port + 1), then sets the new client's permissions. */
-        public static Dictionary<string, object> Pin(string pin, string name, int port)
+        public static Dictionary<string, object> Pin(string pin, string name, int port, bool virtualDisplay = false)
         {
             string user, password;
             if (string.IsNullOrEmpty(pin)) return No("no PIN");
@@ -691,15 +692,20 @@ namespace PocketXr
                     if (mine != null)
                     {
                         long perm = Convert.ToInt64(mine["perm"]);
-                        if ((perm & PcScreenPerms) != PcScreenPerms)
+                        // A client that cannot ask for a virtual display itself (Moonlight on Linux and macOS: the Steam
+                        // Deck and Mac apps send "virtual") gets Apollo's "always use virtual display", so each of its
+                        // PC screens is its own display, not the PC's main one.
+                        bool vdWanted = virtualDisplay && !true.Equals(mine.ContainsKey("always_use_virtual_display") ? mine["always_use_virtual_display"] : null);
+                        if ((perm & PcScreenPerms) != PcScreenPerms || vdWanted)
                         {
                             // A full replace: every field back as it was, the permissions widened.
                             var update = new Dictionary<string, object>();
                             foreach (var k in new[] { "uuid", "name", "display_mode", "do", "undo", "enable_legacy_ordering", "allow_client_commands", "always_use_virtual_display" })
                                 if (mine.ContainsKey(k)) update[k] = mine[k];
                             update["perm"] = perm | PcScreenPerms;
+                            if (virtualDisplay) update["always_use_virtual_display"] = true;
                             Call(cookies, "POST", web + "/api/clients/update", update);
-                            Log.Line("apollo: permissions for " + name + " set to 0x" + (perm | PcScreenPerms).ToString("X"));
+                            Log.Line("apollo: permissions for " + name + " set to 0x" + (perm | PcScreenPerms).ToString("X") + (virtualDisplay ? ", always a virtual display" : ""));
                         }
                         return new Dictionary<string, object> { { "ok", true } };
                     }
@@ -860,7 +866,9 @@ namespace PocketXr
             {
                 object port;
                 int p = request.TryGetValue("port", out port) ? Convert.ToInt32(port) : 47989;
-                return Apollo.Pin(Text(request, "pin"), Text(request, "name") ?? "Pocket XR", p);
+                object vd;
+                bool wantsVirtual = request.TryGetValue("virtual", out vd) && true.Equals(vd);
+                return Apollo.Pin(Text(request, "pin"), Text(request, "name") ?? "Pocket XR", p, wantsVirtual);
             }
             if (op == "screens-setup") return ScreensSetup(Text(request, "phone") ?? "A phone");
             bool steam = Pc.SteamExe != null;
