@@ -14,6 +14,10 @@
     <string name="pc_screen_paired_shared">Paired with %1$s. PC screen %2$d uses the same host, and a host streams one screen at a time. For both at once, run Pocket XR\'s \"Set up PC screens\" on the PC once, then tap Forget this PC here.</string>
     <string name="pc_screen_address_needed">Type the PC\'s address first.</string>
     <string name="pc_screen_pair">Pair</string>
+    <string name="pc_screen_away_button">Away from home (Tailscale)</string>
+    <string name="pc_screen_away_install">Away from home? Install Tailscale on this phone and sign in with the same account as the PC. On the PC, run Set up PC screens and say yes to using it away from home.</string>
+    <string name="pc_screen_away_turn_on">Away from home? Turn on Tailscale on this phone (tap Away from home below), then tap Connect.</string>
+    <string name="pc_screen_away_check_pc">Tailscale is on. Check the PC is awake and signed in to Tailscale with the same account.</string>
     <string name="pc_screen_auto">Auto</string>
     <string name="pc_screen_fps">Smoothness: %1$s</string>
     <string name="pc_screen_quality">Quality: %1$s</string>

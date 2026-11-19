@@ -136,7 +136,20 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     }
 
     /** The PCs found on the Wi-Fi, each a button; one already used by another PC screen says which. */
+    /** The hosts last found, for the PC's name when one is chosen. */
+    private var lastHosts: List<PcScreenFinder.Host> = emptyList()
+
+    /** Saves the PC's Windows name (mDNS gives it) for the host at [address], for away from home ([PcScreenRemote]). */
+    private fun notePcName(address: String) {
+        val h = lastHosts.firstOrNull { PcScreenAddress.parse(it.typed) == PcScreenAddress.parse(address) } ?: return
+        store.pcName = h.service
+    }
+
+    /** This PC screen's PC name, or the first PC screen's (the same PC). */
+    private fun pcName(): String? = store.pcName ?: (0 until PcScreenSlots.COUNT).firstNotNullOfOrNull { PcScreenStore(this, it).pcName }
+
     private fun showFound(hosts: List<PcScreenFinder.Host>) {
+        lastHosts = hosts
         foundTitle.text = getString(if (hosts.isEmpty()) R.string.pc_screen_none_found else R.string.pc_screen_found)
         foundList.removeAllViews()
         val usedBy = (0 until PcScreenSlots.COUNT).filter { it != slot }
@@ -159,6 +172,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 Thread({
                     val h = free.firstOrNull { knownPairing(it.typed) }
                     if (h != null) main.post {
+                        store.pcName = h.service
                         addressField.setText(h.typed)
                         say(getString(R.string.pc_screen_reused, h.name))
                         connect()
@@ -183,6 +197,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             return
         }
         addressField.setText(address)
+        notePcName(address)
         pair()
     }
 
@@ -221,7 +236,13 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         val address = store.address
         val name = PcScreenAddress.parse(address)?.first ?: address
         return when (kind) {
-            PcScreenTrouble.UNREACHABLE -> getString(R.string.pc_screen_trouble_unreachable, name)
+            PcScreenTrouble.UNREACHABLE -> getString(R.string.pc_screen_trouble_unreachable, name) + "\n\n" + getString(
+                when {
+                    !PcScreenRemote.tailscaleInstalled(this) -> R.string.pc_screen_away_install
+                    !PcScreenRemote.vpnUp(this) -> R.string.pc_screen_away_turn_on
+                    else -> R.string.pc_screen_away_check_pc
+                },
+            )
             PcScreenTrouble.NO_PERMISSION -> getString(R.string.pc_screen_trouble_permission, webPage(address))
             PcScreenTrouble.NOT_PAIRED -> getString(R.string.pc_screen_trouble_unpaired)
             PcScreenTrouble.OTHER -> fallback
@@ -306,6 +327,12 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 text = getString(R.string.pc_screen_connect)
                 setOnClickListener { connect() }
             })
+            // Away from home: Tailscale on this phone (opens it, or its Play Store page).
+            addView(Button(context).apply {
+                text = getString(R.string.pc_screen_away_button)
+                isAllCaps = false
+                setOnClickListener { PcScreenRemote.openTailscale(context) }
+            })
             addView(Button(context).apply {
                 text = getString(R.string.pc_screen_forget)
                 setOnClickListener {
@@ -367,6 +394,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     // The MAC (for Wake-on-LAN) only comes over HTTPS to a paired phone.
                     val secure = runCatching { NvHTTP(tuple(address), details.httpsPort, store.uniqueId, cert, crypto).getServerInfo(true) }.getOrNull()
                     store.savePairing(address, details.httpsPort, cert, secure?.let { macOf(it) })
+                    if (store.pcName == null) store.pcName = details.name
                     val other = sharedWith(address)
                     if (other == null) {
                         say(getString(R.string.pc_screen_paired_with, details.name))
@@ -417,8 +445,24 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     /** Counts stream starts and stops: a connect thread whose start was stopped meanwhile drops its connection. */
     @Volatile private var generation = 0
 
+    /** The address this stream uses: the home one, or the PC's Tailscale name away from home ([route]). */
+    @Volatile private var activeAddress: String? = null
+
+    /**
+     * Home or away: the home address when the PC answers there; else, with a VPN up (Tailscale), the PC's Tailscale
+     * name with the same port; else the home address (and the usual wake and trouble steps). Blocking.
+     */
+    private fun route(home: String): String {
+        if (PcScreenRemote.answers(home, 1500)) return home
+        val away = PcScreenRemote.awayAddress(home, pcName()) ?: return home
+        val vpn = PcScreenRemote.vpnUp(this)
+        val ok = vpn && PcScreenRemote.answers(away, 4000)
+        Log.i(TAG, "route: home $home does not answer; away $away ${if (!vpn) "not tried (no VPN up)" else if (ok) "answers" else "does not answer"}")
+        return if (ok) away else home
+    }
+
     private fun startStream(holder: SurfaceHolder, viewWidth: Int, viewHeight: Int) {
-        val address = store.address
+        val home = store.address
         val cert = store.serverCert ?: return
         starting = true
         val gen = ++generation
@@ -433,14 +477,18 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         val panelSurface = PcScreenSurfaces.current?.takeIf { it.isValid }
         val d = PcScreenDecoder(panelSurface ?: holder.surface).also { decoder = it }
         Log.i(TAG, "decoding into ${if (panelSurface != null) "the Space's panel directly" else "this window"}")
-        say(getString(R.string.pc_screen_connecting, address))
+        say(getString(R.string.pc_screen_connecting, home))
         Thread({
             try {
+                val address = route(home)
+                activeAddress = address
                 val http = NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto)
                 // Apollo makes a virtual display of the stream's size (VirtualDisplayCapable, its driver ready): the
                 // stream takes the window's own shape, so it fills the window. Elsewhere 1920 x 1080, the usual
                 // desktop, which the host sends without stretching.
                 val info = serverInfoWaking(http, gen)
+                // The PC's name for away from home, learnt at home if it was paired before names were kept.
+                if (store.pcName == null && address == home) xml(info, "hostname")?.let { store.pcName = it }
                 // Apollo says what this phone may do: without launching, or the mouse and keyboard, say how to fix it
                 // before trying (a refused launch is a bare 403).
                 xml(info, "Permission")?.toLongOrNull()?.let { perm ->
@@ -527,7 +575,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         stopStream()
         sessionStarted = false
         if ((!wasStreaming && !force) || !store.paired) return
-        val address = store.address
+        val address = activeAddress ?: store.address
         val cert = store.serverCert ?: return
         val port = store.httpsPort
         val id = store.uniqueId

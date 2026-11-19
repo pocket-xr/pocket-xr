@@ -60,6 +60,11 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
 
     val paired: Boolean get() = address.isNotEmpty() && httpsPort > 0 && serverCert != null
 
+    /** The PC's Windows name, as found at home: its Tailscale name away from home ([PcScreenRemote]). */
+    var pcName: String?
+        get() = prefs.getString(KEY_PC_NAME, null)
+        set(value) = prefs.edit().putString(KEY_PC_NAME, value).apply()
+
     /** The host's network card, for Wake-on-LAN ([PcScreenWake]), from its serverinfo; null if it gave none. */
     val mac: String? get() = prefs.getString(KEY_MAC, null)
 
@@ -74,7 +79,7 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
 
     /** This PC screen's PC forgotten: address, port, certificate and MAC. The phone's own id stays. */
     fun forget() {
-        prefs.edit().remove(KEY_ADDRESS).remove(KEY_HTTPS).remove(KEY_CERT).remove(KEY_MAC).commit()
+        prefs.edit().remove(KEY_ADDRESS).remove(KEY_HTTPS).remove(KEY_CERT).remove(KEY_MAC).remove(KEY_PC_NAME).commit()
     }
 
     companion object {
@@ -87,6 +92,7 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
         private const val KEY_CERT = "server_cert"
         private const val KEY_MAC = "mac"
         private const val KEY_FPS = "fps"
+        private const val KEY_PC_NAME = "pc_name"
         private const val KEY_QUALITY = "quality"
     }
 }

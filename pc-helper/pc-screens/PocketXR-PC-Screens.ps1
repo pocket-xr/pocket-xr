@@ -15,6 +15,9 @@
 #   (none)    set up, as above
 #   -Run      what the sign-in task runs: start the instances and copy pairings, checking every 10 seconds
 #   -Remove   stop the extra instances and remove the sign-in task (their config files stay)
+#
+# Setup also offers "away from home": it installs Tailscale, signs it in (a browser page), names the PC on Tailscale
+# after its Windows name, turns on waking by network for a wired card, and offers to stop the PC sleeping on mains.
 
 param(
     [switch]$Run,
@@ -253,6 +256,93 @@ function Install-Task {
     Say "Added the sign-in task ""$TaskName""."
 }
 
+# ---- away from home (Tailscale) ----
+#
+# Pocket XR reaches the PC away from home over Tailscale, by the PC's Tailscale name, which this makes the Windows
+# name (lower case): the phone learns that name when it finds the PC at home, so nothing is typed on the phone. Apollo
+# stays closed to the internet; only the user's own Tailscale devices can reach it.
+
+$TailscaleExe = Join-Path $env:ProgramFiles 'Tailscale\tailscale.exe'
+
+function Install-Tailscale {
+    if (Test-Path $TailscaleExe) { return $true }
+    Say 'Installing Tailscale (free, from tailscale.com)...'
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $msi = Join-Path $env:TEMP 'tailscale-setup-latest-amd64.msi'
+    Invoke-WebRequest -Uri 'https://pkgs.tailscale.com/stable/tailscale-setup-latest-amd64.msi' -OutFile $msi -UseBasicParsing
+    # Unattended: Tailscale stays connected when nobody is signed in to Windows, so the sign-in screen is reachable.
+    $p = Start-Process -FilePath 'msiexec.exe' -ArgumentList "/i `"$msi`" /quiet /norestart TS_UNATTENDEDMODE=always" -Wait -PassThru
+    if ($p.ExitCode -ne 0) { Say "The Tailscale installer stopped ($($p.ExitCode))."; return $false }
+    for ($i = 0; $i -lt 30 -and -not (Test-Path $TailscaleExe); $i++) { Start-Sleep -Seconds 1 }
+    return (Test-Path $TailscaleExe)
+}
+
+function Get-TailscaleState {
+    try { return (& $TailscaleExe status --json 2>$null | Out-String | ConvertFrom-Json) } catch { return $null }
+}
+
+function Connect-Tailscale {
+    $name = ($env:COMPUTERNAME.ToLower() -replace '[^a-z0-9-]+', '-').Trim('-')
+    $state = Get-TailscaleState
+    if ($state -and $state.BackendState -eq 'Running') {
+        & $TailscaleExe set --hostname=$name --unattended 2>&1 | Out-Null
+        return $state
+    }
+    # "tailscale up" prints a sign-in link and waits for it: run it aside, open the link in the browser.
+    $out = Join-Path $env:TEMP 'pocketxr-tailscale-up.txt'
+    $err = Join-Path $env:TEMP 'pocketxr-tailscale-up-err.txt'
+    Remove-Item $out, $err -ErrorAction SilentlyContinue
+    Start-Process -FilePath $TailscaleExe -ArgumentList "up --unattended --hostname=$name" -NoNewWindow -RedirectStandardOutput $out -RedirectStandardError $err | Out-Null
+    $opened = $false
+    for ($i = 0; $i -lt 600; $i++) {
+        Start-Sleep -Seconds 1
+        if (-not $opened) {
+            $link = Select-String -Path @($out, $err) -Pattern 'https://login\.tailscale\.com/\S+' -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($link) {
+                Say 'Sign in to Tailscale in the browser page that opens. Use the same account you use (or will use) in the Tailscale app on your phone.'
+                Start-Process $link.Matches[0].Value
+                $opened = $true
+            }
+        }
+        $state = Get-TailscaleState
+        if ($state -and $state.BackendState -eq 'Running') { return $state }
+    }
+    return $null
+}
+
+# The network card wakes the PC for a "magic packet" (Wake-on-LAN), and may wake it from sleep.
+function Enable-Wake {
+    $wired = @(Get-NetAdapter -Physical -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' -and $_.MediaType -eq '802.3' })
+    if ($wired.Count -eq 0) {
+        Say 'No wired network cable: waking the PC over the network needs one (Wi-Fi rarely wakes a PC).'
+        return
+    }
+    foreach ($a in $wired) {
+        try { Set-NetAdapterPowerManagement -Name $a.Name -WakeOnMagicPacket Enabled -ErrorAction Stop } catch {}
+        try { Set-NetAdapterAdvancedProperty -Name $a.Name -RegistryKeyword '*WakeOnMagicPacket' -RegistryValue 1 -ErrorAction Stop } catch {}
+        & powercfg /deviceenablewake "$($a.InterfaceDescription)" 2>$null | Out-Null
+        Say "Waking by network turned on for $($a.Name) ($($a.MacAddress))."
+    }
+}
+
+function Enable-Away {
+    if (-not (Install-Tailscale)) { Say 'Tailscale is not installed, so PC screens away from home are not set up.'; return }
+    $state = Connect-Tailscale
+    if (-not $state) { Say 'Tailscale did not finish signing in. Run this setup again to try once more.'; return }
+    $ip = @($state.Self.TailscaleIPs | Where-Object { $_ -match '^100\.' }) | Select-Object -First 1
+    Say "Tailscale is on. This PC is ""$($state.Self.HostName)"" ($ip) on your Tailscale."
+    Enable-Wake
+    $answer = Read-Host 'Keep this PC from sleeping while it is plugged in, so you can always reach it away from home? (Y/N)'
+    if ($answer -match '^[Yy]') {
+        & powercfg /change standby-timeout-ac 0
+        & powercfg /change hibernate-timeout-ac 0
+        Say 'This PC no longer sleeps by itself while plugged in. The screen can still turn off.'
+    } else {
+        Say 'Sleep left as it is. Away from home, a sleeping PC can only be woken by something at home that stays on (some routers can do it).'
+    }
+    Say 'On your phone: install Tailscale from the Play Store and sign in with the same account. Pocket XR finds the PC through it when you are away.'
+}
+
 # ---- modes ----
 
 if ($Run) {
@@ -293,6 +383,9 @@ try {
         Install-Task
         # Start now, without waiting for the next sign-in.
         Start-ScheduledTask -TaskName $TaskName
+        Say ''
+        $away = Read-Host 'Use PC screens away from home too, for example from a cafe? This adds Tailscale (free). (Y/N)'
+        if ($away -match '^[Yy]') { Enable-Away }
         Say ''
         Say 'Done. On your phone, open PC screen in Pocket XR and tap this PC.'
         Say 'The first time, Pocket XR shows a PIN: type it in Apollo''s web page (it opens next).'
