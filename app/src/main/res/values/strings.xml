@@ -227,6 +227,10 @@
     <!-- %1$s is an app's name -->
     <string name="pad_side_by_side_in">Side by side 3D in %1$s</string>
     <string name="pad_side_by_side_subtitle">For a video split into two halves. Each eye sees its half.</string>
+    <string name="pad_swipe_scroll_in">Scroll by swiping in %1$s</string>
+    <string name="pad_swipe_scroll_subtitle">Scrolling drags a finger across the app, for swipe gestures such as a video\'s mini player or sliding between tabs.</string>
+    <string name="space_swipe_scroll_on">Scroll by swiping on</string>
+    <string name="space_swipe_scroll_off">Scroll by swiping off</string>
     <string name="pad_tracking">Tracking</string>
     <string name="pad_adjust_all_windows">Adjust all windows together</string>
     <string name="pad_presets_empty_with_windows">Save the windows you have open, then open them all again with one tap, each where it was.</string>

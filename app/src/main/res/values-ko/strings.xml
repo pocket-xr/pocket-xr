@@ -163,6 +163,10 @@
     <string name="pad_shape_of">%1$s 화면 비율</string>
     <string name="pad_side_by_side_in">%1$s에서 SBS 3D</string>
     <string name="pad_side_by_side_subtitle">좌우 두 부분으로 나뉜 동영상용이에요. 각 눈이 한쪽씩 봐요.</string>
+    <string name="pad_swipe_scroll_in">%1$s에서 스와이프로 스크롤</string>
+    <string name="pad_swipe_scroll_subtitle">스크롤하면 앱 위를 손가락으로 끌어요. 동영상 미니 플레이어나 탭 전환 같은 스와이프 동작에 사용하세요.</string>
+    <string name="space_swipe_scroll_on">스와이프로 스크롤 켜짐</string>
+    <string name="space_swipe_scroll_off">스와이프로 스크롤 꺼짐</string>
     <string name="pad_tracking">트래킹</string>
     <string name="pad_adjust_all_windows">모든 창 함께 조절</string>
     <string name="pad_presets_empty_with_windows">열려 있는 창을 저장하면 탭 한 번으로 모두 원래 위치에 다시 열 수 있어요.</string>

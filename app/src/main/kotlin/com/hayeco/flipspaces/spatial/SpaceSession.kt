@@ -70,6 +70,9 @@ sealed interface SpaceCommand {
     /** 1.2.3 (issue 58): 2D while moving for side by side windows, on or off. */
     data class SideBySideFlat(val on: Boolean) : SpaceCommand
 
+    /** 1.5.6 (issue 119): Scroll by swiping on or off for the focused window's app. */
+    data class SwipeScroll(val on: Boolean) : SpaceCommand
+
     /** 0.5.17: the arrange actions from the trackpad's drawer ([com.hayeco.flipspaces.core.spatial.Arrange]). */
     data class Arrange(val kind: com.hayeco.flipspaces.core.spatial.ArrangeKind) : SpaceCommand
 
@@ -185,6 +188,9 @@ object SpaceSession {
 
     /** 1.2.3 (issue 58): the focused window's label and whether its app shows Side by side 3D, for the trackpad's Menu. */
     @Volatile var focusedSideBySide: Pair<String, Boolean>? = null
+
+    /** 1.5.6 (issue 119): the focused window's label and whether its app has Scroll by swiping on, for the Menu. */
+    @Volatile var focusedSwipeScroll: Pair<String, Boolean>? = null
 
     /** 1.3.3: the focused window's name and shape (width over height), for the Menu's Shape row. */
     @Volatile var focusedShape: Pair<String, Float>? = null

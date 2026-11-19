@@ -56,6 +56,8 @@ object TrackpadMenu {
         SHAPE(Section.THIS_WINDOW),
         SIDE_BY_SIDE(Section.THIS_WINDOW),
         SIDE_BY_SIDE_FLAT(Section.THIS_WINDOW),
+        // 1.5.6 (issue 119): the app's scrolls as a finger's swipe ([com.hayeco.flipspaces.core.spatial.SwipeScrollStore]).
+        SWIPE_SCROLL(Section.THIS_WINDOW),
 
         SPACE_TRACKING(Section.SPACE),
         LOCK_SCREENS(Section.SPACE),
@@ -117,6 +119,7 @@ object TrackpadMenu {
         val shapeShown: Boolean = false,
         val sideBySideShown: Boolean = false,
         val sideBySideOn: Boolean = false,
+        val swipeScrollShown: Boolean = false,
         val windowCount: Int = 0,
         val glassesKnown: Boolean = false,
         val airOffered: Boolean = false,
@@ -140,6 +143,7 @@ object TrackpadMenu {
         Item.SHAPE -> s.shapeShown
         Item.SIDE_BY_SIDE -> s.sideBySideShown
         Item.SIDE_BY_SIDE_FLAT -> s.sideBySideShown && s.sideBySideOn
+        Item.SWIPE_SCROLL -> s.swipeScrollShown
         // 1.3.4 (a tester: "a lot of redundancy in the menus / UIs (ie multiple ways to do the same thing)"): Tracking,
         // Snap windows and Cursor follows head are the Control Center's on the glasses, so the Menu leaves them out.
         // Arrange and presets stay in both (Mike). [CONTROL_CENTER_ONLY] keeps the list; their rows stay in the app.

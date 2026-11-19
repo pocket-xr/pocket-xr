@@ -122,7 +122,7 @@ class TrackpadMenu126Test {
         val all = State(
             spaceActive = true, phoneLocked = true, steadyOffered = true, gameKeysOn = true, recording = true,
             controllerMode = GameControllerMode.TOUCH, textSizeShown = true, shapeShown = true, sideBySideShown = true, sideBySideOn = true,
-            windowCount = 2, glassesKnown = true, airOffered = true, airOn = true, directionApplies = true, developerShown = true,
+            swipeScrollShown = true, windowCount = 2, glassesKnown = true, airOffered = true, airOn = true, directionApplies = true, developerShown = true,
         )
         val open = TrackpadMenu.items(all)
         val cover = TrackpadMenu.items(all.copy(cover = true))

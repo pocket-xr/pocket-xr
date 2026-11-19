@@ -633,7 +633,10 @@ class TrackpadActivity : Activity(), PadHost {
         return if (cover) {
             com.hayeco.flipspaces.core.pointer.ScrollStrip.layout(widthPx / d, heightPx / d, com.hayeco.flipspaces.core.pointer.ScrollStrip.coverSide(settings.coverControls))
         } else {
-            com.hayeco.flipspaces.core.pointer.ScrollStrip.main(widthPx / d, heightPx / d, settings.stripSide, portrait = settings.mode != PadMode.HORIZONTAL)
+            // 1.5.6 (issue 119): the page as it is laid out, as the groove is drawn ([PadArtView.landscape]). Spatial Mouse on a
+            // landscape handheld such as the Retroid Nova has a landscape page with no inset, so the mode alone put the
+            // touch band 20 dp wider than the groove there.
+            com.hayeco.flipspaces.core.pointer.ScrollStrip.main(widthPx / d, heightPx / d, settings.stripSide, portrait = !screen.pad.landscape)
         }
     }
 
@@ -991,6 +994,12 @@ class TrackpadActivity : Activity(), PadHost {
     override fun focusedSideBySide(): Pair<String, Boolean>? = if (SpaceSession.active) SpaceSession.focusedSideBySide else null
 
     override fun focusedShape(): Pair<String, Float>? = if (SpaceSession.active) SpaceSession.focusedShape else null
+
+    override fun focusedSwipeScroll(): Pair<String, Boolean>? = if (SpaceSession.active) SpaceSession.focusedSwipeScroll else null
+
+    override fun swipeScrollChosen(on: Boolean) {
+        if (SpaceSession.active) SpaceSession.send(SpaceCommand.SwipeScroll(on))
+    }
 
     override fun shapeChosen(ratio: Float) {
         if (SpaceSession.active) SpaceSession.send(SpaceCommand.Shape(ratio))

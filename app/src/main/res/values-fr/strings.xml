@@ -171,6 +171,10 @@
     <string name="pad_shape_of">Format de %1$s</string>
     <string name="pad_side_by_side_in">3D côte à côte dans %1$s</string>
     <string name="pad_side_by_side_subtitle">Pour une vidéo coupée en deux moitiés. Chaque œil voit sa moitié.</string>
+    <string name="pad_swipe_scroll_in">Défiler en balayant dans %1$s</string>
+    <string name="pad_swipe_scroll_subtitle">Le défilement fait glisser un doigt sur l\'appli, pour les gestes comme le mini-lecteur d\'une vidéo ou le passage d\'un onglet à l\'autre.</string>
+    <string name="space_swipe_scroll_on">Défiler en balayant activé</string>
+    <string name="space_swipe_scroll_off">Défiler en balayant désactivé</string>
     <string name="pad_tracking">Suivi</string>
     <string name="pad_adjust_all_windows">Ajuster toutes les fenêtres ensemble</string>
     <string name="pad_presets_empty_with_windows">Enregistrez les fenêtres ouvertes, puis rouvrez-les toutes d\'un seul geste, chacune à sa place.</string>

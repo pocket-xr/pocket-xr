@@ -107,7 +107,7 @@ class Tour150Test {
                 m.name == "hashCode" -> System.identityHashCode(proxy)
                 m.name == "toString" -> "test host"
                 m.name == "openTour" -> { opened++; null }
-                m.name == "focusedTextSize" || m.name == "focusedSideBySide" || m.name == "focusedShape" -> null
+                m.name == "focusedTextSize" || m.name == "focusedSideBySide" || m.name == "focusedSwipeScroll" || m.name == "focusedShape" -> null
                 t == java.lang.Boolean.TYPE -> false
                 t == Integer.TYPE -> 0
                 t == java.lang.Float.TYPE -> 0f

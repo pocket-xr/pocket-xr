@@ -163,6 +163,10 @@
     <string name="pad_shape_of">%1$s 的形状</string>
     <string name="pad_side_by_side_in">%1$s 中的 3D 左右并排</string>
     <string name="pad_side_by_side_subtitle">适用于分成左右两半的视频，每只眼睛看到各自的一半。</string>
+    <string name="pad_swipe_scroll_in">在 %1$s 中滑动滚动</string>
+    <string name="pad_swipe_scroll_subtitle">滚动时用手指在应用上拖动，用于视频小窗播放或切换标签页等滑动手势。</string>
+    <string name="space_swipe_scroll_on">滑动滚动已开启</string>
+    <string name="space_swipe_scroll_off">滑动滚动已关闭</string>
     <string name="pad_tracking">追踪</string>
     <string name="pad_adjust_all_windows">整体调整所有窗口</string>
     <string name="pad_presets_empty_with_windows">保存你当前打开的窗口，之后点一下就能把它们全部在原位置重新打开。</string>
