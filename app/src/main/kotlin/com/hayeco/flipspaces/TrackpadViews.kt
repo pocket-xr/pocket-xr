@@ -1156,12 +1156,28 @@ internal fun coverIcon(b: CoverButton): Int = when (b) {
  */
 @SuppressLint("ViewConstructor")
 internal class PadScreen(context: Context, private val host: PadHost) : ViewGroup(context) {
-    init {
-        // The text field follows the keyboard as it comes and goes (keyboardCover).
-        setOnApplyWindowInsetsListener { v, insets ->
-            if (textOpen) v.requestLayout()
-            v.onApplyWindowInsets(insets)
+    /**
+     * The keyboard's cover when the text field was last placed. The trackpad never hears of the keyboard through its own
+     * insets (phone test, 18 Nov 2026: the field stayed at the top with the keyboard up), so each drawn frame looks,
+     * and a change places the field again (keyboardCover). One comparison a frame while the field is open.
+     */
+    private var placedKeyboardCover = -1
+    private val keyboardWatch = android.view.ViewTreeObserver.OnPreDrawListener {
+        if (textOpen) {
+            val kb = keyboardCover()
+            if (kb != placedKeyboardCover) requestLayout()
         }
+        true
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        viewTreeObserver.addOnPreDrawListener(keyboardWatch)
+    }
+
+    override fun onDetachedFromWindow() {
+        viewTreeObserver.removeOnPreDrawListener(keyboardWatch)
+        super.onDetachedFromWindow()
     }
 
     private var settings = TrackpadSettings()
@@ -1728,7 +1744,12 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     /** How much of this view the keyboard covers, from its bottom, in pixels (0 with no keyboard). */
     private fun keyboardCover(): Int {
         val insets = rootWindowInsets ?: return 0
-        val ime = insets.getInsets(android.view.WindowInsets.Type.ime()).bottom
+        var ime = insets.getInsets(android.view.WindowInsets.Type.ime()).bottom
+        if (ime <= 0 && insets.isVisible(android.view.WindowInsets.Type.ime())) {
+            // Insets without the keyboard's size: the part of the window it hides instead.
+            val r = android.graphics.Rect().also { getWindowVisibleDisplayFrame(it) }
+            ime = (rootView.height - r.bottom).coerceAtLeast(0)
+        }
         if (ime <= 0) return 0
         val at = IntArray(2).also { getLocationInWindow(it) }
         val belowView = (rootView.height - (at[1] + height)).coerceAtLeast(0)
@@ -1881,6 +1902,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         // eye is while typing; at the top only while the keyboard is not up.
         if (!cover && textOpen) {
             val kb = keyboardCover()
+            placedKeyboardCover = kb
             val top = if (kb > 0) (h - kb - dp(12f) - dp(52f)).coerceAtLeast(dp(12f)) else dp(12f)
             put(textBar, dp(20f), top, w - dp(40f), dp(52f))
         }
