@@ -3893,6 +3893,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                         pickForPanel = null
                         com.hayeco.flipspaces.pcvr.PcVrSession.open("the launcher's PC VR button")
                     }
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.PC_SCREEN -> {
+                        pickForPanel = null
+                        openPcScreen()
+                    }
                     com.hayeco.flipspaces.core.spatial.LauncherButton.RECENTRE -> recentre()
                     com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY -> GlassesDisplayControl.userSteady(context, !GlassesDisplayControl.steadyOn, "the launcher's button")
                     com.hayeco.flipspaces.core.spatial.LauncherButton.VIEW -> SpaceActivity.alive()?.let { a -> a.runOnUiThread { a.switchView("the launcher's 3D / 2D button") } }
@@ -4128,6 +4132,23 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             }
         }
         if (!textSizeBatch.isEmpty) applyTextSizes()
+    }
+
+    /**
+     * The launcher's PC screen button: the first PC screen not open yet ([com.hayeco.flipspaces.pcscreen.PcScreenSlots]),
+     * each its own window, process and PC; with all three open, the first comes to the front.
+     */
+    private fun openPcScreen() {
+        val slots = com.hayeco.flipspaces.pcscreen.PcScreenSlots
+        fun entry(slot: Int) = AppEntry(
+            if (slot == 0) str(R.string.pc_screen_tile) else context.getString(R.string.pc_screen_tile_n, slot + 1),
+            context.packageName, slots.activity(slot),
+        )
+        val open = layout.panels.map { it.activityName }.toSet()
+        val free = (0 until slots.COUNT).firstOrNull { slots.activity(it) !in open }
+        Log.i(tag, "launcher: PC screen button: ${if (free != null) "opens PC screen ${free + 1}" else "all three open, PC screen 1 to the front"}")
+        addApp(entry(free ?: 0), inFrontOfGaze = true)
+        launcher.close()
     }
 
     /**

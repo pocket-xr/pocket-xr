@@ -2,6 +2,7 @@
 <!-- PC screens, first proof: English only until the feature is settled. -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="pc_screen_tile">PC screen</string>
+    <string name="spatial_launcher_pc_screen">PC screen</string>
     <string name="pc_screen_title">PC screen</string>
     <string name="pc_screen_title_n">PC screen %1$d</string>
     <string name="pc_screen_tile_n">PC screen %1$d</string>

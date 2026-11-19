@@ -360,16 +360,8 @@ class SpaceActivity : Activity() {
 
     /** PC VR first, where the stream can be built in, named with how the PC is ([com.hayeco.flipspaces.pcvr.PcVrTileStatus]). */
     private fun sendApps() {
-        // PC screens: three tiles, each its own window, process and saved PC ([com.hayeco.flipspaces.pcscreen.PcScreenSlots]),
-        // opened on a panel like an app. The launcher sorts them together, under P.
-        val pcScreens = (0 until com.hayeco.flipspaces.pcscreen.PcScreenSlots.COUNT).map { slot ->
-            com.hayeco.flipspaces.core.AppEntry(
-                if (slot == 0) getString(com.hayeco.flipspaces.R.string.pc_screen_tile)
-                else getString(com.hayeco.flipspaces.R.string.pc_screen_tile_n, slot + 1),
-                packageName, com.hayeco.flipspaces.pcscreen.PcScreenSlots.activity(slot),
-            )
-        }
-        val found = foundApps + pcScreens
+        // PC screens open from the launcher's PC screen button, beside PC VR (LauncherButton.PC_SCREEN), not from tiles.
+        val found = foundApps
         SpaceSession.send(SpaceCommand.LauncherApps(found))
     }
 
