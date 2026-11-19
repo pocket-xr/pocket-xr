@@ -2,6 +2,29 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.5.6: PC screens
+
+- **PC screens:** your computer's screen in the glasses, up to three at once from a Windows PC, each as its own window
+  in the Space. Press the new PC screen button beside PC VR in the launcher; each press opens the next screen. It
+  streams with Moonlight's open source code from Apollo (Windows) or Sunshine (Windows, Linux, Steam Deck Desktop Mode,
+  Mac), at up to 120 frames a second.
+- **Setup is one tap on the phone:** with the Pocket XR PC helper on a Windows PC, Set up my PC installs Apollo, adds
+  the extra screens and, if you want, use away from home. Pairing needs no PIN: click Yes on the PC. Linux and Macs
+  have a setup script that does the same with Sunshine (one screen there).
+- **Works the way you'd hope:** each screen gets its own virtual display on the PC, so the PC's monitors can be off;
+  it connects as soon as it opens, comes back by itself after Wi-Fi drops, wakes a sleeping PC on the same network,
+  and works away from home over Tailscale. An old phone left at home can wake the PC from anywhere (PC wake relay, in
+  the trackpad Menu). The PC's sound plays from one screen at a time.
+- **Keyboard:** the trackpad's keyboard has a shortcut row: Esc, Tab, Ctrl, Alt, Shift, Win, the arrows and Del.
+  Bluetooth and USB keyboards go straight to the PC.
+- **Scroll by swiping** (issue 119): a per-app switch in the Menu's This window section makes scrolling drag like a
+  finger, so YouTube's swipe to the mini player works. The scroll strip's touch area now matches its groove on
+  Spatial Mouse on handhelds such as the Retroid Nova.
+- **Cursor follows head** is now off by default.
+- Tried on a Galaxy Z Flip 7 with XREAL Aura glasses and a Windows PC: three screens at once, sound, reconnect, away
+  from home, the setup from a PC with no Apollo. Not yet tried: Linux and Mac computers, the wake relay, other phones
+  and glasses.
+
 ## 1.5.5: hand tracking starts only when Android allows it
 
 - **Hand tracking now asks Android for the camera only while a Pocket XR screen is showing.** Android 15 and later
