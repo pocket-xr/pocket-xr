@@ -166,7 +166,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         for ((pc, instances) in PcScreenPick.byPc(hosts)) {
             val pick = PcScreenPick.instanceFor(slot, instances) { usedBy[PcScreenAddress.parse(it.typed)] == null }
             val detail = when {
-                pick == null -> getString(R.string.pc_screen_pc_full, PcScreenSlots.COUNT)
+                pick == null -> getString(R.string.pc_screen_pc_full, instances.size)
                 store.paired && instances.any { PcScreenAddress.parse(it.typed) == mine } -> getString(R.string.pc_screen_pc_paired)
                 else -> getString(R.string.pc_screen_pc_tap)
             }
