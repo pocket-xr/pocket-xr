@@ -31,8 +31,11 @@ import com.limelight.nvstream.input.MouseButtonPacket
 import com.limelight.nvstream.jni.MoonBridge
 
 /**
- * PC screens, first proof: one PC screen, opened on a Space panel like an app, in its own process (`:pcscreen`).
- * moonlight-common-c keeps one connection per process, so each further screen will need a process of its own.
+ * PC screens: a PC's screen on a Space panel, opened like an app, each in its own process ([PcScreenSlots]):
+ * moonlight-common-c keeps one connection per process. Setup is meant to need almost nothing: PCs on the Wi-Fi are
+ * listed ([PcScreenFinder]), a tap pairs, a PC that already knows the phone connects with no PIN, a paired PC screen
+ * connects as soon as it opens, an asleep PC is woken ([PcScreenWake]), and trouble is said in plain words
+ * ([PcScreenTrouble]).
  *
  * What it does:
  * - pairs with a Sunshine or Apollo host by address and PIN;
@@ -54,6 +57,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private lateinit var root: FrameLayout
     private lateinit var setup: LinearLayout
     private lateinit var addressField: EditText
+    private lateinit var foundTitle: TextView
+    private lateinit var foundList: LinearLayout
+    private val finder by lazy { PcScreenFinder(this) { showFound(it) } }
     private lateinit var status: TextView
     private lateinit var surface: SurfaceView
 
@@ -121,6 +127,95 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             }
         }
         say(getString(if (store.paired) R.string.pc_screen_paired else R.string.pc_screen_intro))
+        finder.start()
+        // Paired before: straight to the PC's screen, nothing to tap.
+        if (store.paired && savedInstanceState == null) connect()
+    }
+
+    /** The PCs found on the Wi-Fi, each a button; one already used by another PC screen says which. */
+    private fun showFound(hosts: List<PcScreenFinder.Host>) {
+        foundTitle.text = getString(if (hosts.isEmpty()) R.string.pc_screen_none_found else R.string.pc_screen_found)
+        foundList.removeAllViews()
+        val usedBy = (0 until PcScreenSlots.COUNT).filter { it != slot }
+            .associateBy { PcScreenAddress.parse(PcScreenStore(this, it).address) }
+        for (h in hosts) {
+            val label = "${h.name}  ${h.typed}"
+            val other = usedBy[PcScreenAddress.parse(h.typed)]
+            foundList.addView(Button(this).apply {
+                text = if (other != null) getString(R.string.pc_screen_host_in_use, label, other + 1) else label
+                isAllCaps = false
+                setOnClickListener { choose(h.typed) }
+            })
+        }
+        // A second or third PC screen with nothing saved yet: a found host no other screen uses, that already knows
+        // this phone (the PC setup copies the pairing to every Apollo instance), is taken and connected at once.
+        if (!store.paired && store.address.isEmpty() && !autoTried) {
+            val free = hosts.filter { usedBy[PcScreenAddress.parse(it.typed)] == null }
+            if (free.isNotEmpty()) {
+                autoTried = true
+                Thread({
+                    val h = free.firstOrNull { knownPairing(it.typed) }
+                    if (h != null) main.post {
+                        addressField.setText(h.typed)
+                        say(getString(R.string.pc_screen_reused, h.name))
+                        connect()
+                    } else {
+                        // Tried too early (one host found so far): try again on the next host found.
+                        main.post { autoTried = false }
+                    }
+                }, "PcScreen-auto").start()
+            }
+        }
+    }
+
+    private var autoTried = false
+
+    /** A found PC tapped: connect if it already knows this phone, else pair with a PIN. */
+    private fun choose(address: String) {
+        addressField.setText(address)
+        pair()
+    }
+
+    /**
+     * This phone is already paired with the host at [address] under a certificate another PC screen saved (Apollo's
+     * instances share one; the PC setup copies the paired phones to each): saved for this PC screen too, with no PIN.
+     * Blocking: a worker thread.
+     */
+    private fun knownPairing(address: String): Boolean {
+        val certs = (0 until PcScreenSlots.COUNT).mapNotNull { PcScreenStore(this, it).serverCert }
+            .distinctBy { it.encoded.contentHashCode() }
+        for (cert in certs) {
+            val ok = runCatching {
+                val http = NvHTTP(tuple(address), 0, store.uniqueId, cert, crypto)
+                val info = http.getServerInfo(true)
+                if (http.getPairState(info) != PairingManager.PairState.PAIRED) return@runCatching false
+                store.savePairing(address, http.getHttpsPort(info), cert, macOf(info))
+                Log.i(TAG, "pairing: $address already knows this phone; saved without a PIN")
+                true
+            }.getOrDefault(false)
+            if (ok) return true
+        }
+        return false
+    }
+
+    private fun macOf(info: String): String? = Regex("<mac>([^<]*)</mac>").find(info)?.groupValues?.get(1)?.trim()
+
+    /** Apollo's web page for this host: its port plus one, over HTTPS. */
+    private fun webPage(address: String): String {
+        val (host, port) = PcScreenAddress.parse(address) ?: (address to PcScreenAddress.DEFAULT_PORT)
+        return "https://$host:${port + 1}"
+    }
+
+    /** What went wrong, in words that say what to do. */
+    private fun trouble(kind: PcScreenTrouble, fallback: String): String {
+        val address = store.address
+        val name = PcScreenAddress.parse(address)?.first ?: address
+        return when (kind) {
+            PcScreenTrouble.UNREACHABLE -> getString(R.string.pc_screen_trouble_unreachable, name)
+            PcScreenTrouble.NO_PERMISSION -> getString(R.string.pc_screen_trouble_permission, webPage(address))
+            PcScreenTrouble.NOT_PAIRED -> getString(R.string.pc_screen_trouble_unpaired)
+            PcScreenTrouble.OTHER -> fallback
+        }
     }
 
     private fun buildSetup(): LinearLayout {
@@ -132,6 +227,21 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 text = if (slot == 0) getString(R.string.pc_screen_title) else getString(R.string.pc_screen_title_n, slot + 1)
                 textSize = 24f
                 setTextColor(Color.WHITE)
+            })
+            // PCs on the Wi-Fi ([PcScreenFinder]): a tap pairs (or connects, when the PC already knows the phone).
+            foundTitle = TextView(context).apply {
+                text = getString(R.string.pc_screen_looking)
+                setTextColor(Color.LTGRAY)
+                textSize = 16f
+            }
+            addView(foundTitle)
+            foundList = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            addView(foundList)
+            addView(TextView(context).apply {
+                text = getString(R.string.pc_screen_or_type)
+                setTextColor(Color.LTGRAY)
+                textSize = 14f
+                setPadding(0, pad / 2, 0, 0)
             })
             addressField = EditText(context).apply {
                 hint = getString(R.string.pc_screen_address_hint)
@@ -194,9 +304,14 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         if (PcScreenAddress.parse(address) == null) return say(getString(R.string.pc_screen_address_bad))
         store.address = address
         val pin = PairingManager.generatePinString()
-        say(getString(R.string.pc_screen_enter_pin, pin))
         Thread({
             try {
+                if (knownPairing(address)) {
+                    say(getString(R.string.pc_screen_reused, PcScreenAddress.parse(address)?.first ?: address))
+                    main.post { connect() }
+                    return@Thread
+                }
+                say(getString(R.string.pc_screen_enter_pin, pin) + "\n" + webPage(address))
                 val http = NvHTTP(tuple(address), 0, store.uniqueId, null, crypto)
                 val info = http.getServerInfo(true)
                 val details = http.getComputerDetails(info)
@@ -204,16 +319,22 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 Log.i(TAG, "pair with ${details.name} at $address: $result")
                 val cert = http.pairingManager.pairedCert
                 if (result == PairingManager.PairState.PAIRED && cert != null) {
-                    store.savePairing(address, details.httpsPort, cert)
+                    // The MAC (for Wake-on-LAN) only comes over HTTPS to a paired phone.
+                    val secure = runCatching { NvHTTP(tuple(address), details.httpsPort, store.uniqueId, cert, crypto).getServerInfo(true) }.getOrNull()
+                    store.savePairing(address, details.httpsPort, cert, secure?.let { macOf(it) })
                     val other = sharedWith(address)
-                    say(if (other == null) getString(R.string.pc_screen_paired_with, details.name)
-                        else getString(R.string.pc_screen_paired_shared, details.name, other + 1))
+                    if (other == null) {
+                        say(getString(R.string.pc_screen_paired_with, details.name))
+                        main.post { connect() }
+                    } else {
+                        say(getString(R.string.pc_screen_paired_shared, details.name, other + 1))
+                    }
                 } else {
                     say(getString(R.string.pc_screen_pair_failed, result.toString()))
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "pair: $e")
-                say(getString(R.string.pc_screen_pair_failed, e.message ?: e.toString()))
+                say(trouble(PcScreenTrouble.of(e), getString(R.string.pc_screen_pair_failed, e.message ?: e.toString())))
             }
         }, "PcScreen-pair").start()
     }
@@ -270,7 +391,16 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 // Apollo makes a virtual display of the stream's size (VirtualDisplayCapable, its driver ready): the
                 // stream takes the window's own shape, so it fills the window. Elsewhere 1920 x 1080, the usual
                 // desktop, which the host sends without stretching.
-                val info = http.getServerInfo(true)
+                val info = serverInfoWaking(http, gen)
+                // Apollo says what this phone may do: without launching, or the mouse and keyboard, say how to fix it
+                // before trying (a refused launch is a bare 403).
+                xml(info, "Permission")?.toLongOrNull()?.let { perm ->
+                    Log.i(TAG, "permission 0x${java.lang.Long.toHexString(perm)}")
+                    if (perm and PERMS_NEEDED != PERMS_NEEDED) {
+                        showSetup(trouble(PcScreenTrouble.NO_PERMISSION, ""))
+                        return@Thread
+                    }
+                }
                 val vd = xml(info, "VirtualDisplayCapable") == "true" && xml(info, "VirtualDisplayDriverReady") != "false"
                 val (w, h) = if (vd) PcScreenShape.forWindow(windowW, windowH) else (STREAM_W to STREAM_H)
                 shapedToWindow = vd
@@ -312,7 +442,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     .also { it.start(AndroidAudioRenderer(applicationContext, false), d, this) }
             } catch (e: Exception) {
                 Log.w(TAG, "connect: $e")
-                showSetup(getString(R.string.pc_screen_connect_failed, e.message ?: e.toString()))
+                showSetup(trouble(PcScreenTrouble.of(e), getString(R.string.pc_screen_connect_failed, e.message ?: e.toString())))
             } finally {
                 main.post { if (gen == generation) starting = false }
             }
@@ -338,6 +468,30 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             val r = runCatching { NvHTTP(tuple(address), port, id, cert, crypto).quitApp() }
             Log.i(TAG, "session ended on the PC: ${r.exceptionOrNull() ?: r.getOrNull()}")
         }, "PcScreen-quit").start()
+    }
+
+    /**
+     * Serverinfo, waking the PC first if it does not answer and its MAC is known ([PcScreenWake]): a magic packet, then
+     * up to 60 s for it to come up. Blocking: the connect thread.
+     */
+    private fun serverInfoWaking(http: NvHTTP, gen: Int): String {
+        val first = try {
+            return http.getServerInfo(true)
+        } catch (e: Exception) {
+            if (PcScreenTrouble.of(e) != PcScreenTrouble.UNREACHABLE || PcScreenWake.macBytes(store.mac) == null) throw e
+            e
+        }
+        val host = PcScreenAddress.parse(store.address)?.first ?: store.address
+        say(getString(R.string.pc_screen_waking, host))
+        Log.i(TAG, "the PC does not answer: Wake-on-LAN sent ${PcScreenWake.send(store.mac, host)}")
+        val until = android.os.SystemClock.uptimeMillis() + 60_000
+        while (android.os.SystemClock.uptimeMillis() < until && gen == generation) {
+            Thread.sleep(3000)
+            val info = runCatching { http.getServerInfo(false) }.getOrNull()
+            if (info != null) return info
+            PcScreenWake.send(store.mac, host)
+        }
+        throw first
     }
 
     /** A session was launched on the PC by this window and not yet ended. */
@@ -467,6 +621,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     }
 
     override fun onDestroy() {
+        finder.stop()
         PcScreenSurfaces.listener = null
         endSession()
         super.onDestroy()
@@ -477,7 +632,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     override fun stageComplete(stage: String) = Unit
     override fun stageFailed(stage: String, portFlags: Int, errorCode: Int) {
         Log.w(TAG, "stage $stage failed: ports $portFlags, error $errorCode")
-        showSetup(getString(R.string.pc_screen_connect_failed, "$stage ($errorCode)"))
+        showSetup(trouble(PcScreenTrouble.ofCode(errorCode), getString(R.string.pc_screen_connect_failed, "$stage ($errorCode)")))
     }
     override fun connectionStarted() {
         streaming = true
@@ -500,6 +655,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private companion object {
         const val BASE_TAG = "PcScreen"
         const val BITRATE_KBPS = 40_000
+
+        /** Apollo's permission bits a PC screen needs: launch apps (0x4000000), mouse (0x800) and keyboard (0x1000). */
+        const val PERMS_NEEDED = 0x4000000L or 0x800L or 0x1000L
         const val STREAM_W = 1920
         const val STREAM_H = 1080
     }

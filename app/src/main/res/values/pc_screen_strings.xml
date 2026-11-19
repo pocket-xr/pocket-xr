@@ -14,6 +14,16 @@
     <string name="pc_screen_paired_shared">Paired with %1$s. PC screen %2$d uses the same host, and a host streams one screen at a time. For both at once, give this screen a second Apollo instance on its own port.</string>
     <string name="pc_screen_address_needed">Type the PC\'s address first.</string>
     <string name="pc_screen_pair">Pair</string>
+    <string name="pc_screen_looking">Looking for PCs on your Wi-Fi…</string>
+    <string name="pc_screen_found">Tap your PC:</string>
+    <string name="pc_screen_none_found">No PC found yet. Check Apollo is running on the PC and the PC is on the same Wi-Fi as the phone. You can also type its address below.</string>
+    <string name="pc_screen_or_type">Or type the PC\'s address:</string>
+    <string name="pc_screen_host_in_use">%1$s (PC screen %2$d)</string>
+    <string name="pc_screen_reused">%1$s already knows this phone. Connecting…</string>
+    <string name="pc_screen_waking">Waking %1$s…</string>
+    <string name="pc_screen_trouble_unreachable">Can\'t reach %1$s. Check the PC is on, Apollo is running, and the PC and phone are on the same Wi-Fi.</string>
+    <string name="pc_screen_trouble_permission">Apollo is blocking this phone. On the PC, open %1$s, go to Clients, and turn on Launch apps, Mouse and Keyboard for this phone. Then tap Connect.</string>
+    <string name="pc_screen_trouble_unpaired">The PC no longer knows this phone. Tap your PC above to pair again.</string>
     <string name="pc_screen_connect">Connect</string>
     <string name="pc_screen_enter_pin">Enter PIN %1$s on the PC, in Sunshine\'s or Apollo\'s web page (PIN tab). Apollo: then give this device the Launch apps, mouse and keyboard permissions there.</string>
     <string name="pc_screen_paired_with">Paired with %1$s. Connect to stream its screen.</string>

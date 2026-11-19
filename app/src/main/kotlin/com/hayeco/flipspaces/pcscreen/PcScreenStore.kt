@@ -50,12 +50,16 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
 
     val paired: Boolean get() = address.isNotEmpty() && httpsPort > 0 && serverCert != null
 
-    fun savePairing(address: String, httpsPort: Int, cert: X509Certificate) {
+    /** The host's network card, for Wake-on-LAN ([PcScreenWake]), from its serverinfo; null if it gave none. */
+    val mac: String? get() = prefs.getString(KEY_MAC, null)
+
+    fun savePairing(address: String, httpsPort: Int, cert: X509Certificate, mac: String? = null) {
         prefs.edit()
             .putString(KEY_ADDRESS, address.trim())
             .putInt(KEY_HTTPS, httpsPort)
+            .apply { if (PcScreenWake.macBytes(mac) != null) putString(KEY_MAC, mac) }
             .putString(KEY_CERT, Base64.encodeToString(cert.encoded, Base64.NO_WRAP))
-            .apply()
+            .commit()
     }
 
     fun forget() {
@@ -70,5 +74,6 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
         private const val KEY_ADDRESS = "address"
         private const val KEY_HTTPS = "https_port"
         private const val KEY_CERT = "server_cert"
+        private const val KEY_MAC = "mac"
     }
 }
