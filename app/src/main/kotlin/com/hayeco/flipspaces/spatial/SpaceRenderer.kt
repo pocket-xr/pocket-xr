@@ -5172,6 +5172,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             if (headCursorAlpha < 0.01f) return
             val ray = pointer.ray(head)
             val hover = pointer.hover
+            // PC screens (Mike, 18 Nov 2026): over a PC screen's picture only the PC's own mouse pointer shows, drawn in the
+            // stream where the PC put it; the dot comes back on the window's bar, frame and buttons.
+            if (com.hayeco.flipspaces.pcscreen.PcScreenCursor.hidesDot(hover)) return
             // 0.5.70 (Mike: the cursor is one of the things he dislikes; "Light on glass"): a crisp white dot with a dark
             // hairline (it reads on a bright page as on the room), a soft light bloom round it, a thin ring growing in over
             // anything it can press, the accent while pressing or busy, and a ripple ring on each press.
