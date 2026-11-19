@@ -43,9 +43,12 @@ import com.limelight.nvstream.jni.MoonBridge
  * Not yet: the keyboard, several screens, and decoding straight into the panel's own picture, which skips one
  * composite.
  */
-class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callback {
+open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callback {
+    /** Which PC screen this is ([PcScreenSlots]): 0 here, 1 and 2 in [PcScreen2Activity] and [PcScreen3Activity]. */
+    protected open val slot: Int get() = 0
+    private val TAG by lazy { if (slot == 0) BASE_TAG else "$BASE_TAG${slot + 1}" }
     private val main = Handler(Looper.getMainLooper())
-    private val store by lazy { PcScreenStore(this) }
+    private val store by lazy { PcScreenStore(this, slot) }
     private val crypto by lazy { AndroidCryptoProvider(applicationContext) }
 
     private lateinit var root: FrameLayout
@@ -126,7 +129,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
             orientation = LinearLayout.VERTICAL
             setPadding(pad, pad, pad, pad)
             addView(TextView(context).apply {
-                text = getString(R.string.pc_screen_title)
+                text = if (slot == 0) getString(R.string.pc_screen_title) else getString(R.string.pc_screen_title_n, slot + 1)
                 textSize = 24f
                 setTextColor(Color.WHITE)
             })
@@ -171,11 +174,24 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         main.post { status.text = text }
     }
 
-    private fun tuple(address: String) = ComputerDetails.AddressTuple(address, NvHTTP.DEFAULT_HTTP_PORT)
+    /** The host and its HTTP port, as typed ([PcScreenAddress]): a second Apollo instance has its own port. */
+    private fun tuple(address: String): ComputerDetails.AddressTuple {
+        val (host, port) = PcScreenAddress.parse(address) ?: (address.trim() to PcScreenAddress.DEFAULT_PORT)
+        return ComputerDetails.AddressTuple(host, port)
+    }
+
+    /** Another PC screen saved with the same host and port: both cannot stream from one host at once. */
+    private fun sharedWith(address: String): Int? {
+        val mine = PcScreenAddress.parse(address) ?: return null
+        return (0 until PcScreenSlots.COUNT).firstOrNull { other ->
+            other != slot && PcScreenAddress.parse(PcScreenStore(this, other).address) == mine
+        }
+    }
 
     private fun pair() {
         val address = addressField.text.toString().trim()
         if (address.isEmpty()) return say(getString(R.string.pc_screen_address_needed))
+        if (PcScreenAddress.parse(address) == null) return say(getString(R.string.pc_screen_address_bad))
         store.address = address
         val pin = PairingManager.generatePinString()
         say(getString(R.string.pc_screen_enter_pin, pin))
@@ -189,7 +205,9 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
                 val cert = http.pairingManager.pairedCert
                 if (result == PairingManager.PairState.PAIRED && cert != null) {
                     store.savePairing(address, details.httpsPort, cert)
-                    say(getString(R.string.pc_screen_paired_with, details.name))
+                    val other = sharedWith(address)
+                    say(if (other == null) getString(R.string.pc_screen_paired_with, details.name)
+                        else getString(R.string.pc_screen_paired_shared, details.name, other + 1))
                 } else {
                     say(getString(R.string.pc_screen_pair_failed, result.toString()))
                 }
@@ -202,6 +220,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
 
     private fun connect() {
         if (!store.paired) return say(getString(R.string.pc_screen_pair_first))
+        Log.i(TAG, "connect: PC screen ${slot + 1}, host ${store.address}${sharedWith(store.address)?.let { ", also PC screen ${it + 1}'s host" } ?: ""}")
         setup.visibility = View.GONE
         surface.visibility = View.VISIBLE
         // The stream starts once the surface exists (surfaceChanged), at the window's own size.
@@ -459,9 +478,19 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
     override fun setControllerLED(controllerNumber: Short, r: Byte, g: Byte, b: Byte) = Unit
 
     private companion object {
-        const val TAG = "PcScreen"
+        const val BASE_TAG = "PcScreen"
         const val BITRATE_KBPS = 40_000
         const val STREAM_W = 1920
         const val STREAM_H = 1080
     }
+}
+
+/** The second PC screen, in its own process (`:pcscreen2`), with its own saved PC ([PcScreenSlots]). */
+class PcScreen2Activity : PcScreenActivity() {
+    override val slot: Int get() = 1
+}
+
+/** The third PC screen, in its own process (`:pcscreen3`). */
+class PcScreen3Activity : PcScreenActivity() {
+    override val slot: Int get() = 2
 }

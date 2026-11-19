@@ -254,6 +254,38 @@
             android:name=".pcscreen.PcScreenSurfaceService"
             android:exported="false"
             android:process=":pcscreen" />
+        <!-- PC screen 2: its own process, as Moonlight's core keeps one stream per process (pcscreen.PcScreenSlots). -->
+        <activity
+            android:name=".pcscreen.PcScreen2Activity"
+            android:exported="true"
+            android:label="@string/pc_screen_tile_2"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:process=":pcscreen2"
+            android:taskAffinity="com.hayeco.flipspaces.pcscreen2"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService2"
+            android:exported="false"
+            android:process=":pcscreen2" />
+        <!-- PC screen 3: its own process, as Moonlight's core keeps one stream per process (pcscreen.PcScreenSlots). -->
+        <activity
+            android:name=".pcscreen.PcScreen3Activity"
+            android:exported="true"
+            android:label="@string/pc_screen_tile_3"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:process=":pcscreen3"
+            android:taskAffinity="com.hayeco.flipspaces.pcscreen3"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService3"
+            android:exported="false"
+            android:process=":pcscreen3" />
         <!-- The launcher's PC VR tile: a name and icon only. The Space opens PC VR over itself (pcvr.PcVrSession). -->
         <activity-alias
             android:name=".pcvr.PcVrTile"

@@ -88,9 +88,10 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
      * composite of its display in between. Null for every other panel. Drawn instead of the display's picture while
      * it has a recent one ([streamLive]), fitted inside the window with black bars.
      */
-    val stream: PanelSource? = if (com.hayeco.flipspaces.pcscreen.PcScreenLink.isPcScreen(panel)) {
+    private val pcSlot = com.hayeco.flipspaces.pcscreen.PcScreenLink.slotOf(panel)
+    val stream: PanelSource? = if (pcSlot >= 0) {
         PanelSource(com.hayeco.flipspaces.pcscreen.PcScreenLink.STREAM_W, com.hayeco.flipspaces.pcscreen.PcScreenLink.STREAM_H, decoded = true)
-            .also { frames.add(it); com.hayeco.flipspaces.pcscreen.PcScreenLink.offer(it.surface) }
+            .also { frames.add(it); com.hayeco.flipspaces.pcscreen.PcScreenLink.offer(pcSlot, it.surface) }
     } else {
         null
     }
@@ -351,7 +352,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     }
 
     fun release() {
-        stream?.let { com.hayeco.flipspaces.pcscreen.PcScreenLink.withdraw(it.surface); frames.remove(it) }
+        stream?.let { com.hayeco.flipspaces.pcscreen.PcScreenLink.withdraw(pcSlot, it.surface); frames.remove(it) }
         previous?.let { frames.remove(it) }
         previous = null
         fadingOut?.let { frames.remove(it) }
@@ -4136,7 +4137,11 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.21: an app that already has a window gets that one back, in
         // front of the gaze and focused, not a second window that would take its task from the first.
         // 0.5.37: unless the Menu's "Open a new instance" is on, when it opens again in a window of its own.
-        if (!store.newInstance) layout.showing(app.packageName)?.let { open ->
+        // PC screens: each of the three is its own window ([com.hayeco.flipspaces.pcscreen.PcScreenSlots]), all from
+        // this app's package, so a PC screen's tile brings back its own window only.
+        val pcSlot = com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(app.activityName)
+        val alreadyOpen = if (pcSlot >= 0) layout.panels.firstOrNull { it.activityName == app.activityName } else layout.showing(app.packageName)
+        if (!store.newInstance || pcSlot >= 0) alreadyOpen?.let { open ->
             val (yaw, pitch) = at ?: gaze()
             val next = if (inFrontOfGaze) layout.bringTo(open.id, yaw, pitch) else layout.raise(open.id)
             setLayout(next, commit = true)

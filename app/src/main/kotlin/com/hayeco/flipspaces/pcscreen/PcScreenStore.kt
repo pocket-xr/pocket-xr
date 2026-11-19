@@ -18,12 +18,16 @@ import java.security.cert.X509Certificate
  * The client id is random, made once, like Moonlight's. The client's own certificate and key are kept by
  * AndroidCryptoProvider in the app's files.
  */
-class PcScreenStore(context: Context) {
-    private val prefs = context.applicationContext.getSharedPreferences("pc_screen", Context.MODE_PRIVATE)
+class PcScreenStore(context: Context, val slot: Int = 0) {
+    /** Each PC screen ([PcScreenSlots]) keeps its own PC: the first in "pc_screen", the others in "pc_screen_2" and on. */
+    private val prefs = context.applicationContext.getSharedPreferences(prefsName(slot), Context.MODE_PRIVATE)
+
+    /** The client id is the phone's, one for every PC screen, kept with the first's. */
+    private val idPrefs = if (slot == 0) prefs else context.applicationContext.getSharedPreferences(prefsName(0), Context.MODE_PRIVATE)
 
     val uniqueId: String
-        get() = prefs.getString(KEY_ID, null) ?: ByteArray(8).also { SecureRandom().nextBytes(it) }
-            .joinToString("") { "%02x".format(it) }.also { prefs.edit().putString(KEY_ID, it).apply() }
+        get() = idPrefs.getString(KEY_ID, null) ?: ByteArray(8).also { SecureRandom().nextBytes(it) }
+            .joinToString("") { "%02x".format(it) }.also { idPrefs.edit().putString(KEY_ID, it).commit() }
 
     var address: String
         get() = prefs.getString(KEY_ADDRESS, "") ?: ""
@@ -59,6 +63,7 @@ class PcScreenStore(context: Context) {
     }
 
     companion object {
+        fun prefsName(slot: Int) = if (slot == 0) "pc_screen" else "pc_screen_${slot + 1}"
         val CODECS = listOf("auto", "h264", "av1")
         private const val KEY_CODEC = "codec"
         private const val KEY_ID = "unique_id"

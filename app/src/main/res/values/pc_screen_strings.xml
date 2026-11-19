@@ -3,9 +3,15 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="pc_screen_tile">PC screen</string>
     <string name="pc_screen_title">PC screen</string>
+    <string name="pc_screen_title_n">PC screen %1$d</string>
+    <string name="pc_screen_tile_n">PC screen %1$d</string>
+    <string name="pc_screen_tile_2">PC screen 2</string>
+    <string name="pc_screen_tile_3">PC screen 3</string>
     <string name="pc_screen_intro">Stream a PC screen from Sunshine or Apollo. Type the PC\'s address, then pair.</string>
     <string name="pc_screen_paired">Paired. Connect to stream the PC\'s screen.</string>
-    <string name="pc_screen_address_hint">PC address, like 192.168.1.20</string>
+    <string name="pc_screen_address_hint">PC address, like 192.168.1.20 (add :port for a second Apollo)</string>
+    <string name="pc_screen_address_bad">That address isn\'t right. Type it like 192.168.1.20, or 192.168.1.20:48989 with a port.</string>
+    <string name="pc_screen_paired_shared">Paired with %1$s. PC screen %2$d uses the same host, and a host streams one screen at a time. For both at once, give this screen a second Apollo instance on its own port.</string>
     <string name="pc_screen_address_needed">Type the PC\'s address first.</string>
     <string name="pc_screen_pair">Pair</string>
     <string name="pc_screen_connect">Connect</string>
