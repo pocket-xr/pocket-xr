@@ -52,6 +52,7 @@ class MenuShotsTest {
         "windowCount" to 3,
         "focusedTextSize" to Pair("Chrome", 100),
         "focusedSideBySide" to Pair("Chrome", false),
+        "focusedSwipeScroll" to Pair("Chrome", false),
         "glassesCheckAvailable" to true,
         "steadyOffered" to true,
         "cursorFollowsHeadOn" to true,

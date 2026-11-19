@@ -406,6 +406,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     /** 1.2.3 (issue 58): the apps whose windows split a side by side picture between the eyes ([com.hayeco.flipspaces.core.spatial.SideBySide]). */
     private val sideBySide = com.hayeco.flipspaces.core.spatial.SideBySideStore(store.sideBySide)
+
+    /** 1.5.6 (issue 119): the apps whose windows take the trackpad's scrolls as a swipe ([com.hayeco.flipspaces.core.spatial.SwipeScrollStore]). */
+    private val swipeScroll = com.hayeco.flipspaces.core.spatial.SwipeScrollStore(store.swipeScroll)
     private val pointer = SpatialPointer(frustum, PointerSettings(handsSteer = store.handsSteer)).also { p ->
         p.directAim = { side -> directHandAim(side) }
     }
@@ -1192,6 +1195,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 1.2.3 (issue 58): 2D while moving, from the head's turn and the cursor shown in the last frame.
         sideBySideFlat = sideBySideFlatOn && sideBySideMotion.update(HeadTracker.turnSpeedDegS, headCursorAlpha > 0.02f, SystemClock.uptimeMillis())
         SpaceSession.focusedSideBySide = focused?.let { it.label to sideBySide.isOn(it.packageName) }
+        SpaceSession.focusedSwipeScroll = focused?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to swipeScroll.isOn(it.packageName) }
+        pointer.swipePanels = layout.panels.filter { swipeScroll.isOn(it.packageName) }.mapTo(HashSet()) { it.id }
         SpaceSession.focusedShape = focused?.let { it.label to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
         // 0.5.32: the head's turn speed to the glasses' duty on turns (it sends nothing unless its switch is on).
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
@@ -3344,6 +3349,20 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }, "air-display").start()
     }
 
+    /**
+     * 1.5.6 (issue 119): the Menu's Scroll by swiping for the focused window's app, remembered for it. On, the trackpad's
+     * scrolls over its windows drag a finger across the app ([com.hayeco.flipspaces.core.spatial.SpatialPointer.swipePanels]).
+     */
+    private fun swipeScrollChosen(on: Boolean) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        val pkg = p.panel.packageName
+        if (pkg.isEmpty() || swipeScroll.isOn(pkg) == on) return
+        swipeScroll.set(pkg, on)
+        store.swipeScroll = swipeScroll.encode()
+        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: Scroll by swiping ${if (on) "on" else "off"} (remembered for $pkg)")
+        showNotice(p, str(if (on) R.string.space_swipe_scroll_on else R.string.space_swipe_scroll_off), SystemClock.uptimeMillis())
+    }
+
     /** 1.2.3 (issue 58): the Menu's 2D while moving ([com.hayeco.flipspaces.core.spatial.SideBySideMotion]), off by default. */
     private var sideBySideFlatOn = store.sideBySideFlat
     private val sideBySideMotion = com.hayeco.flipspaces.core.spatial.SideBySideMotion()
@@ -4078,6 +4097,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 is SpaceCommand.PadTouches -> padTouches(c.events)
                 SpaceCommand.FocusWindow -> focusedPanelId?.let { panels[it] }?.displayId?.let { PanelHost.focus(it, "the Game controller's gamepad") }
                 is SpaceCommand.SideBySide -> sideBySideChosen(c.on)
+                is SpaceCommand.SwipeScroll -> swipeScrollChosen(c.on)
                 is SpaceCommand.Shape -> shapeChosen(c.ratio)
                 is SpaceCommand.SideBySideFlat -> {
                     sideBySideFlatOn = c.on

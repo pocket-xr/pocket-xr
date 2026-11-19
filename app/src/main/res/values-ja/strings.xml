@@ -163,6 +163,10 @@
     <string name="pad_shape_of">%1$s の形</string>
     <string name="pad_side_by_side_in">%1$s で 3D サイドバイサイド</string>
     <string name="pad_side_by_side_subtitle">左右 2 つに分かれた動画向け。それぞれの目に片方が見えます。</string>
+    <string name="pad_swipe_scroll_in">%1$s でスワイプしてスクロール</string>
+    <string name="pad_swipe_scroll_subtitle">スクロールでアプリ上を指でなぞります。動画のミニプレーヤーやタブの切り替えなどのスワイプ操作向けです。</string>
+    <string name="space_swipe_scroll_on">スワイプしてスクロール オン</string>
+    <string name="space_swipe_scroll_off">スワイプしてスクロール オフ</string>
     <string name="pad_tracking">トラッキング</string>
     <string name="pad_adjust_all_windows">すべてのウィンドウをまとめて調整</string>
     <string name="pad_presets_empty_with_windows">開いているウィンドウを保存すると、次からワンタップで全部を元の位置に開けます。</string>

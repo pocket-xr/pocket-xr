@@ -167,6 +167,10 @@
     <string name="pad_shape_of">Format von %1$s</string>
     <string name="pad_side_by_side_in">Side-by-Side-3D in %1$s</string>
     <string name="pad_side_by_side_subtitle">Für ein Video, das in zwei Hälften geteilt ist. Jedes Auge sieht seine Hälfte.</string>
+    <string name="pad_swipe_scroll_in">Wischend scrollen in %1$s</string>
+    <string name="pad_swipe_scroll_subtitle">Scrollen zieht einen Finger über die App, für Wischgesten wie den Mini-Player eines Videos oder den Wechsel zwischen Tabs.</string>
+    <string name="space_swipe_scroll_on">Wischend scrollen an</string>
+    <string name="space_swipe_scroll_off">Wischend scrollen aus</string>
     <string name="pad_tracking">Tracking</string>
     <string name="pad_adjust_all_windows">Alle Fenster gemeinsam anpassen</string>
     <string name="pad_presets_empty_with_windows">Speichere deine offenen Fenster und öffne sie später alle mit einem Tippen wieder, jedes an seinem Platz.</string>

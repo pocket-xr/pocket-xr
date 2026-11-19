@@ -175,6 +175,10 @@
     <string name="pad_shape_of">Форма %1$s</string>
     <string name="pad_side_by_side_in">3D бок о бок в %1$s</string>
     <string name="pad_side_by_side_subtitle">Для видео, разделённого на две половины. Каждый глаз видит свою половину.</string>
+    <string name="pad_swipe_scroll_in">Прокрутка свайпом в %1$s</string>
+    <string name="pad_swipe_scroll_subtitle">Прокрутка ведёт пальцем по приложению: для жестов вроде мини-плеера видео или переключения вкладок.</string>
+    <string name="space_swipe_scroll_on">Прокрутка свайпом включена</string>
+    <string name="space_swipe_scroll_off">Прокрутка свайпом выключена</string>
     <string name="pad_tracking">Отслеживание</string>
     <string name="pad_adjust_all_windows">Настроить все окна вместе</string>
     <string name="pad_presets_empty_with_windows">Сохраните открытые окна, а потом открывайте их снова одним нажатием, каждое на своём месте.</string>

@@ -171,6 +171,10 @@
     <string name="pad_shape_of">Forma di %1$s</string>
     <string name="pad_side_by_side_in">3D side by side in %1$s</string>
     <string name="pad_side_by_side_subtitle">Per un video diviso in due metà. Ogni occhio vede la sua metà.</string>
+    <string name="pad_swipe_scroll_in">Scorri con uno swipe in %1$s</string>
+    <string name="pad_swipe_scroll_subtitle">Lo scorrimento trascina un dito sull\'app, per i gesti come il mini player di un video o il passaggio tra le schede.</string>
+    <string name="space_swipe_scroll_on">Scorri con uno swipe attivo</string>
+    <string name="space_swipe_scroll_off">Scorri con uno swipe disattivo</string>
     <string name="pad_tracking">Tracciamento</string>
     <string name="pad_adjust_all_windows">Regola tutte le finestre insieme</string>
     <string name="pad_presets_empty_with_windows">Salva le finestre aperte, poi riaprile tutte con un tocco, ognuna dov\'era.</string>

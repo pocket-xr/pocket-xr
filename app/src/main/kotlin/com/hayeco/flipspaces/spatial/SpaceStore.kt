@@ -570,6 +570,11 @@ class SpaceStore(context: Context) {
         set(value) = prefs.edit().putString(KEY_TOUCH_SPOTS, value).apply()
 
     /** 1.2.3 (issue 58): 2D while moving for side by side windows; off by default. */
+    /** 1.5.6 (issue 119): the apps with Scroll by swiping on, as [com.hayeco.flipspaces.core.spatial.SwipeScrollStore] text. */
+    var swipeScroll: String?
+        get() = prefs.getString(KEY_SWIPE_SCROLL, null)
+        set(value) = prefs.edit().putString(KEY_SWIPE_SCROLL, value).apply()
+
     var sideBySideFlat: Boolean
         get() = prefs.getBoolean(KEY_SIDE_BY_SIDE_FLAT, false)
         set(value) = prefs.edit().putBoolean(KEY_SIDE_BY_SIDE_FLAT, value).apply()
@@ -759,6 +764,7 @@ class SpaceStore(context: Context) {
         private const val KEY_AIR_DISPLAY_MODE = "air_display_mode_123"
         private const val KEY_SIDE_BY_SIDE = "side_by_side_123"
         private const val KEY_SIDE_BY_SIDE_FLAT = "side_by_side_flat_123"
+        private const val KEY_SWIPE_SCROLL = "swipe_scroll_156"
         private const val KEY_AUTO_GLASSES_VIEW = "auto_glasses_view_0565"
         private const val KEY_FACTORY_CALIBRATION = "factory_calibration_0565"
         private const val KEY_RECENTRE_FOLLOWS_TILT = "recentre_follows_tilt_1213"

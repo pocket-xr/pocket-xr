@@ -715,6 +715,12 @@ interface PadHost {
     /** 1.3.3: the focused window's name and shape, for the Shape row; null without one. */
     fun focusedShape(): Pair<String, Float>?
 
+    /** 1.5.6 (issue 119): the focused window's label and whether its app has Scroll by swiping on, or null with none focused. */
+    fun focusedSwipeScroll(): Pair<String, Boolean>?
+
+    /** 1.5.6 (issue 119): Scroll by swiping on or off for the focused window's app. */
+    fun swipeScrollChosen(on: Boolean)
+
     fun shapeChosen(ratio: Float)
 
     /** 1.3.3: Save settings to a file, and Restore settings from one. */
@@ -2099,7 +2105,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     /** What the open Menu's This window and Arrange were built from ([refreshDrawerForFocus]). */
     private var builtFor: Any? = null
 
-    private fun focusInputs(): Any = listOf(host.focusedTextSize(), host.focusedSideBySide(), host.windowCount(), host.textSizeBusy())
+    private fun focusInputs(): Any = listOf(host.focusedTextSize(), host.focusedSideBySide(), host.focusedSwipeScroll(), host.windowCount(), host.textSizeBusy())
 
     /**
      * 1.2.6 (Mike: the Menu "has become congested and feels like too much"): built from [TrackpadMenu], which picks the
@@ -2182,6 +2188,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             shapeShown = host.focusedShape() != null,
             sideBySideShown = sideBySide != null,
             sideBySideOn = sideBySide?.second == true,
+            swipeScrollShown = host.focusedSwipeScroll() != null,
             windowCount = host.windowCount(),
             glassesKnown = host.glassesCheckAvailable(),
             airOffered = air,
@@ -2299,6 +2306,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                     closeDrawer()
                     host.sideBySideChosen(!on)
                 }.apply { tag = MENU_SIDE_BY_SIDE })
+            }.orEmpty()
+            // 1.5.6 (issue 119): Scroll by swiping for the focused window's app.
+            MenuItem.SWIPE_SCROLL -> host.focusedSwipeScroll()?.let { (label, on) ->
+                listOf(row(R.drawable.ic_cover_view, onOff(c.getString(R.string.pad_swipe_scroll_in, label), on), tick = on, subtitle = c.getString(R.string.pad_swipe_scroll_subtitle)) {
+                    host.swipeScrollChosen(!on)
+                    postDelayed({ buildDrawer() }, SHAPE_REFRESH_MS)
+                }.apply { tag = MENU_SWIPE_SCROLL })
             }.orEmpty()
             // 1.2.3 (issue 58): 2D while moving, offered while the window shows Side by side 3D; off by default.
             MenuItem.SIDE_BY_SIDE_FLAT -> {
@@ -3409,6 +3423,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         const val TEXT_SIZE_BUSY_LABEL = "Resizing"
         const val TEXT_SIZE_BUSY_ALPHA = 0.4f
         const val MENU_SIDE_BY_SIDE = "menu:side-by-side"
+        const val MENU_SWIPE_SCROLL = "menu:swipe-scroll"
 
         /** 0.5.28: a toast with a one-tap action stays this long. */
         const val ACTION_TOAST_MS = 5000L

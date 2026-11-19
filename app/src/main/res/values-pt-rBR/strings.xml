@@ -171,6 +171,10 @@
     <string name="pad_shape_of">Formato de %1$s</string>
     <string name="pad_side_by_side_in">3D lado a lado em %1$s</string>
     <string name="pad_side_by_side_subtitle">Para um vídeo dividido em duas metades. Cada olho vê a sua metade.</string>
+    <string name="pad_swipe_scroll_in">Rolar deslizando em %1$s</string>
+    <string name="pad_swipe_scroll_subtitle">Rolar arrasta um dedo pelo app, para gestos como o miniplayer de um vídeo ou passar entre abas.</string>
+    <string name="space_swipe_scroll_on">Rolar deslizando ativado</string>
+    <string name="space_swipe_scroll_off">Rolar deslizando desativado</string>
     <string name="pad_tracking">Rastreamento</string>
     <string name="pad_adjust_all_windows">Ajustar todas as janelas juntas</string>
     <string name="pad_presets_empty_with_windows">Salve as janelas abertas e depois abra todas de novo com um toque, cada uma onde estava.</string>
