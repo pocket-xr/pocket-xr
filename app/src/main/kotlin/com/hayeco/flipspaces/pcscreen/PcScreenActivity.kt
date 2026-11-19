@@ -272,6 +272,17 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 text = getString(R.string.pc_screen_connect)
                 setOnClickListener { connect() }
             })
+            addView(Button(context).apply {
+                text = getString(R.string.pc_screen_forget)
+                setOnClickListener {
+                    store.forget()
+                    addressField.setText("")
+                    autoTried = false
+                    say(getString(R.string.pc_screen_forgotten))
+                    finder.stop()
+                    finder.start()
+                }
+            })
             status = TextView(context).apply {
                 setTextColor(Color.LTGRAY)
                 textSize = 16f

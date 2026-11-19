@@ -62,8 +62,9 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
             .commit()
     }
 
+    /** This PC screen's PC forgotten: address, port, certificate and MAC. The phone's own id stays. */
     fun forget() {
-        prefs.edit().remove(KEY_HTTPS).remove(KEY_CERT).apply()
+        prefs.edit().remove(KEY_ADDRESS).remove(KEY_HTTPS).remove(KEY_CERT).remove(KEY_MAC).commit()
     }
 
     companion object {
