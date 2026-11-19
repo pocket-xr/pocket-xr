@@ -229,7 +229,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     override fun surfaceCreated(holder: SurfaceHolder) = Unit
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        if (connection != null || surface.visibility != View.VISIBLE) return
+        if (connection != null || starting || surface.visibility != View.VISIBLE) return
         startStream(holder, width, height)
     }
 
@@ -237,9 +237,21 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         stopStream()
     }
 
+    /**
+     * A stream is being set up (its connect thread has not made the connection yet). The phone test of PC screen 2
+     * (19 Nov 2026) showed two surfaceChanged calls 100 ms apart starting two streams, two decoders and two
+     * connections in one process. Main thread.
+     */
+    private var starting = false
+
+    /** Counts stream starts and stops: a connect thread whose start was stopped meanwhile drops its connection. */
+    @Volatile private var generation = 0
+
     private fun startStream(holder: SurfaceHolder, viewWidth: Int, viewHeight: Int) {
         val address = store.address
         val cert = store.serverCert ?: return
+        starting = true
+        val gen = ++generation
         // The stream's size: 1920 x 1080. The phone test (18 Nov 2026) asked for the panel's shape, 1976 x 1080, while
         // Apollo captured a 1920 x 1080 desktop: the host stretched it and the phone shrank it again, a little soft.
         // A desktop's own 16:9 is sent as it is, and the panel shows it at its shape ([PcScreenFit]).
@@ -292,11 +304,17 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     Log.i(TAG, "a session was running (app $running): ended it for a fresh one: ${quit.exceptionOrNull() ?: "done"}")
                 }
                 Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@60 (window ${windowW}x$windowH, virtual display $vd), codec ${store.codec}, formats 0x${Integer.toHexString(formats)}")
+                if (gen != generation) {
+                    Log.i(TAG, "connect: stopped before it connected; not connecting")
+                    return@Thread
+                }
                 connection = NvConnection(applicationContext, tuple(address), store.httpsPort, store.uniqueId, config, crypto, cert)
                     .also { it.start(AndroidAudioRenderer(applicationContext, false), d, this) }
             } catch (e: Exception) {
                 Log.w(TAG, "connect: $e")
                 showSetup(getString(R.string.pc_screen_connect_failed, e.message ?: e.toString()))
+            } finally {
+                main.post { if (gen == generation) starting = false }
             }
         }, "PcScreen-connect").start()
     }
@@ -367,6 +385,8 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     }
 
     private fun stopStream() {
+        generation++
+        starting = false
         streaming = false
         connection?.let { c -> Thread({ c.stop() }, "PcScreen-stop").start() }
         connection = null
