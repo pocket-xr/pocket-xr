@@ -82,7 +82,12 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         // The Space's surface arriving or going while streaming: the stream starts again on the new one.
         PcScreenSurfaces.listener = {
             main.post {
-                if (connection != null && surface.holder.surface.isValid) {
+                if (connection != null && PcScreenSurfaces.current == null) {
+                    // The Space took its surface back: the PC screen's panel is closing (or the glasses went). The
+                    // session ends with it ([endSession]), not moved onto this window.
+                    Log.i(TAG, "the Space's surface was taken back: ending the session")
+                    endSession()
+                } else if (connection != null && surface.holder.surface.isValid) {
                     Log.i(TAG, "the Space's surface changed: starting the stream again")
                     stopStream()
                     startStream(surface.holder, surface.width, surface.height)
@@ -244,6 +249,26 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         }, "PcScreen-connect").start()
     }
 
+    /**
+     * Stops the stream and ends the session on the PC, so Apollo removes this stream's virtual display. Stopping alone
+     * left the session running for a later resume: after Mike unplugged the glasses (18 Nov 2026), the virtual display
+     * stayed on the PC and his windows were hidden on it once the monitors were back on. Called when the PC screen's
+     * window goes (its panel closed, the Space or glasses gone) and when the Space takes its surface back.
+     */
+    private fun endSession() {
+        val wasStreaming = connection != null
+        stopStream()
+        if (!wasStreaming || !store.paired) return
+        val address = store.address
+        val cert = store.serverCert ?: return
+        val port = store.httpsPort
+        val id = store.uniqueId
+        Thread({
+            val r = runCatching { NvHTTP(tuple(address), port, id, cert, crypto).quitApp() }
+            Log.i(TAG, "session ended on the PC: ${r.exceptionOrNull() ?: r.getOrNull()}")
+        }, "PcScreen-quit").start()
+    }
+
     private fun stopStream() {
         streaming = false
         connection?.let { c -> Thread({ c.stop() }, "PcScreen-stop").start() }
@@ -308,7 +333,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
 
     override fun onDestroy() {
         PcScreenSurfaces.listener = null
-        stopStream()
+        endSession()
         super.onDestroy()
     }
 
