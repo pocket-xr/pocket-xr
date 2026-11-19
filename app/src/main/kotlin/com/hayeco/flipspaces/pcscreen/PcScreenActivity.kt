@@ -411,12 +411,17 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         }
         refreshSetup()
         // One column, at most 560 dp wide, centred, scrolling when the window is short.
+        // Centred in the window's own width (the display's, used before, is wider than the window: the page was cut off on
+        // the left, 19 Nov 2026), at most 560 dp.
         return android.widget.ScrollView(this).apply {
             isFillViewport = true
             isVerticalScrollBarEnabled = false
-            addView(FrameLayout(context).apply {
-                addView(column, FrameLayout.LayoutParams(minOf(resources.displayMetrics.widthPixels, kit.dp(560f)), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
-            })
+            addView(column, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+            addOnLayoutChangeListener { v, l, _, r, _, ol, _, or, _ ->
+                if (r - l == or - ol) return@addOnLayoutChangeListener
+                val side = maxOf(kit.dp(24f), ((r - l) - kit.dp(560f)) / 2)
+                if (column.paddingLeft != side) v.post { column.setPadding(side, column.paddingTop, side, column.paddingBottom) }
+            }
         }
     }
 
@@ -582,8 +587,12 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         val instances = PcScreenPick.byPc(lastHosts).firstOrNull { (_, list) -> list.any { it.address == host } }?.second ?: return null
         val pick = PcScreenPick.instanceFor(slot, instances) { PcScreenAddress.parse(it.typed) !in usedBy } ?: return null
         if (pick.typed == home || !PcScreenRemote.answers(pick.typed, 1500)) return null
-        Log.i(TAG, "route: $home does not answer; this PC's Apollo for PC screen ${slot + 1} is now at ${pick.typed}: using it")
-        store.address = pick.typed
+        // Its own HTTPS port too (the old one's stayed: 49084 for 48989's Apollo); the pairing is checked after, and
+        // paired again by itself if this Apollo does not know the phone.
+        val https = runCatching { NvHTTP(tuple(pick.typed), 0, store.uniqueId, null, crypto).let { it.getHttpsPort(it.getServerInfo(true)) } }.getOrNull() ?: return null
+        val cert = store.serverCert ?: return null
+        Log.i(TAG, "route: $home does not answer; this PC's Apollo for PC screen ${slot + 1} is now at ${pick.typed} (HTTPS $https): using it")
+        store.savePairing(pick.typed, https, cert, store.mac)
         main.post { addressField.setText(pick.typed) }
         return pick.typed
     }
@@ -744,7 +753,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         }
         val host = PcScreenAddress.parse(home)?.first ?: home
         val mac = store.mac!!
-        say(getString(R.string.pc_screen_waking, host))
+        say(getString(R.string.pc_screen_waking, pcName()?.let { PcScreenPick.pcName(it).replaceFirstChar { c -> c.titlecase() } } ?: host))
         fun wake() {
             val here = PcScreenWake.send(mac, host)
             val relay = WakeRelay.ask(this, mac, host)
