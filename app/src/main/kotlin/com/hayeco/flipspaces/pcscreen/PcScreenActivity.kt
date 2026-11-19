@@ -278,6 +278,30 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     text = label()
                 }
             })
+            // Smoothness: Auto (120 where the phone decodes it), 60 or 120 frames a second.
+            addView(Button(context).apply {
+                fun label() = getString(R.string.pc_screen_fps, when (store.fps) { "60" -> "60"; "120" -> "120"; else -> getString(R.string.pc_screen_auto) })
+                text = label()
+                isAllCaps = false
+                setOnClickListener {
+                    store.fps = PcScreenQuality.FPS[(PcScreenQuality.FPS.indexOf(store.fps) + 1) % PcScreenQuality.FPS.size]
+                    text = label()
+                }
+            })
+            // Quality: Auto, Sharpest (more bits) or Data saver (half).
+            addView(Button(context).apply {
+                fun label() = getString(R.string.pc_screen_quality, getString(when (store.quality) {
+                    "sharp" -> R.string.pc_screen_quality_sharp
+                    "saver" -> R.string.pc_screen_quality_saver
+                    else -> R.string.pc_screen_auto
+                }))
+                text = label()
+                isAllCaps = false
+                setOnClickListener {
+                    store.quality = PcScreenQuality.QUALITY[(PcScreenQuality.QUALITY.indexOf(store.quality) + 1) % PcScreenQuality.QUALITY.size]
+                    text = label()
+                }
+            })
             addView(Button(context).apply {
                 text = getString(R.string.pc_screen_connect)
                 setOnClickListener { connect() }
@@ -363,9 +387,13 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private fun connect() {
         if (!store.paired) return say(getString(R.string.pc_screen_pair_first))
         Log.i(TAG, "connect: PC screen ${slot + 1}, host ${store.address}${sharedWith(store.address)?.let { ", also PC screen ${it + 1}'s host" } ?: ""}")
+        wantStream = true
+        main.removeCallbacks(reconnect)
         setup.visibility = View.GONE
         surface.visibility = View.VISIBLE
-        // The stream starts once the surface exists (surfaceChanged), at the window's own size.
+        // The stream starts once the surface exists (surfaceChanged), at the window's own size. Again after a reconnect
+        // wait: the surface was hidden and comes back.
+        if (surface.holder.surface.isValid && connection == null && !starting) startStream(surface.holder, surface.width, surface.height)
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) = Unit
@@ -428,15 +456,19 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 streamW = w
                 streamH = h
                 main.post { root.requestLayout() }
+                // 120 frames a second where every codec offered decodes this size at 120 (Auto), else 60: a picture
+                // is half as old when the Space takes it.
+                val fps = PcScreenQuality.fps(store.fps, PcScreenDecoder.decodes(formats, w, h, 120))
+                val kbps = PcScreenQuality.bitrateKbps(w, h, fps, store.quality)
                 val apps = http.appList
                 val app = apps.firstOrNull { it.appName.equals("Desktop", ignoreCase = true) } ?: apps.firstOrNull()
                     ?: throw IllegalStateException("the host lists no apps")
                 val config = StreamConfiguration.Builder()
                     .setApp(app)
                     .setResolution(w, h)
-                    .setRefreshRate(60)
-                    .setClientRefreshRateX100(6000)
-                    .setBitrate(BITRATE_KBPS)
+                    .setRefreshRate(fps)
+                    .setClientRefreshRateX100(fps * 100)
+                    .setBitrate(kbps)
                     .setRemoteConfiguration(StreamConfiguration.STREAM_CFG_AUTO)
                     .setAudioConfiguration(MoonBridge.AUDIO_CONFIGURATION_STEREO)
                     // Moonlight's default colours, said to the host and to the decoder alike (PcScreenDecoder).
@@ -449,12 +481,15 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 // A fresh session each time, so Apollo makes this stream's virtual display: rejoining a session it
                 // started on a real monitor kept streaming that monitor (Mike's phone, 18 Nov 2026). One PC screen
                 // for now; several will each have their own host instance.
+                // A reconnect after the stream was lost resumes the session instead (NvConnection resumes a running
+                // session of the same app): its virtual display, and the PC's windows on it, stay as they were.
+                val resuming = lostAtMs > 0
                 val running = runCatching { http.getCurrentGame(http.getServerInfo(true)) }.getOrDefault(0)
-                if (running != 0) {
+                if (running != 0 && !resuming) {
                     val quit = runCatching { http.quitApp() }
                     Log.i(TAG, "a session was running (app $running): ended it for a fresh one: ${quit.exceptionOrNull() ?: "done"}")
                 }
-                Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@60 (window ${windowW}x$windowH, virtual display $vd), codec ${store.codec}, formats 0x${Integer.toHexString(formats)}")
+                Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@$fps (${store.fps}), ${kbps / 1000} Mbps (${store.quality}), window ${windowW}x$windowH, virtual display $vd, codec ${store.codec}, formats 0x${Integer.toHexString(formats)}${if (resuming) ", resuming after a drop (try $attempt)" else ""}")
                 if (gen != generation) {
                     Log.i(TAG, "connect: stopped before it connected; not connecting")
                     return@Thread
@@ -466,7 +501,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     }
             } catch (e: Exception) {
                 Log.w(TAG, "connect: $e")
-                showSetup(trouble(PcScreenTrouble.of(e), getString(R.string.pc_screen_connect_failed, e.message ?: e.toString())))
+                val kind = PcScreenTrouble.of(e)
+                if (lostAtMs > 0 && kind.canRetry()) main.post { lost("connect: $e") }
+                else showSetup(trouble(kind, getString(R.string.pc_screen_connect_failed, e.message ?: e.toString())))
             } finally {
                 main.post { if (gen == generation) starting = false }
             }
@@ -480,6 +517,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
      * window goes (its panel closed, the Space or glasses gone) and when the Space takes its surface back.
      */
     private fun endSession(force: Boolean = false) {
+        wantStream = false
+        lostAtMs = 0
+        main.removeCallbacks(reconnect)
         val wasStreaming = connection != null || sessionStarted
         stopStream()
         sessionStarted = false
@@ -516,6 +556,42 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             PcScreenWake.send(store.mac, host)
         }
         throw first
+    }
+
+    /**
+     * Reconnect: the user asked for the stream ([connect]) and has not closed it. A stream lost without being asked to
+     * end (Wi-Fi gone, the phone asleep, the PC busy) is tried again ([lost]), resuming its session, until
+     * [PcScreenQuality.GIVE_UP_MS] has passed. Main thread.
+     */
+    private var wantStream = false
+    private var lostAtMs = 0L
+    private var attempt = 0
+    private val reconnect = Runnable { if (wantStream) connect() }
+
+    private fun PcScreenTrouble.canRetry() = this == PcScreenTrouble.UNREACHABLE || this == PcScreenTrouble.OTHER
+
+    /** The stream went without being asked to: try again after a wait, or give up and say so. Main thread. */
+    private fun lost(why: String) {
+        stopStream()
+        if (!wantStream) return
+        val now = android.os.SystemClock.uptimeMillis()
+        if (lostAtMs == 0L) lostAtMs = now
+        val delay = PcScreenQuality.reconnectDelayMs(attempt, now - lostAtMs)
+        surface.visibility = View.GONE
+        setup.visibility = View.VISIBLE
+        if (delay == null) {
+            Log.i(TAG, "reconnect: gave up after ${(now - lostAtMs) / 1000} s ($why)")
+            wantStream = false
+            lostAtMs = 0
+            attempt = 0
+            status.text = getString(R.string.pc_screen_lost)
+            return
+        }
+        attempt++
+        Log.i(TAG, "reconnect: try $attempt in ${delay / 1000} s ($why)")
+        status.text = getString(R.string.pc_screen_reconnecting, PcScreenAddress.parse(store.address)?.first ?: store.address)
+        main.removeCallbacks(reconnect)
+        main.postDelayed(reconnect, delay)
     }
 
     /** A session was launched on the PC by this window and not yet ended. */
@@ -665,16 +741,25 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     override fun stageComplete(stage: String) = Unit
     override fun stageFailed(stage: String, portFlags: Int, errorCode: Int) {
         Log.w(TAG, "stage $stage failed: ports $portFlags, error $errorCode")
-        showSetup(trouble(PcScreenTrouble.ofCode(errorCode), getString(R.string.pc_screen_connect_failed, "$stage ($errorCode)")))
+        val kind = PcScreenTrouble.ofCode(errorCode)
+        if (lostAtMs > 0 && kind.canRetry()) main.post { lost("stage $stage failed ($errorCode)") }
+        else showSetup(trouble(kind, getString(R.string.pc_screen_connect_failed, "$stage ($errorCode)")))
     }
     override fun connectionStarted() {
         streaming = true
         sessionStarted = true
+        main.post {
+            if (lostAtMs > 0) Log.i(TAG, "reconnect: back after ${(android.os.SystemClock.uptimeMillis() - lostAtMs) / 1000} s, try $attempt")
+            lostAtMs = 0
+            attempt = 0
+        }
         Log.i(TAG, "streaming")
     }
     override fun connectionTerminated(errorCode: Int) {
         Log.i(TAG, "ended: $errorCode, ${decoder?.shown ?: 0} shown, ${decoder?.dropped ?: 0} dropped")
-        showSetup(getString(R.string.pc_screen_ended, errorCode))
+        // Ended by the PC on purpose (0): say so. Lost (Wi-Fi, sleep, no video): reconnect.
+        if (errorCode != MoonBridge.ML_ERROR_GRACEFUL_TERMINATION) main.post { lost("ended $errorCode") }
+        else showSetup(getString(R.string.pc_screen_ended, errorCode))
     }
     override fun connectionStatusUpdate(connectionStatus: Int) = Unit
     override fun displayMessage(message: String) = say(message)
@@ -687,7 +772,6 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
 
     private companion object {
         const val BASE_TAG = "PcScreen"
-        const val BITRATE_KBPS = 40_000
         const val VK_LWIN: Short = 0x5b
 
         /** Apollo's permission bits a PC screen needs: launch apps (0x4000000), mouse (0x800) and keyboard (0x1000). */

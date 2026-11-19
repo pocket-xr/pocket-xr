@@ -40,6 +40,16 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
         get() = prefs.getString(KEY_CODEC, "auto")?.takeIf { it in CODECS } ?: "auto"
         set(value) = prefs.edit().putString(KEY_CODEC, value).apply()
 
+    /** Frame rate asked of the host: [PcScreenQuality.FPS], "auto" being 120 where the phone decodes it. */
+    var fps: String
+        get() = prefs.getString(KEY_FPS, "auto")?.takeIf { it in PcScreenQuality.FPS } ?: "auto"
+        set(value) = prefs.edit().putString(KEY_FPS, value).apply()
+
+    /** Picture quality: [PcScreenQuality.QUALITY], how many bits the stream gets. */
+    var quality: String
+        get() = prefs.getString(KEY_QUALITY, "auto")?.takeIf { it in PcScreenQuality.QUALITY } ?: "auto"
+        set(value) = prefs.edit().putString(KEY_QUALITY, value).apply()
+
     val serverCert: X509Certificate?
         get() = prefs.getString(KEY_CERT, null)?.let { encoded ->
             runCatching {
@@ -76,5 +86,7 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
         private const val KEY_HTTPS = "https_port"
         private const val KEY_CERT = "server_cert"
         private const val KEY_MAC = "mac"
+        private const val KEY_FPS = "fps"
+        private const val KEY_QUALITY = "quality"
     }
 }

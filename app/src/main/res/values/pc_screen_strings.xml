@@ -14,6 +14,13 @@
     <string name="pc_screen_paired_shared">Paired with %1$s. PC screen %2$d uses the same host, and a host streams one screen at a time. For both at once, run Pocket XR\'s \"Set up PC screens\" on the PC once, then tap Forget this PC here.</string>
     <string name="pc_screen_address_needed">Type the PC\'s address first.</string>
     <string name="pc_screen_pair">Pair</string>
+    <string name="pc_screen_auto">Auto</string>
+    <string name="pc_screen_fps">Smoothness: %1$s</string>
+    <string name="pc_screen_quality">Quality: %1$s</string>
+    <string name="pc_screen_quality_sharp">Sharpest</string>
+    <string name="pc_screen_quality_saver">Data saver</string>
+    <string name="pc_screen_reconnecting">Lost the connection to %1$s. Reconnecting…</string>
+    <string name="pc_screen_lost">Lost the connection to the PC. Tap Connect when it\'s back.</string>
     <string name="pc_screen_forget">Forget this PC</string>
     <string name="pc_screen_forgotten">Forgotten. Tap a PC to set this screen up again.</string>
     <string name="pc_screen_looking">Looking for PCs on your Wi-Fi…</string>

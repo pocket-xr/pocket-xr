@@ -198,6 +198,24 @@ class PcScreenDecoder(private val surface: Surface) : VideoDecoderRenderer() {
             return if (hardwareOnly) hardware else hardware ?: decoders.firstOrNull()
         }
 
+        /**
+         * Whether every codec in [formats] decodes [w] x [h] at [fps] in hardware, by the decoder's own figures: a
+         * 120 Hz stream is asked for only when whichever codec the host picks can keep up.
+         */
+        fun decodes(formats: Int, w: Int, h: Int, fps: Int): Boolean {
+            val mimes = buildList {
+                add(MediaFormat.MIMETYPE_VIDEO_AVC)
+                if (formats and MoonBridge.VIDEO_FORMAT_MASK_H265 != 0) add(MediaFormat.MIMETYPE_VIDEO_HEVC)
+                if (formats and MoonBridge.VIDEO_FORMAT_MASK_AV1 != 0) add(MediaFormat.MIMETYPE_VIDEO_AV1)
+            }
+            return mimes.all { mime ->
+                val info = findDecoder(mime, hardwareOnly = true) ?: return@all false
+                runCatching {
+                    info.getCapabilitiesForType(mime).videoCapabilities?.areSizeAndRateSupported(w, h, fps.toDouble())
+                }.getOrNull() == true
+            }
+        }
+
         /** Whether a hardware HEVC decoder is there, to offer HEVC to the host. */
         fun hevcAvailable(): Boolean = findDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC, hardwareOnly = true) != null
 
