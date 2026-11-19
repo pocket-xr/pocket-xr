@@ -458,7 +458,10 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 main.post { root.requestLayout() }
                 // 120 frames a second where every codec offered decodes this size at 120 (Auto), else 60: a picture
                 // is half as old when the Space takes it.
-                val fps = PcScreenQuality.fps(store.fps, PcScreenDecoder.decodes(formats, w, h, 120))
+                // Auto: 120 only while no other PC screen streams. Two 120 Hz AV1 streams starting together made the
+                // Flip 7's decoder refuse five times before it took one (phone log, 19 Nov 2026).
+                val others = PcScreenAudio.othersStreaming(applicationContext, slot)
+                val fps = PcScreenQuality.fps(store.fps, others == 0 && PcScreenDecoder.decodes(formats, w, h, 120))
                 val kbps = PcScreenQuality.bitrateKbps(w, h, fps, store.quality)
                 val apps = http.appList
                 val app = apps.firstOrNull { it.appName.equals("Desktop", ignoreCase = true) } ?: apps.firstOrNull()
@@ -489,7 +492,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     val quit = runCatching { http.quitApp() }
                     Log.i(TAG, "a session was running (app $running): ended it for a fresh one: ${quit.exceptionOrNull() ?: "done"}")
                 }
-                Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@$fps (${store.fps}), ${kbps / 1000} Mbps (${store.quality}), window ${windowW}x$windowH, virtual display $vd, codec ${store.codec}, formats 0x${Integer.toHexString(formats)}${if (resuming) ", resuming after a drop (try $attempt)" else ""}")
+                Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@$fps (${store.fps}), ${kbps / 1000} Mbps (${store.quality}), $others other PC screens streaming, window ${windowW}x$windowH, virtual display $vd, codec ${store.codec}, formats 0x${Integer.toHexString(formats)}${if (resuming) ", resuming after a drop (try $attempt)" else ""}")
                 if (gen != generation) {
                     Log.i(TAG, "connect: stopped before it connected; not connecting")
                     return@Thread

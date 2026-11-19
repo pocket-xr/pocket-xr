@@ -98,5 +98,16 @@ class PcScreenAudio(context: Context, private val slot: Int, private val inner: 
         const val LOUD_WINDOW_MS = 3000L
 
         private fun file(dir: File, slot: Int) = File(dir, "pc_screen_audio_${slot + 1}")
+
+        /**
+         * How many other PC screens are streaming now: their sound file was written in the last 5 s (every 250 ms
+         * while a stream's sound arrives; removed when it stops).
+         */
+        fun othersStreaming(context: Context, slot: Int): Int {
+            val now = System.currentTimeMillis()
+            return (0 until PcScreenSlots.COUNT).count { other ->
+                other != slot && file(context.filesDir, other).let { it.exists() && now - it.lastModified() < 5000 }
+            }
+        }
     }
 }
