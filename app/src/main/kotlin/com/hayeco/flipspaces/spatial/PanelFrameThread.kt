@@ -50,11 +50,20 @@ internal class CopyToken(val sync: Long, val eglImage: EGLImageKHR?, val buffer:
  * GPU graph) the display's queue filled and SurfaceFlinger's main thread waited in dequeueBuffer
  * until its watchdog reset the phone's graphics.
  */
-internal class PanelSource(width: Int, height: Int) {
-    val reader: ImageReader = ImageReader.newInstance(
-        width.coerceAtLeast(1), height.coerceAtLeast(1), PixelFormat.RGBA_8888,
-        PanelImageMailbox.DEFAULT_MAX_IMAGES, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT,
-    )
+internal class PanelSource(width: Int, height: Int, decoded: Boolean = false) {
+    // PC screens: a decoded source takes a video decoder's own buffers (ImageFormat.PRIVATE, often YUV), which the copy
+    // reads through its external texture like any other; an app's display draws RGBA as before.
+    val reader: ImageReader = if (decoded) {
+        ImageReader.newInstance(
+            width.coerceAtLeast(1), height.coerceAtLeast(1), android.graphics.ImageFormat.PRIVATE,
+            PanelImageMailbox.DEFAULT_MAX_IMAGES + 2, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE,
+        )
+    } else {
+        ImageReader.newInstance(
+            width.coerceAtLeast(1), height.coerceAtLeast(1), PixelFormat.RGBA_8888,
+            PanelImageMailbox.DEFAULT_MAX_IMAGES, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT,
+        )
+    }
     val surface: Surface = reader.surface
     // 0.5.26: two pictures may wait, so each is shown on the refresh its own timestamp says ([latch]).
     val mailbox = PanelImageMailbox<Image>(close = { runCatching { it.close() } }, maxWaiting = 2)

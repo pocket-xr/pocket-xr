@@ -249,6 +249,11 @@
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
             android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <!-- PC screens: takes the Space's surface for the stream into the PC screen's process (pcscreen.PcScreenLink). -->
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService"
+            android:exported="false"
+            android:process=":pcscreen" />
         <!-- The launcher's PC VR tile: a name and icon only. The Space opens PC VR over itself (pcvr.PcVrSession). -->
         <activity-alias
             android:name=".pcvr.PcVrTile"

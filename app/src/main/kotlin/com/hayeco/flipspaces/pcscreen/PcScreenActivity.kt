@@ -79,6 +79,16 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         setup = buildSetup()
         root.addView(setup, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
         setContentView(root)
+        // The Space's surface arriving or going while streaming: the stream starts again on the new one.
+        PcScreenSurfaces.listener = {
+            main.post {
+                if (connection != null && surface.holder.surface.isValid) {
+                    Log.i(TAG, "the Space's surface changed: starting the stream again")
+                    stopStream()
+                    startStream(surface.holder, surface.width, surface.height)
+                }
+            }
+        }
         say(getString(if (store.paired) R.string.pc_screen_paired else R.string.pc_screen_intro))
     }
 
@@ -180,7 +190,11 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         val w = STREAM_W
         val h = STREAM_H
         val hevc = PcScreenDecoder.hevcAvailable()
-        val d = PcScreenDecoder(holder.surface).also { decoder = it }
+        // Straight into the Space's reader when the Space has handed one over (PcScreenLink): no composite of this
+        // window's display in between. Else into this window, as before (the Space not running, or an older one).
+        val panelSurface = PcScreenSurfaces.current?.takeIf { it.isValid }
+        val d = PcScreenDecoder(panelSurface ?: holder.surface).also { decoder = it }
+        Log.i(TAG, "decoding into ${if (panelSurface != null) "the Space's panel directly" else "this window"}")
         say(getString(R.string.pc_screen_connecting, address))
         Thread({
             try {
@@ -274,6 +288,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
     }
 
     override fun onDestroy() {
+        PcScreenSurfaces.listener = null
         stopStream()
         super.onDestroy()
     }

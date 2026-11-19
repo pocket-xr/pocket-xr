@@ -83,6 +83,22 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
         private set
     val surface: Surface get() = src.surface
 
+    /**
+     * PC screens: the stream's pictures, decoded by the PC screen's process straight into this reader, with no
+     * composite of its display in between. Null for every other panel. Drawn instead of the display's picture while
+     * it has a recent one ([streamLive]), fitted inside the window with black bars.
+     */
+    val stream: PanelSource? = if (com.hayeco.flipspaces.pcscreen.PcScreenLink.isPcScreen(panel)) {
+        PanelSource(com.hayeco.flipspaces.pcscreen.PcScreenLink.STREAM_W, com.hayeco.flipspaces.pcscreen.PcScreenLink.STREAM_H, decoded = true)
+            .also { frames.add(it); com.hayeco.flipspaces.pcscreen.PcScreenLink.offer(it.surface) }
+    } else {
+        null
+    }
+
+    /** PC screens: [stream] had a picture in the last 2 s. */
+    val streamLive: Boolean
+        get() = stream?.let { !it.released && it.copies > 0 && SystemClock.uptimeMillis() - it.lastImageMs < 2000 } == true
+
     /** A frame was copied and can be drawn. */
     val hasFrame: Boolean get() = drawn.copies > 0
     var width: Int
@@ -335,6 +351,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     }
 
     fun release() {
+        stream?.let { com.hayeco.flipspaces.pcscreen.PcScreenLink.withdraw(it.surface); frames.remove(it) }
         previous?.let { frames.remove(it) }
         previous = null
         fadingOut?.let { frames.remove(it) }
@@ -4438,6 +4455,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // only down to the levels its shrink samples; near 1:1 one level and bilinear filtering.
         val levels = com.hayeco.flipspaces.core.spatial.PanelPrepare.mipLevels(PanelMips.texelsPerPixel(panel, p.width, frustum), d.texture.fullLevels)
         if (d.copies > 0) d.texture.prepare(levels).takeIf { it > 0 }?.let { prepareCounts.chain(it, forBlackCheck = false) }
+        // PC screens: the decoded stream is copied as it comes, at the window's cap like the display's picture.
+        p.stream?.takeIf { !it.released }?.let { st ->
+            val streamPlan = com.hayeco.flipspaces.core.spatial.PanelPrepare.copy(st.mailbox.hasNew, visible, capFps, nowMs, st.lastCopyMs)
+            if (streamPlan == com.hayeco.flipspaces.core.spatial.PanelPrepare.Copy.COPIED && copyDue) {
+                PanelImport.copy(st, nowMs, viewport.surfaceWidth, viewport.surfaceHeight, presentNs)
+            }
+            if (st.copies > 0) st.texture.prepare(com.hayeco.flipspaces.core.spatial.PanelPrepare.mipLevels(PanelMips.texelsPerPixel(panel, st.width, frustum), st.texture.fullLevels))
+        }
         p.freshThisFrame = s.copies != p.copiesSeen
         p.copiesSeen = s.copies
         perf.panel(panel.id, System.nanoTime() - t0, p.freshThisFrame)
@@ -4499,7 +4524,16 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             drawFocusHalo(p, panel, viewProj, windowAlpha, hover != null || pointer.allWindowsHeld, firstEye, hover?.frame == true || (grabZone == PanelZone.TITLE_BAR && pointer.heldPanelId != panel.id) || pointer.allWindowsHeld)
             if (old != null) drawOn(body, viewProj, old.texture.id, windowAlpha, matrixFor(old), footprint = false, round = bodyRounding(panel))
             val a = if (old != null) windowAlpha * (fade * fade * (3f - 2f * fade)) else windowAlpha
-            drawOn(body, viewProj, d.texture.id, a, matrixFor(d), footprint = !mips && store.footprintFilter, round = bodyRounding(panel, p, windowAlpha))
+            val st = p.stream?.takeIf { p.streamLive }
+            if (st != null) {
+                // PC screens: black under the whole window, then the stream at its own shape in the middle of it, the
+                // same fit the PC screen's own window uses for the mouse ([com.hayeco.flipspaces.pcscreen.PcScreenFit]).
+                colorOn(body, viewProj, floatArrayOf(0f, 0f, 0f, windowAlpha), round = bodyRounding(panel, p, windowAlpha))
+                val box = com.hayeco.flipspaces.pcscreen.PcScreenFit.uv(p.width, p.height, st.width, st.height)
+                drawOn(PanelCurve.rect(panel, box[0], box[1], box[2], box[3]), viewProj, st.texture.id, windowAlpha, GlKit.IDENTITY, footprint = !mips && store.footprintFilter)
+            } else {
+                drawOn(body, viewProj, d.texture.id, a, matrixFor(d), footprint = !mips && store.footprintFilter, round = bodyRounding(panel, p, windowAlpha))
+            }
             if (firstEye) checkProtected(p, nowMs)
             p.offer?.takeIf { card == null }?.let { offer ->
                 p.banner.set(listOf(offer), Look.mix(Look.GLASS, Look.DANGER, 0.55f), Look.INK, 30f, badge = "\u2715")
