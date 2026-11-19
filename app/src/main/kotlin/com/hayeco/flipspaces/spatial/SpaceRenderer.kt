@@ -4529,7 +4529,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 // PC screens: black under the whole window, then the stream at its own shape in the middle of it, the
                 // same fit the PC screen's own window uses for the mouse ([com.hayeco.flipspaces.pcscreen.PcScreenFit]).
                 colorOn(body, viewProj, floatArrayOf(0f, 0f, 0f, windowAlpha), round = bodyRounding(panel, p, windowAlpha))
-                val box = com.hayeco.flipspaces.pcscreen.PcScreenFit.uv(p.width, p.height, st.width, st.height)
+                // The pictures' own size (the decoder's buffers), which follows the stream's: the window's shape with a
+                // virtual display, else 1920 x 1080.
+                val box = com.hayeco.flipspaces.pcscreen.PcScreenFit.uv(p.width, p.height, st.texture.width, st.texture.height)
                 drawOn(PanelCurve.rect(panel, box[0], box[1], box[2], box[3]), viewProj, st.texture.id, windowAlpha, GlKit.IDENTITY, footprint = !mips && store.footprintFilter)
             } else {
                 drawOn(body, viewProj, d.texture.id, a, matrixFor(d), footprint = !mips && store.footprintFilter, round = bodyRounding(panel, p, windowAlpha))

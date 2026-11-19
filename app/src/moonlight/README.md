@@ -8,6 +8,7 @@ licence as Pocket XR (`LICENSE-moonlight-android.txt` in `../main/cpp/moonlight`
 
 - `com/limelight/nvstream`, without `mdns` and `wol`, which aren't used yet;
 - `com/limelight/binding/crypto/AndroidCryptoProvider.java`;
+- `com/limelight/binding/input/KeyboardTranslator.java` (Android key codes to the PC's);
 - `com/limelight/binding/audio/AndroidAudioRenderer.java`;
 - `com/limelight/LimeLog.java`.
 

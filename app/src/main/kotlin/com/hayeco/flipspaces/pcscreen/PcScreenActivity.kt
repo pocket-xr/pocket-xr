@@ -59,6 +59,24 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
     @Volatile private var streaming = false
     private var heldButton: Byte = 0
 
+    /** The stream's size: the window's own when the PC makes a virtual display ([PcScreenShape]), else 1920 x 1080. */
+    @Volatile private var streamW = STREAM_W
+    @Volatile private var streamH = STREAM_H
+
+    /** The PC made this stream a virtual display of its size, so a resized window gets a fresh stream at its shape. */
+    @Volatile private var shapedToWindow = false
+
+    private val keys by lazy { com.limelight.binding.input.KeyboardTranslator() }
+    private val reshape = Runnable {
+        if (connection != null && shapedToWindow && PcScreenShape.reshapeNeeded(root.width, root.height, streamW, streamH)) {
+            Log.i(TAG, "window now ${root.width}x${root.height}: a fresh stream at its shape")
+            // startStream ends the running session itself before the new one (endSession's own quit could land after
+            // the new launch and end that instead).
+            stopStream()
+            startStream(surface.holder, surface.width, surface.height)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -68,7 +86,10 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         root.addView(surface, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER))
         // The picture keeps the stream's shape (16:9), centred with black bars, never stretched to the panel's.
         root.addOnLayoutChangeListener { _, l, t, r, b, _, _, _, _ ->
-            val (fw, fh) = PcScreenFit.fit(r - l, b - t, STREAM_W, STREAM_H)
+            val (fw, fh) = PcScreenFit.fit(r - l, b - t, streamW, streamH)
+            // A window resized by more than a little, once it has settled for a second: a stream at its new shape.
+            main.removeCallbacks(reshape)
+            if (shapedToWindow) main.postDelayed(reshape, 1000)
             val lp = surface.layoutParams as FrameLayout.LayoutParams
             if (lp.width != fw || lp.height != fh) {
                 lp.width = fw
@@ -202,8 +223,8 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         // The stream's size: 1920 x 1080. The phone test (18 Nov 2026) asked for the panel's shape, 1976 x 1080, while
         // Apollo captured a 1920 x 1080 desktop: the host stretched it and the phone shrank it again, a little soft.
         // A desktop's own 16:9 is sent as it is, and the panel shows it at its shape ([PcScreenFit]).
-        val w = STREAM_W
-        val h = STREAM_H
+        val windowW = root.width
+        val windowH = root.height
         val formats = PcScreenDecoder.formatsFor(store.codec)
         // Straight into the Space's reader when the Space has handed one over (PcScreenLink): no composite of this
         // window's display in between. Else into this window, as before (the Space not running, or an older one).
@@ -214,6 +235,16 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         Thread({
             try {
                 val http = NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto)
+                // Apollo makes a virtual display of the stream's size (VirtualDisplayCapable, its driver ready): the
+                // stream takes the window's own shape, so it fills the window. Elsewhere 1920 x 1080, the usual
+                // desktop, which the host sends without stretching.
+                val info = http.getServerInfo(true)
+                val vd = xml(info, "VirtualDisplayCapable") == "true" && xml(info, "VirtualDisplayDriverReady") != "false"
+                val (w, h) = if (vd) PcScreenShape.forWindow(windowW, windowH) else (STREAM_W to STREAM_H)
+                shapedToWindow = vd
+                streamW = w
+                streamH = h
+                main.post { root.requestLayout() }
                 val apps = http.appList
                 val app = apps.firstOrNull { it.appName.equals("Desktop", ignoreCase = true) } ?: apps.firstOrNull()
                     ?: throw IllegalStateException("the host lists no apps")
@@ -240,7 +271,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
                     val quit = runCatching { http.quitApp() }
                     Log.i(TAG, "a session was running (app $running): ended it for a fresh one: ${quit.exceptionOrNull() ?: "done"}")
                 }
-                Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@60, codec ${store.codec}, formats 0x${Integer.toHexString(formats)}")
+                Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@60 (window ${windowW}x$windowH, virtual display $vd), codec ${store.codec}, formats 0x${Integer.toHexString(formats)}")
                 connection = NvConnection(applicationContext, tuple(address), store.httpsPort, store.uniqueId, config, crypto, cert)
                     .also { it.start(AndroidAudioRenderer(applicationContext, false), d, this) }
             } catch (e: Exception) {
@@ -273,6 +304,41 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
 
     /** A session was launched on the PC by this window and not yet ended. */
     private var sessionStarted = false
+
+    private fun xml(info: String, tag: String): String? =
+        Regex("<$tag>([^<]*)</$tag>").find(info)?.groupValues?.get(1)?.trim()?.lowercase()
+
+    // Keyboards: a Bluetooth or USB keyboard on the phone, and keys Pocket XR sends to the window, go to the PC as its
+    // own keys (Moonlight's KeyboardTranslator), with Shift, Ctrl, Alt and Win held as they are; a character with no
+    // key of its own is typed as text. Back from a mouse or the phone's buttons stays Pocket XR's.
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (!streaming) return super.dispatchKeyEvent(event)
+        if ((event.flags and android.view.KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) return super.dispatchKeyEvent(event)
+        val fromKeyboard = (event.source and android.view.InputDevice.SOURCE_KEYBOARD) == android.view.InputDevice.SOURCE_KEYBOARD &&
+            event.device?.keyboardType == android.view.InputDevice.KEYBOARD_TYPE_ALPHABETIC
+        if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && !fromKeyboard) return super.dispatchKeyEvent(event)
+        val code = keys.translate(event.keyCode, event.deviceId)
+        if (code.toInt() == 0) {
+            val ch = event.unicodeChar
+            if (event.action == android.view.KeyEvent.ACTION_DOWN && ch != 0) MoonBridge.sendUtf8Text(String(Character.toChars(ch)))
+            else if (event.action == android.view.KeyEvent.ACTION_MULTIPLE && event.characters != null) MoonBridge.sendUtf8Text(event.characters)
+            return true
+        }
+        var mods = 0
+        if (event.isShiftPressed) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_SHIFT.toInt()
+        if (event.isCtrlPressed) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_CTRL.toInt()
+        if (event.isAltPressed) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_ALT.toInt()
+        if (event.isMetaPressed) mods = mods or com.limelight.nvstream.input.KeyboardPacket.MODIFIER_META.toInt()
+        val flags = if (keys.hasNormalizedMapping(event.keyCode, event.deviceId)) 0 else MoonBridge.SS_KBE_FLAG_NON_NORMALIZED.toInt()
+        when (event.action) {
+            android.view.KeyEvent.ACTION_DOWN -> if (event.repeatCount == 0) {
+                MoonBridge.sendKeyboardInput(code, com.limelight.nvstream.input.KeyboardPacket.KEY_DOWN, mods.toByte(), flags.toByte())
+            }
+            android.view.KeyEvent.ACTION_UP ->
+                MoonBridge.sendKeyboardInput(code, com.limelight.nvstream.input.KeyboardPacket.KEY_UP, mods.toByte(), flags.toByte())
+        }
+        return true
+    }
 
     private fun stopStream() {
         streaming = false
