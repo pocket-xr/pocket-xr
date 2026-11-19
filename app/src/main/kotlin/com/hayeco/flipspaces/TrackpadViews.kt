@@ -2628,6 +2628,10 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 closeDrawer()
                 host.openTour()
             }.apply { tag = MENU_TOUR })
+            MenuItem.WAKE_RELAY -> listOf(row(R.drawable.ic_pcvr_tile, c.getString(R.string.wake_relay_title), subtitle = c.getString(R.string.wake_relay_row_subtitle)) {
+                closeDrawer()
+                c.startActivity(android.content.Intent(c, com.hayeco.flipspaces.pcscreen.WakeRelayActivity::class.java))
+            })
             MenuItem.HOW_TO -> listOf(row(R.drawable.ic_usage_intro, c.getString(R.string.pad_how_to_use)) {
                 closeDrawer()
                 showIntro(host.introPages())

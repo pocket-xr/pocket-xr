@@ -60,6 +60,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private lateinit var foundTitle: TextView
     private lateinit var foundList: LinearLayout
     private val finder by lazy { PcScreenFinder(this) { showFound(it) } }
+
+    /** The wake relay at home, found by mDNS and remembered for away ([WakeRelay]). */
+    private val relayFinder by lazy { WakeRelayFinder(this) }
     private lateinit var status: TextView
     private lateinit var surface: SurfaceView
 
@@ -131,6 +134,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         }
         say(getString(if (store.paired) R.string.pc_screen_paired else R.string.pc_screen_intro))
         finder.start()
+        relayFinder.start()
         // Paired before: straight to the PC's screen, nothing to tap.
         if (store.paired && savedInstanceState == null) connect()
     }
@@ -480,13 +484,13 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         say(getString(R.string.pc_screen_connecting, home))
         Thread({
             try {
-                val address = route(home)
+                // Home or away, waking the PC first (at home, or through the wake relay) when it does not answer.
+                val (address, info) = serverInfoWaking(home, cert, gen)
                 activeAddress = address
                 val http = NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto)
                 // Apollo makes a virtual display of the stream's size (VirtualDisplayCapable, its driver ready): the
                 // stream takes the window's own shape, so it fills the window. Elsewhere 1920 x 1080, the usual
                 // desktop, which the host sends without stretching.
-                val info = serverInfoWaking(http, gen)
                 // The PC's name for away from home, learnt at home if it was paired before names were kept.
                 if (store.pcName == null && address == home) xml(info, "hostname")?.let { store.pcName = it }
                 // Apollo says what this phone may do: without launching, or the mouse and keyboard, say how to fix it
@@ -586,25 +590,40 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     }
 
     /**
-     * Serverinfo, waking the PC first if it does not answer and its MAC is known ([PcScreenWake]): a magic packet, then
-     * up to 60 s for it to come up. Blocking: the connect thread.
+     * The address to use and its serverinfo, waking the PC first if it does not answer and its MAC is known: a magic
+     * packet on this network ([PcScreenWake]), and the wake relay at home asked to send one there ([WakeRelay]), which is
+     * what wakes it from away. Then up to 90 s for it to come up, choosing home or away ([route]) again each time.
+     * Blocking: the connect thread.
      */
-    private fun serverInfoWaking(http: NvHTTP, gen: Int): String {
+    private fun serverInfoWaking(home: String, cert: java.security.cert.X509Certificate, gen: Int): Pair<String, String> {
+        fun info(address: String, likelyOnline: Boolean) = NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto).getServerInfo(likelyOnline)
+        val firstAddress = route(home)
         val first = try {
-            return http.getServerInfo(true)
+            return firstAddress to info(firstAddress, true)
         } catch (e: Exception) {
             if (PcScreenTrouble.of(e) != PcScreenTrouble.UNREACHABLE || PcScreenWake.macBytes(store.mac) == null) throw e
             e
         }
-        val host = PcScreenAddress.parse(store.address)?.first ?: store.address
+        val host = PcScreenAddress.parse(home)?.first ?: home
+        val mac = store.mac!!
         say(getString(R.string.pc_screen_waking, host))
-        Log.i(TAG, "the PC does not answer: Wake-on-LAN sent ${PcScreenWake.send(store.mac, host)}")
-        val until = android.os.SystemClock.uptimeMillis() + 60_000
+        fun wake() {
+            val here = PcScreenWake.send(mac, host)
+            val relay = WakeRelay.ask(this, mac, host)
+            Log.i(TAG, "the PC does not answer: Wake-on-LAN here ${if (here) "sent" else "not sent"}, wake relay ${if (relay) "sent it" else if (WakeRelay.known(this) == null) "none known" else "did not answer"}")
+        }
+        wake()
+        val until = android.os.SystemClock.uptimeMillis() + 90_000
+        var round = 0
         while (android.os.SystemClock.uptimeMillis() < until && gen == generation) {
             Thread.sleep(3000)
-            val info = runCatching { http.getServerInfo(false) }.getOrNull()
-            if (info != null) return info
-            PcScreenWake.send(store.mac, host)
+            val address = route(home)
+            val got = runCatching { info(address, false) }.getOrNull()
+            if (got != null) {
+                Log.i(TAG, "the PC is awake, at $address")
+                return address to got
+            }
+            if (++round % 5 == 0) wake()
         }
         throw first
     }
@@ -782,6 +801,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
 
     override fun onDestroy() {
         finder.stop()
+        relayFinder.stop()
         PcScreenSurfaces.listener = null
         endSession()
         super.onDestroy()

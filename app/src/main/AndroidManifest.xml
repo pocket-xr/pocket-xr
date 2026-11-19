@@ -303,6 +303,24 @@
             android:foregroundServiceType="camera" />
 
         <!-- 0.4.4: keeps the process awake for the glasses' plug-in, with a quiet notification. -->
+        <!-- PC screens: the wake relay, on a phone left at home (pcscreen.WakeRelayService), its screen and its restart
+             after a reboot. -->
+        <service
+            android:name=".pcscreen.WakeRelayService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+        <activity
+            android:name=".pcscreen.WakeRelayActivity"
+            android:exported="false"
+            android:label="@string/wake_relay_title"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <receiver
+            android:name=".pcscreen.WakeRelayBoot"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <service
             android:name=".GlassesReadyService"
             android:exported="false"
