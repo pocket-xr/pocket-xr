@@ -1,46 +1,100 @@
 package com.hayeco.flipspaces.pcscreen
 
 import android.content.Context
+import android.os.SystemClock
 import com.hayeco.flipspaces.Log
 import com.limelight.nvstream.av.audio.AudioRenderer
 import com.limelight.nvstream.jni.MoonBridge
 import java.io.File
-import java.io.RandomAccessFile
-import java.nio.channels.FileChannel
-import java.nio.channels.FileLock
 
 /**
- * PC screens: one sound for all of them. Every Apollo instance on a PC sends the same PC sound, so two PC screens
- * played it twice, a little apart (Mike's phone, 19 Nov 2026). The first PC screen to stream takes a file lock shared by
- * the PC screen processes and plays the sound; the others play nothing until it lets go.
+ * PC screens: one sound for all of them.
+ *
+ * What Mike's phone showed (19 Nov 2026):
+ * - two PC screens each playing the sound played it twice, a little apart;
+ * - Apollo sends the PC's sound to its newest session only: when PC screen 2 connected, PC screen 1's sound stopped
+ *   coming, so "the first PC screen plays it" went silent.
+ *
+ * So each PC screen notes, in a small file shared by the PC screen processes, when it started and when it last
+ * received sound that is not silence. A PC screen plays what it receives unless another PC screen, started later, is
+ * receiving sound too: then that one plays and this one feeds silence. Whichever screen Apollo sends the sound to is
+ * heard, once.
  */
-object PcScreenAudio {
-    private var channel: FileChannel? = null
-    private var lock: FileLock? = null
+class PcScreenAudio(context: Context, private val slot: Int, private val inner: AudioRenderer) : AudioRenderer {
+    private val dir = context.filesDir
+    private val mine = file(dir, slot)
+    private val startedMs = SystemClock.elapsedRealtime()
+    private var lastLoudMs = 0L
+    private var lastWriteMs = 0L
+    private var lastCheckMs = 0L
+    private var playing = true
+    private var silence = ShortArray(0)
 
-    /** True when this process now carries the sound (or already did). */
-    @Synchronized
-    fun claim(context: Context): Boolean {
-        if (lock?.isValid == true) return true
-        return runCatching {
-            val ch = channel ?: RandomAccessFile(File(context.filesDir, "pc_screen_audio.lock"), "rw").channel.also { channel = it }
-            lock = ch.tryLock()
-            lock != null
-        }.getOrDefault(false).also { Log.i("PcScreen", "sound: ${if (it) "this PC screen plays it" else "another PC screen plays it"}") }
+    override fun setup(audioConfiguration: MoonBridge.AudioConfiguration, sampleRate: Int, samplesPerFrame: Int): Int {
+        write(SystemClock.elapsedRealtime())
+        return inner.setup(audioConfiguration, sampleRate, samplesPerFrame)
     }
 
-    @Synchronized
-    fun release() {
-        runCatching { lock?.release() }
-        lock = null
+    override fun start() = inner.start()
+
+    override fun stop() {
+        inner.stop()
+        runCatching { mine.delete() }
     }
 
-    /** Takes the stream's sound and plays none of it. */
-    class Silent : AudioRenderer {
-        override fun setup(audioConfiguration: MoonBridge.AudioConfiguration, sampleRate: Int, samplesPerFrame: Int) = 0
-        override fun start() = Unit
-        override fun stop() = Unit
-        override fun playDecodedAudio(audioData: ShortArray) = Unit
-        override fun cleanup() = Unit
+    override fun cleanup() {
+        inner.cleanup()
+        runCatching { mine.delete() }
+    }
+
+    override fun playDecodedAudio(audioData: ShortArray) {
+        val now = SystemClock.elapsedRealtime()
+        var peak = 0
+        for (s in audioData) {
+            val a = if (s < 0) -s.toInt() else s.toInt()
+            if (a > peak) peak = a
+        }
+        if (peak > LOUD) lastLoudMs = now
+        if (now - lastWriteMs >= 250) write(now)
+        if (now - lastCheckMs >= 250) {
+            lastCheckMs = now
+            val next = shouldPlay(now)
+            if (next != playing) {
+                playing = next
+                Log.i("PcScreen", "sound: PC screen ${slot + 1} ${if (next) "plays the sound" else "is quiet, a later PC screen has the sound"}")
+            }
+        }
+        if (playing) {
+            inner.playDecodedAudio(audioData)
+        } else {
+            // Silence keeps the audio track fed, so it is ready the moment this screen has the sound again.
+            if (silence.size != audioData.size) silence = ShortArray(audioData.size)
+            inner.playDecodedAudio(silence)
+        }
+    }
+
+    private fun write(now: Long) {
+        lastWriteMs = now
+        runCatching { mine.writeText("$startedMs $lastLoudMs") }
+    }
+
+    /** Plays unless another PC screen, started later, has had sound in the last second. */
+    private fun shouldPlay(now: Long): Boolean {
+        for (other in 0 until PcScreenSlots.COUNT) {
+            if (other == slot) continue
+            val parts = runCatching { file(dir, other).readText().trim().split(' ') }.getOrNull() ?: continue
+            val started = parts.getOrNull(0)?.toLongOrNull() ?: continue
+            val loud = parts.getOrNull(1)?.toLongOrNull() ?: continue
+            if (started > startedMs && now - loud < LOUD_WINDOW_MS) return false
+        }
+        return true
+    }
+
+    companion object {
+        /** Peak above this (of 32767) is sound, not silence or noise. */
+        const val LOUD = 300
+        const val LOUD_WINDOW_MS = 1000L
+
+        private fun file(dir: File, slot: Int) = File(dir, "pc_screen_audio_${slot + 1}")
     }
 }

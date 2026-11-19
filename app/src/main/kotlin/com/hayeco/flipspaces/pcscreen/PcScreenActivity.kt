@@ -454,9 +454,8 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 }
                 connection = NvConnection(applicationContext, tuple(address), store.httpsPort, store.uniqueId, config, crypto, cert)
                     .also {
-                        // One PC screen plays the PC's sound; the others would play the same sound again ([PcScreenAudio]).
-                        val sound = if (PcScreenAudio.claim(applicationContext)) AndroidAudioRenderer(applicationContext, false) else PcScreenAudio.Silent()
-                        it.start(sound, d, this)
+                        // One PC screen plays the PC's sound: the latest one Apollo sends it to ([PcScreenAudio]).
+                        it.start(PcScreenAudio(applicationContext, slot, AndroidAudioRenderer(applicationContext, false)), d, this)
                     }
             } catch (e: Exception) {
                 Log.w(TAG, "connect: $e")
@@ -569,7 +568,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         generation++
         starting = false
         streaming = false
-        connection?.let { c -> Thread({ c.stop(); PcScreenAudio.release() }, "PcScreen-stop").start() }
+        connection?.let { c -> Thread({ c.stop() }, "PcScreen-stop").start() }
         connection = null
         decoder = null
     }
