@@ -78,7 +78,7 @@ class PcScreenAudio(context: Context, private val slot: Int, private val inner: 
         runCatching { mine.writeText("$startedMs $lastLoudMs") }
     }
 
-    /** Plays unless another PC screen, started later, has had sound in the last second. */
+    /** Plays unless another PC screen, started later, has had sound in the last 3 s. */
     private fun shouldPlay(now: Long): Boolean {
         for (other in 0 until PcScreenSlots.COUNT) {
             if (other == slot) continue
@@ -93,7 +93,9 @@ class PcScreenAudio(context: Context, private val slot: Int, private val inner: 
     companion object {
         /** Peak above this (of 32767) is sound, not silence or noise. */
         const val LOUD = 300
-        const val LOUD_WINDOW_MS = 1000L
+        // 1 s let the sound hop between screens at every pause in it, two screens playing for a moment (phone log,
+        // 19 Nov 2026); 3 s rides over pauses in music and speech.
+        const val LOUD_WINDOW_MS = 3000L
 
         private fun file(dir: File, slot: Int) = File(dir, "pc_screen_audio_${slot + 1}")
     }
