@@ -211,6 +211,8 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
                     .setRemoteConfiguration(StreamConfiguration.STREAM_CFG_AUTO)
                     .setAudioConfiguration(MoonBridge.AUDIO_CONFIGURATION_STEREO)
                     // Moonlight's default colours, said to the host and to the decoder alike (PcScreenDecoder).
+                    // Apollo: a virtual display of this size on the PC, so the PC screen works with the monitors off.
+                    .setVirtualDisplay(true)
                     .setColorSpace(MoonBridge.COLORSPACE_REC_709)
                     .setColorRange(MoonBridge.COLOR_RANGE_LIMITED)
                     .setSupportedVideoFormats(MoonBridge.VIDEO_FORMAT_H264 or (if (hevc) MoonBridge.VIDEO_FORMAT_H265 else 0))

@@ -26,6 +26,9 @@ public class StreamConfiguration {
     private int attachedGamepadMask;
     private int encryptionFlags;
     private int colorRange;
+    // Pocket XR: Apollo makes the host a virtual display of the stream's size when asked (Artemis's virtualDisplay), so
+    // a PC screen works with the PC's monitors off. Sunshine ignores the argument.
+    private boolean virtualDisplay;
     private int colorSpace;
     private boolean persistGamepadsAfterDisconnect;
 
@@ -118,6 +121,11 @@ public class StreamConfiguration {
             return this;
         }
 
+        public StreamConfiguration.Builder setVirtualDisplay(boolean enable) {
+            config.virtualDisplay = enable;
+            return this;
+        }
+
         public StreamConfiguration.Builder setColorRange(int colorRange) {
             config.colorRange = colorRange;
             return this;
@@ -150,6 +158,10 @@ public class StreamConfiguration {
         this.attachedGamepadMask = 0;
     }
     
+    public boolean getVirtualDisplay() {
+        return virtualDisplay;
+    }
+
     public int getWidth() {
         return width;
     }

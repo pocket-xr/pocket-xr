@@ -18,7 +18,8 @@ through the XREAL Aura on a Flip7. It also replaces a low-latency track that doe
 standard one, and logs the audio's peak level every 5 seconds. This was seen on a Flip7 with the XREAL Aura's USB
 audio.
 
-`nvstream/http/NvHTTP.java` no longer reads Moonlight's `BuildConfig`, and its verbose logging is off.
+`nvstream/StreamConfiguration.java` and `NvHTTP.java` can ask the host for a virtual display (`virtualDisplay=1`,
+as Artemis does), which Apollo makes and Sunshine ignores. `nvstream/http/NvHTTP.java` also no longer reads Moonlight's `BuildConfig`, and its verbose logging is off.
 
 ## Why the package names are Moonlight's
 
