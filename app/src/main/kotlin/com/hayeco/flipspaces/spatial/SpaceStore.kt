@@ -630,9 +630,12 @@ class SpaceStore(context: Context) {
         get() = prefs.getBoolean(KEY_SNAP_WINDOWS, true)
         set(value) = prefs.edit().putBoolean(KEY_SNAP_WINDOWS, value).apply()
 
-    /** 0.5.36: the trackpad cursor follows the head (on, the default) or stays anchored in the room (off). */
+    /**
+     * 0.5.36: the trackpad cursor follows the head (on) or stays anchored in the room (off). Off by default since Mike
+     * asked (18 Nov 2026); someone who turned it on or off keeps their choice.
+     */
     var cursorFollowsHead: Boolean
-        get() = prefs.getBoolean(KEY_CURSOR_FOLLOWS_HEAD, true)
+        get() = prefs.getBoolean(KEY_CURSOR_FOLLOWS_HEAD, false)
         set(value) = prefs.edit().putBoolean(KEY_CURSOR_FOLLOWS_HEAD, value).apply()
 
     /**
