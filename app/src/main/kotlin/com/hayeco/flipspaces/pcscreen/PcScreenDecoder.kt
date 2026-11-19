@@ -55,7 +55,11 @@ class PcScreenDecoder(private val surface: Surface) : VideoDecoderRenderer() {
     private val renderedHandler = android.os.Handler(renderedThread.looper)
 
     override fun setup(format: Int, width: Int, height: Int, redrawRate: Int): Int {
-        mime = if (format and MoonBridge.VIDEO_FORMAT_MASK_H265 != 0) MediaFormat.MIMETYPE_VIDEO_HEVC else MediaFormat.MIMETYPE_VIDEO_AVC
+        mime = when {
+            format and MoonBridge.VIDEO_FORMAT_MASK_AV1 != 0 -> MediaFormat.MIMETYPE_VIDEO_AV1
+            format and MoonBridge.VIDEO_FORMAT_MASK_H265 != 0 -> MediaFormat.MIMETYPE_VIDEO_HEVC
+            else -> MediaFormat.MIMETYPE_VIDEO_AVC
+        }
         val info = findDecoder(mime) ?: run {
             Log.w(TAG, "no hardware decoder for $mime")
             return -1
@@ -196,6 +200,16 @@ class PcScreenDecoder(private val surface: Surface) : VideoDecoderRenderer() {
 
         /** Whether a hardware HEVC decoder is there, to offer HEVC to the host. */
         fun hevcAvailable(): Boolean = findDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC, hardwareOnly = true) != null
+
+        /** Whether a hardware AV1 decoder is there. */
+        fun av1Available(): Boolean = findDecoder(MediaFormat.MIMETYPE_VIDEO_AV1, hardwareOnly = true) != null
+
+        /** The formats offered to the host for the chosen codec ([PcScreenStore.codec]); H.264 always, as a fallback. */
+        fun formatsFor(codec: String): Int = when (codec) {
+            "h264" -> MoonBridge.VIDEO_FORMAT_H264
+            "av1" -> MoonBridge.VIDEO_FORMAT_H264 or (if (av1Available()) MoonBridge.VIDEO_FORMAT_AV1_MAIN8 else 0)
+            else -> MoonBridge.VIDEO_FORMAT_H264 or (if (hevcAvailable()) MoonBridge.VIDEO_FORMAT_H265 else 0)
+        }
 
         /** Artemis's options, fewer on each [tryNumber] (0 is all of them). */
         internal fun lowLatency(f: MediaFormat, name: String, tryNumber: Int) {

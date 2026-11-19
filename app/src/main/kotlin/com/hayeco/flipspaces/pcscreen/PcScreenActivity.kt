@@ -118,6 +118,15 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
                 text = getString(R.string.pc_screen_pair)
                 setOnClickListener { pair() }
             })
+            // Codec, a test of which decodes fastest on the phone: Auto (HEVC), H.264 or AV1.
+            addView(Button(context).apply {
+                fun label() = "Codec: " + when (store.codec) { "h264" -> "H.264"; "av1" -> "AV1"; else -> "Auto (HEVC)" }
+                text = label()
+                setOnClickListener {
+                    store.codec = PcScreenStore.CODECS[(PcScreenStore.CODECS.indexOf(store.codec) + 1) % PcScreenStore.CODECS.size]
+                    text = label()
+                }
+            })
             addView(Button(context).apply {
                 text = getString(R.string.pc_screen_connect)
                 setOnClickListener { connect() }
@@ -189,7 +198,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         // A desktop's own 16:9 is sent as it is, and the panel shows it at its shape ([PcScreenFit]).
         val w = STREAM_W
         val h = STREAM_H
-        val hevc = PcScreenDecoder.hevcAvailable()
+        val formats = PcScreenDecoder.formatsFor(store.codec)
         // Straight into the Space's reader when the Space has handed one over (PcScreenLink): no composite of this
         // window's display in between. Else into this window, as before (the Space not running, or an older one).
         val panelSurface = PcScreenSurfaces.current?.takeIf { it.isValid }
@@ -215,9 +224,17 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
                     .setVirtualDisplay(true)
                     .setColorSpace(MoonBridge.COLORSPACE_REC_709)
                     .setColorRange(MoonBridge.COLOR_RANGE_LIMITED)
-                    .setSupportedVideoFormats(MoonBridge.VIDEO_FORMAT_H264 or (if (hevc) MoonBridge.VIDEO_FORMAT_H265 else 0))
+                    .setSupportedVideoFormats(formats)
                     .build()
-                Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@60, hevc $hevc")
+                // A fresh session each time, so Apollo makes this stream's virtual display: rejoining a session it
+                // started on a real monitor kept streaming that monitor (Mike's phone, 18 Nov 2026). One PC screen
+                // for now; several will each have their own host instance.
+                val running = runCatching { http.getCurrentGame(http.getServerInfo(true)) }.getOrDefault(0)
+                if (running != 0) {
+                    val quit = runCatching { http.quitApp() }
+                    Log.i(TAG, "a session was running (app $running): ended it for a fresh one: ${quit.exceptionOrNull() ?: "done"}")
+                }
+                Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@60, codec ${store.codec}, formats 0x${Integer.toHexString(formats)}")
                 connection = NvConnection(applicationContext, tuple(address), store.httpsPort, store.uniqueId, config, crypto, cert)
                     .also { it.start(AndroidAudioRenderer(applicationContext, false), d, this) }
             } catch (e: Exception) {

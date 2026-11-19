@@ -31,6 +31,11 @@ class PcScreenStore(context: Context) {
 
     val httpsPort: Int get() = prefs.getInt(KEY_HTTPS, 0)
 
+    /** The video codec asked of the host: [CODECS], "auto" being HEVC where the phone decodes it, else H.264. */
+    var codec: String
+        get() = prefs.getString(KEY_CODEC, "auto")?.takeIf { it in CODECS } ?: "auto"
+        set(value) = prefs.edit().putString(KEY_CODEC, value).apply()
+
     val serverCert: X509Certificate?
         get() = prefs.getString(KEY_CERT, null)?.let { encoded ->
             runCatching {
@@ -53,10 +58,12 @@ class PcScreenStore(context: Context) {
         prefs.edit().remove(KEY_HTTPS).remove(KEY_CERT).apply()
     }
 
-    private companion object {
-        const val KEY_ID = "unique_id"
-        const val KEY_ADDRESS = "address"
-        const val KEY_HTTPS = "https_port"
-        const val KEY_CERT = "server_cert"
+    companion object {
+        val CODECS = listOf("auto", "h264", "av1")
+        private const val KEY_CODEC = "codec"
+        private const val KEY_ID = "unique_id"
+        private const val KEY_ADDRESS = "address"
+        private const val KEY_HTTPS = "https_port"
+        private const val KEY_CERT = "server_cert"
     }
 }
