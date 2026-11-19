@@ -135,6 +135,9 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     var notice: String? = null
     var noticeUntilMs = 0L
 
+    /** PC screens: [streamLive] when last drawn, so a stream (re)starting shows the window's name. */
+    var streamWasLive = false
+
     /** 0.5.21: when Wide view was last pressed, for the line on whether the app filled the window. */
     var broadToggledMs = 0L
 
@@ -4146,6 +4149,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val next = if (inFrontOfGaze) layout.bringTo(open.id, yaw, pitch) else layout.raise(open.id)
             setLayout(next, commit = true)
             focus(open.id)
+            // PC screens: its name on it, so the tile's window is the one that says so.
+            if (pcSlot >= 0) panels[open.id]?.let { showNotice(it, open.label, SystemClock.uptimeMillis()) }
             windowOpenMs.remove(-1)?.let { windowOpenMs[open.id] = it }
             launcher.clearSearch()
             Log.i(PANEL_TAG, "panel ${open.id} ${app.label} already open: brought ${if (inFrontOfGaze) "in front of the gaze" else "to the front"} instead of a second window")
@@ -4530,6 +4535,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             if (old != null) drawOn(body, viewProj, old.texture.id, windowAlpha, matrixFor(old), footprint = false, round = bodyRounding(panel))
             val a = if (old != null) windowAlpha * (fade * fade * (3f - 2f * fade)) else windowAlpha
             val st = p.stream?.takeIf { p.streamLive }
+            // PC screens look alike (Mike, 19 Nov 2026: "hard to tell which one ... which window is which"): the name,
+            // "PC screen 2", over the window for 4 s when its stream starts.
+            if (firstEye && (st != null) != p.streamWasLive) {
+                p.streamWasLive = st != null
+                if (st != null) showNotice(p, panel.label, nowMs)
+            }
             if (st != null) {
                 // PC screens: black under the whole window, then the stream at its own shape in the middle of it, the
                 // same fit the PC screen's own window uses for the mouse ([com.hayeco.flipspaces.pcscreen.PcScreenFit]).

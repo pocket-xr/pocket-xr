@@ -179,10 +179,31 @@ function Stop-Screen($apollo, $n) {
 
 # Copies the main Apollo's phones (and its web login) into an extra instance's state, if they differ. Returns $true
 # when it changed the file (the instance must restart to read it).
+#
+# Each phone gets its own uuid in each extra instance: Apollo makes one virtual display per paired device's uuid, so
+# with the main Apollo's uuids copied as they were, all three instances made the same display (\\.\DISPLAY6) and the
+# three PC screens showed one desktop (Mike's PC, 19 Nov 2026). The uuid is made from the original and the screen's
+# number, so it stays the same from one copy to the next.
+function Screen-Uuid($uuid, $n) {
+    $md5 = [Security.Cryptography.MD5]::Create()
+    $bytes = $md5.ComputeHash([Text.Encoding]::UTF8.GetBytes("$uuid pocketxr screen $n"))
+    return ([guid]::new($bytes)).ToString().ToUpper()
+}
+
+function Screen-Devices($devices, $n) {
+    $out = @()
+    foreach ($d in $devices) {
+        $copy = $d | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+        if ($copy.PSObject.Properties['uuid'] -and $copy.uuid) { $copy.uuid = Screen-Uuid $copy.uuid $n }
+        $out += $copy
+    }
+    return $out
+}
+
 function Sync-Screen($apollo, $n, $mainState) {
     $path = Screen-State $apollo $n
     $state = Read-Json $path
-    $devices = Get-Devices $mainState
+    $devices = Screen-Devices (Get-Devices $mainState) $n
     if ($state -and (Devices-Key (Get-Devices $state)) -eq (Devices-Key $devices)) { return $false }
     $uniqueid = if ($state -and $state.root -and $state.root.uniqueid) { $state.root.uniqueid } else { ([guid]::NewGuid()).ToString().ToUpper() }
     $out = [ordered]@{}
@@ -211,7 +232,15 @@ function Sync-All($apollo) {
 
 # ---- the sign-in task ----
 
+function Stop-RunLoop {
+    Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+    Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -like '*PocketXR-PC-Screens.ps1*-Run*' } |
+        ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+}
+
 function Install-Task {
+    # Run again (an update): the running loop is the old script, so it stops before the new one starts.
+    Stop-RunLoop
     New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
     # Run from Program Files, where only admins can change it: the task runs it with admin rights.
     if ($PSCommandPath -ne $InstalledScript) { Copy-Item -Path $PSCommandPath -Destination $InstalledScript -Force }
@@ -246,9 +275,8 @@ if (-not (Test-Admin)) {
 try {
     $apollo = Find-Apollo
     if ($Remove) {
+        Stop-RunLoop
         Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
-        Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object { $_.CommandLine -like '*PocketXR-PC-Screens.ps1*-Run*' } |
-            ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
         if ($apollo) { foreach ($s in $Screens) { Stop-Screen $apollo $s.Number } }
         Say 'PC screens 2 and 3 are stopped and will not start at sign-in. Their settings files are left in Apollo''s config folder.'
     } else {

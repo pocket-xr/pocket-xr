@@ -173,8 +173,15 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
 
     private var autoTried = false
 
-    /** A found PC tapped: connect if it already knows this phone, else pair with a PIN. */
+    /**
+     * A found PC tapped: connect if it already knows this phone, else pair with a PIN. One another PC screen uses is
+     * refused: two PC screens on one Apollo show the same picture (Mike's phone, 19 Nov 2026).
+     */
     private fun choose(address: String) {
+        sharedWith(address)?.let { other ->
+            say(getString(R.string.pc_screen_host_taken, other + 1))
+            return
+        }
         addressField.setText(address)
         pair()
     }

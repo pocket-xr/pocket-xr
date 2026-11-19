@@ -15,7 +15,7 @@ import java.net.Inet4Address
  */
 class PcScreenFinder(context: Context, private val found: (List<Host>) -> Unit) {
     /** A host as found: its mDNS name (the PC's; every Apollo instance gives the same), its IPv4 address and HTTP port. */
-    data class Host(val name: String, val address: String, val port: Int) {
+    data class Host(val name: String, val address: String, val port: Int, val service: String = name) {
         /** The address as the setup page saves it: the port only when it is not the usual one. */
         val typed: String get() = if (port == PcScreenAddress.DEFAULT_PORT) address else "$address:$port"
     }
@@ -37,7 +37,7 @@ class PcScreenFinder(context: Context, private val found: (List<Host>) -> Unit) 
             resolveNext()
         }.let { }
         override fun onServiceLost(info: NsdServiceInfo) = main.post {
-            if (hosts.entries.removeAll { it.value.name == info.serviceName }) found(hosts.values.toList())
+            if (hosts.entries.removeAll { it.value.service == info.serviceName }) found(hosts.values.toList())
         }.let { }
     }
 
@@ -71,18 +71,38 @@ class PcScreenFinder(context: Context, private val found: (List<Host>) -> Unit) 
                 val addr = serviceInfo.host
                 // IPv4 where there is one: the phone and PC on one Wi-Fi, and simplest to show.
                 if (addr is Inet4Address) {
-                    val h = Host(serviceInfo.serviceName, addr.hostAddress ?: "", serviceInfo.port)
-                    // Keyed by address and port: Apollo's instances all give the PC's own name.
-                    if (h.address.isNotEmpty() && hosts[h.typed] != h) {
-                        hosts[h.typed] = h
-                        Log.i(TAG, "finder: found ${h.name} at ${h.typed}")
-                        found(hosts.values.toList())
-                    }
+                    val seen = Host(serviceInfo.serviceName, addr.hostAddress ?: "", serviceInfo.port)
+                    // mDNS gives every Apollo instance the PC's own name, numbered "Mike(2)" by order of start, which
+                    // says nothing; the instance's own name ("MIKE screen 2") comes from its serverinfo.
+                    if (seen.address.isNotEmpty()) Thread({
+                        val h = seen.copy(name = hostName(seen) ?: seen.name)
+                        main.post {
+                            // Keyed by address and port.
+                            if (running && hosts[h.typed] != h) {
+                                hosts[h.typed] = h
+                                Log.i(TAG, "finder: found ${h.name} at ${h.typed}")
+                                found(hosts.values.toList())
+                            }
+                        }
+                    }, "PcScreen-name").start()
                 }
                 resolveNext()
             }.let { }
         }) ?: run { resolving = false }
     }
+
+    /** The host's own name from its serverinfo over plain HTTP, or null. Blocking. */
+    private fun hostName(h: Host): String? = runCatching {
+        val c = java.net.URL("http://${h.address}:${h.port}/serverinfo").openConnection() as java.net.HttpURLConnection
+        c.connectTimeout = 1500
+        c.readTimeout = 1500
+        try {
+            val xml = c.inputStream.bufferedReader().use { it.readText() }
+            Regex("<hostname>([^<]+)</hostname>").find(xml)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotEmpty() }
+        } finally {
+            c.disconnect()
+        }
+    }.getOrNull()
 
     private companion object {
         const val TAG = "PcScreen"

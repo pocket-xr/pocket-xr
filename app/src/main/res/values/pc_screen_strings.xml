@@ -21,6 +21,7 @@
     <string name="pc_screen_none_found">No PC found yet. Check Apollo is running on the PC and the PC is on the same Wi-Fi as the phone. You can also type its address below.</string>
     <string name="pc_screen_or_type">Or type the PC\'s address:</string>
     <string name="pc_screen_host_in_use">%1$s (PC screen %2$d)</string>
+    <string name="pc_screen_host_taken">PC screen %1$d already uses that one. Tap another, or run Set up PC screens on the PC to add more.</string>
     <string name="pc_screen_reused">%1$s already knows this phone. Connecting…</string>
     <string name="pc_screen_waking">Waking %1$s…</string>
     <string name="pc_screen_trouble_unreachable">Can\'t reach %1$s. Check the PC is on, Apollo is running, and the PC and phone are on the same Wi-Fi.</string>
