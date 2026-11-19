@@ -79,6 +79,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         setup = buildSetup()
         root.addView(setup, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
         setContentView(root)
+        homeDisplay = display?.displayId ?: android.view.Display.INVALID_DISPLAY
         // The Space's surface arriving or going while streaming: the stream starts again on the new one.
         PcScreenSurfaces.listener = {
             main.post {
@@ -255,10 +256,11 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
      * stayed on the PC and his windows were hidden on it once the monitors were back on. Called when the PC screen's
      * window goes (its panel closed, the Space or glasses gone) and when the Space takes its surface back.
      */
-    private fun endSession() {
-        val wasStreaming = connection != null
+    private fun endSession(force: Boolean = false) {
+        val wasStreaming = connection != null || sessionStarted
         stopStream()
-        if (!wasStreaming || !store.paired) return
+        sessionStarted = false
+        if ((!wasStreaming && !force) || !store.paired) return
         val address = store.address
         val cert = store.serverCert ?: return
         val port = store.httpsPort
@@ -268,6 +270,9 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
             Log.i(TAG, "session ended on the PC: ${r.exceptionOrNull() ?: r.getOrNull()}")
         }, "PcScreen-quit").start()
     }
+
+    /** A session was launched on the PC by this window and not yet ended. */
+    private var sessionStarted = false
 
     private fun stopStream() {
         streaming = false
@@ -331,6 +336,24 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
         )
     }
 
+    /** The display the PC screen opened on: its panel's. */
+    private var homeDisplay = android.view.Display.INVALID_DISPLAY
+
+    /**
+     * Unplugging the glasses removes the panel's display, and Android moves the PC screen to the phone's own screen
+     * instead of closing it (Mike's phone, 18 Nov 2026): the stream stopped there, but the session stayed open on the
+     * PC with its virtual display. A PC screen that leaves its panel's display ends the session and closes.
+     */
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val now = display?.displayId ?: return
+        if (homeDisplay != android.view.Display.INVALID_DISPLAY && now != homeDisplay) {
+            Log.i(TAG, "moved from display $homeDisplay to $now (its panel's display went): ending the session and closing")
+            endSession(force = true)
+            finish()
+        }
+    }
+
     override fun onDestroy() {
         PcScreenSurfaces.listener = null
         endSession()
@@ -346,6 +369,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
     }
     override fun connectionStarted() {
         streaming = true
+        sessionStarted = true
         Log.i(TAG, "streaming")
     }
     override fun connectionTerminated(errorCode: Int) {
