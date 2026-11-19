@@ -66,6 +66,7 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
     /** The PC made this stream a virtual display of its size, so a resized window gets a fresh stream at its shape. */
     @Volatile private var shapedToWindow = false
 
+    private var lastKeyLogMs = 0L
     private val keys by lazy { com.limelight.binding.input.KeyboardTranslator() }
     private val reshape = Runnable {
         if (connection != null && shapedToWindow && PcScreenShape.reshapeNeeded(root.width, root.height, streamW, streamH)) {
@@ -312,6 +313,12 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
     // own keys (Moonlight's KeyboardTranslator), with Shift, Ctrl, Alt and Win held as they are; a character with no
     // key of its own is typed as text. Back from a mouse or the phone's buttons stays Pocket XR's.
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        // Which keys arrive, from what (a phone test of the trackpad's keyboard): at most one line a second.
+        val nowMs = android.os.SystemClock.uptimeMillis()
+        if (nowMs - lastKeyLogMs > 1000) {
+            lastKeyLogMs = nowMs
+            Log.i(TAG, "key ${android.view.KeyEvent.keyCodeToString(event.keyCode)} action ${event.action} device ${event.deviceId} source 0x${Integer.toHexString(event.source)} flags 0x${Integer.toHexString(event.flags)} streaming $streaming")
+        }
         if (!streaming) return super.dispatchKeyEvent(event)
         if ((event.flags and android.view.KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) return super.dispatchKeyEvent(event)
         val fromKeyboard = (event.source and android.view.InputDevice.SOURCE_KEYBOARD) == android.view.InputDevice.SOURCE_KEYBOARD &&
