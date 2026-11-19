@@ -2309,7 +2309,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             }.orEmpty()
             // 1.5.6 (issue 119): Scroll by swiping for the focused window's app.
             MenuItem.SWIPE_SCROLL -> host.focusedSwipeScroll()?.let { (label, on) ->
-                listOf(row(R.drawable.ic_cover_view, onOff(c.getString(R.string.pad_swipe_scroll_in, label), on), tick = on, subtitle = c.getString(R.string.pad_swipe_scroll_subtitle)) {
+                listOf(row(R.drawable.ic_scroll_right, onOff(c.getString(R.string.pad_swipe_scroll_in, label), on), tick = on, subtitle = c.getString(R.string.pad_swipe_scroll_subtitle)) {
                     host.swipeScrollChosen(!on)
                     postDelayed({ buildDrawer() }, SHAPE_REFRESH_MS)
                 }.apply { tag = MENU_SWIPE_SCROLL })
