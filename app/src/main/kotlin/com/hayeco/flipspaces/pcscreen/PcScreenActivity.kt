@@ -619,6 +619,11 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 // Home or away, waking the PC first (at home, or through the wake relay) when it does not answer.
                 val (address, info) = serverInfoWaking(home, cert, gen)
                 activeAddress = address
+                runCatching { NvHTTP(tuple(address), 0, store.uniqueId, cert, crypto).getHttpsPort(info) }.getOrNull()
+                    ?.takeIf { it > 0 && it != store.httpsPort }?.let { https ->
+                        Log.i(TAG, "HTTPS port now $https (was ${store.httpsPort})")
+                        store.savePairing(store.address, https, cert, store.mac)
+                    }
                 val http = NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto)
                 // Apollo makes a virtual display of the stream's size (VirtualDisplayCapable, its driver ready): the
                 // stream takes the window's own shape, so it fills the window. Elsewhere 1920 x 1080, the usual
@@ -704,7 +709,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             } catch (e: Exception) {
                 Log.w(TAG, "connect: $e")
                 val kind = PcScreenTrouble.of(e)
-                if (lostAtMs > 0 && kind.canRetry()) main.post { lost("connect: $e") }
+                if (wantStream && kind.canRetry()) main.post { lost("connect: $e") }
                 else showSetup(trouble(kind, getString(R.string.pc_screen_connect_failed, e.message ?: e.toString())))
             } finally {
                 main.post { if (gen == generation) starting = false }
@@ -743,7 +748,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
      * Blocking: the connect thread.
      */
     private fun serverInfoWaking(home: String, cert: java.security.cert.X509Certificate, gen: Int): Pair<String, String> {
-        fun info(address: String, likelyOnline: Boolean) = NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto).getServerInfo(likelyOnline)
+        // The HTTPS port asked of the Apollo each time (0: NvHTTP reads it from the plain serverinfo), never the saved one:
+        // a saved port went stale when the PC setup gave this screen's Apollo another (19 Nov 2026: 49084 for 48989).
+        fun info(address: String, likelyOnline: Boolean) = NvHTTP(tuple(address), 0, store.uniqueId, cert, crypto).getServerInfo(likelyOnline)
         val firstAddress = route(home)
         val first = try {
             return firstAddress to info(firstAddress, true)
@@ -806,7 +813,10 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         }
         attempt++
         Log.i(TAG, "reconnect: try $attempt in ${delay / 1000} s ($why)")
-        status.text = getString(R.string.pc_screen_reconnecting, PcScreenAddress.parse(store.address)?.first ?: store.address)
+        val name = pcName()?.let { PcScreenPick.pcName(it).replaceFirstChar { c -> c.titlecase() } } ?: (PcScreenAddress.parse(store.address)?.first ?: store.address)
+        // A stream that never started (two PC screens starting together failed once: "video stream establishment (-1)")
+        // is still connecting; one that ran was lost.
+        status.text = getString(if (sessionStarted) R.string.pc_screen_reconnecting else R.string.pc_screen_connecting_again, name)
         main.removeCallbacks(reconnect)
         main.postDelayed(reconnect, delay)
     }
@@ -960,7 +970,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     override fun stageFailed(stage: String, portFlags: Int, errorCode: Int) {
         Log.w(TAG, "stage $stage failed: ports $portFlags, error $errorCode")
         val kind = PcScreenTrouble.ofCode(errorCode)
-        if (lostAtMs > 0 && kind.canRetry()) main.post { lost("stage $stage failed ($errorCode)") }
+        if (wantStream && kind.canRetry()) main.post { lost("stage $stage failed ($errorCode)") }
         else showSetup(trouble(kind, getString(R.string.pc_screen_connect_failed, "$stage ($errorCode)")))
     }
     override fun connectionStarted() {

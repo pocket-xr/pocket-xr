@@ -15,6 +15,7 @@
     <string name="pc_screen_paired_shared">Paired with %1$s. PC screen %2$d uses the same host, and a host streams one screen at a time. For both at once, run Pocket XR\'s \"Set up PC screens\" on the PC once, then tap Forget this PC here.</string>
     <string name="pc_screen_address_needed">Type the PC\'s address first.</string>
     <string name="pc_screen_pair">Pair</string>
+    <string name="pc_screen_connecting_again">Connecting to %1$s… trying again.</string>
     <string name="pc_screen_subtitle">Your PC\'s screen, in your glasses</string>
     <string name="pc_screen_your_pcs">Your PCs</string>
     <string name="pc_screen_section_setup">Set up</string>
