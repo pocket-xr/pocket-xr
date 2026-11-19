@@ -525,7 +525,8 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         Log.i(TAG, "connect: PC screen ${slot + 1}, host ${store.address}${sharedWith(store.address)?.let { ", also PC screen ${it + 1}'s host" } ?: ""}")
         wantStream = true
         main.removeCallbacks(reconnect)
-        setup.visibility = View.GONE
+        // The page stays up, saying what happens (connecting, waking the PC), until the picture starts
+        // ([connectionStarted]); hidden at once it left a black window while the PC was woken (19 Nov 2026).
         surface.visibility = View.VISIBLE
         // The stream starts once the surface exists (surfaceChanged), at the window's own size. Again after a reconnect
         // wait: the surface was hidden and comes back.
@@ -562,11 +563,29 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
      */
     private fun route(home: String): String {
         if (PcScreenRemote.answers(home, 1500)) return home
+        moved(home)?.let { return it }
         val away = PcScreenRemote.awayAddress(home, pcName()) ?: return home
         val vpn = PcScreenRemote.vpnUp(this)
         val ok = vpn && PcScreenRemote.answers(away, 4000)
         Log.i(TAG, "route: home $home does not answer; away $away ${if (!vpn) "not tried (no VPN up)" else if (ok) "answers" else "does not answer"}")
         return if (ok) away else home
+    }
+
+    /**
+     * The saved Apollo does not answer, but the same PC has another, free for this PC screen, found on the Wi-Fi: the PC
+     * setup was run again and gave this screen's Apollo another port (Mike's PC, 19 Nov 2026: PC screen 2 kept trying
+     * 49089 while its Apollo was at 48989). Taken and saved; null if there is none. Blocking.
+     */
+    private fun moved(home: String): String? {
+        val host = PcScreenAddress.parse(home)?.first ?: return null
+        val usedBy = (0 until PcScreenSlots.COUNT).filter { it != slot }.map { PcScreenAddress.parse(PcScreenStore(this, it).address) }.toSet()
+        val instances = PcScreenPick.byPc(lastHosts).firstOrNull { (_, list) -> list.any { it.address == host } }?.second ?: return null
+        val pick = PcScreenPick.instanceFor(slot, instances) { PcScreenAddress.parse(it.typed) !in usedBy } ?: return null
+        if (pick.typed == home || !PcScreenRemote.answers(pick.typed, 1500)) return null
+        Log.i(TAG, "route: $home does not answer; this PC's Apollo for PC screen ${slot + 1} is now at ${pick.typed}: using it")
+        store.address = pick.typed
+        main.post { addressField.setText(pick.typed) }
+        return pick.typed
     }
 
     private fun startStream(holder: SurfaceHolder, viewWidth: Int, viewHeight: Int) {
@@ -939,6 +958,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         streaming = true
         sessionStarted = true
         main.post {
+            setup.visibility = View.GONE
             if (lostAtMs > 0) Log.i(TAG, "reconnect: back after ${(android.os.SystemClock.uptimeMillis() - lostAtMs) / 1000} s, try $attempt")
             lostAtMs = 0
             attempt = 0
