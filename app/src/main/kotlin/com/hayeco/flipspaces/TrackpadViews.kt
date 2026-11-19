@@ -1156,6 +1156,14 @@ internal fun coverIcon(b: CoverButton): Int = when (b) {
  */
 @SuppressLint("ViewConstructor")
 internal class PadScreen(context: Context, private val host: PadHost) : ViewGroup(context) {
+    init {
+        // The text field follows the keyboard as it comes and goes (keyboardCover).
+        setOnApplyWindowInsetsListener { v, insets ->
+            if (textOpen) v.requestLayout()
+            v.onApplyWindowInsets(insets)
+        }
+    }
+
     private var settings = TrackpadSettings()
     private var cover = false
 
@@ -1683,7 +1691,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             textField.setText("")
             textField.requestFocus()
             keyboardOnFocus = !textField.hasWindowFocus()
-            if (!keyboardOnFocus) textField.post { ime?.showSoftInput(textField, 0) }
+            if (!keyboardOnFocus) askKeyboard()
         } else {
             keyboardOnFocus = false
             ime?.hideSoftInputFromWindow(textField.windowToken, 0)
@@ -1697,9 +1705,34 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         if (!keyboardOnFocus || !textOpen) return
         keyboardOnFocus = false
         textField.requestFocus()
+        askKeyboard()
+    }
+
+    /**
+     * The keyboard for the open text field, asked for in two ways, and once more 300 ms later if it is not up: on the
+     * open Flip 7 the Keyboard button's field came up without its keyboard, and Mike had to tap the field (18 Nov 2026).
+     */
+    private fun askKeyboard(retry: Boolean = true) {
         textField.post {
-            context.getSystemService(android.view.inputmethod.InputMethodManager::class.java)?.showSoftInput(textField, 0)
+            if (!textOpen) return@post
+            textField.requestFocus()
+            context.getSystemService(android.view.inputmethod.InputMethodManager::class.java)?.showSoftInput(textField, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            textField.windowInsetsController?.show(android.view.WindowInsets.Type.ime())
+            if (retry) textField.postDelayed({
+                val up = textField.rootWindowInsets?.isVisible(android.view.WindowInsets.Type.ime()) == true
+                if (textOpen && !up) askKeyboard(retry = false)
+            }, 300)
         }
+    }
+
+    /** How much of this view the keyboard covers, from its bottom, in pixels (0 with no keyboard). */
+    private fun keyboardCover(): Int {
+        val insets = rootWindowInsets ?: return 0
+        val ime = insets.getInsets(android.view.WindowInsets.Type.ime()).bottom
+        if (ime <= 0) return 0
+        val at = IntArray(2).also { getLocationInWindow(it) }
+        val belowView = (rootView.height - (at[1] + height)).coerceAtLeast(0)
+        return (ime - belowView).coerceIn(0, height)
     }
 
     /** The gesture hint shows only while gestures are on (state 2). */
@@ -1844,7 +1877,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         val (hw, hh) = wrap(hint, w)
         // 0.5.82 (Mike: the launcher's "Search apps bar doesnt work"): on the open phone too the text field shows at the top,
         // over the selector, while typing into the Space (the cover's has its own place above).
-        if (!cover && textOpen) put(textBar, dp(20f), dp(12f), w - dp(40f), dp(52f))
+        // 18 Nov 2026 (Mike: the field "is placed terribly and way too far up"): just above the keyboard, where the
+        // eye is while typing; at the top only while the keyboard is not up.
+        if (!cover && textOpen) {
+            val kb = keyboardCover()
+            val top = if (kb > 0) (h - kb - dp(12f) - dp(52f)).coerceAtLeast(dp(12f)) else dp(12f)
+            put(textBar, dp(20f), top, w - dp(40f), dp(52f))
+        }
         if (landscape) put(hint, w - dp(23f) - dp(20f) - hw, selectorBottom + dp(35f), hw, hh) else put(hint, (w - hw) / 2, selectorBottom + dp(35f), hw, hh)
         put(mask, 0, 0, w, h)
         put(drawerScrim, 0, 0, w, h)
