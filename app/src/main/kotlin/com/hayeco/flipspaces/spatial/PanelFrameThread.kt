@@ -275,7 +275,10 @@ internal object PanelImport {
         s.blackCheckChain = false
         // 0.5.26: the picture due on the refresh at [presentNs] by its own timestamp ([com.hayeco.flipspaces.core.spatial.PanelLatch]).
         val latchNs = System.nanoTime()
-        val image = (if (presentNs > 0L) s.mailbox.lease { waiting ->
+        // PC screens: a decoded stream takes the newest picture at once, as Moonlight shows each as soon as it is decoded.
+        // The latch holds a picture back by its pictures' slowest recent arrival to keep video's rhythm even; for the
+        // stream that was the decode time and more, 44 ms p50 from decoder in to copy on Mike's phone (18 Nov 2026).
+        val image = (if (presentNs > 0L && !s.decoded) s.mailbox.lease { waiting ->
             val stamps = waiting.map { runCatching { it.timestamp }.getOrDefault(0L) }
             synchronized(s.latch) { s.latch.pick(stamps, presentNs, latchNs) }
         } else s.mailbox.lease()) ?: return false
