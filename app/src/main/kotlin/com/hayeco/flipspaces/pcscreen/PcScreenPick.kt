@@ -1,0 +1,31 @@
+package com.hayeco.flipspaces.pcscreen
+
+/**
+ * PC screens: the setup page lists PCs, not Apollo instances. Every instance on a PC answers mDNS with the PC's own name
+ * ("Mike", then "Mike(2)", "Mike(3)"), so the instances are grouped by address and each PC screen is given the right
+ * one behind its PC's single button.
+ */
+object PcScreenPick {
+    /** The PC's name from an instance's mDNS name: "Mike(2)" and "MIKE screen 2" are both "Mike"'s. */
+    fun pcName(serviceName: String): String =
+        serviceName.trim().replace(Regex("""\(\d+\)$"""), "").replace(Regex("""\s+screen\s+\d+$""", RegexOption.IGNORE_CASE), "").trim()
+            .ifEmpty { serviceName }
+
+    /** The found instances by PC (address), each PC named by its main instance, in the order found. */
+    fun byPc(hosts: List<PcScreenFinder.Host>): List<Pair<String, List<PcScreenFinder.Host>>> =
+        hosts.groupBy { it.address }.values.map { list ->
+            val main = list.firstOrNull { it.port == PcScreenAddress.DEFAULT_PORT } ?: list.minBy { it.port }
+            pcName(main.service) to list.sortedBy { it.port }
+        }
+
+    /**
+     * The instance PC screen [slot] uses: PC screen 1 the main Apollo (the usual port) first; PC screens 2 and 3 the
+     * extra ones first, so the main stays PC screen 1's. Only instances [free] says no other PC screen uses; null if none.
+     */
+    fun instanceFor(slot: Int, instances: List<PcScreenFinder.Host>, free: (PcScreenFinder.Host) -> Boolean): PcScreenFinder.Host? {
+        val main = instances.filter { it.port == PcScreenAddress.DEFAULT_PORT }
+        val extra = instances.filter { it.port != PcScreenAddress.DEFAULT_PORT }.sortedBy { it.port }
+        val order = if (slot == 0) main + extra else extra + main
+        return order.firstOrNull(free)
+    }
+}

@@ -11,6 +11,7 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
@@ -55,7 +56,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private val crypto by lazy { AndroidCryptoProvider(applicationContext) }
 
     private lateinit var root: FrameLayout
-    private lateinit var setup: LinearLayout
+    private lateinit var setup: View
     private lateinit var addressField: EditText
     private lateinit var foundTitle: TextView
     private lateinit var foundList: LinearLayout
@@ -114,7 +115,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             }
         }
         setup = buildSetup()
-        root.addView(setup, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+        root.addView(setup, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER))
         setContentView(root)
         homeDisplay = display?.displayId ?: android.view.Display.INVALID_DISPLAY
         // The Space's surface arriving or going while streaming: the stream starts again on the new one.
@@ -158,19 +159,27 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         foundList.removeAllViews()
         val usedBy = (0 until PcScreenSlots.COUNT).filter { it != slot }
             .associateBy { PcScreenAddress.parse(PcScreenStore(this, it).address) }
-        for (h in hosts) {
-            val label = "${h.name}  ${h.typed}"
-            val other = usedBy[PcScreenAddress.parse(h.typed)]
-            foundList.addView(Button(this).apply {
-                text = if (other != null) getString(R.string.pc_screen_host_in_use, label, other + 1) else label
-                isAllCaps = false
-                setOnClickListener { choose(h.typed) }
-            })
+        // One button per PC (Mike, 19 Nov 2026: three Apollo instances listed as three PCs was "very confusing"): the
+        // PC's instances grouped by address, and the one this PC screen should use picked behind the button.
+        val mine = PcScreenAddress.parse(store.address)
+        for ((pc, instances) in PcScreenPick.byPc(hosts)) {
+            val pick = PcScreenPick.instanceFor(slot, instances) { usedBy[PcScreenAddress.parse(it.typed)] == null }
+            val detail = when {
+                pick == null -> getString(R.string.pc_screen_pc_full, PcScreenSlots.COUNT)
+                store.paired && instances.any { PcScreenAddress.parse(it.typed) == mine } -> getString(R.string.pc_screen_pc_paired)
+                else -> getString(R.string.pc_screen_pc_tap)
+            }
+            foundList.addView(kit.pcRow(pc, detail, pick != null) {
+                if (pick != null) choose(pick.typed) else say(getString(R.string.pc_screen_pc_full_detail, pc))
+            }, fullWidth(top = if (foundList.childCount == 0) 0f else 10f))
         }
+        refreshSetup()
         // A second or third PC screen with nothing saved yet: a found host no other screen uses, that already knows
         // this phone (the PC setup copies the pairing to every Apollo instance), is taken and connected at once.
         if (!store.paired && store.address.isEmpty() && !autoTried) {
-            val free = hosts.filter { usedBy[PcScreenAddress.parse(it.typed)] == null }
+            val free = PcScreenPick.byPc(hosts).flatMap { (_, inst) ->
+                listOfNotNull(PcScreenPick.instanceFor(slot, inst) { usedBy[PcScreenAddress.parse(it.typed)] == null })
+            }
             if (free.isNotEmpty()) {
                 autoTried = true
                 Thread({
@@ -315,117 +324,136 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         }
     }
 
-    private fun buildSetup(): LinearLayout {
-        val pad = (24 * resources.displayMetrics.density).toInt()
-        return LinearLayout(this).apply {
+    private val kit by lazy { PcScreenSetupKit(this) }
+    private lateinit var connectButton: View
+    private lateinit var forgetLink: View
+
+    /**
+     * The page before a stream (Mike, 19 Nov 2026: "really ugly"): Pocket XR's look, one column. Its title and a line
+     * under it; a status card while there is something to say; the PCs found, one row each; Connect once paired; Set up
+     * my PC and Away from home; the picture settings and adding a PC by address folded away; Forget this PC as a link.
+     */
+    private fun buildSetup(): View {
+        val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad, pad, pad)
-            addView(TextView(context).apply {
-                text = if (slot == 0) getString(R.string.pc_screen_title) else getString(R.string.pc_screen_title_n, slot + 1)
-                textSize = 24f
-                setTextColor(Color.WHITE)
+            setPadding(kit.dp(24f), kit.dp(28f), kit.dp(24f), kit.dp(28f))
+            // Header.
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                addView(MonitorGlyph(context, com.hayeco.flipspaces.core.Look.ACCENT), LinearLayout.LayoutParams(kit.dp(44f), kit.dp(44f)))
+                addView(LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(kit.dp(14f), 0, 0, 0)
+                    addView(kit.text(if (slot == 0) getString(R.string.pc_screen_title) else getString(R.string.pc_screen_title_n, slot + 1),
+                        com.hayeco.flipspaces.core.Look.TYPE_HEADLINE - 2, medium = true))
+                    addView(kit.text(getString(R.string.pc_screen_subtitle), com.hayeco.flipspaces.core.Look.TYPE_BODY, com.hayeco.flipspaces.core.Look.INK_2).apply {
+                        setPadding(0, kit.dp(6f), 0, 0)
+                    })
+                })
             })
-            // One tap from the phone: the PC helper sets the PC up (more screens, away from home), or its download link.
-            addView(Button(context).apply {
-                text = getString(R.string.pc_screen_setup_button)
-                isAllCaps = false
-                setOnClickListener { setUpPc() }
-            })
-            // PCs on the Wi-Fi ([PcScreenFinder]): a tap pairs (or connects, when the PC already knows the phone).
-            foundTitle = TextView(context).apply {
-                text = getString(R.string.pc_screen_looking)
-                setTextColor(Color.LTGRAY)
-                textSize = 16f
+            // Status, while there is something to say.
+            status = kit.text("", com.hayeco.flipspaces.core.Look.TYPE_BODY + 1, com.hayeco.flipspaces.core.Look.INK).apply {
+                background = kit.shape(com.hayeco.flipspaces.core.Look.HELD_GLASS, com.hayeco.flipspaces.core.Look.RADIUS_M, 0x335A93FF)
+                setPadding(kit.dp(16f), kit.dp(14f), kit.dp(16f), kit.dp(14f))
+                visibility = View.GONE
+            }
+            addView(status, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = kit.dp(20f) })
+            // The PCs found ([PcScreenFinder]): a tap pairs, or connects when the PC already knows the phone.
+            addView(kit.section(getString(R.string.pc_screen_your_pcs)))
+            foundTitle = kit.text(getString(R.string.pc_screen_looking), com.hayeco.flipspaces.core.Look.TYPE_BODY, com.hayeco.flipspaces.core.Look.INK_2).apply {
+                setPadding(kit.dp(4f), 0, kit.dp(4f), kit.dp(10f))
             }
             addView(foundTitle)
             foundList = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
             addView(foundList)
-            addView(TextView(context).apply {
-                text = getString(R.string.pc_screen_or_type)
-                setTextColor(Color.LTGRAY)
-                textSize = 14f
-                setPadding(0, pad / 2, 0, 0)
-            })
-            addressField = EditText(context).apply {
-                hint = getString(R.string.pc_screen_address_hint)
-                setText(store.address)
-                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-                setTextColor(Color.WHITE)
-                setHintTextColor(Color.GRAY)
-                // The theme's light field hid the white text (emulator test, 18 Nov 2026).
-                setBackgroundColor(Color.rgb(40, 40, 40))
-                val p = (12 * resources.displayMetrics.density).toInt()
-                setPadding(p, p, p, p)
+            connectButton = kit.primary(getString(R.string.pc_screen_connect)) { connect() }
+            addView(connectButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = kit.dp(12f) })
+            // Setting the PC up, and away from home.
+            addView(kit.section(getString(R.string.pc_screen_section_setup)))
+            addView(kit.secondary(getString(R.string.pc_screen_setup_button)) { setUpPc() }, fullWidth())
+            addView(kit.secondary(getString(R.string.pc_screen_away_button)) { PcScreenRemote.openTailscale(context) }, fullWidth(top = 10f))
+            // Picture settings, folded away.
+            val picture = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(kit.dp(4f), kit.dp(6f), kit.dp(4f), kit.dp(6f))
             }
-            addView(addressField)
-            addView(Button(context).apply {
-                text = getString(R.string.pc_screen_pair)
-                setOnClickListener { pair() }
-            })
-            // Codec: Auto (the best the PC and phone share), H.264 or AV1.
-            addView(Button(context).apply {
-                fun label() = "Codec: " + when (store.codec) { "h264" -> "H.264"; "av1" -> "AV1"; else -> "Auto" }
-                text = label()
-                setOnClickListener {
-                    store.codec = PcScreenStore.CODECS[(PcScreenStore.CODECS.indexOf(store.codec) + 1) % PcScreenStore.CODECS.size]
-                    text = label()
+            fillPicture(picture)
+            addView(kit.foldable(getString(R.string.pc_screen_section_picture), picture), fullWidth(top = 22f))
+            // A PC by address, folded away.
+            val byAddress = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(kit.dp(4f), kit.dp(12f), kit.dp(4f), kit.dp(6f))
+                addressField = EditText(context).apply {
+                    hint = getString(R.string.pc_screen_address_hint)
+                    setText(store.address)
+                    inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+                    setTextColor(com.hayeco.flipspaces.core.Look.INK)
+                    setHintTextColor(com.hayeco.flipspaces.core.Look.INK_3)
+                    typeface = com.hayeco.flipspaces.ui.LookType.regular
+                    background = kit.shape(com.hayeco.flipspaces.core.Look.PAD, com.hayeco.flipspaces.core.Look.RADIUS_M, com.hayeco.flipspaces.core.Look.RIM)
+                    setPadding(kit.dp(16f), kit.dp(14f), kit.dp(16f), kit.dp(14f))
                 }
-            })
-            // Smoothness: Auto (120 where the phone decodes it), 60 or 120 frames a second.
-            addView(Button(context).apply {
-                fun label() = getString(R.string.pc_screen_fps, when (store.fps) { "60" -> "60"; "120" -> "120"; else -> getString(R.string.pc_screen_auto) })
-                text = label()
-                isAllCaps = false
-                setOnClickListener {
-                    store.fps = PcScreenQuality.FPS[(PcScreenQuality.FPS.indexOf(store.fps) + 1) % PcScreenQuality.FPS.size]
-                    text = label()
-                }
-            })
-            // Quality: Auto, Sharpest (more bits) or Data saver (half).
-            addView(Button(context).apply {
-                fun label() = getString(R.string.pc_screen_quality, getString(when (store.quality) {
-                    "sharp" -> R.string.pc_screen_quality_sharp
-                    "saver" -> R.string.pc_screen_quality_saver
-                    else -> R.string.pc_screen_auto
-                }))
-                text = label()
-                isAllCaps = false
-                setOnClickListener {
-                    store.quality = PcScreenQuality.QUALITY[(PcScreenQuality.QUALITY.indexOf(store.quality) + 1) % PcScreenQuality.QUALITY.size]
-                    text = label()
-                }
-            })
-            addView(Button(context).apply {
-                text = getString(R.string.pc_screen_connect)
-                setOnClickListener { connect() }
-            })
-            // Away from home: Tailscale on this phone (opens it, or its Play Store page).
-            addView(Button(context).apply {
-                text = getString(R.string.pc_screen_away_button)
-                isAllCaps = false
-                setOnClickListener { PcScreenRemote.openTailscale(context) }
-            })
-            addView(Button(context).apply {
-                text = getString(R.string.pc_screen_forget)
-                setOnClickListener {
-                    store.forget()
-                    addressField.setText("")
-                    autoTried = false
-                    say(getString(R.string.pc_screen_forgotten))
-                    finder.stop()
-                    finder.start()
-                }
-            })
-            status = TextView(context).apply {
-                setTextColor(Color.LTGRAY)
-                textSize = 16f
+                addView(addressField)
+                addView(kit.secondary(getString(R.string.pc_screen_pair)) { pair() }, fullWidth(top = 10f))
             }
-            addView(status)
+            addView(kit.foldable(getString(R.string.pc_screen_section_address), byAddress), fullWidth(top = 10f))
+            forgetLink = kit.link(getString(R.string.pc_screen_forget), com.hayeco.flipspaces.core.Look.DANGER) {
+                store.forget()
+                addressField.setText("")
+                autoTried = false
+                say(getString(R.string.pc_screen_forgotten))
+                finder.stop()
+                finder.start()
+            }
+            addView(forgetLink, fullWidth(top = 14f))
+        }
+        refreshSetup()
+        // One column, at most 560 dp wide, centred, scrolling when the window is short.
+        return android.widget.ScrollView(this).apply {
+            isFillViewport = true
+            isVerticalScrollBarEnabled = false
+            addView(FrameLayout(context).apply {
+                addView(column, FrameLayout.LayoutParams(minOf(resources.displayMetrics.widthPixels, kit.dp(560f)), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+            })
         }
     }
 
+    private fun fullWidth(top: Float = 0f) =
+        LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = kit.dp(top) }
+
+    /** Codec, smoothness and quality, each a row of choices; a choice fills the box again with it lit. */
+    private fun fillPicture(box: LinearLayout) {
+        box.removeAllViews()
+        val auto = getString(R.string.pc_screen_auto)
+        box.addView(kit.setting(getString(R.string.pc_screen_codec), kit.segmented(listOf(auto, "H.264", "AV1"), PcScreenStore.CODECS.indexOf(store.codec)) {
+            store.codec = PcScreenStore.CODECS[it]; fillPicture(box)
+        }))
+        box.addView(kit.setting(getString(R.string.pc_screen_smoothness), kit.segmented(listOf(auto, "60 Hz", "120 Hz"), PcScreenQuality.FPS.indexOf(store.fps)) {
+            store.fps = PcScreenQuality.FPS[it]; fillPicture(box)
+        }))
+        box.addView(kit.setting(getString(R.string.pc_screen_quality_name), kit.segmented(
+            listOf(auto, getString(R.string.pc_screen_quality_sharp), getString(R.string.pc_screen_quality_saver)), PcScreenQuality.QUALITY.indexOf(store.quality),
+        ) {
+            store.quality = PcScreenQuality.QUALITY[it]; fillPicture(box)
+        }))
+    }
+
+    /** Connect and Forget show only once this PC screen has a PC. */
+    private fun refreshSetup() {
+        if (!::connectButton.isInitialized) return
+        val paired = store.paired
+        connectButton.visibility = if (paired) View.VISIBLE else View.GONE
+        forgetLink.visibility = if (paired) View.VISIBLE else View.GONE
+        (connectButton as? TextView)?.text = pcName()?.let { getString(R.string.pc_screen_connect_to, PcScreenPick.pcName(it)) } ?: getString(R.string.pc_screen_connect)
+    }
+
     private fun say(text: String) {
-        main.post { status.text = text }
+        main.post {
+            status.text = text
+            status.visibility = if (text.isBlank()) View.GONE else View.VISIBLE
+            refreshSetup()
+        }
     }
 
     /** The host and its HTTP port, as typed ([PcScreenAddress]): a second Apollo instance has its own port. */

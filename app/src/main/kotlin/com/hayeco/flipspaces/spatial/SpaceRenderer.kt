@@ -4796,8 +4796,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.2: the frame thread samples the brightness about once a second (PanelFrameThread).
         val s = p.src
         // PC screens: while the stream is drawn straight from the decoder, the window's own display is black by design
-        // (its picture no longer passes through it). Not protected video: no check, no banner (Mike's phone test).
-        if (p.stream != null && (p.streamLive || p.stream.copies > 0)) {
+        // (its picture no longer passes through it), and black too while it connects or reconnects. Never protected
+        // video: no check, no banner at all (Mike, 19 Nov 2026: the red "shows only black here" banner on a PC screen
+        // that had no problem).
+        if (p.stream != null) {
             p.offer = null
             return
         }
