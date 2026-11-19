@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PC screens, first proof: English only until the feature is settled. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="pc_screen_tile">PC screen</string>
+    <string name="pc_screen_title">PC screen</string>
+    <string name="pc_screen_intro">Stream a PC screen from Sunshine or Apollo. Type the PC\'s address, then pair.</string>
+    <string name="pc_screen_paired">Paired. Connect to stream the PC\'s screen.</string>
+    <string name="pc_screen_address_hint">PC address, like 192.168.1.20</string>
+    <string name="pc_screen_address_needed">Type the PC\'s address first.</string>
+    <string name="pc_screen_pair">Pair</string>
+    <string name="pc_screen_connect">Connect</string>
+    <string name="pc_screen_enter_pin">Enter PIN %1$s on the PC, in Sunshine\'s or Apollo\'s web page (PIN tab). Apollo: then give this device the Launch apps, mouse and keyboard permissions there.</string>
+    <string name="pc_screen_paired_with">Paired with %1$s. Connect to stream its screen.</string>
+    <string name="pc_screen_pair_failed">Pairing failed: %1$s</string>
+    <string name="pc_screen_pair_first">Pair with the PC first.</string>
+    <string name="pc_screen_connecting">Connecting to %1$s</string>
+    <string name="pc_screen_connect_failed">Could not connect: %1$s</string>
+    <string name="pc_screen_stage">Starting %1$s</string>
+    <string name="pc_screen_ended">The stream ended (%1$d).</string>
+</resources>

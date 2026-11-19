@@ -24,6 +24,9 @@ class FlipSpacesApp : Application() {
         com.hayeco.flipspaces.core.UiText.lookup = { key -> appString(key) }
         // 1.0.1: a crash is kept and offered the next time the app opens ([CrashCatcher]); first, so it catches the rest.
         CrashCatcher.install(this)
+        // PC screens: a PC screen's own process (":pcscreen") only streams. The watchers, services and log file below
+        // belong to the main process, and a second copy would open the Space or write the log twice.
+        if (android.app.Application.getProcessName().substringAfter(':', "").startsWith("pcscreen")) return
         // 1.1.10: the open screens, so Exit Pocket XR can finish each one.
         AppExit.track(this)
         // 0.5.28: the app's own rotating log file, before anything logs.
