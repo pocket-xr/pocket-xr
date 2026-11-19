@@ -1,7 +1,8 @@
 # Pocket XR PC screens setup.
 #
 # Run once on the PC (double-click "Set up PC screens.cmd"). It asks Windows for admin rights, then:
-#   1. finds Apollo (and offers to download and install it when it is missing);
+#   1. finds Apollo, or downloads and installs it with no questions; an Apollo already there is kept as it is, and a
+#      Sunshine that is on (same ports) is turned off after one question;
 #   2. makes two more Apollo instances for PC screens 2 and 3, each with its own port and its own virtual display;
 #   3. adds a sign-in task, "Pocket XR PC screens", that starts them and keeps them knowing the same phones as the main
 #      Apollo: a phone paired once with the main Apollo is copied, with its permissions, to the others. So Pocket XR's
@@ -67,10 +68,10 @@ function Find-Apollo {
     return $null
 }
 
+# Apollo installed with no questions: running this setup is the user's yes. Its installer (NSIS) takes /S; it installs
+# the virtual display driver, the firewall rules and ApolloService, which starts with Windows.
 function Install-Apollo {
-    Say 'Apollo is not on this PC. Pocket XR streams PC screens from Apollo (free, open source).'
-    $answer = Read-Host 'Download and install Apollo now? (Y/N)'
-    if ($answer -notmatch '^[Yy]') { return $false }
+    Say 'Installing Apollo (free, open source), which streams PC screens to Pocket XR...'
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/ClassicOldSong/Apollo/releases/latest' -Headers @{ 'User-Agent' = 'PocketXR-PC-Screens' }
     $asset = $release.assets | Where-Object { $_.name -match '\.exe$' } | Select-Object -First 1
@@ -78,9 +79,42 @@ function Install-Apollo {
     $file = Join-Path $env:TEMP $asset.name
     Say "Downloading $($asset.name)..."
     Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $file -UseBasicParsing
-    Say 'Opening the Apollo installer. Click through it with the usual choices, then come back here.'
-    Start-Process -FilePath $file -Wait
+    Say 'Installing Apollo. Windows may ask once to allow its virtual display driver: click Install.'
+    $p = Start-Process -FilePath $file -ArgumentList '/S' -Wait -PassThru
+    Log "Apollo installer $($asset.name) exited $($p.ExitCode)"
+    # The service can take a moment to appear and start.
+    for ($i = 0; $i -lt 60; $i++) {
+        $svc = Get-Service -Name 'ApolloService' -ErrorAction SilentlyContinue
+        if ($svc -and (Find-Apollo)) {
+            if ($svc.Status -ne 'Running') { try { Start-Service 'ApolloService' } catch {} }
+            Say "Apollo $($release.tag_name) is installed."
+            return $true
+        }
+        Start-Sleep -Seconds 1
+    }
     return [bool](Find-Apollo)
+}
+
+# Sunshine (LizardByte's, which Apollo is made from) on the same ports would stop Apollo answering, and it cannot make
+# virtual screens. Left installed; turned off and kept from starting with Windows, after one question.
+function Resolve-Sunshine {
+    $svc = Get-Service -Name 'SunshineService' -ErrorAction SilentlyContinue
+    $procs = @(Get-Process -Name 'sunshine' -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path -notlike '*\Apollo\*' })
+    $active = ($svc -and ($svc.Status -eq 'Running' -or $svc.StartType -eq 'Automatic')) -or $procs.Count -gt 0
+    if (-not $active) {
+        if ($svc) { Say 'Sunshine is installed but off: left as it is.' }
+        return $true
+    }
+    Say 'Sunshine is on this PC. Pocket XR''s PC screens use Apollo, which makes a virtual screen for each one; the two use the same network ports, so Sunshine has to be off.'
+    $answer = Read-Host 'Turn Sunshine off (it stays installed, and you can turn it back on in Windows Services)? (Y/N)'
+    if ($answer -notmatch '^[Yy]') { return $false }
+    if ($svc) {
+        try { Stop-Service 'SunshineService' -Force -ErrorAction Stop } catch {}
+        Set-Service 'SunshineService' -StartupType Disabled
+    }
+    foreach ($p in $procs) { try { Stop-Process -Id $p.Id -Force } catch {} }
+    Say 'Sunshine is off.'
+    return $true
 }
 
 # Reads "key = value" lines of an Apollo config file.
@@ -435,9 +469,12 @@ try {
     } else {
         Say 'Pocket XR PC screens setup'
         Say ''
+        if (-not (Resolve-Sunshine)) { throw 'Sunshine is still on, so Apollo cannot use its ports. Run this again when you want PC screens.' }
         if (-not $apollo) {
-            if (-not (Install-Apollo)) { throw 'Apollo is needed for PC screens. Install it from github.com/ClassicOldSong/Apollo, then run this again.' }
+            if (-not (Install-Apollo)) { throw 'Apollo did not install. Install it from github.com/ClassicOldSong/Apollo, then run this again.' }
             $apollo = Find-Apollo
+        } else {
+            Say 'Apollo is already installed: kept as it is, with its login and paired devices.'
         }
         Say "Apollo: $apollo"
         $svc = Get-Service -Name 'ApolloService' -ErrorAction SilentlyContinue
