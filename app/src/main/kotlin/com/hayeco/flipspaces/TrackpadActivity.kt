@@ -1974,6 +1974,7 @@ class TrackpadActivity : Activity(), PadHost {
     override fun typing(on: Boolean) {
         // 0.5.82: the field closing sends what is still held, without Enter.
         if (!on && typing) flushText(enter = false)
+        if (!on) setHeld(emptySet())
         typing = on
         updateFocusable()
     }
@@ -2027,6 +2028,25 @@ class TrackpadActivity : Activity(), PadHost {
                 TextOp.Enter -> "enter"
             } + if (launcher) " into the launcher's search" else " for the focused window (held until Enter)",
         )
+        // The shortcut row's held Ctrl, Alt, Shift or Win: the next key goes with them at once, not held for Enter.
+        if (held.isNotEmpty() && !launcher) {
+            flushText(enter = false)
+            when (op) {
+                is TextOp.Type -> {
+                    val events = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD).getEvents(op.text.toCharArray())
+                    events?.filter { it.action == KeyEvent.ACTION_DOWN && !ShortcutKeys.isModifier(it.keyCode) }?.forEach { e ->
+                        val shift = if (e.isShiftPressed) setOf(ShortcutKeys.Mod.SHIFT) else emptySet()
+                        sendKeys(ShortcutKeys.combo(e.keyCode, held + shift))
+                    }
+                    screen.clearTyped()
+                }
+                TextOp.Delete -> sendKeys(ShortcutKeys.combo(KeyEvent.KEYCODE_DEL, held))
+                TextOp.Enter -> sendKeys(ShortcutKeys.combo(KeyEvent.KEYCODE_ENTER, held))
+            }
+            Log.i(TAG, "shortcut row: ${op.javaClass.simpleName.lowercase()} with ${held.joinToString("+") { ShortcutKeys.label(it) }}")
+            setHeld(emptySet())
+            return
+        }
         when (op) {
             is TextOp.Type -> if (launcher) {
                 op.text.forEach { SpaceSession.send(SpaceCommand.LauncherKey(it)) }
@@ -2043,6 +2063,43 @@ class TrackpadActivity : Activity(), PadHost {
             }
             TextOp.Enter -> if (!launcher) flushText(enter = true)
         }
+    }
+
+    /** The shortcut row's modifiers held for the next key ([ShortcutKeys]). */
+    private var held: Set<ShortcutKeys.Mod> = emptySet()
+
+    private fun setHeld(next: Set<ShortcutKeys.Mod>) {
+        held = next
+        if (::screen.isInitialized) screen.showHeld(next)
+    }
+
+    override fun shortcutKey(keyCode: Int) {
+        if (!SpaceSession.active) return
+        buzz(PadHaptic.COVER_BUTTON)
+        flushText(enter = false)
+        sendKeys(ShortcutKeys.combo(keyCode, held))
+        Log.i(TAG, "shortcut row: ${ShortcutKeys.label(keyCode)}${if (held.isEmpty()) "" else " with " + held.joinToString("+") { ShortcutKeys.label(it) }}")
+        setHeld(emptySet())
+    }
+
+    override fun shortcutModifier(mod: ShortcutKeys.Mod) {
+        if (!SpaceSession.active) return
+        buzz(PadHaptic.COVER_BUTTON)
+        if (mod in held) {
+            // Tapped again: it goes on its own, with any others held (Ctrl+Shift alone does nothing much; Win alone opens Start).
+            flushText(enter = false)
+            val others = held - mod
+            sendKeys(if (others.isEmpty()) ShortcutKeys.alone(mod) else ShortcutKeys.combo(mod.keyCode, others))
+            Log.i(TAG, "shortcut row: ${ShortcutKeys.label(mod)} on its own")
+            setHeld(emptySet())
+        } else {
+            setHeld(held + mod)
+        }
+    }
+
+    private fun sendKeys(keys: List<ShortcutKeys.Key>) {
+        val t = SystemClock.uptimeMillis()
+        keys.forEach { SpaceSession.send(SpaceCommand.PanelKey(it.action, it.keyCode, it.metaState, 0, t)) }
     }
 
     private fun key(code: Int) {

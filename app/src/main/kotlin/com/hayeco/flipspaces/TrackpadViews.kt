@@ -848,6 +848,10 @@ interface PadHost {
     fun textEnter()
     fun typing(on: Boolean)
 
+    /** The shortcut row ([ShortcutKeys]): a plain key, or a modifier tapped. */
+    fun shortcutKey(keyCode: Int)
+    fun shortcutModifier(mod: ShortcutKeys.Mod)
+
     /** 0.5.19: a slide along a Curve key, [dyPx] screen pixels up since the last call. */
     fun curveSlide(dyPx: Float, phase: com.hayeco.flipspaces.core.pointer.Phase)
 
@@ -1523,6 +1527,49 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     val textOpen: Boolean get() = textBar.visibility == View.VISIBLE
 
+    /**
+     * 19 Nov 2026 (PC screens roadmap): the shortcut row over the keyboard while typing ([ShortcutKeys]): Esc, Tab, the
+     * arrows and Del go at once; Ctrl, Alt, Shift and Win light up and hold for the next key, typed or from the row; a
+     * lit one tapped again goes on its own (Win alone: the Start menu).
+     */
+    private val modKeys = HashMap<ShortcutKeys.Mod, TextView>()
+    private fun shortcutChip(text: String, tap: () -> Unit) = context.padText(text, 15f, WHITE, bold = true).apply {
+        gravity = Gravity.CENTER
+        setPadding(context.dp(14f), 0, context.dp(14f), 0)
+        minWidth = context.dp(48f)
+        background = chipLook(false)
+        setOnClickListener { tap() }
+    }
+    private fun chipLook(lit: Boolean) = GradientDrawable().apply {
+        cornerRadius = context.dpf(10f)
+        setColor(if (lit) com.hayeco.flipspaces.core.Look.ACCENT else com.hayeco.flipspaces.core.Look.GLASS_RAISED or 0xFF000000.toInt())
+        setStroke(context.dp(1f), DIVIDER_33)
+    }
+    private val shortcutRow = android.widget.HorizontalScrollView(context).apply {
+        isHorizontalScrollBarEnabled = false
+        visibility = View.GONE
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            fun add(v: View) = addView(v, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT).apply { marginEnd = context.dp(6f) })
+            for (code in ShortcutKeys.PLAIN.take(2)) add(shortcutChip(ShortcutKeys.label(code)) { host.shortcutKey(code) })
+            for (m in ShortcutKeys.Mod.entries) add(shortcutChip(ShortcutKeys.label(m)) { host.shortcutModifier(m) }.also { modKeys[m] = it })
+            for (code in ShortcutKeys.PLAIN.drop(2)) add(shortcutChip(ShortcutKeys.label(code)) { host.shortcutKey(code) })
+        }, ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT))
+    }
+
+    /** The shortcut row's held modifiers, lit. */
+    fun showHeld(held: Set<ShortcutKeys.Mod>) {
+        for ((m, v) in modKeys) v.background = chipLook(m in held)
+    }
+
+    /** The field emptied without sending (its text went as shortcuts). */
+    fun clearTyped() {
+        textField.post {
+            typedSoFar = ""
+            textField.setText("")
+        }
+    }
+
     /** 1.2.3 (issue 59): Game keys, a cluster for each thumb ([GameKeysView]), on the open phone while on. */
     private val gameLeft = GameKeysView(context, com.hayeco.flipspaces.core.pointer.GameKeyLayout.LEFT) { host.gameKey(it) }.apply { visibility = View.GONE }
     private val gameRight = GameKeysView(context, com.hayeco.flipspaces.core.pointer.GameKeyLayout.RIGHT) { host.gameKey(it) }.apply { visibility = View.GONE }
@@ -1548,7 +1595,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         addView(gameRight)
         addView(padLeft)
         addView(padRight)
-        listOf(textBar, mask, popup, intro, dialog, drawerScrim, drawer, toast, lock).forEach { addView(it) }
+        listOf(textBar, shortcutRow, mask, popup, intro, dialog, drawerScrim, drawer, toast, lock).forEach { addView(it) }
         pressable(barBack, barBackIcon, R.drawable.ic_back, R.drawable.ic_back_pressed, R.drawable.left_black_gradient_bg_pressed, isHome = false)
         pressable(barHome, barHomeIcon, R.drawable.ic_home_new, R.drawable.ic_home_new_pressed, R.drawable.right_black_gradient_bg_pressed, isHome = true)
         pressable(sideBack, sideBackIcon, R.drawable.ic_back, R.drawable.ic_back_pressed, R.drawable.black_gradient_rounded_rect_pressed, isHome = false, restore = R.drawable.black_gradient_rounded_rect)
@@ -1700,6 +1747,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     fun showText(show: Boolean) {
         if (show == textOpen) return
         textBar.visibility = if (show) View.VISIBLE else View.GONE
+        shortcutRow.visibility = textBar.visibility
         for ((b, k) in coverKeys) k.visibility = if (cover && !show && coverShown(b)) View.VISIBLE else View.GONE
         host.typing(show)
         val ime = context.getSystemService(android.view.inputmethod.InputMethodManager::class.java)
@@ -1820,7 +1868,8 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             if (textOpen) {
                 val m = dp(CoverLayoutMath.MARGIN)
                 put(textBar, m, m, w - 2 * m, dp(52f))
-                val top = m + dp(52f) + dp(CoverLayoutMath.GAP)
+                put(shortcutRow, m, m + dp(52f) + dp(6f), w - 2 * m, dp(40f))
+                val top = m + dp(52f) + dp(6f) + dp(40f) + dp(CoverLayoutMath.GAP)
                 put(pad, m, top, w - 2 * m, (h - top - m).coerceAtLeast(dp(48f)))
             } else {
                 at(pad, l.pad)
@@ -1910,8 +1959,11 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         if (!cover && textOpen) {
             val kb = keyboardCover()
             placedKeyboardCover = kb
-            val top = if (kb > 0) (h - kb - dp(12f) - dp(52f)).coerceAtLeast(dp(12f)) else dp(12f)
+            // The shortcut row just above the keyboard, the field above it.
+            val rowTop = if (kb > 0) (h - kb - dp(8f) - dp(44f)).coerceAtLeast(dp(72f)) else dp(72f)
+            val top = if (kb > 0) rowTop - dp(8f) - dp(52f) else dp(12f)
             put(textBar, dp(20f), top, w - dp(40f), dp(52f))
+            put(shortcutRow, dp(20f), rowTop, w - dp(40f), dp(44f))
         }
         if (landscape) put(hint, w - dp(23f) - dp(20f) - hw, selectorBottom + dp(35f), hw, hh) else put(hint, (w - hw) / 2, selectorBottom + dp(35f), hw, hh)
         put(mask, 0, 0, w, h)
