@@ -118,9 +118,9 @@ class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callbac
                 text = getString(R.string.pc_screen_pair)
                 setOnClickListener { pair() }
             })
-            // Codec, a test of which decodes fastest on the phone: Auto (HEVC), H.264 or AV1.
+            // Codec: Auto (the best the PC and phone share), H.264 or AV1.
             addView(Button(context).apply {
-                fun label() = "Codec: " + when (store.codec) { "h264" -> "H.264"; "av1" -> "AV1"; else -> "Auto (HEVC)" }
+                fun label() = "Codec: " + when (store.codec) { "h264" -> "H.264"; "av1" -> "AV1"; else -> "Auto" }
                 text = label()
                 setOnClickListener {
                     store.codec = PcScreenStore.CODECS[(PcScreenStore.CODECS.indexOf(store.codec) + 1) % PcScreenStore.CODECS.size]

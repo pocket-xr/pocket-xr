@@ -208,7 +208,11 @@ class PcScreenDecoder(private val surface: Surface) : VideoDecoderRenderer() {
         fun formatsFor(codec: String): Int = when (codec) {
             "h264" -> MoonBridge.VIDEO_FORMAT_H264
             "av1" -> MoonBridge.VIDEO_FORMAT_H264 or (if (av1Available()) MoonBridge.VIDEO_FORMAT_AV1_MAIN8 else 0)
-            else -> MoonBridge.VIDEO_FORMAT_H264 or (if (hevcAvailable()) MoonBridge.VIDEO_FORMAT_H265 else 0)
+            // Auto: every codec the phone decodes in hardware; the host picks the best it can encode. On the Flip 7 all
+            // three decoded in 10 to 14 ms (18 Nov 2026), so the host's choice, AV1 at the best quality for its bits
+            // where it has it, costs nothing.
+            else -> MoonBridge.VIDEO_FORMAT_H264 or (if (hevcAvailable()) MoonBridge.VIDEO_FORMAT_H265 else 0) or
+                (if (av1Available()) MoonBridge.VIDEO_FORMAT_AV1_MAIN8 else 0)
         }
 
         /** Artemis's options, fewer on each [tryNumber] (0 is all of them). */
