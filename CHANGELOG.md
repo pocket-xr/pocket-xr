@@ -35,14 +35,25 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
 - **Scroll by swiping** (issue 119): a per-app switch in the Menu's This window section makes scrolling drag like a
   finger, so YouTube's swipe to the mini player works. The scroll strip's touch area now matches its groove on
   Spatial Mouse on handhelds such as the Retroid Nova.
+- **Pocket XR on the computer can be the PC end itself:** the coming Pocket XR for Windows, Mac and Steam Deck updates
+  stream their own screens with no Apollo or Sunshine, and each shows in the phone's list as its own row (for example
+  "MIKE Pocket XR"). Tried from a Windows PC, an Intel MacBook Air and a Steam Deck.
+- **PC screens keep streaming when the glasses switch between 2D and 3D**, instead of reconnecting three or four times
+  as the Space reopens. If a computer connects but sends no picture, or refuses and says why (a Mac without Screen
+  Recording allowed), the PC screen stops and shows what to do instead of retrying.
+- **Window buttons say what they do** (issue 118): rest the pointer on one for a moment and its name shows.
+- **Immersive fills your view** (issue 118): a window far from the view's shape, such as YouTube before Fit video,
+  now takes the view's shape so the app fills it. A 16:9 video keeps its own shape.
+- **XREAL XBX A01 and A01+** are recognised as Air family glasses, with head tracking read from their own USB
+  interface. Not yet tried on these glasses.
 - **Cursor follows head** is now off by default.
 - Tried on a Galaxy Z Flip 7 with XREAL Aura glasses, a Windows PC, an Intel MacBook Air and a Steam Deck in SteamOS
   Desktop Mode: three screens at once from Windows, two at once from the Mac and from the Deck at the windows' shapes,
   sound, reconnect, away from home, the setup from a PC with no Apollo, the Linux Flatpak installed from a download,
   mouse and keyboard on all three. Not yet tried: Apple silicon Macs, Linux desktops other than KDE Plasma on the Deck,
   NVIDIA graphics on Linux, game controllers, the precise pointer, sound from two Mac screens at once, three screens at once from the Mac or the Deck, the
-  wake relay, other phones and
-  glasses.
+  wake relay, a held stream carried on through a 2D and 3D switch, the window buttons' names, Immersive's new shape,
+  other phones and glasses.
 
 ## 1.5.5: hand tracking starts only when Android allows it
 

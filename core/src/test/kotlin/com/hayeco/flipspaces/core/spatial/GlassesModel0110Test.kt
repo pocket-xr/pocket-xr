@@ -35,7 +35,7 @@ class GlassesModel0110Test {
             assertEquals(GlassesModel.AIR, GlassesModel.detect(null, pid))
         }
         assertEquals(AxisMap.DEFAULT, GlassesModel.AIR.defaultAxes)
-        assertEquals(GlassesModel.OTHER_XREAL, GlassesModel.detect(null, 0x0442))
+        assertEquals("1.6.0: 0x0442 is the XBX A01+, Air family", GlassesModel.AIR, GlassesModel.detect(null, 0x0442))
     }
 
     @Test fun aNameThatSaysTheModelStillWins() {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.0 (GitHub #118): the window buttons' names, shown when one is pointed at for a moment. -->
+<resources>
+    <string name="space_tip_back">뒤로</string>
+    <string name="space_tip_move">이동: 누른 채 끌기</string>
+    <string name="space_tip_refresh">앱 새로고침</string>
+    <string name="space_tip_switch_app">이 창의 앱 바꾸기</string>
+    <string name="space_tip_reset">다시 앞으로 가져오기</string>
+    <string name="space_tip_close">창 닫기</string>
+    <string name="space_tip_wide_view">와이드 보기: 가로 화면</string>
+    <string name="space_tip_fit_video">동영상 맞춤: 16:9</string>
+    <string name="space_tip_immersive">몰입: 시야 가득 채우기</string>
+</resources>

@@ -173,6 +173,11 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     var statsLine: String? = null
     var statsReadMs = 0L
 
+    /** 1.6.0 (GitHub #118, "I don't know what buttons do what, maybe add hover text?"): the pointed-at button's name. */
+    val tipTex = LabelTexture(768, 96)
+    var tipControl: com.hayeco.flipspaces.core.spatial.WindowControls.Control? = null
+    var tipSinceMs = 0L
+
     /** 0.5.17: the window's Reset and Close, and the held window's guide ("FARTHER", ...). */
     val reset = IconTexture()
     val close = IconTexture()
@@ -370,6 +375,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
         back.release()
         banner.release()
         statsTex.release()
+        tipTex.release()
         reset.release()
         close.release()
         refresh.release()
@@ -4710,6 +4716,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 look(grip, a),
                 Rounding(gripV * panel.heightM, 2f * gripU * arcW, 2f * gripV * panel.heightM),
             )
+            drawTip(p, panel, l, viewProj, a, hover?.takeIf { !it.frame }?.zone, firstEye, arcW)
         }
         // 0.5.75 (Mike: the glow "does not make it obvious enough that its grabbable"): on the grab band the window gets a
         // crisp accent frame drawn in the band itself, where the cursor is, with a spot of light on it under the cursor.
@@ -4806,6 +4813,50 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * focused window, when there is more than one, gets a soft accent glow [HALO_PER_M] of its distance wide round its
      * edge. One quad on the window's surface (curved with it), drawn before its picture; no blur pass.
      */
+    /**
+     * 1.6.0 (GitHub #118: "I don't know what buttons do what, maybe add hover text?"): a window button's name in a small
+     * glass label, once the pointer has rested on it for [TIP_DELAY_MS]; above the buttons over the window, below the ones
+     * under it. The pill's says how to move the window.
+     */
+    private fun drawTip(
+        p: PanelGl, panel: SpacePanel, l: com.hayeco.flipspaces.core.spatial.WindowControls.Layout, viewProj: Mat4, alpha: Float,
+        zone: PanelZone?, firstEye: Boolean, arcW: Float,
+    ) {
+        val c = l.places.firstOrNull { it.control.zone == zone }?.control
+        if (firstEye && c != p.tipControl) {
+            p.tipControl = c
+            p.tipSinceMs = frameClockMs
+        }
+        val shown = p.tipControl ?: return
+        if (frameClockMs - p.tipSinceMs < TIP_DELAY_MS) return
+        val place = l.places.firstOrNull { it.control == shown } ?: return
+        val text = str(
+            when (shown) {
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.BACK -> R.string.space_tip_back
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.MOVE -> R.string.space_tip_move
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.REFRESH -> R.string.space_tip_refresh
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.SWITCH_APP -> R.string.space_tip_switch_app
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.RESET -> R.string.space_tip_reset
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.CLOSE -> R.string.space_tip_close
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.WIDE_VIEW -> R.string.space_tip_wide_view
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.FIT_VIDEO -> R.string.space_tip_fit_video
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.IMMERSIVE -> R.string.space_tip_immersive
+            },
+        )
+        if (firstEye) p.tipTex.set(listOf(text), 0xE6101418.toInt(), Look.INK, 44f, centred = true, medium = true, oneLine = true)
+        // The label: as tall as a button, eight times as wide (the texture's shape), a button's gap from it.
+        val hM = l.heightM
+        val wU = 8f * hM / arcW.coerceAtLeast(1e-3f)
+        val hV = hM / panel.heightM.coerceAtLeast(1e-3f)
+        val gapV = hV * 0.35f
+        val u0 = (place.uCentre - wU / 2f).coerceIn(minOf(-0.2f, 1.2f - wU), maxOf(-0.2f, 1.2f - wU))
+        val (v0, v1) = if (place.v1 <= 0f) (place.v0 - gapV - hV) to (place.v0 - gapV) else (place.v1 + gapV) to (place.v1 + gapV + hV)
+        drawOn(
+            lift(PanelCurve.rect(panel, u0, v0, u0 + wU, v1), Look.DEPTH_CONTROLS + Look.DEPTH_HOVER), viewProj, p.tipTex.id, alpha,
+            round = Rounding(hM / 2f, wU * arcW, hM),
+        )
+    }
+
     private fun drawFocusHalo(p: PanelGl, panel: SpacePanel, viewProj: Mat4, windowAlpha: Float, hovered: Boolean, firstEye: Boolean, onFrame: Boolean = false) {
         val focused = panel.id == focusedPanelId && layout.panels.size > 1
         val focus = if (firstEye) p.focusLook.at(focused, frameClockMs) else p.focusLook.value
@@ -5789,6 +5840,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 }
 
 private const val PANEL_TAG = "FlipSpaces/Panel"
+
+/** 1.6.0: how long the pointer rests on a window button before its name shows ([SpaceRenderer.drawTip]). */
+private const val TIP_DELAY_MS = 450L
 private const val WATCHDOG_TAG = "FlipSpaces/Watchdog"
 
 /** Hand calibration lines go with the other hand lines. */

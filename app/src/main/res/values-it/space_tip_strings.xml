@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.0 (GitHub #118): the window buttons' names, shown when one is pointed at for a moment. -->
+<resources>
+    <string name="space_tip_back">Indietro</string>
+    <string name="space_tip_move">Sposta: tieni premuto e trascina</string>
+    <string name="space_tip_refresh">Ricarica l’app</string>
+    <string name="space_tip_switch_app">Cambia app in questa finestra</string>
+    <string name="space_tip_reset">Riportala davanti a te</string>
+    <string name="space_tip_close">Chiudi la finestra</string>
+    <string name="space_tip_wide_view">Vista ampia: orizzontale</string>
+    <string name="space_tip_fit_video">Adatta video: 16:9</string>
+    <string name="space_tip_immersive">Immersivo: riempi la vista</string>
+</resources>

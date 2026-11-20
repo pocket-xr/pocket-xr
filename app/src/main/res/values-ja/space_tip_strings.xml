@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.0 (GitHub #118): the window buttons' names, shown when one is pointed at for a moment. -->
+<resources>
+    <string name="space_tip_back">戻る</string>
+    <string name="space_tip_move">移動：押したままドラッグ</string>
+    <string name="space_tip_refresh">アプリを再読み込み</string>
+    <string name="space_tip_switch_app">このウィンドウのアプリを切り替え</string>
+    <string name="space_tip_reset">正面に戻す</string>
+    <string name="space_tip_close">ウィンドウを閉じる</string>
+    <string name="space_tip_wide_view">ワイド表示：横向き</string>
+    <string name="space_tip_fit_video">動画に合わせる：16:9</string>
+    <string name="space_tip_immersive">没入：視界いっぱいに</string>
+</resources>

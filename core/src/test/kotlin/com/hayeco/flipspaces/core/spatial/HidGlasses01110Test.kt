@@ -38,7 +38,7 @@ class HidGlasses01110Test {
     }
 
     @Test fun theModelIsOtherXrealAndOnlyHidGlassesAreFoundAsHid() {
-        assertEquals(GlassesModel.OTHER_XREAL, GlassesModel.detect(null, 0x0442))
+        assertEquals("1.6.0: 0x0442 is the XBX A01+, Air family", GlassesModel.AIR, GlassesModel.detect(null, 0x0442))
         assertEquals(GlassesModel.ONE, GlassesModel.detect(null, 0x0438))
         val helen = GlassesReport.Usb(0x3318, 0x0442, "XREAL", emptyList(), listOf(hid, audio))
         val one = GlassesReport.Usb(0x3318, 0x0438, "XREAL One", listOf("NCM"), listOf(hid, ncm, ecm))

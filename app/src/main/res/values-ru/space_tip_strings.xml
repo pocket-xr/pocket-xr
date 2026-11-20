@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.0 (GitHub #118): the window buttons' names, shown when one is pointed at for a moment. -->
+<resources>
+    <string name="space_tip_back">Назад</string>
+    <string name="space_tip_move">Переместить: удерживайте и тяните</string>
+    <string name="space_tip_refresh">Перезапустить приложение</string>
+    <string name="space_tip_switch_app">Сменить приложение в этом окне</string>
+    <string name="space_tip_reset">Вернуть перед собой</string>
+    <string name="space_tip_close">Закрыть окно</string>
+    <string name="space_tip_wide_view">Широкий вид: альбомный</string>
+    <string name="space_tip_fit_video">Подогнать видео: 16:9</string>
+    <string name="space_tip_immersive">Погружение: на весь обзор</string>
+</resources>

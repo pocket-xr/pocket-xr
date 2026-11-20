@@ -30,6 +30,14 @@ object AirImuProtocol {
     const val PID_AIR_2_PRO = 0x0432
     const val PID_AIR_2_ULTRA = 0x0426
 
+    /**
+     * 1.6.0: the XREAL XBX A01 and A01+ (a Steam Deck tester's glasses report: "xbx a01+", USB 3318:0442, three HID
+     * interfaces). The same IMU stream as the Air, on HID interface 1, with the MCU on 0, as nrealAirLinuxDriver's
+     * public id table has them (wheaney's fork, MIT). Not yet run with Pocket XR.
+     */
+    const val PID_XBX_A01 = 0x0440
+    const val PID_XBX_A01_PLUS = 0x0442
+
     const val PACKET_BYTES = 64
     const val COMMAND_HEAD = 0xAA
     const val CMD_IMU_STREAM = 0x19
@@ -40,13 +48,19 @@ object AirImuProtocol {
         PID_AIR_2 -> "XREAL Air 2"
         PID_AIR_2_PRO -> "XREAL Air 2 Pro"
         PID_AIR_2_ULTRA -> "XREAL Air 2 Ultra"
+        PID_XBX_A01 -> "XREAL XBX A01"
+        PID_XBX_A01_PLUS -> "XREAL XBX A01+"
         else -> null
     }
 
     fun isAir(vendorId: Int, productId: Int): Boolean = vendorId == XREAL_VENDOR && modelName(productId) != null
 
-    /** The HID interface the IMU streams on: 3, and 2 on the Air 2 Ultra. */
-    fun imuInterface(productId: Int): Int = if (productId == PID_AIR_2_ULTRA) 2 else 3
+    /** The HID interface the IMU streams on: 3; 2 on the Air 2 Ultra; 1 on the XBX A01 and A01+. */
+    fun imuInterface(productId: Int): Int = when (productId) {
+        PID_AIR_2_ULTRA -> 2
+        PID_XBX_A01, PID_XBX_A01_PLUS -> 1
+        else -> 3
+    }
 
     /** A 64 byte command [id] with [data]. */
     fun command(id: Int, data: ByteArray = ByteArray(0)): ByteArray {
