@@ -13,9 +13,13 @@ object PcScreenPick {
             .let { if (it.contains('.') && it.first().isLetter()) it.substringBefore('.') else it }
             .ifEmpty { serviceName }
 
-    /** The found instances by PC (address), each PC named by its main instance, in the order found. */
+    /**
+     * The found instances by PC (address and name), each PC named by its main instance, in the order found. One PC's
+     * Apollo instances share a name ("Mike", "Mike(2)", "MIKE screen 3"); another host on the same PC with its own name
+     * ("MIKE Pocket XR", Pocket XR for Windows as a host) is a row of its own (Mike, 20 Nov 2026: it was hidden in "Mike").
+     */
     fun byPc(hosts: List<PcScreenFinder.Host>): List<Pair<String, List<PcScreenFinder.Host>>> =
-        hosts.groupBy { it.address }.values.map { list ->
+        hosts.groupBy { it.address + "|" + pcName(it.service).lowercase() }.values.map { list ->
             val main = list.firstOrNull { it.port == PcScreenAddress.DEFAULT_PORT } ?: list.minBy { it.port }
             pcName(main.service) to list.sortedBy { it.port }
         }

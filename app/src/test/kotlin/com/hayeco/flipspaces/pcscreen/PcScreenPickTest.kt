@@ -14,6 +14,12 @@ class PcScreenPickTest {
         assertEquals(listOf(47989, 49089, 49989), pcs[0].second.map { it.port })
     }
 
+    @Test fun anotherHostOnTheSamePcIsItsOwnRow() {
+        val pcs = PcScreenPick.byPc(mike + host("MIKE Pocket XR", 50989))
+        assertEquals(listOf("Mike", "MIKE Pocket XR"), pcs.map { it.first })
+        assertEquals(listOf(50989), pcs[1].second.map { it.port })
+    }
+
     @Test fun namesWithoutNumbers() {
         assertEquals("Mike", PcScreenPick.pcName("Mike(2)"))
         assertEquals("MIKE", PcScreenPick.pcName("MIKE screen 3"))
