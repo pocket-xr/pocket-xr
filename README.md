@@ -67,6 +67,7 @@ This list only says what someone has actually seen working. Thanks to everyone w
 | XREAL One Pro+ | @gegonut ran it on a Galaxy Z Fold 6. Windows showed, but after a recenter they sat below the view. 1.2.13 recognises the One Pro+, and recenter now follows head tilt, so windows land where you look even lying back. A retest by @gegonut is pending ([Discussion #81](https://github.com/pocket-xr/pocket-xr/discussions/81)). |
 | XREAL Air, Air 2 Pro, Air 2 Ultra | Same head tracking as the Air 2 since 1.1.12. No tester yet. |
 | XREAL XBX A01, A01+ | Recognised since 1.6.0, with head tracking read from their own USB interface, thanks to Pierre Zammit's Steam Deck logs. Not yet tried on these glasses with Pocket XR. |
+| VITURE Beast 35CA:1201 | Recognised as a Beast since 1.5.2, thanks to Anton Kravchenko's logs from a vivo V2562. Head tracking on a 1201 is not yet confirmed. |
 | Other VITURE glasses | Not tried yet. Experimental VITURE head tracking is on the head tracking screen, off by default ([Discussion #24](https://github.com/pocket-xr/pocket-xr/discussions/24)). |
 | Other glasses | Help wanted. Windows are drawn with plain fallbacks; head tracking works only if they send it the way a known model does. |
 
