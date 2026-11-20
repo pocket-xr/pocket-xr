@@ -2080,13 +2080,24 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
      * [frame] runs every frame). Only the [hoverOwner] (or, with none, the first pointer over a
      * panel's content) sends them.
      */
-    private fun hoverTo(a: Aim, hit: PanelHit?, out: MutableList<SpaceAction>) {
+    private fun hoverTo(a: Aim, hit: PanelHit?, out: MutableList<SpaceAction>, ray: Ray? = null, layout: SpaceLayout? = null) {
         val owner = hoverOwner
         if (owner != null && owner !== a) return
         val over = hit?.takeIf { settings.hoverEvents && it.zone == PanelZone.BODY }
         val was = hovering
         if (was != null && (over == null || over.panel.id != was.panelId)) {
-            out += SpaceAction.Hover(was.panelId, HoverPhase.EXIT, was.u, was.v)
+            // Leaving over the window's own edge (its grab band, or the controls above): one last move at that edge first,
+            // so a PC screen's cursor reaches the very top, and the Mac's menu bar (Mike, 20 Nov 2026: "the mouse cursor
+            // cant reach the very top of the window"; the last move had been a little inside).
+            // The exit at the same spot, so it does not pull the cursor back.
+            // Where the ray crosses that window's surface now (it may have jumped past its grab band in one step: the PC
+            // screen then saw 48 px as its highest, phone log 20 Nov 2026), held to the window's edge.
+            val edge: Pair<Float, Float>? = hit?.takeIf { it.panel.id == was.panelId }?.let { it.u to it.v }
+                ?: if (ray != null && layout != null) layout.panel(was.panelId)?.let { PanelCurve.intersect(ray, it) }?.let { (it.x + 0.5f) to (0.5f - it.y) } else null
+            val eu = edge?.first?.coerceIn(0f, 1f) ?: was.u
+            val ev = edge?.second?.coerceIn(0f, 1f) ?: was.v
+            if (eu != was.u || ev != was.v) out += SpaceAction.Hover(was.panelId, HoverPhase.MOVE, eu, ev)
+            out += SpaceAction.Hover(was.panelId, HoverPhase.EXIT, eu, ev)
             hovering = null
             // A hand that leaves the panel lets the next pointer over one hover it (0.5.0).
             if (a.hand != null) hoverOwner = null
@@ -2246,7 +2257,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                 // Under the open launcher (or its home button) the panel behind is neither hot
                 // nor hovered (0.4.2: its title bar used to light up through the tiles).
                 a.hover = panelHit(ray, layout)
-                hoverTo(a, a.hover, out)
+                hoverTo(a, a.hover, out, ray, layout)
             }
             else -> a.hover = panelHit(ray, layout)
         }

@@ -56,7 +56,9 @@ class PcScreenFinder(context: Context, private val found: (List<Host>) -> Unit) 
         repeat(2) { round ->
             if (round > 0) Thread.sleep(4000)
             if (!running) return
-            val answered = LinkedHashSet<String>()
+            // Each answering computer's Sunshine ports: the Linux helper lists one per PC screen
+            // ("POCKETXR-HERE 1 47610 steamdeck 47989,48989,49989"), as SteamOS blocks mDNS; others give none.
+            val answered = LinkedHashMap<String, List<Int>>()
             runCatching {
                 java.net.DatagramSocket().use { socket ->
                     socket.broadcast = true
@@ -72,15 +74,19 @@ class PcScreenFinder(context: Context, private val found: (List<Host>) -> Unit) 
                         } catch (_: java.net.SocketTimeoutException) {
                             break
                         }
-                        if (String(packet.data, 0, packet.length).startsWith("POCKETXR-HERE")) packet.address.hostAddress?.let { answered += it }
+                        val text = String(packet.data, 0, packet.length).trim()
+                        if (text.startsWith("POCKETXR-HERE")) packet.address.hostAddress?.let { from ->
+                            val ports = text.split(" ", limit = 4).getOrNull(3)?.let { com.hayeco.flipspaces.pcvr.PcVrHelper.herePorts(it) }.orEmpty()
+                            answered[from] = ports.ifEmpty { listOf(PcScreenAddress.DEFAULT_PORT) }
+                        }
                     }
                 }
             }
-            for (address in answered) {
-                val seen = Host(address, address, PcScreenAddress.DEFAULT_PORT)
+            for ((address, ports) in answered) for (port in ports) {
+                val seen = Host(address, address, port)
                 val name = hostName(seen) ?: continue
                 main.post {
-                    if (running && hosts.values.none { it.address == address }) {
+                    if (running && hosts.values.none { it.address == address && it.port == port }) {
                         val h = seen.copy(name = name, service = name)
                         hosts[h.typed] = h
                         Log.i(TAG, "finder: found $name at ${h.typed} through its PC helper")

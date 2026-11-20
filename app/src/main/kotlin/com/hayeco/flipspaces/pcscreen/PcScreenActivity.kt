@@ -631,12 +631,12 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 // Home or away, waking the PC first (at home, or through the wake relay) when it does not answer.
                 val (address, info) = serverInfoWaking(home, cert, gen)
                 activeAddress = address
-                // A Linux computer gets relative mouse moves ([relativeMouse]); asked of its PC helper, if it has one.
-                Thread({
-                    val os = helperAt(address)?.let { (helper, pc) -> runCatching { helper.hostOs(pc) }.getOrNull() }
-                    relativeMouse = os == "linux"
-                    Log.i(TAG, "mouse: ${if (relativeMouse) "relative moves (a Linux computer)" else "positions"} (helper says ${os ?: "nothing"})")
-                }, "PcScreen-os").start()
+                // What the computer's PC helper says, if it has one: a Linux computer gets relative mouse moves
+                // ([relativeMouse]), and a helper that makes virtual screens (the Mac's) gets the window's shape.
+                val helperHere = if (xml(info, "VirtualDisplayCapable") == "true") null else helperAt(address)
+                val helperSays = helperHere?.let { (helper, pc) -> runCatching { helper.hostInfo(pc) }.getOrNull() }
+                relativeMouse = helperSays?.first == "linux"
+                Log.i(TAG, "helper says: ${helperSays ?: "nothing"}; mouse ${if (relativeMouse) "relative moves" else "positions"}")
                 runCatching { NvHTTP(tuple(address), 0, store.uniqueId, cert, crypto).getHttpsPort(info) }.getOrNull()
                     ?.takeIf { it > 0 && it != store.httpsPort }?.let { https ->
                         Log.i(TAG, "HTTPS port now $https (was ${store.httpsPort})")
@@ -672,7 +672,8 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                         return@Thread
                     }
                 }
-                val vd = xml(info, "VirtualDisplayCapable") == "true" && xml(info, "VirtualDisplayDriverReady") != "false"
+                val vd = (xml(info, "VirtualDisplayCapable") == "true" && xml(info, "VirtualDisplayDriverReady") != "false") ||
+                    helperSays?.second == true
                 val (w, h) = if (vd) PcScreenShape.forWindow(windowW, windowH) else (STREAM_W to STREAM_H)
                 shapedToWindow = vd
                 streamW = w
@@ -713,6 +714,14 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 if (running != 0 && !resuming) {
                     val quit = runCatching { http.quitApp() }
                     Log.i(TAG, "a session was running (app $running): ended it for a fresh one: ${quit.exceptionOrNull() ?: "done"}")
+                }
+                // A Mac's helper keeps idle virtual screens mirrored (out of the way); this one comes out at the stream's
+                // size before Sunshine looks at it.
+                if (helperSays?.second == true && helperHere != null) {
+                    val port = PcScreenAddress.parse(address)?.second ?: PcScreenAddress.DEFAULT_PORT
+                    val t0 = android.os.SystemClock.uptimeMillis()
+                    val ready = runCatching { helperHere.first.screenPrepare(helperHere.second, port, w, h, fps) }.getOrDefault(false)
+                    Log.i(TAG, "screen-prepare ${w}x$h@$fps on port $port: ${if (ready) "ready" else "not ready"} after ${android.os.SystemClock.uptimeMillis() - t0} ms")
                 }
                 Log.i(TAG, "connecting to $address, app ${app.appName}, ${w}x$h@$fps (${store.fps}), ${kbps / 1000} Mbps (${store.quality}), $others other PC screens streaming, window ${windowW}x$windowH, virtual display $vd, codec ${store.codec}, formats 0x${Integer.toHexString(formats)}${if (resuming) ", resuming after a drop (try $attempt)" else ""}")
                 if (gen != generation) {
@@ -864,6 +873,12 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             return true
         }
         if (!streaming) return super.dispatchKeyEvent(event)
+        // Volume keys (the phone's and the glasses' own buttons) stay with Android: they set the media volume the PC's
+        // sound plays at. Sent on to the PC they did nothing, and the phone's volume bar never showed (Mike, 20 Nov 2026).
+        when (event.keyCode) {
+            android.view.KeyEvent.KEYCODE_VOLUME_UP, android.view.KeyEvent.KEYCODE_VOLUME_DOWN, android.view.KeyEvent.KEYCODE_VOLUME_MUTE ->
+                return super.dispatchKeyEvent(event)
+        }
         if ((event.flags and android.view.KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) return super.dispatchKeyEvent(event)
         val fromKeyboard = (event.source and android.view.InputDevice.SOURCE_KEYBOARD) == android.view.InputDevice.SOURCE_KEYBOARD &&
             event.device?.keyboardType == android.view.InputDevice.KEYBOARD_TYPE_ALPHABETIC
@@ -981,6 +996,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private var lastY = Float.NaN
     private var restX = 0f
     private var restY = 0f
+
 
     private fun position(event: MotionEvent) {
         val w = surface.width.coerceAtLeast(1)

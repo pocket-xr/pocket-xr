@@ -29,9 +29,13 @@ class PanelInputTest {
         val move = p.handle(PointerSignal.MoveBy(25f, 0f), Quat.IDENTITY, layout, pixels).filterIsInstance<SpaceAction.Hover>().single()
         assertEquals(HoverPhase.MOVE, move.phase)
         assertTrue(move.u > 0.5f)
-        // Off the panel: an exit.
-        val exit = p.handle(PointerSignal.MoveBy(1e5f, 0f), Quat.IDENTITY, layout, pixels).filterIsInstance<SpaceAction.Hover>().single()
-        assertEquals(HoverPhase.EXIT, exit.phase)
+        // Off the panel: a last move at the edge it left by (here the right, u 1), then an exit at the same spot, so a PC
+        // screen's cursor reaches the edge and stays there.
+        val off = p.handle(PointerSignal.MoveBy(1e5f, 0f), Quat.IDENTITY, layout, pixels).filterIsInstance<SpaceAction.Hover>()
+        assertEquals(listOf(HoverPhase.MOVE, HoverPhase.EXIT), off.map { it.phase })
+        assertEquals(1f, off[0].u, 1e-3f)
+        val exit = off.last()
+        assertEquals(1f, exit.u, 1e-3f)
         assertEquals(1, exit.panelId)
     }
 

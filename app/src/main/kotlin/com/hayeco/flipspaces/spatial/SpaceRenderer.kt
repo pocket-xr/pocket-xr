@@ -2945,7 +2945,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         // 1.1.15: a press on the app (a touch going down, a long press): its new screens are watched for on the phone.
         if ((sent is SpaceAction.Touch && sent.phase == com.hayeco.flipspaces.core.spatial.TouchPhase.DOWN) || sent is SpaceAction.LongPress) pressedApp(p)
-        for (m in input.map(sent, p.width, p.height)) {
+        val pcScreen = com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(p.panel.activityName) >= 0
+        for (m in input.map(sent, p.width, p.height, fullArea = pcScreen)) {
             if (m.startsGesture) p.downTime = SystemClock.uptimeMillis()
             val down = if (m.source == PanelMotion.SOURCE_MOUSE) 0L else p.downTime
             // Every scroll and its result (0.4.2: a dropped scroll used to leave no trace).
