@@ -27,7 +27,10 @@ import java.io.ByteArrayOutputStream
  * moonlight-common-c calls [submitDecodeUnit] once per NAL group. An IDR comes as its parameter sets (SPS, PPS and,
  * for HEVC, VPS) then its picture. The sets are gathered and queued as one codec config buffer before the picture.
  */
-class PcScreenDecoder(private val surface: Surface) : VideoDecoderRenderer() {
+class PcScreenDecoder(private val surface: Surface, private val fullRange: Boolean = false) : VideoDecoderRenderer() {
+    /** The stream's numbers once a second, for the stats overlay; null with it off. Called on the decoder's threads. */
+    @Volatile var onStats: ((String) -> Unit)? = null
+
     private var codec: MediaCodec? = null
     private var output: Thread? = null
     @Volatile private var running = false
@@ -69,8 +72,9 @@ class PcScreenDecoder(private val surface: Surface) : VideoDecoderRenderer() {
             f.setInteger(MediaFormat.KEY_MAX_WIDTH, width)
             f.setInteger(MediaFormat.KEY_MAX_HEIGHT, height)
             f.setInteger(MediaFormat.KEY_FRAME_RATE, redrawRate)
-            // As Moonlight: BT.709, limited range, SDR, as the stream was asked for (PcScreenActivity).
-            f.setInteger(MediaFormat.KEY_COLOR_RANGE, MediaFormat.COLOR_RANGE_LIMITED)
+            // As Moonlight: BT.709, SDR, limited range or (Quality: Sharp) full range, as the stream was asked for
+            // (PcScreenActivity).
+            f.setInteger(MediaFormat.KEY_COLOR_RANGE, if (fullRange) MediaFormat.COLOR_RANGE_FULL else MediaFormat.COLOR_RANGE_LIMITED)
             f.setInteger(MediaFormat.KEY_COLOR_STANDARD, MediaFormat.COLOR_STANDARD_BT709)
             f.setInteger(MediaFormat.KEY_COLOR_TRANSFER, MediaFormat.COLOR_TRANSFER_SDR_VIDEO)
             lowLatency(f, info.name, tryNumber)
@@ -122,6 +126,7 @@ class PcScreenDecoder(private val surface: Surface) : VideoDecoderRenderer() {
                 shown++
                 stats.decode((System.nanoTime() / 1000 - info.presentationTimeUs) / 1000.0)
                 stats.maybeLog()
+                stats.maybeStats(onStats)
             } catch (e: IllegalStateException) {
                 if (running) Log.w(TAG, "output: $e")
                 break
@@ -281,12 +286,15 @@ internal class LatencyStats {
 
     fun frame(hostMs: Double, receiveMs: Double) {
         frames++
+        secFrames++
         if (hostMs > 0) { hostSum += hostMs; hostMax = maxOf(hostMax, hostMs) }
         receiveSum += receiveMs
     }
 
     fun decode(ms: Double) {
         decoded++
+        secDecoded++
+        secDecodeSum += ms
         decodeSum += ms
         decodeMax = maxOf(decodeMax, ms)
     }
@@ -295,6 +303,23 @@ internal class LatencyStats {
         screened++
         screenSum += ms
         screenMax = maxOf(screenMax, ms)
+    }
+
+    private var secFrames = 0
+    private var secDecodeSum = 0.0
+    private var secDecoded = 0
+    private var secSinceMs = 0L
+
+    /** One short line a second for the stats overlay: frame rate in, network round trip, decode time. */
+    fun maybeStats(sink: ((String) -> Unit)?) {
+        if (sink == null) return
+        val now = android.os.SystemClock.uptimeMillis()
+        if (secSinceMs == 0L) secSinceMs = now
+        if (now - secSinceMs < 1000) return
+        val rtt = MoonBridge.getEstimatedRttInfo()
+        val decode = secDecodeSum / secDecoded.coerceAtLeast(1)
+        sink("${(secFrames * 1000 / (now - secSinceMs)).toInt()} fps  ·  ${rtt ushr 32} ms network  ·  ${"%.1f".format(java.util.Locale.ROOT, decode)} ms decode")
+        secFrames = 0; secDecodeSum = 0.0; secDecoded = 0; secSinceMs = now
     }
 
     fun maybeLog() {

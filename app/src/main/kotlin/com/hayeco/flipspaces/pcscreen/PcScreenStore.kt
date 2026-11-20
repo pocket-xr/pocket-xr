@@ -45,6 +45,31 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
         get() = prefs.getString(KEY_FPS, "auto")?.takeIf { it in PcScreenQuality.FPS } ?: "auto"
         set(value) = prefs.edit().putString(KEY_FPS, value).apply()
 
+    /** Where the PC's sound plays: [SOUNDS] (the glasses, the PC's own speakers, or not at all for this screen). */
+    var sound: String
+        get() = prefs.getString(KEY_SOUND, "glasses")?.takeIf { it in SOUNDS } ?: "glasses"
+        set(value) = prefs.edit().putString(KEY_SOUND, value).apply()
+
+    /** The mouse: [MOUSES] ("exact" sends positions, "moves" relative moves, "auto" relative only where needed). */
+    var mouse: String
+        get() = prefs.getString(KEY_MOUSE, "auto")?.takeIf { it in MOUSES } ?: "auto"
+        set(value) = prefs.edit().putString(KEY_MOUSE, value).apply()
+
+    /** Precise pointer: the PC's pointer moves at [PRECISE_FACTOR] of the hand's speed (relative moves). */
+    var precise: Boolean
+        get() = prefs.getBoolean(KEY_PRECISE, false)
+        set(value) = prefs.edit().putBoolean(KEY_PRECISE, value).apply()
+
+    /** The clipboard shared with the PC while streaming (Apollo). */
+    var clipboard: Boolean
+        get() = prefs.getBoolean(KEY_CLIPBOARD, true)
+        set(value) = prefs.edit().putBoolean(KEY_CLIPBOARD, value).apply()
+
+    /** The stream's numbers on the screen (frame rate, network, decode). */
+    var stats: Boolean
+        get() = prefs.getBoolean(KEY_STATS, false)
+        set(value) = prefs.edit().putBoolean(KEY_STATS, value).apply()
+
     /** Picture quality: [PcScreenQuality.QUALITY], how many bits the stream gets. */
     var quality: String
         get() = prefs.getString(KEY_QUALITY, "auto")?.takeIf { it in PcScreenQuality.QUALITY } ?: "auto"
@@ -90,6 +115,14 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
     companion object {
         fun prefsName(slot: Int) = if (slot == 0) "pc_screen" else "pc_screen_${slot + 1}"
         val CODECS = listOf("auto", "h264", "av1")
+        val SOUNDS = listOf("glasses", "pc", "off")
+        val MOUSES = listOf("auto", "exact", "moves")
+        const val PRECISE_FACTOR = 0.4f
+        private const val KEY_SOUND = "sound"
+        private const val KEY_MOUSE = "mouse"
+        private const val KEY_PRECISE = "precise"
+        private const val KEY_CLIPBOARD = "clipboard"
+        private const val KEY_STATS = "stats"
         private const val KEY_CODEC = "codec"
         private const val KEY_ID = "unique_id"
         private const val KEY_ADDRESS = "address"

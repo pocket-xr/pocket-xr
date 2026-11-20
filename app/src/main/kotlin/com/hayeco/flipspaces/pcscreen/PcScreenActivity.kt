@@ -455,6 +455,27 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         ) {
             store.quality = PcScreenQuality.QUALITY[it]; fillPicture(box)
         }))
+        val off = getString(R.string.pc_screen_off)
+        val on = getString(R.string.pc_screen_on)
+        box.addView(kit.setting(getString(R.string.pc_screen_sound), kit.segmented(
+            listOf(getString(R.string.pc_screen_sound_glasses), getString(R.string.pc_screen_sound_pc), off), PcScreenStore.SOUNDS.indexOf(store.sound),
+        ) {
+            store.sound = PcScreenStore.SOUNDS[it]; fillPicture(box)
+        }))
+        box.addView(kit.setting(getString(R.string.pc_screen_mouse), kit.segmented(
+            listOf(auto, getString(R.string.pc_screen_mouse_exact), getString(R.string.pc_screen_mouse_moves)), PcScreenStore.MOUSES.indexOf(store.mouse),
+        ) {
+            store.mouse = PcScreenStore.MOUSES[it]; fillPicture(box)
+        }))
+        box.addView(kit.setting(getString(R.string.pc_screen_precise), kit.segmented(listOf(off, on), if (store.precise) 1 else 0) {
+            store.precise = it == 1; fillPicture(box)
+        }))
+        box.addView(kit.setting(getString(R.string.pc_screen_clipboard), kit.segmented(listOf(off, on), if (store.clipboard) 1 else 0) {
+            store.clipboard = it == 1; fillPicture(box)
+        }))
+        box.addView(kit.setting(getString(R.string.pc_screen_stats), kit.segmented(listOf(off, on), if (store.stats) 1 else 0) {
+            store.stats = it == 1; fillPicture(box)
+        }))
     }
 
     /** Connect and Forget show only once this PC screen has a PC. */
@@ -623,7 +644,11 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         // Straight into the Space's reader when the Space has handed one over (PcScreenLink): no composite of this
         // window's display in between. Else into this window, as before (the Space not running, or an older one).
         val panelSurface = PcScreenSurfaces.current?.takeIf { it.isValid }
-        val d = PcScreenDecoder(panelSurface ?: holder.surface).also { decoder = it }
+        val d = PcScreenDecoder(panelSurface ?: holder.surface, fullRange = store.quality == "sharp").also { decoder = it }
+        // The stats overlay: one line a second in a file the Space reads and draws on this screen's window.
+        val statsFile = java.io.File(filesDir, "pc_screen_stats_${slot + 1}")
+        runCatching { statsFile.delete() }
+        if (store.stats) d.onStats = { line -> runCatching { statsFile.writeText(line) } }
         Log.i(TAG, "decoding into ${if (panelSurface != null) "the Space's panel directly" else "this window"}")
         say(getString(R.string.pc_screen_connecting, home))
         Thread({
@@ -635,7 +660,15 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 // ([relativeMouse]), and a helper that makes virtual screens (the Mac's) gets the window's shape.
                 val helperHere = if (xml(info, "VirtualDisplayCapable") == "true") null else helperAt(address)
                 val helperSays = helperHere?.let { (helper, pc) -> runCatching { helper.hostInfo(pc) }.getOrNull() }
-                relativeMouse = helperSays?.first == "linux"
+                relativeMouse = store.precise || when (store.mouse) {
+                    "moves" -> true
+                    "exact" -> false
+                    else -> helperSays?.first == "linux"
+                }
+                mouseFactor = if (store.precise) PcScreenStore.PRECISE_FACTOR else 1f
+                // Relative moves start from where the pointer enters the window, except on a Linux computer whose exact
+                // positions are what fails (the Deck's rotated panel).
+                placeOnEnter = helperSays?.first != "linux"
                 Log.i(TAG, "helper says: ${helperSays ?: "nothing"}; mouse ${if (relativeMouse) "relative moves" else "positions"}")
                 runCatching { NvHTTP(tuple(address), 0, store.uniqueId, cert, crypto).getHttpsPort(info) }.getOrNull()
                     ?.takeIf { it > 0 && it != store.httpsPort }?.let { https ->
@@ -701,7 +734,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     // Apollo: a virtual display of this size on the PC, so the PC screen works with the monitors off.
                     .setVirtualDisplay(true)
                     .setColorSpace(MoonBridge.COLORSPACE_REC_709)
-                    .setColorRange(MoonBridge.COLOR_RANGE_LIMITED)
+                    .setColorRange(if (store.quality == "sharp") MoonBridge.COLOR_RANGE_FULL else MoonBridge.COLOR_RANGE_LIMITED)
+                    // Sound: the PC's own speakers keep playing ("pc"); else the PC goes quiet while it streams.
+                    .enableLocalAudioPlayback(store.sound == "pc")
                     .setSupportedVideoFormats(formats)
                     .build()
                 // A fresh session each time, so Apollo makes this stream's virtual display: rejoining a session it
@@ -731,7 +766,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 connection = NvConnection(applicationContext, tuple(address), store.httpsPort, store.uniqueId, config, crypto, cert)
                     .also {
                         // One PC screen plays the PC's sound: the latest one Apollo sends it to ([PcScreenAudio]).
-                        it.start(PcScreenAudio(applicationContext, slot, AndroidAudioRenderer(applicationContext, false)), d, this)
+                        it.start(PcScreenAudio(applicationContext, slot, AndroidAudioRenderer(applicationContext, false), muted = store.sound != "glasses"), d, this)
                     }
             } catch (e: Exception) {
                 Log.w(TAG, "connect: $e")
@@ -873,6 +908,8 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             return true
         }
         if (!streaming) return super.dispatchKeyEvent(event)
+        // A game controller's buttons go to the PC as a gamepad ([PcScreenGamepad]).
+        if (gamepad.key(event)) return true
         // Volume keys (the phone's and the glasses' own buttons) stay with Android: they set the media volume the PC's
         // sound plays at. Sent on to the PC they did nothing, and the phone's volume bar never showed (Mike, 20 Nov 2026).
         when (event.keyCode) {
@@ -918,7 +955,11 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private fun stopStream() {
         generation++
         starting = false
+        if (streaming) runCatching { gamepad.releaseAll() }
         streaming = false
+        clip?.stop()
+        clip = null
+        runCatching { java.io.File(filesDir, "pc_screen_stats_${slot + 1}").delete() }
         connection?.let { c -> Thread({ c.stop() }, "PcScreen-stop").start() }
         connection = null
         decoder = null
@@ -958,6 +999,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
         if (!streaming) return super.dispatchGenericMotionEvent(event)
+        if (gamepad.motion(event)) return true
         when (event.actionMasked) {
             MotionEvent.ACTION_HOVER_MOVE, MotionEvent.ACTION_HOVER_ENTER -> position(event)
             MotionEvent.ACTION_SCROLL -> {
@@ -992,6 +1034,10 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
      * picture (Mike's Deck, 20 Nov 2026). Set when the stream starts.
      */
     @Volatile private var relativeMouse = false
+    /** Precise pointer: relative moves at this share of the hand's speed. */
+    @Volatile private var mouseFactor = 1f
+    /** Relative moves: the PC's cursor is first put where the pointer enters, so the two start together. */
+    @Volatile private var placeOnEnter = true
     private var lastX = Float.NaN
     private var lastY = Float.NaN
     private var restX = 0f
@@ -1005,10 +1051,16 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             val x = event.x - surface.left
             val y = event.y - surface.top
             val fresh = lastX.isNaN() || event.actionMasked == MotionEvent.ACTION_HOVER_ENTER
+            if (fresh && placeOnEnter) {
+                // Mike, 20 Nov 2026: with relative moves the PC's cursor was far from the pointer when it came in.
+                MoonBridge.sendMousePosition(x.toInt().coerceIn(0, w - 1).toShort(), y.toInt().coerceIn(0, h - 1).toShort(), w.toShort(), h.toShort())
+                restX = 0f
+                restY = 0f
+            }
             if (!fresh) {
                 // In the stream's pixels, which is what Sunshine moves the cursor by.
-                restX += (x - lastX) * streamW / w
-                restY += (y - lastY) * streamH / h
+                restX += (x - lastX) * streamW / w * mouseFactor
+                restY += (y - lastY) * streamH / h * mouseFactor
                 val dx = restX.toInt()
                 val dy = restY.toInt()
                 if (dx != 0 || dy != 0) {
@@ -1063,9 +1115,27 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         if (wantStream && kind.canRetry()) main.post { lost("stage $stage failed ($errorCode)") }
         else showSetup(trouble(kind, getString(R.string.pc_screen_connect_failed, "$stage ($errorCode)")))
     }
+    /** The clipboard shared with the PC while streaming ([PcScreenClipboard]), when on. */
+    private var clip: PcScreenClipboard? = null
+    private val gamepad = PcScreenGamepad()
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        // Android lets the phone's clipboard be read only by the app with focus.
+        if (hasFocus) clip?.phoneToPc()
+    }
+
     override fun connectionStarted() {
         streaming = true
         sessionStarted = true
+        if (store.clipboard) main.post {
+            val address = activeAddress ?: store.address
+            val cert = store.serverCert
+            clip?.stop()
+            if (cert != null) clip = PcScreenClipboard(this) {
+                NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto)
+            }.also { it.start(); it.phoneToPc() }
+        }
         main.post {
             setup.visibility = View.GONE
             if (lostAtMs > 0) Log.i(TAG, "reconnect: back after ${(android.os.SystemClock.uptimeMillis() - lostAtMs) / 1000} s, try $attempt")

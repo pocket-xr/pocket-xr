@@ -660,6 +660,15 @@ namespace PocketXr
 
         static Dictionary<string, object> No(string why) { Log.Line("apollo: " + why); return new Dictionary<string, object> { { "ok", false }, { "why", why } }; }
 
+        /** A record of the device named [name]: that name, or Apollo's numbered copy of it ("MIKE (2)"). */
+        static bool SameDevice(string recordName, string name)
+        {
+            if (recordName == null) return false;
+            if (recordName == name) return true;
+            return recordName.StartsWith(name + " (") && recordName.EndsWith(")") &&
+                recordName.Substring(name.Length + 2, recordName.Length - name.Length - 3).All(char.IsDigit);
+        }
+
         /** Types [pin] into the Apollo instance on HTTP port [port] (its web page is port + 1), then sets the new client's permissions. */
         public static Dictionary<string, object> Pin(string pin, string name, int port, bool virtualDisplay = false)
         {
@@ -670,6 +679,22 @@ namespace PocketXr
             var cookies = new CookieContainer();
             try { Call(cookies, "POST", web + "/api/login", new Dictionary<string, object> { { "username", user }, { "password", password } }); }
             catch (Exception e) { return No("Apollo sign-in failed: " + e.Message); }
+            // A device pairing again: its old records go first. Apollo kept them and named the new one "MIKE (2)", so the
+            // permissions below went to the old record (the Windows app's test, 20 Nov 2026), as the Mac helper found
+            // with Sunshine (a certificate on two records is refused).
+            try
+            {
+                var before = (Dictionary<string, object>)Json.DeserializeObject(Call(cookies, "GET", web + "/api/clients/list", null));
+                var old = before["named_certs"] as object[] ?? (before["named_certs"] as ArrayList ?? new ArrayList()).ToArray();
+                foreach (var c in old)
+                {
+                    var d = c as Dictionary<string, object>;
+                    if (d == null || !SameDevice(d["name"] as string, name) || !d.ContainsKey("uuid")) continue;
+                    Call(cookies, "POST", web + "/api/clients/unpair", new Dictionary<string, object> { { "uuid", d["uuid"] } });
+                    Log.Line("apollo: old record \"" + d["name"] + "\" removed before pairing " + name + " again");
+                }
+            }
+            catch (Exception e) { Log.Line("apollo old records: " + e.Message); }
             // The phone is waiting at its PIN step by now, or will be in a moment.
             bool typed = false;
             for (int i = 0; i < 10 && !typed; i++)
@@ -692,7 +717,7 @@ namespace PocketXr
                     var list = (Dictionary<string, object>)Json.DeserializeObject(Call(cookies, "GET", web + "/api/clients/list", null));
                     var clients = list["named_certs"] as object[] ?? (list["named_certs"] as ArrayList ?? new ArrayList()).ToArray();
                     Dictionary<string, object> mine = null;
-                    foreach (var c in clients) { var d = c as Dictionary<string, object>; if (d != null && (d["name"] as string) == name) mine = d; }
+                    foreach (var c in clients) { var d = c as Dictionary<string, object>; if (d != null && SameDevice(d["name"] as string, name)) mine = d; }
                     if (mine != null)
                     {
                         long perm = Convert.ToInt64(mine["perm"]);

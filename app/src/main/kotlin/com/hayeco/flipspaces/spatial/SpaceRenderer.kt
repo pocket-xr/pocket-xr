@@ -168,6 +168,11 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     val back = IconTexture()
     val banner = LabelTexture(1024, 160)
 
+    /** PC screens: the stats overlay's line ([com.hayeco.flipspaces.pcscreen.PcScreenDecoder.onStats]), read once a second. */
+    val statsTex = LabelTexture(1024, 96)
+    var statsLine: String? = null
+    var statsReadMs = 0L
+
     /** 0.5.17: the window's Reset and Close, and the held window's guide ("FARTHER", ...). */
     val reset = IconTexture()
     val close = IconTexture()
@@ -364,6 +369,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
         placeholder.release()
         back.release()
         banner.release()
+        statsTex.release()
         reset.release()
         close.release()
         refresh.release()
@@ -4600,6 +4606,18 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 // virtual display, else 1920 x 1080.
                 val box = com.hayeco.flipspaces.pcscreen.PcScreenFit.uv(p.width, p.height, st.texture.width, st.texture.height)
                 drawOn(PanelCurve.rect(panel, box[0], box[1], box[2], box[3]), viewProj, st.texture.id, windowAlpha, GlKit.IDENTITY, footprint = !mips && store.footprintFilter)
+                // The stats overlay (the PC screen's Stats on the screen): its line, written once a second by the PC
+                // screen's process, at the picture's top left.
+                if (firstEye && nowMs - p.statsReadMs > 1000) {
+                    p.statsReadMs = nowMs
+                    val slot = com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(panel.activityName)
+                    val f = java.io.File(context.filesDir, "pc_screen_stats_${slot + 1}")
+                    p.statsLine = if (slot >= 0 && f.exists() && System.currentTimeMillis() - f.lastModified() < 3000) runCatching { f.readText() }.getOrNull() else null
+                }
+                p.statsLine?.let { line ->
+                    p.statsTex.set(listOf(line), 0xB0101418.toInt(), Look.INK, 40f)
+                    drawOn(PanelCurve.rect(panel, box[0] + 0.01f, box[1] + 0.01f, box[0] + 0.45f, box[1] + 0.07f), viewProj, p.statsTex.id, windowAlpha)
+                }
             } else {
                 drawOn(body, viewProj, d.texture.id, a, matrixFor(d), footprint = !mips && store.footprintFilter, round = bodyRounding(panel, p, windowAlpha))
             }

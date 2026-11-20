@@ -410,6 +410,36 @@ public class NvHTTP {
         }
     }
 
+    // Pocket XR (PC screens): Apollo's clipboard, text only, while this client streams ("/actions/clipboard?type=text").
+    private HttpUrl clipboardUrl() throws IOException {
+        return getHttpsUrl(true).newBuilder()
+                .addPathSegment("actions")
+                .addPathSegment("clipboard")
+                .addQueryParameter("type", "text")
+                .addQueryParameter("uniqueid", uniqueId)
+                .addQueryParameter("uuid", UUID.randomUUID().toString())
+                .build();
+    }
+
+    public String getClipboardText() throws IOException {
+        Request request = new Request.Builder().url(clipboardUrl()).get().build();
+        try (Response response = performAndroidTlsHack(httpClientLongConnectTimeout).newCall(request).execute()) {
+            if (response.code() == 404) throw new FileNotFoundException("clipboard");
+            if (!response.isSuccessful()) throw new HostHttpResponseException(response.code(), response.message());
+            ResponseBody body = response.body();
+            return body != null ? body.string() : "";
+        }
+    }
+
+    public void setClipboardText(String text) throws IOException {
+        Request request = new Request.Builder().url(clipboardUrl())
+                .post(okhttp3.RequestBody.create(okhttp3.MediaType.parse("text/plain; charset=utf-8"), text)).build();
+        try (Response response = performAndroidTlsHack(httpClientLongConnectTimeout).newCall(request).execute()) {
+            if (response.code() == 404) throw new FileNotFoundException("clipboard");
+            if (!response.isSuccessful()) throw new HostHttpResponseException(response.code(), response.message());
+        }
+    }
+
     private HttpUrl getCompleteUrl(HttpUrl baseUrl, String path, String query) {
         return baseUrl.newBuilder()
                 .addPathSegment(path)

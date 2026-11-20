@@ -20,7 +20,13 @@ import java.io.File
  * receiving sound too: then that one plays and this one feeds silence. Whichever screen Apollo sends the sound to is
  * heard, once.
  */
-class PcScreenAudio(context: Context, private val slot: Int, private val inner: AudioRenderer) : AudioRenderer {
+class PcScreenAudio(
+    context: Context,
+    private val slot: Int,
+    private val inner: AudioRenderer,
+    /** This screen's sound is off, or plays on the PC: nothing here, and it never takes the sound from another screen. */
+    private val muted: Boolean = false,
+) : AudioRenderer {
     private val dir = context.filesDir
     private val mine = file(dir, slot)
     private val startedMs = SystemClock.elapsedRealtime()
@@ -54,7 +60,7 @@ class PcScreenAudio(context: Context, private val slot: Int, private val inner: 
             val a = if (s < 0) -s.toInt() else s.toInt()
             if (a > peak) peak = a
         }
-        if (peak > LOUD) lastLoudMs = now
+        if (peak > LOUD && !muted) lastLoudMs = now
         if (now - lastWriteMs >= 250) write(now)
         if (now - lastCheckMs >= 250) {
             lastCheckMs = now
@@ -64,7 +70,7 @@ class PcScreenAudio(context: Context, private val slot: Int, private val inner: 
                 Log.i("PcScreen", "sound: PC screen ${slot + 1} ${if (next) "plays the sound" else "is quiet, a later PC screen has the sound"}")
             }
         }
-        if (playing) {
+        if (playing && !muted) {
             inner.playDecodedAudio(audioData)
         } else {
             // Silence keeps the audio track fed, so it is ready the moment this screen has the sound again.

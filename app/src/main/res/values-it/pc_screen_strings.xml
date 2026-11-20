@@ -87,4 +87,15 @@
     <string name="pc_screen_ended">La trasmissione è terminata (%1$d).</string>
     <string name="pc_screen_disconnected">Disconnesso. Tocca Connetti per tornare indietro o tocca un altro computer.</string>
     <string name="pc_screen_helper_typing">Consentito su %1$s. Inserimento del PIN per te, può richiedere qualche secondo…</string>
+    <string name="pc_screen_sound">Audio</string>
+    <string name="pc_screen_sound_glasses">Occhiali</string>
+    <string name="pc_screen_sound_pc">PC</string>
+    <string name="pc_screen_mouse">Mouse</string>
+    <string name="pc_screen_mouse_exact">Esatto</string>
+    <string name="pc_screen_mouse_moves">Movimenti</string>
+    <string name="pc_screen_precise">Puntatore preciso</string>
+    <string name="pc_screen_clipboard">Condividi appunti</string>
+    <string name="pc_screen_stats">Statistiche sullo schermo</string>
+    <string name="pc_screen_off">No</string>
+    <string name="pc_screen_on">Sì</string>
 </resources>

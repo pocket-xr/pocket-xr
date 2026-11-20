@@ -87,4 +87,15 @@
     <string name="pc_screen_ended">Трансляция завершена (%1$d).</string>
     <string name="pc_screen_disconnected">Отключено. Нажмите «Подключить», чтобы вернуться, или выберите другой компьютер.</string>
     <string name="pc_screen_helper_typing">Разрешено на %1$s. PIN вводится автоматически, это может занять несколько секунд…</string>
+    <string name="pc_screen_sound">Звук</string>
+    <string name="pc_screen_sound_glasses">Очки</string>
+    <string name="pc_screen_sound_pc">ПК</string>
+    <string name="pc_screen_mouse">Мышь</string>
+    <string name="pc_screen_mouse_exact">Точно</string>
+    <string name="pc_screen_mouse_moves">Перемещение</string>
+    <string name="pc_screen_precise">Точный указатель</string>
+    <string name="pc_screen_clipboard">Общий буфер обмена</string>
+    <string name="pc_screen_stats">Статистика на экране</string>
+    <string name="pc_screen_off">Выкл</string>
+    <string name="pc_screen_on">Вкл</string>
 </resources>

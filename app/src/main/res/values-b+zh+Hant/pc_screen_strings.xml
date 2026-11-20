@@ -87,4 +87,15 @@
     <string name="pc_screen_ended">串流已結束（%1$d）。</string>
     <string name="pc_screen_disconnected">已中斷連線。點選「連線」返回，或點選另一台電腦。</string>
     <string name="pc_screen_helper_typing">已在 %1$s 上允許。正在為你輸入 PIN，可能需要幾秒鐘…</string>
+    <string name="pc_screen_sound">聲音</string>
+    <string name="pc_screen_sound_glasses">眼鏡</string>
+    <string name="pc_screen_sound_pc">電腦</string>
+    <string name="pc_screen_mouse">滑鼠</string>
+    <string name="pc_screen_mouse_exact">精確</string>
+    <string name="pc_screen_mouse_moves">移動</string>
+    <string name="pc_screen_precise">精確指標</string>
+    <string name="pc_screen_clipboard">共用剪貼簿</string>
+    <string name="pc_screen_stats">在螢幕上顯示統計</string>
+    <string name="pc_screen_off">關</string>
+    <string name="pc_screen_on">開</string>
 </resources>

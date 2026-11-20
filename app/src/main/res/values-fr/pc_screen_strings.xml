@@ -87,4 +87,15 @@
     <string name="pc_screen_ended">La diffusion s\'est arrêtée (%1$d).</string>
     <string name="pc_screen_disconnected">Déconnecté. Touchez Se connecter pour revenir, ou touchez un autre ordinateur.</string>
     <string name="pc_screen_helper_typing">Autorisé sur %1$s. Saisie du code PIN pour vous, cela peut prendre quelques secondes…</string>
+    <string name="pc_screen_sound">Son</string>
+    <string name="pc_screen_sound_glasses">Lunettes</string>
+    <string name="pc_screen_sound_pc">PC</string>
+    <string name="pc_screen_mouse">Souris</string>
+    <string name="pc_screen_mouse_exact">Exacte</string>
+    <string name="pc_screen_mouse_moves">Mouvements</string>
+    <string name="pc_screen_precise">Pointeur précis</string>
+    <string name="pc_screen_clipboard">Partager le presse-papiers</string>
+    <string name="pc_screen_stats">Statistiques à l\'écran</string>
+    <string name="pc_screen_off">Non</string>
+    <string name="pc_screen_on">Oui</string>
 </resources>

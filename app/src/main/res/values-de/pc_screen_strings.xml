@@ -87,4 +87,15 @@
     <string name="pc_screen_ended">Der Stream wurde beendet (%1$d).</string>
     <string name="pc_screen_disconnected">Getrennt. Tippe auf Verbinden, um zurückzukehren, oder tippe auf einen anderen Computer.</string>
     <string name="pc_screen_helper_typing">Auf %1$s erlaubt. Die PIN wird für dich eingegeben, das kann ein paar Sekunden dauern…</string>
+    <string name="pc_screen_sound">Ton</string>
+    <string name="pc_screen_sound_glasses">Brille</string>
+    <string name="pc_screen_sound_pc">PC</string>
+    <string name="pc_screen_mouse">Maus</string>
+    <string name="pc_screen_mouse_exact">Genau</string>
+    <string name="pc_screen_mouse_moves">Bewegung</string>
+    <string name="pc_screen_precise">Präziser Zeiger</string>
+    <string name="pc_screen_clipboard">Zwischenablage teilen</string>
+    <string name="pc_screen_stats">Statistik anzeigen</string>
+    <string name="pc_screen_off">Aus</string>
+    <string name="pc_screen_on">An</string>
 </resources>

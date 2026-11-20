@@ -25,6 +25,10 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   device back when you're done. Back on a PC screen disconnects and shows your computers, so you can switch to
   another. The cursor reaches every edge of the picture, and the phone's and the glasses' volume buttons set how loud
   the PC's sound plays.
+- **Each PC screen's settings:** where its sound plays (the glasses, the PC's own speakers, or off), the mouse (exact
+  positions or moves, and a precise pointer at 40 % speed), the clipboard shared both ways with an Apollo PC, and a
+  line of stats on the screen. Game controllers on the phone reach the PC as gamepads. Quality: Sharp also uses full
+  colour range.
 - **Keyboard:** the trackpad's keyboard has a shortcut row: Esc, Tab, Ctrl, Alt, Shift, Win, the arrows and Del.
   Bluetooth and USB keyboards go straight to the PC. The trackpad's Keyboard button now opens the phone's keyboard
   straight away, with the text field just above it.
@@ -36,7 +40,7 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   Desktop Mode: three screens at once from Windows, two at once from the Mac and from the Deck at the windows' shapes,
   sound, reconnect, away from home, the setup from a PC with no Apollo, the Linux Flatpak installed from a download,
   mouse and keyboard on all three. Not yet tried: Apple silicon Macs, Linux desktops other than KDE Plasma on the Deck,
-  NVIDIA graphics on Linux, sound from two Mac screens at once, three screens at once from the Mac or the Deck, the
+  NVIDIA graphics on Linux, game controllers, the precise pointer, sound from two Mac screens at once, three screens at once from the Mac or the Deck, the
   wake relay, other phones and
   glasses.
 

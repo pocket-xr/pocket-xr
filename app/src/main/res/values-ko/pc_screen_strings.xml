@@ -87,4 +87,15 @@
     <string name="pc_screen_ended">스트리밍이 끝났어요 (%1$d).</string>
     <string name="pc_screen_disconnected">연결이 끊어졌습니다. 돌아가려면 연결을 탭하거나 다른 컴퓨터를 탭하세요.</string>
     <string name="pc_screen_helper_typing">%1$s에서 허용되었습니다. PIN을 입력하는 중이며 몇 초 걸릴 수 있습니다…</string>
+    <string name="pc_screen_sound">소리</string>
+    <string name="pc_screen_sound_glasses">안경</string>
+    <string name="pc_screen_sound_pc">PC</string>
+    <string name="pc_screen_mouse">마우스</string>
+    <string name="pc_screen_mouse_exact">정확</string>
+    <string name="pc_screen_mouse_moves">이동</string>
+    <string name="pc_screen_precise">정밀 포인터</string>
+    <string name="pc_screen_clipboard">클립보드 공유</string>
+    <string name="pc_screen_stats">화면에 통계 표시</string>
+    <string name="pc_screen_off">끔</string>
+    <string name="pc_screen_on">켬</string>
 </resources>

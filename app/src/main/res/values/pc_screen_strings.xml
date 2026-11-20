@@ -88,4 +88,15 @@
     <string name="pc_screen_ended">The stream ended (%1$d).</string>
     <string name="pc_screen_disconnected">Disconnected. Tap Connect to go back, or tap another computer.</string>
     <string name="pc_screen_helper_typing">Allowed on %1$s. Typing the PIN for you, this can take a few seconds…</string>
+    <string name="pc_screen_sound">Sound</string>
+    <string name="pc_screen_sound_glasses">Glasses</string>
+    <string name="pc_screen_sound_pc">PC</string>
+    <string name="pc_screen_mouse">Mouse</string>
+    <string name="pc_screen_mouse_exact">Exact</string>
+    <string name="pc_screen_mouse_moves">Moves</string>
+    <string name="pc_screen_precise">Precise pointer</string>
+    <string name="pc_screen_clipboard">Share clipboard</string>
+    <string name="pc_screen_stats">Stats on the screen</string>
+    <string name="pc_screen_off">Off</string>
+    <string name="pc_screen_on">On</string>
 </resources>

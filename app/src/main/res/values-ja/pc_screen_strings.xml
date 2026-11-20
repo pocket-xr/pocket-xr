@@ -87,4 +87,15 @@
     <string name="pc_screen_ended">ストリーミングが終了しました (%1$d)。</string>
     <string name="pc_screen_disconnected">切断しました。戻るには［接続］をタップするか、別のコンピュータをタップしてください。</string>
     <string name="pc_screen_helper_typing">%1$s で許可されました。PIN を入力しています。数秒かかることがあります…</string>
+    <string name="pc_screen_sound">音声</string>
+    <string name="pc_screen_sound_glasses">グラス</string>
+    <string name="pc_screen_sound_pc">PC</string>
+    <string name="pc_screen_mouse">マウス</string>
+    <string name="pc_screen_mouse_exact">正確</string>
+    <string name="pc_screen_mouse_moves">移動量</string>
+    <string name="pc_screen_precise">精密ポインター</string>
+    <string name="pc_screen_clipboard">クリップボードを共有</string>
+    <string name="pc_screen_stats">画面に統計を表示</string>
+    <string name="pc_screen_off">オフ</string>
+    <string name="pc_screen_on">オン</string>
 </resources>
