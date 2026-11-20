@@ -11,7 +11,9 @@ banned='nebula|decompil|il2cpp|\bvtable|\bPDB\b|agent read|\.java:[0-9]|xreal.?s
 # data (they are the glasses' own output, not our code).
 allowed='"warp_nebula_0532"|NRFlingerInterface|FlingerCtrl::'
 
-hits=$(grep -rnIiE "$banned" app core docs 2>/dev/null | grep -viE "$allowed" || true)
+# Moonlight's own source, included unchanged and credited (docs/LICENSES.md), is third-party code, not ours: its
+# controller list names a "Nebula" gamepad. Our code that uses it is still checked.
+hits=$(grep -rnIiE "$banned" app core docs --exclude-dir=moonlight 2>/dev/null | grep -viE "$allowed" || true)
 if [ -n "$hits" ]; then
   echo "check-clean: these lines name another product as a source, or carry private details:"
   echo "$hits"
