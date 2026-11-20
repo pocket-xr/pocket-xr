@@ -44,7 +44,9 @@ mkdir -p "$OUT"; vfs "$OUT"
 TARGET="${ARCH:-$(uname -m)}-apple-macosx14.0"
 swiftc ${VFS[@]+"${VFS[@]}"} -swift-version 5 -target "$TARGET" -sdk "$SDK" -O -parse-as-library -emit-module -emit-object -wmo \
     -module-name HelperCore -emit-module-path "$OUT/HelperCore.swiftmodule" Sources/HelperCore/*.swift -o "$OUT/HelperCore.o"
+# CVirtualDisplay: CoreGraphics' virtual display classes, declared for Swift (a header and its module map only).
 swiftc ${VFS[@]+"${VFS[@]}"} -swift-version 5 -target "$TARGET" -sdk "$SDK" -O -wmo -module-name PocketXRPCHelper -I "$OUT" \
-    Sources/PcHelper/*.swift "$OUT/HelperCore.o" -framework AppKit -framework Security -framework ServiceManagement \
+    -I Sources/CVirtualDisplay Sources/PcHelper/*.swift "$OUT/HelperCore.o" \
+    -framework AppKit -framework CoreGraphics -framework Security -framework ServiceManagement \
     -o "$OUT/PocketXRPCHelper"
 echo "built $OUT/PocketXRPCHelper"

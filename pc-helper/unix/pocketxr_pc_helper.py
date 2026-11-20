@@ -5,12 +5,16 @@ The Windows helper (../PocketXrPcHelper.cs) has a counterpart here, for a Linux 
 Mac that streams its screen to Pocket XR with Sunshine (Apollo is Windows-only). It speaks the same protocol on the
 same port, so the phone needs nothing new:
 
-  UDP 47610  "POCKETXR-FIND 1"  ->  "POCKETXR-HERE 1 47610 <computer name>"
+  UDP 47610  "POCKETXR-FIND 1"  ->  "POCKETXR-HERE 1 47610 <computer name> <Sunshine ports>"
+             (ports comma-separated, e.g. 47989,48989,49989: one Sunshine per PC screen; mDNS can be blocked, as on
+             SteamOS, so the phone learns them here)
   TCP 47610  one JSON line in, one out:
     {"op":"pair","phone":"<name>"}   asks this computer's user (a dialog); {"ok":true,"token":...} or {"ok":false,...}
     {"op":"apollo-pin","token","pin","name","port"}
         types the phone's pairing PIN into Sunshine's web API (Basic sign-in, the login the setup saved), so pairing
-        needs no PIN typed; {"ok":true} or {"ok":false,"why":...}
+        needs no PIN typed; {"ok":true} or {"ok":false,"why":...}. With one Sunshine per PC screen (Linux, the Pocket
+        XR PC Screens app), the new pairing is then copied to the other Sunshines (they share one certificate), so
+        PC screens 2 and 3 connect with no PIN.
     {"op":"screens-setup",...}       {"ok":false,"why":...}: on Linux and macOS the setup is pocketxr-pc-screens.sh
     {"op":"status"|"start",...}      PC VR is Windows-only: {"ok":true,"steam":false,...}
 
@@ -40,6 +44,8 @@ CONFIG_DIR = os.path.expanduser("~/.config/pocketxr")
 TOKENS = os.path.join(CONFIG_DIR, "pc-helper.json")
 LOGIN = os.path.join(CONFIG_DIR, "sunshine-login.json")
 LOG = os.path.join(CONFIG_DIR, "pc-helper.log")
+SCREENS = os.path.join(CONFIG_DIR, "screens.json")  # {"app", "ports": [47989, ...], "virtual"}: by the setup
+BASE_PORT = 47989
 NAME = socket.gethostname().split(".")[0]
 _lock = threading.Lock()
 
@@ -189,6 +195,138 @@ def sunshine_pin(pin, name, port, phone_address=None):
     return {"ok": False, "why": "Sunshine did not take the PIN (%s)" % last}
 
 
+def screens_info():
+    try:
+        with open(SCREENS, encoding="utf-8") as f:
+            info = json.load(f)
+        return info if isinstance(info, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def screens():
+    """The Sunshine ports, one per PC screen, from the setup; just the usual one when it wrote none."""
+    try:
+        ports = [int(p) for p in screens_info().get("ports", [])]
+    except (ValueError, TypeError):
+        ports = []
+    return ports or [BASE_PORT]
+
+
+def state_file(port):
+    """PC screen N's Sunshine keeps its paired phones here (the setup's sunshine-N/sunshine.conf)."""
+    return os.path.join(CONFIG_DIR, "sunshine-%d" % ((port - BASE_PORT) // 1000 + 1), "sunshine_state.json")
+
+
+def read_state(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def share_pairing(port, name):
+    """Copies the phone [name] just paired with the Sunshine on [port] to the other PC screens' Sunshines.
+
+    Sunshine has no web call that adds a phone's certificate, so each other Sunshine is stopped, the phone's record is
+    written into its state file (its earlier records of this phone or certificate first removed: Sunshine 2026.914 lets
+    a certificate in only when exactly one record matches it) and started again. Sunshine saves the pairing when the
+    phone finishes it, a few seconds after the PIN, so this waits for it (up to 60 s). Runs on its own thread."""
+    others = [p for p in screens() if p != port]
+    if not others:
+        return
+    record = None
+    for _ in range(60):
+        devices = read_state(state_file(port)).get("root", {}).get("named_devices", [])
+        mine = [d for d in devices if isinstance(d, dict) and d.get("name") == name and d.get("cert")]
+        if mine:
+            record = mine[-1]
+            break
+        time.sleep(1)
+    if record is None:
+        log("share: %s's pairing on port %d not saved within 60 s; not copied" % (name, port))
+        return
+    for other in others:
+        path = state_file(other)
+        state = read_state(path)
+        root = state.setdefault("root", {})
+        devices = [d for d in root.get("named_devices", []) if isinstance(d, dict)]
+        if any(d.get("cert") == record["cert"] and d.get("name") == name for d in devices) and                 sum(d.get("cert") == record["cert"] for d in devices) == 1:
+            continue  # already there
+        n = (other - BASE_PORT) // 1000 + 1
+        unit = "pocketxr-sunshine@%d.service" % n
+        subprocess.run(["systemctl", "--user", "stop", unit], capture_output=True, timeout=30)
+        state = read_state(path)  # as Sunshine left it
+        root = state.setdefault("root", {})
+        root.setdefault("uniqueid", str(__import__("uuid").uuid4()).upper())
+        devices = [d for d in root.get("named_devices", []) if isinstance(d, dict)
+                   and d.get("name") != name and d.get("cert") != record["cert"]]
+        devices.append(dict(record))
+        root["named_devices"] = devices
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(state, f, indent=4)
+            log("share: %s's pairing copied to PC screen %d (port %d)" % (name, n, other))
+        except OSError as e:
+            log("share: %s" % e)
+        subprocess.run(["systemctl", "--user", "start", unit], capture_output=True, timeout=30)
+
+
+VIRTUAL_PREFIX = "Virtual-sunshine-"  # the patched Sunshine's KWin output for the stream on its port
+_arrange_until = [0.0]
+
+
+def arrange_virtual_outputs():
+    """Keeps the PC screens' virtual outputs side by side, right of the computer's own screens, in port order.
+
+    KWin remembers where outputs were for each set of outputs (~/.config/kwinoutputconfig.json) and puts them back
+    there. Each Sunshine's encoder check makes its output alone at the first free place, right of the panel, so KWin
+    then put PC screens 1 and 2 at the same place when both streamed (the Deck, 20 Nov 2026: both at 949,0, and PC
+    screen 2 showed PC screen 1's picture). Moving them apart once is remembered too. Returns what it moved."""
+    try:
+        r = subprocess.run(["kscreen-doctor", "-j"], capture_output=True, text=True, timeout=10)
+        outputs = json.loads(r.stdout).get("outputs", [])
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return []
+
+    def logical(o):
+        scale = float(o.get("scale") or 1)
+        # rounded up, as KWin does (the Deck's panel: 1280x800 at 1.35 is 949x593)
+        return -(-o["size"]["width"] * 100 // int(round(scale * 100))), -(-o["size"]["height"] * 100 // int(round(scale * 100)))
+
+    live = [o for o in outputs if o.get("enabled") and o.get("pos") and o.get("size")]
+    virtual = sorted((o for o in live if str(o.get("name", "")).startswith(VIRTUAL_PREFIX)),
+                     key=lambda o: str(o["name"]))
+    if not virtual:
+        return []
+    real = [o for o in live if o not in virtual]
+    x = max((o["pos"]["x"] + logical(o)[0] for o in real), default=0)
+    moves = []
+    for o in virtual:
+        if (o["pos"]["x"], o["pos"]["y"]) != (x, 0):
+            moves.append("output.%s.position.%d,0" % (o["name"], x))
+        x += logical(o)[0]
+    if moves:
+        try:
+            subprocess.run(["kscreen-doctor"] + moves, capture_output=True, timeout=10)
+            log("outputs: " + " ".join(moves))
+        except (OSError, subprocess.SubprocessError) as e:
+            log("outputs: %s" % e)
+    return moves
+
+
+def watch_outputs():
+    """Every 2 s for a minute after a phone asks for a PC screen (screen-prepare), every 10 s otherwise."""
+    if not shutil.which("kscreen-doctor"):
+        return
+    while True:
+        if screens_info().get("virtual"):
+            arrange_virtual_outputs()
+        time.sleep(2 if time.time() < _arrange_until[0] else 10)
+
+
 def answer(request, phone_address=None):
     op = request.get("op")
     if op == "pair":
@@ -200,14 +338,32 @@ def answer(request, phone_address=None):
     if not known(request.get("token")):
         return {"ok": False, "why": "not paired"}
     if op == "apollo-pin":
-        return sunshine_pin(request.get("pin"), request.get("name") or "Pocket XR", int(request.get("port") or 47989), phone_address)
+        port = int(request.get("port") or BASE_PORT)
+        name = request.get("name") or "Pocket XR"
+        result = sunshine_pin(request.get("pin"), name, port, phone_address)
+        if result.get("ok") and len(screens()) > 1:
+            threading.Thread(target=share_pairing, args=(port, name), daemon=True).start()
+        return result
+    if op == "screen-prepare":
+        # The phone asks just before it streams (the Mac helper sizes its virtual screen here). On Linux each Sunshine
+        # makes its own virtual output at the stream's size when the stream starts; the output watcher then keeps the
+        # outputs apart, checking often for the next minute.
+        _arrange_until[0] = time.time() + 60
+        return {"ok": True}
     if op == "screens-setup":
         return {"ok": False, "why": "on Linux and macOS, run pocketxr-pc-screens.sh on the computer"}
     if op in ("status", "start"):
         # "os": a Linux computer gets relative mouse moves from the phone (SteamOS mapped positions against the Deck's
-        # unrotated panel, so the cursor stopped partway down).
-        return {"ok": True, "pc": NAME, "steam": False, "alvr": False, "steamvr": "off",
-                "os": "mac" if platform.system() == "Darwin" else "linux"}
+        # unrotated panel, so the cursor stopped partway down). "linux-virtual": each PC screen is its own virtual
+        # output at scale 1, where Sunshine maps positions right, so the phone sends positions: with relative moves the
+        # one cursor would wander from one PC screen's output into another's.
+        if platform.system() == "Darwin":
+            os_name = "mac"
+        else:
+            os_name = "linux-virtual" if screens_info().get("virtual") else "linux"
+        # "virtual": each PC screen is a virtual screen made at the stream's size, so the phone asks for the window's shape
+        return {"ok": True, "pc": NAME, "steam": False, "alvr": False, "steamvr": "off", "os": os_name,
+                "virtual": os_name == "linux-virtual"}
     return {"ok": False, "why": "unknown request"}
 
 
@@ -239,12 +395,14 @@ def serve_udp():
     while True:
         data, sender = udp.recvfrom(256)
         if data.startswith(b"POCKETXR-FIND"):
-            udp.sendto(("POCKETXR-HERE 1 %d %s" % (PORT, NAME)).encode(), sender)
+            udp.sendto(("POCKETXR-HERE 1 %d %s %s" % (PORT, NAME, ",".join(str(p) for p in screens()))).encode(), sender)
 
 
 def main():
     log("started on %s (%s)" % (NAME, platform.system()))
     threading.Thread(target=serve_udp, daemon=True).start()
+    if platform.system() == "Linux":
+        threading.Thread(target=watch_outputs, daemon=True).start()
     serve_tcp()
 
 

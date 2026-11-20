@@ -23,6 +23,14 @@ final class FakeHost: HelperHost {
         pins.append((pin, name, port, phoneAddress)); return pinAnswer
     }
     func showSetup(for phone: String) { setups.append(phone) }
+    var virtualScreensReady = false
+    var screenSecret = "s3cret"
+    var screenCalls: [(Bool, Int, Screens.Mode)] = []
+    func screen(on: Bool, index: Int, mode: Screens.Mode) -> String? { screenCalls.append((on, index, mode)); return nil }
+    var prepared: [(Int, Screens.Mode)] = []
+    func prepareScreen(index: Int, mode: Screens.Mode, token: String) -> String? { prepared.append((index, mode)); return nil }
+    var expected = 0
+    func expectStream(token: String) { expected += 1 }
 }
 
 // The find.
@@ -54,6 +62,10 @@ let token = a["token"] as? String ?? ""
 check(a["ok"] as? Bool == true && token.count == 32 && a["pc"] as? String == "Halcyons-Air" && host.asked.last == "A phone", "allowed: \(a)")
 a = Requests.answer(["op": "status", "token": token], from: "10.0.0.2", host: host)
 check(a["ok"] as? Bool == true && a["steam"] as? Bool == false && a["steamvr"] as? String == "off" && a["pc"] as? String == "Halcyons-Air", "status: \(a)")
+check(a["os"] as? String == "mac" && a["virtual"] as? Bool == false, "status: a Mac, virtual screens not up: \(a)")
+host.virtualScreensReady = true
+a = Requests.answer(["op": "status", "token": token], from: "10.0.0.2", host: host)
+check(a["virtual"] as? Bool == true && Wire.encode(a).contains(#""virtual":true"#), "status: virtual screens up, as true: \(Wire.encode(a))")
 a = Requests.answer(["op": "apollo-pin", "token": token, "pin": "1234", "name": "Mike's Z Flip7", "port": 47989], from: "10.0.0.2", host: host)
 check(a["ok"] as? Bool == true && host.pins.last! == ("1234", "Mike's Z Flip7", 47989, "10.0.0.2"), "the PIN goes in, with the phone's address: \(a)")
 host.pinAnswer = "Sunshine did not take the PIN"
@@ -65,6 +77,46 @@ a = Requests.answer(["op": "screens-setup", "token": token, "phone": "Flip"], fr
 check(a["ok"] as? Bool == true && host.setups == ["Flip"], "the setup opens on the Mac: \(a)")
 a = Requests.answer(["op": "dance", "token": token], from: "10.0.0.2", host: host)
 check(a["why"] as? String == "unknown request", "an unknown request")
+
+// Virtual screens: only this Mac's own Sunshines (127.0.0.1 and the secret) may ask for them.
+a = Requests.answer(["op": "screen-on", "secret": "s3cret", "screen": 2, "width": 2400, "height": 1080, "fps": 120], from: "127.0.0.1", host: host)
+check(a["ok"] as? Bool == true && host.screenCalls.last.map { $0.0 && $0.1 == 2 && $0.2 == Screens.Mode(width: 2400, height: 1080, fps: 120) } == true, "screen 2 on, at the phone's shape: \(a)")
+a = Requests.answer(["op": "screen-off", "secret": "s3cret", "screen": 2], from: "127.0.0.1", host: host)
+check(a["ok"] as? Bool == true && host.screenCalls.last.map { !$0.0 && $0.1 == 2 } == true, "screen 2 off")
+let before = host.screenCalls.count
+a = Requests.answer(["op": "screen-on", "secret": "s3cret", "screen": 1], from: "192.168.1.17", host: host)
+check(a["why"] as? String == "not allowed", "not from another computer")
+a = Requests.answer(["op": "screen-on", "secret": "wrong", "screen": 1], from: "127.0.0.1", host: host)
+check(a["why"] as? String == "not allowed", "not without the secret")
+a = Requests.answer(["op": "screen-on", "screen": 1, "token": token], from: "127.0.0.1", host: host)
+check(a["why"] as? String == "not allowed", "a phone's token is not the secret")
+a = Requests.answer(["op": "screen-on", "secret": "s3cret", "screen": 4], from: "127.0.0.1", host: host)
+check(a["why"] as? String == "no such screen" && host.screenCalls.count == before, "only screens 1 to 3")
+
+a = Requests.answer(["op": "screen-prepare", "token": token, "port": 48989, "width": 2400, "height": 1080, "fps": 90], from: "192.168.1.17", host: host)
+check(a["ok"] as? Bool == true && a["screen"] as? Int == 2 && host.prepared.last.map { $0.0 == 2 && $0.1 == Screens.Mode(width: 2400, height: 1080, fps: 90) } == true, "the phone readies screen 2: \(a)")
+a = Requests.answer(["op": "screen-prepare", "token": token, "port": 50989, "width": 1, "height": 1], from: "192.168.1.17", host: host)
+check(a["why"] as? String == "no such screen", "an unknown port")
+a = Requests.answer(["op": "screen-prepare", "token": "x", "port": 47989], from: "192.168.1.17", host: host)
+check(a["why"] as? String == "not paired" && host.prepared.count == 1, "only an allowed phone")
+let expectedBefore = host.expected
+_ = Requests.answer(["op": "status", "token": token], from: "192.168.1.17", host: host)
+check(host.expected == expectedBefore + 1, "a status: a stream may follow")
+check(Screens.mode(width: "2400", height: "1080", fps: "120") == .init(width: 2400, height: 1080, fps: 120), "a mode")
+check(Screens.mode(width: "1081", height: "1921", fps: "60") == .init(width: 1080, height: 1920, fps: 60), "upright, made even")
+check(Screens.mode(width: nil, height: "", fps: "x") == .start, "nothing: 1920x1080 at 60")
+check(Screens.mode(width: "9000", height: "100", fps: "500") == .init(width: 3840, height: 360, fps: 120), "within limits")
+check(Screens.index(ofPort: 47989) == 1 && Screens.index(ofPort: 49989) == 3 && Screens.index(ofPort: 1) == nil, "screens by port")
+let conf1 = Screens.conf("# mine\nport = 1\noutput_name = 5\nkeep = me\n\n", set: [("port", "48989"), ("output_name", "4128835")], remove: ["gone"])
+check(conf1 == "# mine\nkeep = me\nport = 48989\noutput_name = 4128835\n", "conf: keys replaced, others kept: \(conf1.debugDescription)")
+check(Screens.conf("a = 1\nglobal_prep_cmd = [x]\n", set: [], remove: ["global_prep_cmd"]) == "a = 1\n", "conf: a key taken out")
+check(Screens.value("output_name", in: conf1) == "4128835" && Screens.value("none", in: conf1) == nil, "conf: a value")
+let prep = Screens.prepCmd(script: "/Users/m/.config/pocketxr/screen.sh", index: 2)
+check(prep == #"[{"do":"/Users/m/.config/pocketxr/screen.sh on 2","elevated":false,"undo":"/Users/m/.config/pocketxr/screen.sh off 2"}]"#, "prep command: \(prep)")
+let placed = Screens.layout(saved: [(id: 1, x: 0, y: 0, width: 1280), (id: 2, x: -1920, y: 0, width: 1920)], ours: [(id: 9, width: 2400)])
+check(placed == [.init(id: 1, x: 0, y: 0), .init(id: 2, x: -1920, y: 0), .init(id: 9, x: 1280, y: 0)], "ours to the right of the Mac's: \(placed)")
+let first = Screens.mainFirst((id: 9, width: 1920), others: [(id: 1, width: 1280), (id: 9, width: 1920)])
+check(first == [.init(id: 9, x: 0, y: 0), .init(id: 1, x: 1920, y: 0)], "ours as the main display: \(first)")
 
 // The phone book: the Linux helper's file format, kept between runs, forgotten on request.
 check(PhoneBook(url: book.url).knows(token) && !book.knows("") && !book.knows("x"), "a phone is remembered")

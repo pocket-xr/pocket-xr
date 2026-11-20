@@ -1,0 +1,8 @@
+#!/bin/sh
+# Pocket XR PC Screens, opened from the app menu: copies the setup and the PC helper out of the app, then runs the
+# setup on this computer (outside the app's sandbox), with dialogs instead of a terminal.
+set -e
+dest="$HOME/.local/share/pocketxr"
+mkdir -p "$dest"
+cp /app/share/pocketxr/pocketxr-pc-screens.sh /app/share/pocketxr/pocketxr_pc_helper.py "$dest/"
+exec flatpak-spawn --host --env=POCKETXR_APP="$FLATPAK_ID" bash "$dest/pocketxr-pc-screens.sh" --gui "$@"

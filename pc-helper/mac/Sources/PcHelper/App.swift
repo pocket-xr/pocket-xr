@@ -72,9 +72,13 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate, HelperHost {
             }
             guard let binary = Sunshine.binary() else { return say("Sunshine is not installed.") }
             say("Sunshine: \(binary)")
-            Sunshine.writeAgent(binary: binary)
+            Sunshine.writeAgent(binary: binary, keepRunning: !virtualScreens)
             ensureLogin(binary: binary)
-            Sunshine.start(atLogin: startAtLogin)
+            if virtualScreens {
+                setUpScreens(binary: binary)
+            } else {
+                setUpOwnScreen(binary: binary)
+            }
             for _ in 0..<40 where !Sunshine.isAnswering() { Thread.sleep(forTimeInterval: 0.5) }
             if let login = Keychain.read() {
                 say(Sunshine.loginWorks(login) ? "Ready." : "Ready, but Sunshine did not accept the saved login: phones pair with a PIN.")
@@ -83,6 +87,164 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate, HelperHost {
             }
             if showGuide || !permissionsDone { DispatchQueue.main.async { self.openGuide() } }
         }
+    }
+
+    // MARK: Virtual screens
+
+    private var virtualScreens: Bool {
+        get { defaults.object(forKey: "virtualScreens") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "virtualScreens") }
+    }
+
+    private let screens = VirtualScreens()
+    private var screensReady = false
+    var virtualScreensReady: Bool { virtualScreens && screensReady }
+    private var watchdog: Timer?
+    private var mirrorCheck: Timer?
+    let screenSecret = PhoneBook.newToken()
+    private let secretURL = Home.path(".config/pocketxr/screens.secret")
+    private let scriptURL = Home.path(".config/pocketxr/screen.sh")
+
+    /// Sunshine's prep commands run this script, which runs this app as a command (main.swift: --screen on|off N):
+    /// a path with no spaces, and the secret in a file only this user can read.
+    private func writeScreenScript() {
+        let dir = secretURL.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: secretURL.path, contents: Data(screenSecret.utf8), attributes: [.posixPermissions: 0o600])
+        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: secretURL.path)
+        let exe = Bundle.main.executablePath ?? ""
+        let script = "#!/bin/sh\n# Pocket XR PC helper: a virtual screen for a Sunshine stream (its prep command).\nexec \"\(exe)\" --screen \"$@\"\n"
+        FileManager.default.createFile(atPath: scriptURL.path, contents: Data(script.utf8), attributes: [.posixPermissions: 0o700])
+        try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: scriptURL.path)
+    }
+
+    /// Three Sunshines, each started while its own virtual screen is the main display (so its mouse goes there), the
+    /// Mac's own screen main again after. Their screens are made again, at the phone window's shape, for each stream.
+    private func setUpScreens(binary: String) {
+        screensReady = false
+        writeScreenScript()
+        let name = Host.current().localizedName ?? computerName
+        // All three made first, so each has a display id of its own (see VirtualScreens).
+        for i in Sunshine.Instance.all { _ = screens.make(i.index) }
+        for i in Sunshine.Instance.all {
+            try? FileManager.default.createDirectory(at: i.dir, withIntermediateDirectories: true)
+            var values: [(String, String?)] = [("global_prep_cmd", Screens.prepCmd(script: scriptURL.path, index: i.index))]
+            if i != .main {
+                if !FileManager.default.fileExists(atPath: i.appsURL.path) {
+                    try? FileManager.default.copyItem(at: Sunshine.Instance.main.appsURL, to: i.appsURL)
+                }
+                values += [("port", "\(i.port)"), ("sunshine_name", "\(name) screen \(i.index)"),
+                           ("file_state", i.stateURL.path), ("credentials_file", i.stateURL.path),
+                           ("file_apps", i.appsURL.path), ("log_path", i.logURL.path)]
+            }
+            Sunshine.setConf(i, values)
+            Sunshine.writeAgent(binary: binary, i, keepRunning: false)
+            if i != .main, let login = Keychain.read(), !Sunshine.hasLogin(i) { _ = Sunshine.makeLogin(login, binary: binary, i) }
+            say("Starting PC screen \(i.index) (port \(i.port))…")
+            startOnItsScreen(i)
+        }
+        screensReady = true
+        say("Ready: 3 virtual screens.")
+        DispatchQueue.main.async { self.startWatchdog() }
+    }
+
+    /// Sunshine [i] (re)started while its virtual screen is the main display; then the Mac's own screen is main again.
+    private func startOnItsScreen(_ i: Sunshine.Instance) {
+        if Sunshine.isLoaded(i) { Sunshine.stop(i) }
+        guard let id = screens.make(i.index) else {
+            return say("PC screen \(i.index): no virtual screen")
+        }
+        Sunshine.setConf(i, [("output_name", "\(id)")])
+        _ = screens.makeMain(i.index)
+        Sunshine.start(atLogin: true, i)
+        for _ in 0..<60 where !Sunshine.isAnswering(i) { Thread.sleep(forTimeInterval: 0.5) }
+        Thread.sleep(forTimeInterval: 1)
+        screens.settle()
+        Log.say("PC screen \(i.index): Sunshine on port \(i.port) \(Sunshine.isAnswering(i) ? "up" : "NOT up"), display \(id)")
+    }
+
+    /// One Sunshine on the Mac's own screen, as before virtual screens.
+    private func setUpOwnScreen(binary: String) {
+        watchdog?.invalidate()
+        mirrorCheck?.invalidate()
+        for i in Sunshine.Instance.all where i != .main { Sunshine.remove(i) }
+        screens.removeAll()
+        if Sunshine.setConf(.main, [("global_prep_cmd", nil), ("output_name", nil)]), Sunshine.isLoaded() { Sunshine.stop() }
+        Sunshine.writeAgent(binary: binary, keepRunning: true)
+        Sunshine.start(atLogin: startAtLogin)
+    }
+
+    /// A Sunshine that stopped is started again the same way (launchd would start it with the wrong main display).
+    private func startWatchdog() {
+        watchdog?.invalidate()
+        mirrorCheck?.invalidate()
+        // An idle screen that another display change brought out of mirroring goes back within 3 s.
+        mirrorCheck = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            guard let self, self.virtualScreens, self.screensReady else { return }
+            DispatchQueue.global().async { self.screens.checkIdle() }
+        }
+        watchdog = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
+            guard let self, self.virtualScreens, self.screensReady else { return }
+            self.setupQueue.async {
+                for i in Sunshine.Instance.all where !Sunshine.isRunning(i) {
+                    Log.say("PC screen \(i.index): Sunshine stopped; starting it again")
+                    self.startOnItsScreen(i)
+                }
+            }
+        }
+    }
+
+    func screen(on: Bool, index: Int, mode: Screens.Mode) -> String? {
+        guard virtualScreens else { return on ? "virtual screens are off" : nil }
+        guard on else {
+            // Kept (its id stays Sunshine's), mirrored until the next stream.
+            screens.idle(index)
+            return nil
+        }
+        guard let id = screens.stream(index, mode) else { return "the virtual screen could not be made" }
+        let i = Sunshine.Instance(index: index)
+        if Screens.value("output_name", in: Sunshine.conf(i)) != "\(id)" {
+            Log.say("PC screen \(index): display id \(id) is not Sunshine's; starting it again")
+            screens.idle(index)
+            setupQueue.async { self.startOnItsScreen(i) }
+            return "the virtual screen changed: try again"
+        }
+        return nil
+    }
+
+    /// Phones (tokens) that ready their screens themselves: their status asks bring nothing out. Kept on disk
+    /// (one token a line, 0600), so the first status after the helper starts brings nothing out either.
+    private let preparingFile = Home.path(".config/pocketxr/screen-prepare-phones")
+    private lazy var preparingPhones: Set<String> = {
+        let text = (try? String(contentsOf: preparingFile, encoding: .utf8)) ?? ""
+        return Set(text.split(separator: "\n").map(String.init).filter { !$0.isEmpty })
+    }()
+    private let preparingLock = NSLock()
+
+    func prepareScreen(index: Int, mode: Screens.Mode, token: String) -> String? {
+        preparingLock.lock()
+        if preparingPhones.insert(token).inserted {
+            let text = preparingPhones.sorted().joined(separator: "\n") + "\n"
+            try? text.write(to: preparingFile, atomically: true, encoding: .utf8)
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: preparingFile.path)
+        }
+        preparingLock.unlock()
+        guard virtualScreensReady else { return "virtual screens are not up" }
+        guard let id = screens.prepare(index, mode) else { return "the virtual screen could not be made" }
+        Log.say("PC screen \(index): ready for a stream at \(mode) (display \(id))")
+        return nil
+    }
+
+    func expectStream(token: String) {
+        preparingLock.lock(); let prepares = preparingPhones.contains(token); preparingLock.unlock()
+        guard virtualScreensReady, !prepares else { return }
+        screens.expectAny()
+    }
+
+    @objc private func toggleVirtualScreens() {
+        virtualScreens.toggle()
+        Log.say("virtual screens: \(virtualScreens)")
+        runSetup(showGuide: false)
     }
 
     /// The Python helper of pocketxr-pc-screens.sh would hold the same ports: this app takes over from it.
@@ -187,7 +349,11 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate, HelperHost {
         guide?.close()
         say("Restarting Sunshine, so the switches take effect…")
         setupQueue.async { [self] in
-            Sunshine.restart()
+            if virtualScreens {
+                for i in Sunshine.Instance.all { startOnItsScreen(i) }
+            } else {
+                Sunshine.restart()
+            }
             for _ in 0..<40 where !Sunshine.isAnswering() { Thread.sleep(forTimeInterval: 0.5) }
             say(Sunshine.isAnswering() ? "Ready." : "Sunshine did not start again: see \(Log.url.path).")
         }
@@ -200,13 +366,18 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate, HelperHost {
         let running = Sunshine.isLoaded() && Sunshine.isAnswering()
         let sunshine = Sunshine.binary() == nil ? "not installed" : (running ? "running" : "not running")
         let phones = phoneBook.phones().count
-        for line in ["Pocket XR PC helper on \(computerName)", "Sunshine: \(sunshine)",
+        let screensLine = virtualScreens
+            ? "PC screens: virtual, \(Sunshine.Instance.all.filter { Sunshine.isRunning($0) }.count) of \(Screens.count) ready"
+            : "PC screens: this Mac's own screen"
+        for line in ["Pocket XR PC helper on \(computerName)", "Sunshine: \(sunshine)", screensLine,
                      "Phones allowed: \(phones)", "Status: \(progress)"] {
             let item = NSMenuItem(title: line, action: nil, keyEquivalent: "")
             item.isEnabled = false
             menu.addItem(item)
         }
         menu.addItem(.separator())
+        let virtual = add(menu, "Virtual screens", #selector(toggleVirtualScreens))
+        virtual.state = virtualScreens ? .on : .off
         add(menu, "Set up permissions again…", #selector(setUpAgain))
         add(menu, "Forget phones…", #selector(forgetPhones))
         let login = add(menu, "Start at login", #selector(toggleStartAtLogin))
@@ -234,10 +405,14 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate, HelperHost {
         a.addButton(withTitle: "Cancel")
         guard a.runModal() == .alertFirstButtonReturn else { return }
         phoneBook.forgetAll()
+        preparingLock.lock(); preparingPhones.removeAll(); preparingLock.unlock()
+        try? FileManager.default.removeItem(at: preparingFile)
         setupQueue.async {
             guard let login = Keychain.read() else { return Log.say("phones forgotten (Sunshine's pairings kept: no login)") }
-            let r = Sunshine.api("POST", "/api/clients/unpair-all", body: [:], login: login)
-            Log.say("phones forgotten; Sunshine unpair-all: HTTP \(r.code)")
+            for i in Sunshine.Instance.all where Sunshine.isAnswering(i) {
+                let r = Sunshine.api("POST", "/api/clients/unpair-all", body: [:], webPort: i.webPort, login: login)
+                Log.say("phones forgotten; Sunshine \(i.index) unpair-all: HTTP \(r.code)")
+            }
         }
     }
 
@@ -253,8 +428,9 @@ final class App: NSObject, NSApplicationDelegate, NSMenuDelegate, HelperHost {
         if on, SMAppService.mainApp.status == .requiresApproval { SMAppService.openSystemSettingsLoginItems() }
         Log.say("start at login: \(on), login item status \(SMAppService.mainApp.status.rawValue)")
         setupQueue.async {
-            // Sunshine follows: still running now, and started (or not) at the next sign-in.
-            Shell.run("/bin/launchctl", [on ? "enable" : "disable", "\(Sunshine.domain)/\(Sunshine.label)"])
+            // Sunshine follows: still running now, and started (or not) at the next sign-in. (With virtual screens
+            // this helper starts the Sunshines itself.)
+            for i in Sunshine.Instance.all { Shell.run("/bin/launchctl", [on ? "enable" : "disable", i.target]) }
         }
     }
 

@@ -4,22 +4,27 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
 
 ## 1.5.6: PC screens
 
-- **PC screens:** your computer's screen in the glasses, up to three at once from a Windows PC, each as its own window
-  in the Space. Press the new PC screen button beside PC VR in the launcher; each press opens the next screen. It
-  streams with Moonlight's open source code from Apollo (Windows) or Sunshine (Windows, Linux, Steam Deck Desktop Mode,
-  Mac), at up to 120 frames a second.
+- **PC screens:** your computer's screens in the glasses, up to three at once from a Windows PC, a Mac or a Linux
+  computer on KDE Plasma (such as a Steam Deck in Desktop Mode), each as its own window in the Space. Press the new PC
+  screen button beside PC VR in the launcher; each press opens the next screen. Each screen is a virtual screen of
+  its own on the computer, the shape of its window, and changes shape when you resize the window. It streams with
+  Moonlight's open source code from Apollo (Windows) or Sunshine (Mac, Linux), at up to 120 frames a second.
 - **Setup is one tap on the phone:** with the Pocket XR PC helper on a Windows PC, Set up my PC installs Apollo, adds
   the extra screens and, if you want, use away from home. Pairing needs no PIN: click Yes on the PC.
-- **Your Mac's screen on the phone:** the new Pocket XR PC helper for Mac (signed by Apple) installs Sunshine and
-  types the pairing PIN for you. Then switch Sunshine on under Screen Recording and Accessibility, which macOS only
-  lets you do yourself, and the helper shows you where. A Mac gives one screen: its own desktop. Linux has a setup
-  script that does the same with Sunshine.
+- **Mac:** the new Pocket XR PC helper for Mac (signed by Apple) installs Sunshine, makes the three virtual screens
+  and types the pairing PIN for you. Then switch Sunshine on under Screen Recording and Accessibility, which macOS only
+  lets you do yourself, and the helper shows you where. While nothing streams, its screens stay out of the way.
+- **Linux:** Pocket XR PC Screens for Linux is Sunshine with two small changes for KDE Plasma (a virtual screen per PC
+  screen, and sound from each), with the setup and helper, as one Flatpak: install it, open it, type your password
+  once. On a Steam Deck it works in Desktop Mode, not Game Mode. On a computer without it, a setup script gives one
+  screen with stock Sunshine.
 - **Works the way you'd hope:** each screen gets its own virtual display on the PC, so the PC's monitors can be off;
   it connects as soon as it opens, comes back by itself after Wi-Fi drops, wakes a sleeping PC on the same network,
   and works away from home over Tailscale. An old phone left at home can wake the PC from anywhere (PC wake relay, in
   the trackpad Menu). The PC's sound plays from one screen at a time, and the PC helper puts the PC's own sound
   device back when you're done. Back on a PC screen disconnects and shows your computers, so you can switch to
-  another.
+  another. The cursor reaches every edge of the picture, and the phone's and the glasses' volume buttons set how loud
+  the PC's sound plays.
 - **Keyboard:** the trackpad's keyboard has a shortcut row: Esc, Tab, Ctrl, Alt, Shift, Win, the arrows and Del.
   Bluetooth and USB keyboards go straight to the PC. The trackpad's Keyboard button now opens the phone's keyboard
   straight away, with the text field just above it.
@@ -27,9 +32,13 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   finger, so YouTube's swipe to the mini player works. The scroll strip's touch area now matches its groove on
   Spatial Mouse on handhelds such as the Retroid Nova.
 - **Cursor follows head** is now off by default.
-- Tried on a Galaxy Z Flip 7 with XREAL Aura glasses, a Windows PC and an Intel MacBook Air: three screens at once,
-  sound, reconnect, away from home, the setup from a PC with no Apollo, and the Mac's screen with its mouse and
-  keyboard. Not yet tried: Linux, Apple silicon Macs, the wake relay, other phones and glasses.
+- Tried on a Galaxy Z Flip 7 with XREAL Aura glasses, a Windows PC, an Intel MacBook Air and a Steam Deck in SteamOS
+  Desktop Mode: three screens at once from Windows, two at once from the Mac and from the Deck at the windows' shapes,
+  sound, reconnect, away from home, the setup from a PC with no Apollo, the Linux Flatpak installed from a download,
+  mouse and keyboard on all three. Not yet tried: Apple silicon Macs, Linux desktops other than KDE Plasma on the Deck,
+  NVIDIA graphics on Linux, sound from two Mac screens at once, three screens at once from the Mac or the Deck, the
+  wake relay, other phones and
+  glasses.
 
 ## 1.5.5: hand tracking starts only when Android allows it
 

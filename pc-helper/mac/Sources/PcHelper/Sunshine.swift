@@ -6,10 +6,27 @@ import HelperCore
 /// ~/Applications (no admin password), started by a LaunchAgent so macOS's Screen Recording and Accessibility switches
 /// belong to Sunshine itself, not to this helper. Every call blocks: run them off the main thread.
 enum Sunshine {
-    static let label = "com.hayeco.pocketxr.sunshine"  // the same as pocketxr-pc-screens.sh's, so the two never double up
-    static var agentURL: URL { Home.path("Library/LaunchAgents/\(label).plist") }
-    static var stateURL: URL { Home.path(".config/sunshine/sunshine_state.json") }
+    /// One Sunshine: number 1 is the usual one (port 47989, ~/.config/sunshine, the label pocketxr-pc-screens.sh uses,
+    /// so the two never double up); 2 and 3 are the extra PC screens' (48989, 49989) in ~/.config/pocketxr/sunshine-N.
+    struct Instance: Equatable {
+        let index: Int
+        static let main = Instance(index: 1)
+        static var all: [Instance] { (1...Screens.count).map(Instance.init) }
+
+        var port: Int { Screens.ports[index - 1] }
+        var webPort: Int { port + 1 }
+        var label: String { index == 1 ? "com.hayeco.pocketxr.sunshine" : "com.hayeco.pocketxr.sunshine.\(index)" }
+        var agentURL: URL { Home.path("Library/LaunchAgents/\(label).plist") }
+        var dir: URL { index == 1 ? Home.path(".config/sunshine") : Home.path(".config/pocketxr/sunshine-\(index)") }
+        var confURL: URL { dir.appendingPathComponent("sunshine.conf") }
+        var stateURL: URL { dir.appendingPathComponent("sunshine_state.json") }
+        var logURL: URL { dir.appendingPathComponent("sunshine.log") }
+        var appsURL: URL { dir.appendingPathComponent("apps.json") }
+        var target: String { "\(Sunshine.domain)/\(label)" }
+    }
+
     static var domain: String { "gui/\(getuid())" }
+    static var stateURL: URL { Instance.main.stateURL }
 
     // MARK: Finding and installing
 
@@ -100,69 +117,97 @@ enum Sunshine {
 
     // MARK: Its web login
 
-    static func hasLogin() -> Bool { SunshineState.hasLogin(try? Data(contentsOf: stateURL)) }
+    static func hasLogin(_ i: Instance = .main) -> Bool { SunshineState.hasLogin(try? Data(contentsOf: i.stateURL)) }
 
     /// Gives Sunshine a new web login. Sunshine is stopped first: a `--creds` run while a just-started Sunshine sets
     /// itself up was lost (seen with pocketxr-pc-screens.sh on macOS 14), and Sunshine reads its login when it starts.
     /// The caller starts Sunshine again afterwards.
-    static func makeLogin(_ login: Keychain.Login, binary: String) -> Bool {
-        if isLoaded() { stop() }
-        let r = Shell.run(binary, ["--creds", login.user, login.password])
-        let ok = hasLogin()
-        Log.say("Sunshine --creds: exit \(r.code), login saved: \(ok)")
+    static func makeLogin(_ login: Keychain.Login, binary: String, _ i: Instance = .main) -> Bool {
+        if isLoaded(i) { stop(i) }
+        var args = ["--creds", login.user, login.password]
+        if i != .main { args.insert(i.confURL.path, at: 0) }
+        let r = Shell.run(binary, args)
+        let ok = hasLogin(i)
+        Log.say("Sunshine \(i.index) --creds: exit \(r.code), login saved: \(ok)")
         return ok
     }
 
+    // MARK: Its config
+
+    /// Sets (or with nil, takes out) keys in this Sunshine's config file, keeping the rest. True when it changed.
+    @discardableResult
+    static func setConf(_ i: Instance, _ values: [(String, String?)]) -> Bool {
+        let old = (try? String(contentsOf: i.confURL, encoding: .utf8)) ?? ""
+        let new = Screens.conf(old, set: values.compactMap { k, v in v.map { (k, $0) } }, remove: values.filter { $0.1 == nil }.map(\.0))
+        guard new != old else { return false }
+        try? FileManager.default.createDirectory(at: i.dir, withIntermediateDirectories: true)
+        try? new.write(to: i.confURL, atomically: true, encoding: .utf8)
+        return true
+    }
+
+    static func conf(_ i: Instance) -> String { (try? String(contentsOf: i.confURL, encoding: .utf8)) ?? "" }
+
     // MARK: Running it
 
-    /// Sunshine's LaunchAgent: started now, and at sign-in while [atLogin] is on.
-    static func writeAgent(binary: String) {
+    /// A Sunshine's LaunchAgent. With [keepRunning] launchd starts it at sign-in and again if it stops (one Sunshine
+    /// on the Mac's own screen); without, this helper starts it (virtual screens: it must start while its screen is
+    /// the main display).
+    static func writeAgent(binary: String, _ i: Instance = .main, keepRunning: Bool = true) {
         let plist: [String: Any] = [
-            "Label": label,
-            "ProgramArguments": [binary],
-            "RunAtLoad": true,
-            "KeepAlive": true,
+            "Label": i.label,
+            "ProgramArguments": [binary, i.confURL.path],
+            "RunAtLoad": keepRunning,
+            "KeepAlive": keepRunning,
             "ProcessType": "Interactive",
         ]
         guard let data = try? PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0) else { return }
-        try? FileManager.default.createDirectory(at: agentURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        let old = try? Data(contentsOf: agentURL)
+        try? FileManager.default.createDirectory(at: i.agentURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let old = try? Data(contentsOf: i.agentURL)
         if old != data {
-            try? data.write(to: agentURL)
-            if isLoaded() { Shell.run("/bin/launchctl", ["bootout", "\(domain)/\(label)"]) }
+            try? data.write(to: i.agentURL)
+            if isLoaded(i) { Shell.run("/bin/launchctl", ["bootout", i.target]) }
         }
     }
 
-    static func isLoaded() -> Bool { Shell.run("/bin/launchctl", ["print", "\(domain)/\(label)"]).code == 0 }
+    static func isLoaded(_ i: Instance = .main) -> Bool { Shell.run("/bin/launchctl", ["print", i.target]).code == 0 }
+
+    static func isRunning(_ i: Instance) -> Bool { Shell.run("/bin/launchctl", ["print", i.target]).output.contains("state = running") }
 
     /// Starts Sunshine if it is not running. With [atLogin] off it still runs now, but not at the next sign-in.
-    static func start(atLogin: Bool) {
-        Shell.run("/bin/launchctl", ["enable", "\(domain)/\(label)"])
-        if !isLoaded() {
-            let r = Shell.run("/bin/launchctl", ["bootstrap", domain, agentURL.path])
-            if r.code != 0 { Log.say("launchctl bootstrap: \(r.code) \(r.output)") }
+    static func start(atLogin: Bool, _ i: Instance = .main) {
+        Shell.run("/bin/launchctl", ["enable", i.target])
+        if !isLoaded(i) {
+            let r = Shell.run("/bin/launchctl", ["bootstrap", domain, i.agentURL.path])
+            if r.code != 0 { Log.say("launchctl bootstrap \(i.label): \(r.code) \(r.output)") }
         }
-        if !atLogin { Shell.run("/bin/launchctl", ["disable", "\(domain)/\(label)"]) }
+        if !isRunning(i) { Shell.run("/bin/launchctl", ["kickstart", i.target]) }
+        if !atLogin { Shell.run("/bin/launchctl", ["disable", i.target]) }
     }
 
-    static func restart() {
-        let r = Shell.run("/bin/launchctl", ["kickstart", "-k", "\(domain)/\(label)"])
-        Log.say("Sunshine restarted: \(r.code == 0 ? "yes" : r.output)")
+    static func restart(_ i: Instance = .main) {
+        let r = Shell.run("/bin/launchctl", ["kickstart", "-k", i.target])
+        Log.say("Sunshine \(i.index) restarted: \(r.code == 0 ? "yes" : r.output)")
     }
 
-    static func stop() {
-        Shell.run("/bin/launchctl", ["bootout", "\(domain)/\(label)"])
-        for _ in 0..<20 where isLoaded() { Thread.sleep(forTimeInterval: 0.25) }
+    static func stop(_ i: Instance = .main) {
+        Shell.run("/bin/launchctl", ["bootout", i.target])
+        for _ in 0..<20 where isLoaded(i) { Thread.sleep(forTimeInterval: 0.25) }
     }
 
-    /// Sunshine's web page answers (port 47990).
-    static func isAnswering() -> Bool {
+    /// Stopped, and not started again at sign-in.
+    static func remove(_ i: Instance) {
+        stop(i)
+        try? FileManager.default.removeItem(at: i.agentURL)
+    }
+
+    /// Sunshine's web page answers (port 47990 for the usual one).
+    static func isAnswering(_ i: Instance = .main) -> Bool {
         let fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
         guard fd >= 0 else { return false }
         defer { close(fd) }
         var to = sockaddr_in()
         to.sin_family = sa_family_t(AF_INET)
-        to.sin_port = UInt16(47990).bigEndian
+        to.sin_port = UInt16(i.webPort).bigEndian
         to.sin_addr.s_addr = inet_addr("127.0.0.1")
         return withUnsafePointer(to: &to) { p in
             p.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size)) }

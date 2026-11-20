@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.hayeco.pocketxr.PCScreens</id>
+  <name>Pocket XR PC Screens</name>
+  <summary>Use this computer's screens on your phone and glasses with Pocket XR</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <developer id="com.hayeco">
+    <name>HAYECO</name>
+  </developer>
+  <description>
+    <p>Sets this computer up for Pocket XR's PC screens: up to three screens, each its own virtual screen at the size
+    of the phone's window (KDE Plasma on Wayland), streamed with Sunshine.</p>
+    <p>Includes Sunshine by LizardByte (GPL-3.0), with two small changes.</p>
+  </description>
+  <launchable type="desktop-id">com.hayeco.pocketxr.PCScreens.desktop</launchable>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="2026.914.233613-pocketxr1" date="2026-11-20"/>
+  </releases>
+</component>

@@ -8,7 +8,10 @@ import Foundation
 ///     {"op":"pair","phone"}                        the Mac's user is asked; {"ok":true,"token","pc"} or {"ok":false,"why"}
 ///     {"op":"apollo-pin","token","pin","name","port"}  the PIN goes into Sunshine for the phone; {"ok":true} or why not
 ///     {"op":"screens-setup","token","phone"}       the setup and the permission guide open on the Mac; {"ok":true}
-///     {"op":"status"|"start","token"}              PC VR is Windows-only: {"ok":true,"pc","steam":false,...}
+///     {"op":"screen-prepare","token","port","width","height","fps"}  just before streaming the Sunshine on [port]:
+///                                                  its virtual screen ready at that size; {"ok":true,"screen":N}
+///     {"op":"status"|"start","token"}              PC VR is Windows-only: {"ok":true,"pc","steam":false,...,
+///                                                  "os":"mac","virtual":<the virtual screens are up>}
 public enum Wire {
     public static let port: UInt16 = 47610
     public static let defaultStreamPort = 47989
@@ -52,11 +55,34 @@ public protocol HelperHost: AnyObject {
     func typePin(_ pin: String, name: String, port: Int, phoneAddress: String?) -> String?
     /// Shows the setup and the permission guide on the Mac.
     func showSetup(for phone: String)
+    /// Its virtual screens are up: each PC screen gets its own display at the window's shape (the phone then asks for
+    /// the window's size, as with Apollo's VirtualDisplayCapable).
+    var virtualScreensReady: Bool { get }
+    /// The secret this Mac's own Sunshines send with screen-on and screen-off (a file only this user can read).
+    var screenSecret: String { get }
+    /// Virtual screen [index] at [mode] (on) or gone (off), for a Sunshine's stream. Nil when done, else why not.
+    func screen(on: Bool, index: Int, mode: Screens.Mode) -> String?
+    /// The phone is about to stream screen [index] at [mode]: it is made ready now, because Sunshine looks at its
+    /// display (an encoder test) before its prep command runs. Nil when ready, else why not.
+    func prepareScreen(index: Int, mode: Screens.Mode, token: String) -> String?
+    /// A phone asked how this Mac is: a stream may follow, from a phone that does not say which screen (one that has
+    /// sent screen-prepare is left to do so).
+    func expectStream(token: String)
 }
 
 public enum Requests {
     public static func answer(_ request: [String: Any], from address: String?, host: HelperHost) -> [String: Any] {
         let op = request["op"] as? String ?? ""
+        if op == "screen-on" || op == "screen-off" {
+            // From this Mac's own Sunshines only (their prep commands): its own address and the secret.
+            guard address == "127.0.0.1", let secret = request["secret"] as? String, !secret.isEmpty, secret == host.screenSecret else {
+                return ["ok": false, "why": "not allowed"]
+            }
+            guard let index = request["screen"] as? Int, (1...Screens.count).contains(index) else { return ["ok": false, "why": "no such screen"] }
+            let mode = Screens.mode(width: "\(request["width"] ?? "")", height: "\(request["height"] ?? "")", fps: "\(request["fps"] ?? "")")
+            if let why = host.screen(on: op == "screen-on", index: index, mode: mode) { return ["ok": false, "why": why] }
+            return ["ok": true]
+        }
         if op == "pair" {
             let phone = nonEmpty(request["phone"]) ?? "A phone"
             guard host.allow(phone: phone) else { return ["ok": false, "why": "not allowed on the PC"] }
@@ -73,8 +99,15 @@ public enum Requests {
         case "screens-setup":
             host.showSetup(for: nonEmpty(request["phone"]) ?? "A phone")
             return ["ok": true]
+        case "screen-prepare":
+            guard let index = Screens.index(ofPort: Wire.port(request["port"])) else { return ["ok": false, "why": "no such screen"] }
+            let mode = Screens.mode(width: "\(request["width"] ?? "")", height: "\(request["height"] ?? "")", fps: "\(request["fps"] ?? "")")
+            if let why = host.prepareScreen(index: index, mode: mode, token: token) { return ["ok": false, "why": why] }
+            return ["ok": true, "screen": index]
         case "status", "start":
-            return ["ok": true, "pc": host.computerName, "steam": false, "alvr": false, "steamvr": "off"]
+            host.expectStream(token: token)
+            return ["ok": true, "pc": host.computerName, "steam": false, "alvr": false, "steamvr": "off",
+                    "os": "mac", "virtual": host.virtualScreensReady]
         default:
             return ["ok": false, "why": "unknown request"]
         }
