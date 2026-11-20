@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## 1.5.6: PC screens
+## 1.6.0: PC screens
 
 - **PC screens:** your computer's screens in the glasses, up to three at once from a Windows PC, a Mac or a Linux
   computer on KDE Plasma (such as a Steam Deck in Desktop Mode), each as its own window in the Space. Press the new PC

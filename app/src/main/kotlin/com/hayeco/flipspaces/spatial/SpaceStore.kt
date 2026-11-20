@@ -570,7 +570,7 @@ class SpaceStore(context: Context) {
         set(value) = prefs.edit().putString(KEY_TOUCH_SPOTS, value).apply()
 
     /** 1.2.3 (issue 58): 2D while moving for side by side windows; off by default. */
-    /** 1.5.6 (issue 119): the apps with Scroll by swiping on, as [com.hayeco.flipspaces.core.spatial.SwipeScrollStore] text. */
+    /** 1.6.0 (issue 119): the apps with Scroll by swiping on, as [com.hayeco.flipspaces.core.spatial.SwipeScrollStore] text. */
     var swipeScroll: String?
         get() = prefs.getString(KEY_SWIPE_SCROLL, null)
         set(value) = prefs.edit().putString(KEY_SWIPE_SCROLL, value).apply()

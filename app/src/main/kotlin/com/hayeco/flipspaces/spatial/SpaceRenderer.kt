@@ -428,7 +428,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 1.2.3 (issue 58): the apps whose windows split a side by side picture between the eyes ([com.hayeco.flipspaces.core.spatial.SideBySide]). */
     private val sideBySide = com.hayeco.flipspaces.core.spatial.SideBySideStore(store.sideBySide)
 
-    /** 1.5.6 (issue 119): the apps whose windows take the trackpad's scrolls as a swipe ([com.hayeco.flipspaces.core.spatial.SwipeScrollStore]). */
+    /** 1.6.0 (issue 119): the apps whose windows take the trackpad's scrolls as a swipe ([com.hayeco.flipspaces.core.spatial.SwipeScrollStore]). */
     private val swipeScroll = com.hayeco.flipspaces.core.spatial.SwipeScrollStore(store.swipeScroll)
     private val pointer = SpatialPointer(frustum, PointerSettings(handsSteer = store.handsSteer)).also { p ->
         p.directAim = { side -> directHandAim(side) }
@@ -3378,7 +3378,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     /**
-     * 1.5.6 (issue 119): the Menu's Scroll by swiping for the focused window's app, remembered for it. On, the trackpad's
+     * 1.6.0 (issue 119): the Menu's Scroll by swiping for the focused window's app, remembered for it. On, the trackpad's
      * scrolls over its windows drag a finger across the app ([com.hayeco.flipspaces.core.spatial.SpatialPointer.swipePanels]).
      */
     private fun swipeScrollChosen(on: Boolean) {

@@ -76,7 +76,7 @@ class MenuFollowsFocusTest {
         assertNotNull(row)
         assertEquals("Text size in Chrome", texts(row!!).first())
         assertNotNull(screen.menuRow(PadScreen.MENU_SIDE_BY_SIDE))
-        // 1.5.6 (issue 119): Scroll by swiping for the focused window's app.
+        // 1.6.0 (issue 119): Scroll by swiping for the focused window's app.
         assertEquals("Scroll by swiping in Chrome: OFF", texts(screen.menuRow(PadScreen.MENU_SWIPE_SCROLL)!!).first())
         assertEquals("this_window", screen.menuRowTags().first { it.startsWith("menu:section:") }.removePrefix("menu:section:"))
     }

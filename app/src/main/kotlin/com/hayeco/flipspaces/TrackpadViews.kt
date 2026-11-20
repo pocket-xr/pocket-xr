@@ -715,10 +715,10 @@ interface PadHost {
     /** 1.3.3: the focused window's name and shape, for the Shape row; null without one. */
     fun focusedShape(): Pair<String, Float>?
 
-    /** 1.5.6 (issue 119): the focused window's label and whether its app has Scroll by swiping on, or null with none focused. */
+    /** 1.6.0 (issue 119): the focused window's label and whether its app has Scroll by swiping on, or null with none focused. */
     fun focusedSwipeScroll(): Pair<String, Boolean>?
 
-    /** 1.5.6 (issue 119): Scroll by swiping on or off for the focused window's app. */
+    /** 1.6.0 (issue 119): Scroll by swiping on or off for the focused window's app. */
     fun swipeScrollChosen(on: Boolean)
 
     fun shapeChosen(ratio: Float)
@@ -2427,7 +2427,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                     host.sideBySideChosen(!on)
                 }.apply { tag = MENU_SIDE_BY_SIDE })
             }.orEmpty()
-            // 1.5.6 (issue 119): Scroll by swiping for the focused window's app.
+            // 1.6.0 (issue 119): Scroll by swiping for the focused window's app.
             MenuItem.SWIPE_SCROLL -> host.focusedSwipeScroll()?.let { (label, on) ->
                 listOf(row(R.drawable.ic_scroll_right, onOff(c.getString(R.string.pad_swipe_scroll_in, label), on), tick = on, subtitle = c.getString(R.string.pad_swipe_scroll_subtitle)) {
                     host.swipeScrollChosen(!on)

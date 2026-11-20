@@ -277,7 +277,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
     }
 
     /**
-     * 0.5.17: a scroll from the trackpad as a touch drag on the panel, so the app flings after the lift. 1.5.6 (issue 119):
+     * 0.5.17: a scroll from the trackpad as a touch drag on the panel, so the app flings after the lift. 1.6.0 (issue 119):
      * back for the apps with Scroll by swiping on ([swipePanels]), from two fingers, the strip and Spatial Mouse's one
      * finger scroll alike; [moved] once it went past [SWIPE_SLOP], so a drag too short to be a swipe never lands as a tap.
      */
@@ -1700,7 +1700,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         }
     }
 
-    /** 1.5.6 (issue 119): a trackpad scroll's finger lands on a Scroll by swiping window where the cursor is. */
+    /** 1.6.0 (issue 119): a trackpad scroll's finger lands on a Scroll by swiping window where the cursor is. */
     private fun swipeDown(hit: PanelHit, out: MutableList<SpaceAction>): PadScrolling {
         out += SpaceAction.Focus(hit.panel.id)
         liftThrow(hit.panel.id, out)
@@ -1710,7 +1710,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
     }
 
     /**
-     * 1.5.6 (issue 119): the swipe's finger [SCROLL_DRAG] window sizes a pad unit of travel ([dx] right, [dy] up, both
+     * 1.6.0 (issue 119): the swipe's finger [SCROLL_DRAG] window sizes a pad unit of travel ([dx] right, [dy] up, both
      * since the start), kept on the window. It lifts at the end, or is cancelled when it never went past [SWIPE_SLOP].
      */
     private fun swipeMove(g: PadScrolling, dx: Float, dy: Float, phase: Phase, out: MutableList<SpaceAction>) {
@@ -1754,7 +1754,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                     out += SpaceAction.Wheel(g.panelId, g.u, g.v, 0f, -s.dy * STRIP_NOTCHES_PER_UNIT * WHEEL_PX_PER_NOTCH, s.phase, smooth = true)
                     if (s.phase == Phase.END) main.grab = null
                 }
-                // 1.5.6 (issue 119): the strip drags the finger up and down on a Scroll by swiping window.
+                // 1.6.0 (issue 119): the strip drags the finger up and down on a Scroll by swiping window.
                 is PadScrolling -> swipeMove(g, 0f, s.dy, s.phase, out)
                 // The finger going up shows what is below: the next page.
                 LauncherScroll -> {
@@ -1917,7 +1917,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
     @Volatile var hiddenPanels: Set<Int> = emptySet()
 
     /**
-     * 1.5.6 (issue 119: YouTube's swipe down to its mini player and Solid Explorer's swipe between tabs did nothing): the
+     * 1.6.0 (issue 119: YouTube's swipe down to its mini player and Solid Explorer's swipe between tabs did nothing): the
      * windows whose apps have Scroll by swiping on. A trackpad scroll over them is a finger drag ([PadScrolling]), not the
      * mouse wheel, so the app's own swipe gestures work.
      */
@@ -2620,7 +2620,7 @@ private fun String.fmt(vararg args: Any?) = String.format(java.util.Locale.ROOT,
 /** 0.5.17: a trackpad scroll drags the touch 1.5 panel sizes a pad unit, tuned on the phone and glasses. */
 const val SCROLL_DRAG = 1.5f
 
-/** 1.5.6 (issue 119): a Scroll by swiping drag shorter than this share of the window lifts as a cancel, never a tap. */
+/** 1.6.0 (issue 119): a Scroll by swiping drag shorter than this share of the window lifts as a cancel, never a tap. */
 const val SWIPE_SLOP = 0.02f
 
 /** 0.5.42: Spatial Mouse: how long after a resize step the phone's aim leaves the held window where it is. */

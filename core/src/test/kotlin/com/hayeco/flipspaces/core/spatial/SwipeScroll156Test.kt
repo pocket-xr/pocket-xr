@@ -8,7 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** 1.5.6 (issue 119): Scroll by swiping, the trackpad's scrolls as a finger dragged across the app. */
+/** 1.6.0 (issue 119): Scroll by swiping, the trackpad's scrolls as a finger dragged across the app. */
 class SwipeScroll156Test {
     private val youtube = SpacePanel(1, "YouTube", "com.google.android.youtube", "Main", yawDeg = 0f, pitchDeg = 0f).withAppSize()
     private val layout = SpaceLayout(listOf(youtube))

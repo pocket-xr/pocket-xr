@@ -56,7 +56,7 @@ object TrackpadMenu {
         SHAPE(Section.THIS_WINDOW),
         SIDE_BY_SIDE(Section.THIS_WINDOW),
         SIDE_BY_SIDE_FLAT(Section.THIS_WINDOW),
-        // 1.5.6 (issue 119): the app's scrolls as a finger's swipe ([com.hayeco.flipspaces.core.spatial.SwipeScrollStore]).
+        // 1.6.0 (issue 119): the app's scrolls as a finger's swipe ([com.hayeco.flipspaces.core.spatial.SwipeScrollStore]).
         SWIPE_SCROLL(Section.THIS_WINDOW),
 
         SPACE_TRACKING(Section.SPACE),
