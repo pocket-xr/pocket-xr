@@ -104,6 +104,13 @@ class PcVrHelper(context: Context) {
      * "off", "starting" or "ready"; "no_steam" or "no_alvr" when the PC is missing one; "unpaired" if the PC forgot this
      * phone; null if the helper doesn't answer. Starting also has the helper trust this phone in ALVR and set it up.
      */
+    /** PC screens: the helper's computer's system ("linux", "mac", or "" for Windows and older helpers); null if it does not answer. */
+    fun hostOs(pc: Pc): String? {
+        val token = tokenFor(pc) ?: return null
+        val answer = ask(pc, JSONObject().put("op", "status").put("token", token), CONNECT_MS * 2) ?: return null
+        return answer.optString("os", "")
+    }
+
     fun status(pc: Pc, start: Boolean): String? {
         val token = tokenFor(pc) ?: return "unpaired"
         val request = JSONObject().put("op", if (start) "start" else "status").put("token", token).put("alvr", alvrName)

@@ -204,7 +204,10 @@ def answer(request, phone_address=None):
     if op == "screens-setup":
         return {"ok": False, "why": "on Linux and macOS, run pocketxr-pc-screens.sh on the computer"}
     if op in ("status", "start"):
-        return {"ok": True, "pc": NAME, "steam": False, "alvr": False, "steamvr": "off"}
+        # "os": a Linux computer gets relative mouse moves from the phone (SteamOS mapped positions against the Deck's
+        # unrotated panel, so the cursor stopped partway down).
+        return {"ok": True, "pc": NAME, "steam": False, "alvr": False, "steamvr": "off",
+                "os": "mac" if platform.system() == "Darwin" else "linux"}
     return {"ok": False, "why": "unknown request"}
 
 

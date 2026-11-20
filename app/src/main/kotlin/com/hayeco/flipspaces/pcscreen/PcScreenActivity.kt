@@ -631,6 +631,12 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 // Home or away, waking the PC first (at home, or through the wake relay) when it does not answer.
                 val (address, info) = serverInfoWaking(home, cert, gen)
                 activeAddress = address
+                // A Linux computer gets relative mouse moves ([relativeMouse]); asked of its PC helper, if it has one.
+                Thread({
+                    val os = helperAt(address)?.let { (helper, pc) -> runCatching { helper.hostOs(pc) }.getOrNull() }
+                    relativeMouse = os == "linux"
+                    Log.i(TAG, "mouse: ${if (relativeMouse) "relative moves (a Linux computer)" else "positions"} (helper says ${os ?: "nothing"})")
+                }, "PcScreen-os").start()
                 runCatching { NvHTTP(tuple(address), 0, store.uniqueId, cert, crypto).getHttpsPort(info) }.getOrNull()
                     ?.takeIf { it > 0 && it != store.httpsPort }?.let { https ->
                         Log.i(TAG, "HTTPS port now $https (was ${store.httpsPort})")
@@ -965,9 +971,41 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         }
     }
 
+    /**
+     * Relative moves instead of positions, for a Linux computer (its PC helper says so). Sunshine on SteamOS mapped the
+     * phone's positions against the Deck's unrotated portrait panel, so the Deck's cursor stopped partway down the
+     * picture (Mike's Deck, 20 Nov 2026). Set when the stream starts.
+     */
+    @Volatile private var relativeMouse = false
+    private var lastX = Float.NaN
+    private var lastY = Float.NaN
+    private var restX = 0f
+    private var restY = 0f
+
     private fun position(event: MotionEvent) {
         val w = surface.width.coerceAtLeast(1)
         val h = surface.height.coerceAtLeast(1)
+        if (relativeMouse) {
+            val x = event.x - surface.left
+            val y = event.y - surface.top
+            val fresh = lastX.isNaN() || event.actionMasked == MotionEvent.ACTION_HOVER_ENTER
+            if (!fresh) {
+                // In the stream's pixels, which is what Sunshine moves the cursor by.
+                restX += (x - lastX) * streamW / w
+                restY += (y - lastY) * streamH / h
+                val dx = restX.toInt()
+                val dy = restY.toInt()
+                if (dx != 0 || dy != 0) {
+                    MoonBridge.sendMouseMove(dx.coerceIn(-32000, 32000).toShort(), dy.coerceIn(-32000, 32000).toShort())
+                    restX -= dx
+                    restY -= dy
+                }
+            }
+            lastX = x
+            lastY = y
+            if (event.actionMasked == MotionEvent.ACTION_HOVER_EXIT) lastX = Float.NaN
+            return
+        }
         MoonBridge.sendMousePosition(
             (event.x - surface.left).toInt().coerceIn(0, w - 1).toShort(), (event.y - surface.top).toInt().coerceIn(0, h - 1).toShort(),
             w.toShort(), h.toShort(),
