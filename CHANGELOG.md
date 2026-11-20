@@ -74,7 +74,8 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   Pocket XR told them to turn on Samsung DeX, which they don't have. Now it says the phone has to extend its screen to
   the glasses, and opens Developer options with the switches to turn on: "Force desktop mode", "Enable freeform
   windows", "Force activities to be resizable" and, if listed, "Enable desktop experience features", then a restart.
-  Seen on a vivo V2562 with Android 17; whether those switches help on a vivo is not yet known.
+  Seen on a vivo V2562 with Android 17; whether those switches help on a vivo is not yet known. Thanks to Anton
+  Kravchenko for the report and logs.
 - **A log that doesn't stop after a second:** on some phones Android stopped handing Pocket XR its own log lines a
   moment after it started, so Send logs had almost nothing in it. Pocket XR now notices, reads the log another way, and
   says so in the file if Android still gives it nothing.
@@ -89,7 +90,7 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   Pocket XR starts. Turning it off is remembered too.
 - **VITURE Beast with USB id 35CA:1201** is now recognised as a Beast, like the 35CA:1211 Beast testers confirmed. A
   tester's Beast reported the 1201 id, so Pocket XR treated it as unknown VITURE glasses, with head tracking off. Not yet
-  confirmed on a 1201 itself.
+  confirmed on a 1201 itself. Thanks to Anton Kravchenko for the logs.
 - VITURE glasses show as "VITURE glasses" rather than "Unknown glasses" before a Space has opened on them.
 - The new words are translated into every language Pocket XR speaks; the translations were not checked by native
   speakers.
