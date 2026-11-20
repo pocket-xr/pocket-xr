@@ -8,16 +8,12 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   computer on KDE Plasma (such as a Steam Deck in Desktop Mode), each as its own window in the Space. Press the new PC
   screen button beside PC VR in the launcher; each press opens the next screen. Each screen is a virtual screen of
   its own on the computer, the shape of its window, and changes shape when you resize the window. It streams with
-  Moonlight's open source code from Apollo (Windows) or Sunshine (Mac, Linux), at up to 120 frames a second.
-- **Setup is one tap on the phone:** with the Pocket XR PC helper on a Windows PC, Set up my PC installs Apollo, adds
-  the extra screens and, if you want, use away from home. Pairing needs no PIN: click Yes on the PC.
-- **Mac:** the new Pocket XR PC helper for Mac (signed by Apple) installs Sunshine, makes the three virtual screens
-  and types the pairing PIN for you. Then switch Sunshine on under Screen Recording and Accessibility, which macOS only
-  lets you do yourself, and the helper shows you where. While nothing streams, its screens stay out of the way.
-- **Linux:** Pocket XR PC Screens for Linux is Sunshine with two small changes for KDE Plasma (a virtual screen per PC
-  screen, and sound from each), with the setup and helper, as one Flatpak: install it, open it, type your password
-  once. On a Steam Deck it works in Desktop Mode, not Game Mode. On a computer without it, a setup script gives one
-  screen with stock Sunshine.
+  Moonlight's open source code, at up to 120 frames a second.
+- **On the computer, just Pocket XR:** Pocket XR for Windows 0.4.0, for Mac 0.5.0 and for Steam Deck 0.6.0 stream
+  their own screens to the phone, with no Apollo or Sunshine to install. On Windows, turn on "Let my phone stream this PC"; the
+  phone finds the computer and pairs with a click on it. On a Mac, allow Pocket XR under Screen & System Audio Recording and
+  Accessibility, which macOS only lets you do yourself; Pocket XR shows you where. On Linux it needs KDE Plasma (a
+  Steam Deck in Desktop Mode). Apollo on Windows and Sunshine on a Mac or Linux still work too.
 - **Works the way you'd hope:** each screen gets its own virtual display on the PC, so the PC's monitors can be off;
   it connects as soon as it opens, comes back by itself after Wi-Fi drops, wakes a sleeping PC on the same network,
   and works away from home over Tailscale. An old phone left at home can wake the PC from anywhere (PC wake relay, in
@@ -34,18 +30,16 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   straight away, with the text field just above it.
 - **Scroll by swiping** (issue 119): a per-app switch in the Menu's This window section makes scrolling drag like a
   finger, so YouTube's swipe to the mini player works. The scroll strip's touch area now matches its groove on
-  Spatial Mouse on handhelds such as the Retroid Nova.
-- **Pocket XR on the computer can be the PC end itself:** the coming Pocket XR for Windows, Mac and Steam Deck updates
-  stream their own screens with no Apollo or Sunshine, and each shows in the phone's list as its own row (for example
-  "MIKE Pocket XR"). Tried from a Windows PC, an Intel MacBook Air and a Steam Deck.
+  Spatial Mouse on handhelds such as the Retroid Nova. Thanks to thejoeba for both.
 - **PC screens keep streaming when the glasses switch between 2D and 3D**, instead of reconnecting three or four times
   as the Space reopens. If a computer connects but sends no picture, or refuses and says why (a Mac without Screen
   Recording allowed), the PC screen stops and shows what to do instead of retrying.
-- **Window buttons say what they do** (issue 118): rest the pointer on one for a moment and its name shows.
+- **Window buttons say what they do** (issue 118): rest the pointer on one for a moment and its name shows. Thanks to
+  thejoeba for asking, and for the video.
 - **Immersive fills your view** (issue 118): a window far from the view's shape, such as YouTube before Fit video,
-  now takes the view's shape so the app fills it. A 16:9 video keeps its own shape.
+  now takes the view's shape so the app fills it. A 16:9 video keeps its own shape. Thanks to thejoeba again.
 - **XREAL XBX A01 and A01+** are recognised as Air family glasses, with head tracking read from their own USB
-  interface. Not yet tried on these glasses.
+  interface. Thanks to Pierre Zammit for the Steam Deck logs that showed where it was. Not yet tried on these glasses.
 - **Cursor follows head** is now off by default.
 - Tried on a Galaxy Z Flip 7 with XREAL Aura glasses, a Windows PC, an Intel MacBook Air and a Steam Deck in SteamOS
   Desktop Mode: three screens at once from Windows, two at once from the Mac and from the Deck at the windows' shapes,
