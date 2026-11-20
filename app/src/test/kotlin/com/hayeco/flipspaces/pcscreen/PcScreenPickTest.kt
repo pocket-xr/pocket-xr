@@ -19,6 +19,11 @@ class PcScreenPickTest {
         assertEquals("MIKE", PcScreenPick.pcName("MIKE screen 3"))
     }
 
+    @Test fun namesWithoutTheNetworkSuffix() {
+        assertEquals("Halcyons-Air", PcScreenPick.pcName("Halcyons-Air.mynetworksettings.com"))
+        assertEquals("192.168.1.9", PcScreenPick.pcName("192.168.1.9"))
+    }
+
     @Test fun screenOneTakesTheMainApollo() =
         assertEquals(47989, PcScreenPick.instanceFor(0, PcScreenPick.byPc(mike)[0].second) { true }?.port)
 

@@ -52,6 +52,32 @@ class PcVrHelper(context: Context) {
         return null
     }
 
+    /**
+     * The helper on the computer at [host] only, asked there directly: a PC screen pairs with one computer, and the first
+     * helper to answer a broadcast may be another's (Mike's phone, 19 Nov 2026: pairing with his Mac found his Windows
+     * PC's helper, so nobody typed the PIN). Null if that computer's helper does not answer.
+     */
+    fun findAt(host: InetAddress): Pc? {
+        DatagramSocket().use { socket ->
+            socket.soTimeout = FIND_WAIT_MS
+            val ask = "POCKETXR-FIND 1".toByteArray()
+            repeat(FIND_TRIES) {
+                runCatching { socket.send(DatagramPacket(ask, ask.size, host, PORT)) }
+                val buf = ByteArray(256)
+                val packet = DatagramPacket(buf, buf.size)
+                try {
+                    socket.receive(packet)
+                    val parts = String(packet.data, 0, packet.length).trim().split(" ", limit = 4)
+                    if (packet.address == host && parts.size >= 4 && parts[0] == "POCKETXR-HERE") {
+                        return Pc(packet.address, parts[2].toIntOrNull() ?: PORT, parts[3])
+                    }
+                } catch (_: SocketTimeoutException) {
+                }
+            }
+        }
+        return null
+    }
+
     private fun tokenFor(pc: Pc): String? = prefs.getString("token:${pc.name}", null)
 
     /** One request, one answer. */
@@ -191,7 +217,8 @@ class PcVrHelper(context: Context) {
         private const val POLL_MS = 1_000L
         private const val READY_WAIT_MS = 120_000L
         /** Apollo takes the PIN and the permissions in a few seconds; the helper tries for up to 20. */
-        private const val APOLLO_WAIT_MS = 30_000
+        // Up to 40 s on a Mac or Linux PC: its helper waits for the pairing to show in Sunshine before typing the PIN.
+        private const val APOLLO_WAIT_MS = 50_000
         /** The PC's user has two minutes to say yes to the setup. */
         private const val SETUP_WAIT_MS = 125_000
 

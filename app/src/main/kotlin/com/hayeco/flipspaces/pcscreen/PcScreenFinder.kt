@@ -44,6 +44,51 @@ class PcScreenFinder(context: Context, private val found: (List<Host>) -> Unit) 
     fun start() {
         if (running || nsd == null) return
         running = runCatching { nsd.discoverServices(SERVICE, NsdManager.PROTOCOL_DNS_SD, discovery) }.isSuccess
+        if (running) Thread({ askHelpers() }, "PcScreen-helpers").start()
+    }
+
+    /**
+     * Computers whose Pocket XR PC helper answers (UDP 47610), listed too when their Sunshine or Apollo answers on the
+     * usual port: mDNS can miss one (Mike's phone, 19 Nov 2026: a search left out his Mac, whose Sunshine was advertising,
+     * and the next search found it). Asked twice, at the start and 4 s later. Blocking: its own thread.
+     */
+    private fun askHelpers() {
+        repeat(2) { round ->
+            if (round > 0) Thread.sleep(4000)
+            if (!running) return
+            val answered = LinkedHashSet<String>()
+            runCatching {
+                java.net.DatagramSocket().use { socket ->
+                    socket.broadcast = true
+                    socket.soTimeout = 700
+                    val ask = "POCKETXR-FIND 1".toByteArray()
+                    socket.send(java.net.DatagramPacket(ask, ask.size, java.net.InetAddress.getByName("255.255.255.255"), HELPER_PORT))
+                    val end = android.os.SystemClock.uptimeMillis() + 1500
+                    while (android.os.SystemClock.uptimeMillis() < end) {
+                        val buf = ByteArray(256)
+                        val packet = java.net.DatagramPacket(buf, buf.size)
+                        try {
+                            socket.receive(packet)
+                        } catch (_: java.net.SocketTimeoutException) {
+                            break
+                        }
+                        if (String(packet.data, 0, packet.length).startsWith("POCKETXR-HERE")) packet.address.hostAddress?.let { answered += it }
+                    }
+                }
+            }
+            for (address in answered) {
+                val seen = Host(address, address, PcScreenAddress.DEFAULT_PORT)
+                val name = hostName(seen) ?: continue
+                main.post {
+                    if (running && hosts.values.none { it.address == address }) {
+                        val h = seen.copy(name = name, service = name)
+                        hosts[h.typed] = h
+                        Log.i(TAG, "finder: found $name at ${h.typed} through its PC helper")
+                        found(hosts.values.toList())
+                    }
+                }
+            }
+        }
     }
 
     fun stop() {
@@ -107,5 +152,6 @@ class PcScreenFinder(context: Context, private val found: (List<Host>) -> Unit) 
     private companion object {
         const val TAG = "PcScreen"
         const val SERVICE = "_nvstream._tcp"
+        const val HELPER_PORT = 47610
     }
 }

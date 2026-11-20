@@ -32,6 +32,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.request
 
 PORT = 47610
@@ -93,8 +94,24 @@ def ask(question):
     return False
 
 
-def sunshine_pin(pin, name, port):
-    """Types [pin] into Sunshine's web API on [port] + 1 (Basic sign-in with the saved login)."""
+def pick_pairing(pairings, phone_address):
+    """The waiting pairing to give the PIN to: the one from the asking phone's address, else the only one waiting."""
+    if not isinstance(pairings, list):
+        return None
+    mine = [p for p in pairings if isinstance(p, dict) and p.get("address") == phone_address and p.get("id")]
+    if mine:
+        return mine[-1]["id"]
+    ids = [p.get("id") for p in pairings if isinstance(p, dict) and p.get("id")]
+    return ids[0] if len(ids) == 1 else None
+
+
+def sunshine_pin(pin, name, port, phone_address=None):
+    """Types [pin] into Sunshine's web API on [port] + 1 (Basic sign-in with the saved login).
+
+    Newer Sunshine (seen in 2026.914) lists the phones waiting to pair at GET /api/pin
+    ({"pairings":[{"address","id","name"}]}) and wants {"pairing_id","pin","name"}; without pairing_id it answers 400.
+    Older Sunshine takes {"pin","name"} alone. The phone starts pairing a few seconds after its user taps Allow, so
+    this waits up to about 40 s for it to show up."""
     try:
         with open(LOGIN, encoding="utf-8") as f:
             login = json.load(f)
@@ -107,23 +124,72 @@ def sunshine_pin(pin, name, port):
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    body = json.dumps({"pin": pin, "name": name}).encode()
-    for _ in range(10):
+    url = "https://localhost:%d/api/pin" % (port + 1)
+
+    def call(method, body=None):
+        req = urllib.request.Request(url, data=None if body is None else json.dumps(body).encode(), method=method,
+                                     headers={"Authorization": "Basic " + auth, "Content-Type": "application/json"})
         try:
-            req = urllib.request.Request("https://localhost:%d/api/pin" % (port + 1), data=body, method="POST",
-                                         headers={"Authorization": "Basic " + auth, "Content-Type": "application/json"})
             with urllib.request.urlopen(req, context=ctx, timeout=5) as r:
-                answer = json.loads(r.read().decode() or "{}")
+                return r.status, json.loads(r.read().decode() or "{}")
+        except urllib.error.HTTPError as e:
+            try:  # the body may be JSON, HTML or nothing at all
+                data = json.loads(e.read().decode() or "{}")
+                return e.code, data if isinstance(data, dict) else {}
+            except Exception:
+                return e.code, {}
+
+    def clear_earlier(phone_name):
+        # Sunshine 2026.914 adds a record each time a phone pairs, even with a certificate it already has, and lets a
+        # certificate in only when exactly one record matches it: a phone paired again was refused with "Client
+        # certificate identity is not enabled". So the phone's earlier records (the name given here) go first.
+        req = urllib.request.Request(url.replace("/api/pin", "/api/clients/list"), headers={"Authorization": "Basic " + auth})
+        try:
+            with urllib.request.urlopen(req, context=ctx, timeout=5) as r:
+                clients = json.loads(r.read().decode() or "{}").get("named_certs", [])
+        except Exception as e:
+            log("clients: %s" % e)
+            return
+        for c in clients:
+            if isinstance(c, dict) and c.get("name") == phone_name and c.get("uuid"):
+                body = json.dumps({"uuid": c["uuid"]}).encode()
+                req = urllib.request.Request(url.replace("/api/pin", "/api/clients/unpair"), data=body, method="POST",
+                                             headers={"Authorization": "Basic " + auth, "Content-Type": "application/json"})
+                try:
+                    with urllib.request.urlopen(req, context=ctx, timeout=5) as r:
+                        log("earlier pairing of %s (%s) removed: %s" % (phone_name, c["uuid"], r.read().decode()))
+                except Exception as e:
+                    log("unpair: %s" % e)
+
+    last = ""
+    cleared = False
+    for _ in range(40):
+        try:
+            code, listed = call("GET")
+            if code == 200 and isinstance(listed, dict) and "pairings" in listed:
+                pairing = pick_pairing(listed["pairings"], phone_address)
+                if pairing is None:
+                    last = "no phone waiting to pair yet (%d waiting)" % len(listed["pairings"] or [])
+                    time.sleep(1)
+                    continue
+                if not cleared:
+                    cleared = True
+                    clear_earlier(name)
+                code, answer = call("POST", {"pairing_id": pairing, "pin": pin, "name": name})
+            else:  # an older Sunshine, without the list
+                code, answer = call("POST", {"pin": pin, "name": name})
             if answer.get("status") in (True, "true"):
                 log("PIN typed for %s on port %d" % (name, port))
                 return {"ok": True}
-        except Exception as e:  # the phone may not be waiting yet, or Sunshine is starting
-            log("pin: %s" % e)
+            last = "HTTP %d %s" % (code, answer.get("error", ""))
+        except Exception as e:  # Sunshine is starting, or not there
+            last = str(e)
         time.sleep(1)
-    return {"ok": False, "why": "Sunshine did not take the PIN"}
+    log("pin: %s" % last)
+    return {"ok": False, "why": "Sunshine did not take the PIN (%s)" % last}
 
 
-def answer(request):
+def answer(request, phone_address=None):
     op = request.get("op")
     if op == "pair":
         phone = request.get("phone") or "A phone"
@@ -134,7 +200,7 @@ def answer(request):
     if not known(request.get("token")):
         return {"ok": False, "why": "not paired"}
     if op == "apollo-pin":
-        return sunshine_pin(request.get("pin"), request.get("name") or "Pocket XR", int(request.get("port") or 47989))
+        return sunshine_pin(request.get("pin"), request.get("name") or "Pocket XR", int(request.get("port") or 47989), phone_address)
     if op == "screens-setup":
         return {"ok": False, "why": "on Linux and macOS, run pocketxr-pc-screens.sh on the computer"}
     if op in ("status", "start"):
@@ -148,16 +214,16 @@ def serve_tcp():
     srv.bind(("0.0.0.0", PORT))
     srv.listen(8)
     while True:
-        conn, _ = srv.accept()
-        threading.Thread(target=client, args=(conn,), daemon=True).start()
+        conn, peer = srv.accept()
+        threading.Thread(target=client, args=(conn, peer[0]), daemon=True).start()
 
 
-def client(conn):
+def client(conn, phone_address):
     with conn:
         try:
             conn.settimeout(130)
             line = conn.makefile("r", encoding="utf-8").readline()
-            reply = answer(json.loads(line or "{}"))
+            reply = answer(json.loads(line or "{}"), phone_address)
             conn.sendall((json.dumps(reply) + "\n").encode())
         except Exception as e:
             log("tcp: %s" % e)

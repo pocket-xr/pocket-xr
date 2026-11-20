@@ -37,7 +37,7 @@
     <string name="pc_screen_setup_share_subject">Pocket XR 電腦小幫手</string>
     <string name="pc_screen_setup_share_text">在電腦上開啟此連結，並執行 Pocket XR 電腦小幫手：%1$s</string>
     <string name="pc_screen_setup_asked">在 %1$s 上按一下「是」來設定電腦螢幕。</string>
-    <string name="pc_screen_setup_running">%1$s 上正在進行設定：請在那裡回答問題，然後輕觸上方你的電腦。</string>
+    <string name="pc_screen_setup_running">%1$s 上正在進行設定：請在那裡回答問題，然後輕觸下方你的電腦。</string>
     <string name="pc_screen_setup_refused">%1$s 沒有同意。輕觸「設定我的電腦」再問一次。</string>
     <string name="wake_relay_title">電腦喚醒中繼</string>
     <string name="wake_relay_row_subtitle">把這支手機留在家裡，在外面也能喚醒你的電腦</string>
@@ -75,7 +75,7 @@
     <string name="pc_screen_waking">正在喚醒 %1$s…</string>
     <string name="pc_screen_trouble_unreachable">無法連線到 %1$s。請確認電腦已開機、Apollo 正在執行，而且電腦和手機連上同一個 Wi-Fi。</string>
     <string name="pc_screen_trouble_permission">Apollo 封鎖了這支手機。請在電腦上開啟 %1$s，前往「用戶端」，為這支手機開啟啟動應用程式、滑鼠和鍵盤權限，然後輕觸「連線」。</string>
-    <string name="pc_screen_trouble_unpaired">電腦已不認得這支手機。輕觸上方你的電腦重新配對。</string>
+    <string name="pc_screen_trouble_unpaired">電腦已不認得這支手機。輕觸下方你的電腦重新配對。</string>
     <string name="pc_screen_connect">連線</string>
     <string name="pc_screen_enter_pin">請在電腦上 Sunshine 或 Apollo 的網頁（PIN 分頁）中輸入 PIN %1$s。若使用 Apollo，接著在那裡給這台裝置啟動應用程式、滑鼠和鍵盤權限。</string>
     <string name="pc_screen_paired_with">已與 %1$s 配對。連線後即可串流它的螢幕。</string>
@@ -85,4 +85,6 @@
     <string name="pc_screen_connect_failed">無法連線：%1$s</string>
     <string name="pc_screen_stage">正在啟動 %1$s</string>
     <string name="pc_screen_ended">串流已結束（%1$d）。</string>
+    <string name="pc_screen_disconnected">已中斷連線。點選「連線」返回，或點選另一台電腦。</string>
+    <string name="pc_screen_helper_typing">已在 %1$s 上允許。正在為你輸入 PIN，可能需要幾秒鐘…</string>
 </resources>

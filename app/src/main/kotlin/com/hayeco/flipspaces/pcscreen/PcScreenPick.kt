@@ -9,6 +9,8 @@ object PcScreenPick {
     /** The PC's name from an instance's mDNS name: "Mike(2)" and "MIKE screen 2" are both "Mike"'s. */
     fun pcName(serviceName: String): String =
         serviceName.trim().replace(Regex("""\(\d+\)$"""), "").replace(Regex("""\s+screen\s+\d+$""", RegexOption.IGNORE_CASE), "").trim()
+            // A host name with the network's suffix ("Halcyons-Air.mynetworksettings.com", a Mac's Sunshine): the name only.
+            .let { if (it.contains('.') && it.first().isLetter()) it.substringBefore('.') else it }
             .ifEmpty { serviceName }
 
     /** The found instances by PC (address), each PC named by its main instance, in the order found. */

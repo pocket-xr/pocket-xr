@@ -7,7 +7,8 @@
 #
 # Run it once in a terminal:  bash pocketxr-pc-screens.sh
 # It:
-#   1. installs Sunshine if it is missing (Linux: Flatpak from Flathub; macOS: Homebrew);
+#   1. installs Sunshine if it is missing (Linux: Flatpak from Flathub; macOS: Sunshine's own installer from
+#      its GitHub release, into ~/Applications; one already installed, e.g. by Homebrew, is kept);
 #   2. gives Sunshine a web login if it has none (or asks for the one it has) and saves it for the helper;
 #   3. installs the Pocket XR PC helper (pocketxr_pc_helper.py, next to this script) and starts it and Sunshine at
 #      sign-in (systemd user services on Linux, LaunchAgents on macOS);
@@ -27,19 +28,50 @@ FLATPAK_ID="dev.lizardbyte.app.Sunshine"
 say() { printf '%s\n' "$*"; }
 die() { say "Setup stopped: $*"; exit 1; }
 
+SUNSHINE_RELEASES="https://api.github.com/repositories/438803890/releases/latest"  # by id: follows the repo's moves
+
 sunshine_cmd() {
-    # How to run Sunshine here: the Flatpak, a system install, or Homebrew's.
-    if [ "$OS" = "Linux" ] && flatpak info "$FLATPAK_ID" >/dev/null 2>&1; then echo "flatpak run $FLATPAK_ID"
-    elif command -v sunshine >/dev/null 2>&1; then command -v sunshine
-    else echo ""; fi
+    # How to run Sunshine here: the Flatpak, Sunshine.app (the Mac installer), a system install, or Homebrew's.
+    if [ "$OS" = "Linux" ] && flatpak info "$FLATPAK_ID" >/dev/null 2>&1; then echo "flatpak run $FLATPAK_ID"; return; fi
+    if [ "$OS" = "Darwin" ]; then
+        for app in "$HOME/Applications/Sunshine.app" "/Applications/Sunshine.app"; do
+            [ -x "$app/Contents/MacOS/Sunshine" ] && { echo "$app/Contents/MacOS/Sunshine"; return; }
+        done
+    fi
+    if command -v sunshine >/dev/null 2>&1; then command -v sunshine; else echo ""; fi
+}
+
+install_sunshine_mac() {
+    # Sunshine's own Mac installer from its latest GitHub release, into ~/Applications (no admin password).
+    local arch url dir mnt
+    case "$(uname -m)" in x86_64) arch=x86_64 ;; arm64) arch=arm64 ;; *) die "Sunshine has no Mac installer for $(uname -m)." ;; esac
+    url="$(curl -fsSL "$SUNSHINE_RELEASES" | python3 -c '
+import json, sys
+want = "Sunshine-macOS-%s.dmg" % sys.argv[1]
+print(next((a["browser_download_url"] for a in json.load(sys.stdin).get("assets", []) if a.get("name") == want), ""))
+' "$arch")"
+    [ -n "$url" ] || die "Could not find Sunshine's Mac installer on GitHub (Sunshine-macOS-$arch.dmg). Check the network, then run this again."
+    dir="$(mktemp -d)"; mnt="$dir/mnt"; mkdir "$mnt"
+    say "Downloading $url"
+    curl -fL --progress-bar -o "$dir/Sunshine.dmg" "$url" || { rm -rf "$dir"; die "The download failed."; }
+    hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$dir/Sunshine.dmg" >/dev/null || { rm -rf "$dir"; die "Could not open the Sunshine installer."; }
+    if [ ! -d "$mnt/Sunshine.app" ]; then
+        hdiutil detach "$mnt" >/dev/null; rm -rf "$dir"; die "The Sunshine installer has no Sunshine.app in it."
+    fi
+    if ! spctl --assess --type execute "$mnt/Sunshine.app" 2>/dev/null; then
+        hdiutil detach "$mnt" >/dev/null; rm -rf "$dir"; die "macOS did not accept this Sunshine download (Gatekeeper), so it was not installed."
+    fi
+    mkdir -p "$HOME/Applications"
+    rm -rf "$HOME/Applications/Sunshine.app"
+    ditto "$mnt/Sunshine.app" "$HOME/Applications/Sunshine.app"
+    hdiutil detach "$mnt" >/dev/null; rm -rf "$dir"
 }
 
 install_sunshine() {
     if [ -n "$(sunshine_cmd)" ]; then say "Sunshine is already installed: kept as it is."; return; fi
     say "Installing Sunshine (free, open source), which streams this computer's screen to Pocket XR..."
     if [ "$OS" = "Darwin" ]; then
-        command -v brew >/dev/null 2>&1 || die "Homebrew is needed to install Sunshine on a Mac: install it from https://brew.sh, then run this again."
-        brew tap LizardByte/homebrew >/dev/null && brew install sunshine || die "Homebrew could not install Sunshine."
+        install_sunshine_mac
     else
         command -v flatpak >/dev/null 2>&1 || die "Flatpak is needed (SteamOS and most desktops have it). Install Flatpak, or Sunshine from https://github.com/LizardByte/Sunshine/releases, then run this again."
         flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -76,15 +108,27 @@ except Exception:
 PY
 }
 
+make_login() {
+    # No login yet: make one, so nobody has to. Before Sunshine is started: a --creds run while a freshly started
+    # Sunshine sets itself up was lost (seen on macOS 14, Sunshine 2026.914), and Sunshine reads it when it starts.
+    if [ -f "$LOGIN" ] || has_login; then return; fi
+    local user=pocketxr pass
+    pass="$(python3 -c 'import secrets; print(secrets.token_urlsafe(15))')"
+    $(sunshine_cmd) --creds "$user" "$pass" >/dev/null 2>&1
+    # The Flatpak keeps its state elsewhere, so only the Mac's is checked here; ensure_login checks it works anyway.
+    if [ "$OS" = "Darwin" ] && ! has_login; then die "Sunshine did not save its web login."; fi
+    save_login "$user" "$pass"
+    say "Made Sunshine's web login (user \"$user\", password \"$pass\"). The Pocket XR helper uses it to pair phones for you."
+}
+
 ensure_login() {
-    if [ -f "$LOGIN" ]; then say "Sunshine login: saved for the helper already."; return; fi
-    if ! has_login; then
-        # No login yet: make one, so nobody has to.
-        local user=pocketxr pass
-        pass="$(python3 -c 'import secrets; print(secrets.token_urlsafe(15))')"
-        $(sunshine_cmd) --creds "$user" "$pass" >/dev/null 2>&1
-        save_login "$user" "$pass"
-        say "Made Sunshine's web login (user \"$user\", password \"$pass\"). The Pocket XR helper uses it to pair phones for you."
+    # Sunshine had a login of its own already: ask for it, so the helper can pair phones (Sunshine is running now).
+    if [ -f "$LOGIN" ]; then
+        local u p
+        u="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["username"])' "$LOGIN")"
+        p="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["password"])' "$LOGIN")"
+        if check_login "$u" "$p"; then say "Sunshine login: saved for the helper, and it works."
+        else say "Sunshine login: saved for the helper, but Sunshine did not accept it yet (still starting?)."; fi
         return
     fi
     say "Pocket XR's helper can pair your phone with Sunshine for you (no PIN to type) if it has Sunshine's web login."
@@ -154,8 +198,15 @@ EOF
         launchctl unload "$plist" 2>/dev/null; launchctl load "$plist"
     done
     say "Sunshine and the Pocket XR helper start at sign-in, and are running now."
-    say "macOS asks once for Screen Recording and Accessibility for Sunshine (System Settings, Privacy & Security): allow both,"
-    say "so the phone sees the screen and can use the mouse and keyboard."
+    # macOS does not ask for Accessibility (seen on macOS 14: tccd "kTCCServicePostEvent does not allow prompting;
+    # returning denied"), so without this the phone's clicks and typing are dropped with no message anywhere.
+    say ""
+    say "One more step on this Mac, so the phone sees the screen and its mouse and keyboard work:"
+    say "  1. System Settings > Privacy & Security > Screen Recording: switch on Sunshine."
+    say "  2. System Settings > Privacy & Security > Accessibility: switch on Sunshine."
+    say "     If Sunshine is not in a list, click +, press Cmd+Shift+G, type ~/Applications and choose Sunshine."
+    say "  3. Then restart Sunshine:  launchctl kickstart -k gui/\$(id -u)/com.hayeco.pocketxr.sunshine"
+    open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility" 2>/dev/null || true
 }
 
 remove() {
@@ -177,8 +228,9 @@ command -v python3 >/dev/null 2>&1 || die "Python 3 is needed (macOS: xcode-sele
 
 say "Pocket XR PC screens setup ($OS)"
 install_sunshine
+make_login
 if [ "$OS" = "Darwin" ]; then install_mac_agents; else install_linux_services; fi
-sleep 3
+sleep 5
 ensure_login
 say ""
 say "Done. On your phone, open PC screen in Pocket XR and tap this computer, then click Allow here."

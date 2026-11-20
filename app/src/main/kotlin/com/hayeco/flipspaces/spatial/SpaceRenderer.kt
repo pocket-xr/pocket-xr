@@ -2997,6 +2997,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val display = p.displayId ?: return
         val closed = (p.state as? PanelState.Showing)?.appClosed == true
         if (closed || p.ask != null) return
+        // A PC screen handles Back itself: streaming, it disconnects and shows the computers to choose from; on that page,
+        // Back closes it. So no question first.
+        if (com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(p.panel.activityName) >= 0) {
+            sendBack(p, display)
+            return
+        }
         PanelHost.tasks(display) { tasks ->
             onGl {
                 if (p.removed || p.displayId != display) return@onGl
@@ -3698,7 +3704,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     val now = p.state as? PanelState.Showing ?: return@onGl
                     if (p.removed || now.displayId != display || now.appClosed) return@onGl
                     if (p.empty.sample(tasks, SystemClock.uptimeMillis())) {
-                        val newer = com.hayeco.flipspaces.core.spatial.SingleWindowApp.movedTo(p.window(), panels.values.map { it.window() })
+                        // PC screens are separate windows of one package, never one app moved to a newer window (Mike's
+                        // glasses, 19 Nov 2026: closing PC screen 1 said it "moved" to PC screen 2).
+                        val pcScreen = com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(p.panel.activityName) >= 0
+                        val newer = if (pcScreen) null else com.hayeco.flipspaces.core.spatial.SingleWindowApp.movedTo(p.window(), panels.values.map { it.window() })
                         p.state = now.copy(appClosed = true)
                         p.ask = null
                         p.movedTo = null
@@ -4956,7 +4965,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val lit = if (btn.danger) Look.DANGER else Look.ACCENT
             val r = lift(PanelCurve.rect(panel, btn.u0, btn.v0, btn.u1, btn.v1), depth + Look.DEPTH_HOVER * hot)
             colorOn(r, viewProj, look(Look.mix(rest, lit, hot), show), Rounding(h / 2f, w, h, Look.alpha(Look.RIM, show * (1f - hot)), rimM))
-            tex.set(listOf(btn.label), Color.TRANSPARENT, Look.INK, CARD_BUTTON_PX, centred = true, medium = true)
+            tex.set(listOf(btn.label), Color.TRANSPARENT, Look.INK, CARD_BUTTON_PX, centred = true, medium = true, oneLine = true)
             // The label: half the pill's height, its texture's shape, centred on the pill.
             var hM = 0.62f * h
             var wM = hM * CARD_BUTTON_W / CARD_BUTTON_H

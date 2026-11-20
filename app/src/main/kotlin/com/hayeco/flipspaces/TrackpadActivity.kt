@@ -127,6 +127,8 @@ class TrackpadActivity : Activity(), PadHost {
     /** 0.5.74: the status toasts, settled and held back while the glasses start ([TrackpadStatusToast]). */
     private val statusToast = com.hayeco.flipspaces.core.spatial.TrackpadStatusToast(SystemClock.uptimeMillis())
     private var imeShown = false
+    /** The keyboard's height last seen, so a change places the page again. */
+    private var lastImeBottom = 0
     private var backCallback: Any? = null
 
     private val vibrator: Vibrator? by lazy {
@@ -186,6 +188,14 @@ class TrackpadActivity : Activity(), PadHost {
             val ime = insets.isVisible(WindowInsets.Type.ime())
             if (ime && !imeShown && !typing) screen.showToast(getString(R.string.pad_ime_note))
             imeShown = ime
+            // The keyboard's size changed (it slid up or down): the page is placed again, so the text field sits just above
+            // it. Before, only a tap on the field placed it again; until then it stayed at the top over the menu row (Mike's
+            // phone, 19 Nov 2026: measured with no keyboard at 22:17:44, then not again until his tap 14 s later).
+            val imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom
+            if (imeBottom != lastImeBottom) {
+                lastImeBottom = imeBottom
+                v.post { v.requestLayout() }
+            }
             // 0.5.17 cover screen: the cutouts and corners may only be known now.
             if (cover) v.post { updateCoverLayout() }
             v.onApplyWindowInsets(insets)
@@ -1986,6 +1996,19 @@ class TrackpadActivity : Activity(), PadHost {
         if (!on) setHeld(emptySet())
         typing = on
         updateFocusable()
+        // The trackpad's window was not focusable when the Keyboard button was touched, so the touch left focus on the
+        // glasses' Space and Android ignored the request for the keyboard until the field itself was tapped (Mike's phone,
+        // 19 Nov 2026, 22:35: no focus change after Keyboard). Its own task brought to the front moves focus to the
+        // phone's screen, and the keyboard opens (PadScreen asks for it once the window has focus).
+        if (on) main.post {
+            if (typing && !hasWindowFocus()) {
+                val task = runCatching {
+                    getSystemService(android.app.ActivityManager::class.java)?.appTasks?.firstOrNull { it.taskInfo?.taskId == taskId }
+                }.getOrNull()
+                val moved = runCatching { task?.moveToFront(); task != null }.getOrDefault(false)
+                Log.i(TAG, "keyboard: the trackpad had no focus; its task to the front: $moved")
+            }
+        }
     }
 
     /*

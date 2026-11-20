@@ -27,6 +27,10 @@
 // phone asks; it saves Apollo's web login for this helper (DPAPI, this Windows user only), so the helper can type
 // pairing PINs into Apollo.
 //
+// Sound: while a PC screen streams, Apollo makes Steam Streaming Speakers the PC's sound device and should put the PC's own
+// back after. With several PC screens the second Apollo took the first one's Steam Streaming Speakers for the PC's own and
+// put those back (Mike's PC, 19 Nov 2026). So the helper keeps the PC's own device itself ([SoundKeeper]).
+//
 // Build (Windows' own compiler, nothing to install):
 //   csc /target:winexe /win32icon:pocketxr.ico /r:System.Web.Extensions.dll /r:System.Windows.Forms.dll
 //       /r:System.Drawing.dll /r:System.Security.dll /resource:pc-screens\PocketXR-PC-Screens.ps1,PcScreens.ps1
@@ -743,6 +747,167 @@ namespace PocketXr
         }
     }
 
+    /// <summary>
+    /// The PC's own sound device, back after PC screens. Apollo switches the PC to Steam Streaming Speakers while it streams
+    /// and switches back after, but a second Apollo started meanwhile remembers Steam Streaming Speakers as the PC's own and
+    /// switches back to those (Mike's PC, 19 Nov 2026: he had to choose his speakers again by hand). So every 2 s: the
+    /// default device that is not Steam Streaming Speakers is remembered; once Steam Streaming Speakers is the default with
+    /// no PC screen streaming (no Apollo virtual display on the desktop) for 4 s, after one was, the remembered one is set
+    /// back. Someone who picks Steam Streaming Speakers themselves, with no stream before, is left alone.
+    /// </summary>
+    static class SoundKeeper
+    {
+        static readonly string SavedFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PocketXR", "sound-device.txt");
+
+        public static void Start()
+        {
+            new Thread(Run) { IsBackground = true, Name = "sound" }.Start();
+        }
+
+        static void Run()
+        {
+            string saved = null;
+            try { if (File.Exists(SavedFile)) saved = File.ReadAllText(SavedFile).Trim(); } catch { }
+            bool streamed = false;
+            int quiet = 0;
+            while (true)
+            {
+                try
+                {
+                    string now = DefaultDevice();
+                    bool streaming = Streaming();
+                    if (streaming) streamed = true;
+                    if (now != null && !IsStreamingSpeakers(now))
+                    {
+                        if (now != saved)
+                        {
+                            saved = now;
+                            try { Directory.CreateDirectory(Path.GetDirectoryName(SavedFile)); File.WriteAllText(SavedFile, saved); } catch { }
+                        }
+                        if (!streaming) streamed = false;
+                        quiet = 0;
+                    }
+                    else if (now != null && !streaming && streamed && saved != null)
+                    {
+                        if (++quiet >= 2)
+                        {
+                            SetDefault(saved);
+                            Log.Line("sound: PC screens ended with Steam Streaming Speakers chosen; the PC's own device is back (" + saved + ")");
+                            streamed = false;
+                            quiet = 0;
+                        }
+                    }
+                    else quiet = 0;
+                }
+                catch (Exception e) { Log.Line("sound: " + e.Message); }
+                Thread.Sleep(2000);
+            }
+        }
+
+        /// <summary>Steam Streaming Speakers (Apollo's and Sunshine's silent device), by the device's adapter name.</summary>
+        static bool IsStreamingSpeakers(string id)
+        {
+            int dot = id.LastIndexOf('.');
+            string guid = dot >= 0 ? id.Substring(dot + 1) : id;
+            using (var k = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\" + guid + @"\Properties"))
+            {
+                var adapter = k == null ? null : k.GetValue("{b3f8fa53-0004-438e-9003-51a46e139bfc},6") as string;
+                return adapter != null && adapter.IndexOf("Steam Streaming", StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+        }
+
+        /// <summary>A PC screen streams: one of Apollo's virtual displays (SudoMaker's adapter) is on the desktop.</summary>
+        static bool Streaming()
+        {
+            var d = new DISPLAY_DEVICE();
+            d.cb = System.Runtime.InteropServices.Marshal.SizeOf(d);
+            for (uint i = 0; EnumDisplayDevices(null, i, ref d, 0); i++)
+            {
+                if ((d.StateFlags & 1) != 0 && d.DeviceString != null && d.DeviceString.IndexOf("SudoMaker", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                d.cb = System.Runtime.InteropServices.Marshal.SizeOf(d);
+            }
+            return false;
+        }
+
+        static string DefaultDevice()
+        {
+            var e = (IMMDeviceEnumerator)new MMDeviceEnumerator();
+            try
+            {
+                IMMDevice dev;
+                if (e.GetDefaultAudioEndpoint(0, 0, out dev) != 0 || dev == null) return null;
+                string id;
+                dev.GetId(out id);
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(dev);
+                return id;
+            }
+            finally { System.Runtime.InteropServices.Marshal.ReleaseComObject(e); }
+        }
+
+        static void SetDefault(string id)
+        {
+            var p = (IPolicyConfig)new PolicyConfigClient();
+            try { for (int role = 0; role < 3; role++) p.SetDefaultEndpoint(id, role); }
+            finally { System.Runtime.InteropServices.Marshal.ReleaseComObject(p); }
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        static extern bool EnumDisplayDevices(string device, uint index, ref DISPLAY_DEVICE info, uint flags);
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        struct DISPLAY_DEVICE
+        {
+            public int cb;
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 32)] public string DeviceName;
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceString;
+            public int StateFlags;
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceID;
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
+        }
+
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
+        class MMDeviceEnumerator { }
+
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"),
+         System.Runtime.InteropServices.InterfaceType(System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIUnknown)]
+        interface IMMDeviceEnumerator
+        {
+            [System.Runtime.InteropServices.PreserveSig] int EnumAudioEndpoints(int dataFlow, int stateMask, out IntPtr devices);
+            [System.Runtime.InteropServices.PreserveSig] int GetDefaultAudioEndpoint(int dataFlow, int role, out IMMDevice device);
+        }
+
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("D666063F-1587-4E43-81F1-B948E807363F"),
+         System.Runtime.InteropServices.InterfaceType(System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIUnknown)]
+        interface IMMDevice
+        {
+            [System.Runtime.InteropServices.PreserveSig] int Activate(ref Guid iid, int context, IntPtr activationParams, out IntPtr iface);
+            [System.Runtime.InteropServices.PreserveSig] int OpenPropertyStore(int access, out IntPtr store);
+            [System.Runtime.InteropServices.PreserveSig] int GetId([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] out string id);
+        }
+
+        // Windows' own (undocumented, stable since Windows 7) way to choose the default device, as the Sound settings do.
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("870AF99C-171D-4F9E-AF0D-E63DF40C2BC9")]
+        class PolicyConfigClient { }
+
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("F8679F50-850A-41CF-9C72-430F290290C8"),
+         System.Runtime.InteropServices.InterfaceType(System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIUnknown)]
+        interface IPolicyConfig
+        {
+            [System.Runtime.InteropServices.PreserveSig] int GetMixFormat(string id, IntPtr format);
+            [System.Runtime.InteropServices.PreserveSig] int GetDeviceFormat(string id, int def, IntPtr format);
+            [System.Runtime.InteropServices.PreserveSig] int ResetDeviceFormat(string id);
+            [System.Runtime.InteropServices.PreserveSig] int SetDeviceFormat(string id, IntPtr endpointFormat, IntPtr mixFormat);
+            [System.Runtime.InteropServices.PreserveSig] int GetProcessingPeriod(string id, int def, IntPtr defaultPeriod, IntPtr minPeriod);
+            [System.Runtime.InteropServices.PreserveSig] int SetProcessingPeriod(string id, IntPtr period);
+            [System.Runtime.InteropServices.PreserveSig] int GetShareMode(string id, IntPtr mode);
+            [System.Runtime.InteropServices.PreserveSig] int SetShareMode(string id, IntPtr mode);
+            [System.Runtime.InteropServices.PreserveSig] int GetPropertyValue(string id, IntPtr key, IntPtr value);
+            [System.Runtime.InteropServices.PreserveSig] int SetPropertyValue(string id, IntPtr key, IntPtr value);
+            [System.Runtime.InteropServices.PreserveSig] int SetDefaultEndpoint([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string id, int role);
+            [System.Runtime.InteropServices.PreserveSig] int SetEndpointVisibility(string id, int visible);
+        }
+    }
+
     class Tray : ApplicationContext
     {
         const int Port = 47610;
@@ -786,6 +951,7 @@ namespace PocketXr
 
             new Thread(Discovery) { IsBackground = true, Name = "discovery" }.Start();
             new Thread(Requests) { IsBackground = true, Name = "requests" }.Start();
+            SoundKeeper.Start();
             Log.Line("listening on port " + Port);
             Balloon(Environment.GetCommandLineArgs().Contains("--installed")
                 ? "Installed. It starts with Windows, and Pocket XR can now start SteamVR from your phone."

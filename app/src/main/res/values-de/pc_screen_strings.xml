@@ -37,7 +37,7 @@
     <string name="pc_screen_setup_share_subject">Pocket XR PC-Helfer</string>
     <string name="pc_screen_setup_share_text">Öffne das auf deinem PC und starte den Pocket XR PC-Helfer: %1$s</string>
     <string name="pc_screen_setup_asked">Klicke auf %1$s auf Ja, um PC-Bildschirme einzurichten.</string>
-    <string name="pc_screen_setup_running">Die Einrichtung läuft auf %1$s: Beantworte dort die Fragen. Tippe dann oben auf deinen PC.</string>
+    <string name="pc_screen_setup_running">Die Einrichtung läuft auf %1$s: Beantworte dort die Fragen. Tippe dann unten auf deinen PC.</string>
     <string name="pc_screen_setup_refused">%1$s hat nicht Ja gesagt. Tippe auf „Meinen PC einrichten“, um erneut zu fragen.</string>
     <string name="wake_relay_title">PC-Weckrelais</string>
     <string name="wake_relay_row_subtitle">Dieses Handy weckt zu Hause deinen PC, wenn du unterwegs bist</string>
@@ -75,7 +75,7 @@
     <string name="pc_screen_waking">Wecke %1$s…</string>
     <string name="pc_screen_trouble_unreachable">%1$s ist nicht erreichbar. Prüfe, ob der PC an ist, Apollo läuft und PC und Handy im selben WLAN sind.</string>
     <string name="pc_screen_trouble_permission">Apollo blockiert dieses Handy. Öffne auf dem PC %1$s, geh zu Clients und schalte für dieses Handy Apps starten, Maus und Tastatur ein. Tippe dann auf „Verbinden“.</string>
-    <string name="pc_screen_trouble_unpaired">Der PC kennt dieses Handy nicht mehr. Tippe oben auf deinen PC, um neu zu koppeln.</string>
+    <string name="pc_screen_trouble_unpaired">Der PC kennt dieses Handy nicht mehr. Tippe unten auf deinen PC, um neu zu koppeln.</string>
     <string name="pc_screen_connect">Verbinden</string>
     <string name="pc_screen_enter_pin">Gib die PIN %1$s auf dem PC ein, auf der Webseite von Sunshine oder Apollo (Tab PIN). Bei Apollo: Gib diesem Gerät dort dann die Rechte für Apps starten, Maus und Tastatur.</string>
     <string name="pc_screen_paired_with">Gekoppelt mit %1$s. Verbinde dich, um seinen Bildschirm zu streamen.</string>
@@ -85,4 +85,6 @@
     <string name="pc_screen_connect_failed">Verbindung fehlgeschlagen: %1$s</string>
     <string name="pc_screen_stage">Starte %1$s</string>
     <string name="pc_screen_ended">Der Stream wurde beendet (%1$d).</string>
+    <string name="pc_screen_disconnected">Getrennt. Tippe auf Verbinden, um zurückzukehren, oder tippe auf einen anderen Computer.</string>
+    <string name="pc_screen_helper_typing">Auf %1$s erlaubt. Die PIN wird für dich eingegeben, das kann ein paar Sekunden dauern…</string>
 </resources>

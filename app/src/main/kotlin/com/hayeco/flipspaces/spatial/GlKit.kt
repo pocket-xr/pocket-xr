@@ -645,14 +645,24 @@ internal class LabelTexture(private val width: Int, private val height: Int) {
         icon: Bitmap? = null,
         badge: String? = null,
         medium: Boolean = false,
+        oneLine: Boolean = false,
     ) {
-        val k = "$background/$foreground/$textPx/$centred/${icon?.let { System.identityHashCode(it) }}/$badge/$medium/" + lines.joinToString("\n")
+        val k = "$background/$foreground/$textPx/$centred/${icon?.let { System.identityHashCode(it) }}/$badge/$medium/$oneLine/" + lines.joinToString("\n")
         if (k == key && id != 0) return
         key = k
         // 0.5.69: Inter Medium for titles and buttons ([com.hayeco.flipspaces.ui.LookType]).
         paint.typeface = if (medium) com.hayeco.flipspaces.ui.LookType.medium else com.hayeco.flipspaces.ui.LookType.regular
         canvas.drawColor(background, android.graphics.PorterDuff.Mode.SRC)
         paint.color = foreground
+        paint.textSize = textPx
+        // [oneLine]: each line drawn smaller rather than wrapped onto a second line the texture cuts off (a card button
+        // read "Turn on and" for "Turn on and reopen", Mike's glasses, 19 Nov 2026).
+        @Suppress("NAME_SHADOWING")
+        val textPx = if (!oneLine || lines.isEmpty()) textPx else {
+            val widest = lines.maxOf { paint.measureText(it) }
+            val room = width - 2 * textPx * 0.8f
+            if (widest <= room) textPx else textPx * room / widest
+        }
         paint.textSize = textPx
         val lineH = textPx * 1.3f
         var top = 0f

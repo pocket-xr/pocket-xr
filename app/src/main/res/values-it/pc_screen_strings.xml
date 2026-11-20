@@ -37,7 +37,7 @@
     <string name="pc_screen_setup_share_subject">Helper PC di Pocket XR</string>
     <string name="pc_screen_setup_share_text">Apri questo sul tuo PC e avvia l\'helper PC di Pocket XR: %1$s</string>
     <string name="pc_screen_setup_asked">Fai clic su Sì su %1$s per configurare gli schermi PC.</string>
-    <string name="pc_screen_setup_running">La configurazione è in corso su %1$s: rispondi lì alle sue domande. Poi tocca il tuo PC qui sopra.</string>
+    <string name="pc_screen_setup_running">La configurazione è in corso su %1$s: rispondi lì alle sue domande. Poi tocca il tuo PC qui sotto.</string>
     <string name="pc_screen_setup_refused">%1$s non ha detto sì. Tocca «Configura il mio PC» per chiedere di nuovo.</string>
     <string name="wake_relay_title">Relè di risveglio del PC</string>
     <string name="wake_relay_row_subtitle">Usa questo telefono a casa per risvegliare il PC quando sei fuori</string>
@@ -75,7 +75,7 @@
     <string name="pc_screen_waking">Risveglio di %1$s…</string>
     <string name="pc_screen_trouble_unreachable">Impossibile raggiungere %1$s. Verifica che il PC sia acceso, che Apollo sia in esecuzione e che PC e telefono siano sullo stesso Wi-Fi.</string>
     <string name="pc_screen_trouble_permission">Apollo sta bloccando questo telefono. Sul PC, apri %1$s, vai in Client e attiva Avvio app, Mouse e Tastiera per questo telefono. Poi tocca «Connetti».</string>
-    <string name="pc_screen_trouble_unpaired">Il PC non conosce più questo telefono. Tocca il tuo PC qui sopra per associarlo di nuovo.</string>
+    <string name="pc_screen_trouble_unpaired">Il PC non conosce più questo telefono. Tocca il tuo PC qui sotto per associarlo di nuovo.</string>
     <string name="pc_screen_connect">Connetti</string>
     <string name="pc_screen_enter_pin">Inserisci il PIN %1$s sul PC, nella pagina web di Sunshine o di Apollo (scheda PIN). Con Apollo, poi dai lì a questo dispositivo i permessi di avvio app, mouse e tastiera.</string>
     <string name="pc_screen_paired_with">Associato a %1$s. Connettiti per trasmettere il suo schermo.</string>
@@ -85,4 +85,6 @@
     <string name="pc_screen_connect_failed">Impossibile connettersi: %1$s</string>
     <string name="pc_screen_stage">Avvio di %1$s</string>
     <string name="pc_screen_ended">La trasmissione è terminata (%1$d).</string>
+    <string name="pc_screen_disconnected">Disconnesso. Tocca Connetti per tornare indietro o tocca un altro computer.</string>
+    <string name="pc_screen_helper_typing">Consentito su %1$s. Inserimento del PIN per te, può richiedere qualche secondo…</string>
 </resources>

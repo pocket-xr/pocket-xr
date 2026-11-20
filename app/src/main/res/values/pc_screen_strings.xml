@@ -38,7 +38,7 @@
     <string name="pc_screen_setup_share_subject">Pocket XR PC helper</string>
     <string name="pc_screen_setup_share_text">Open this on your PC and run the Pocket XR PC helper: %1$s</string>
     <string name="pc_screen_setup_asked">Click Yes on %1$s to set up PC screens.</string>
-    <string name="pc_screen_setup_running">Setup is running on %1$s: answer its questions there. Then tap your PC above.</string>
+    <string name="pc_screen_setup_running">Setup is running on %1$s: answer its questions there. Then tap your PC below.</string>
     <string name="pc_screen_setup_refused">%1$s did not say yes. Tap Set up my PC to ask again.</string>
     <string name="wake_relay_title">PC wake relay</string>
     <string name="wake_relay_row_subtitle">Use this phone at home to wake your PC from away</string>
@@ -76,7 +76,7 @@
     <string name="pc_screen_waking">Waking %1$s…</string>
     <string name="pc_screen_trouble_unreachable">Can\'t reach %1$s. Check the PC is on, Apollo is running, and the PC and phone are on the same Wi-Fi.</string>
     <string name="pc_screen_trouble_permission">Apollo is blocking this phone. On the PC, open %1$s, go to Clients, and turn on Launch apps, Mouse and Keyboard for this phone. Then tap Connect.</string>
-    <string name="pc_screen_trouble_unpaired">The PC no longer knows this phone. Tap your PC above to pair again.</string>
+    <string name="pc_screen_trouble_unpaired">The PC no longer knows this phone. Tap your PC below to pair again.</string>
     <string name="pc_screen_connect">Connect</string>
     <string name="pc_screen_enter_pin">Enter PIN %1$s on the PC, in Sunshine\'s or Apollo\'s web page (PIN tab). Apollo: then give this device the Launch apps, mouse and keyboard permissions there.</string>
     <string name="pc_screen_paired_with">Paired with %1$s. Connect to stream its screen.</string>
@@ -86,4 +86,6 @@
     <string name="pc_screen_connect_failed">Could not connect: %1$s</string>
     <string name="pc_screen_stage">Starting %1$s</string>
     <string name="pc_screen_ended">The stream ended (%1$d).</string>
+    <string name="pc_screen_disconnected">Disconnected. Tap Connect to go back, or tap another computer.</string>
+    <string name="pc_screen_helper_typing">Allowed on %1$s. Typing the PIN for you, this can take a few seconds…</string>
 </resources>

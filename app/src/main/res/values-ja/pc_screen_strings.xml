@@ -37,7 +37,7 @@
     <string name="pc_screen_setup_share_subject">Pocket XR PC ヘルパー</string>
     <string name="pc_screen_setup_share_text">PC でこれを開いて、Pocket XR PC ヘルパーを実行してください: %1$s</string>
     <string name="pc_screen_setup_asked">%1$s で「はい」をクリックして、PC 画面をセットアップしてください。</string>
-    <string name="pc_screen_setup_running">%1$s でセットアップを実行中です。そちらの質問に答えてから、上の PC をタップしてください。</string>
+    <string name="pc_screen_setup_running">%1$s でセットアップを実行中です。そちらの質問に答えてから、下の PC をタップしてください。</string>
     <string name="pc_screen_setup_refused">%1$s で許可されませんでした。もう一度確認するには「PC をセットアップ」をタップしてください。</string>
     <string name="wake_relay_title">PC ウェイクリレー</string>
     <string name="wake_relay_row_subtitle">家に置いたこのスマホで、外出先から PC を起動</string>
@@ -75,7 +75,7 @@
     <string name="pc_screen_waking">%1$s を起動しています…</string>
     <string name="pc_screen_trouble_unreachable">%1$s に接続できません。PC の電源が入っているか、Apollo が実行中か、PC とスマホが同じ Wi-Fi にあるか確認してください。</string>
     <string name="pc_screen_trouble_permission">Apollo がこのスマホをブロックしています。PC で %1$s を開き、「クライアント」でこのスマホのアプリ起動、マウス、キーボードをオンにしてから、「接続」をタップしてください。</string>
-    <string name="pc_screen_trouble_unpaired">PC がこのスマホを認識しなくなりました。上の PC をタップして、もう一度ペア設定してください。</string>
+    <string name="pc_screen_trouble_unpaired">PC がこのスマホを認識しなくなりました。下の PC をタップして、もう一度ペア設定してください。</string>
     <string name="pc_screen_connect">接続</string>
     <string name="pc_screen_enter_pin">PC で Sunshine または Apollo のウェブページ (PIN タブ) に PIN %1$s を入力してください。Apollo の場合は、続けてそこでこのデバイスにアプリ起動、マウス、キーボードの権限を与えてください。</string>
     <string name="pc_screen_paired_with">%1$s とペア設定しました。接続すると画面をストリーミングします。</string>
@@ -85,4 +85,6 @@
     <string name="pc_screen_connect_failed">接続できませんでした: %1$s</string>
     <string name="pc_screen_stage">%1$s を開始しています</string>
     <string name="pc_screen_ended">ストリーミングが終了しました (%1$d)。</string>
+    <string name="pc_screen_disconnected">切断しました。戻るには［接続］をタップするか、別のコンピュータをタップしてください。</string>
+    <string name="pc_screen_helper_typing">%1$s で許可されました。PIN を入力しています。数秒かかることがあります…</string>
 </resources>

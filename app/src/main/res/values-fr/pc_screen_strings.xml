@@ -37,7 +37,7 @@
     <string name="pc_screen_setup_share_subject">Assistant PC Pocket XR</string>
     <string name="pc_screen_setup_share_text">Ouvrez ceci sur votre PC et lancez l\'assistant PC Pocket XR : %1$s</string>
     <string name="pc_screen_setup_asked">Cliquez sur Oui sur %1$s pour configurer les écrans PC.</string>
-    <string name="pc_screen_setup_running">La configuration est en cours sur %1$s : répondez à ses questions là-bas. Puis touchez votre PC ci-dessus.</string>
+    <string name="pc_screen_setup_running">La configuration est en cours sur %1$s : répondez à ses questions là-bas. Puis touchez votre PC ci-dessous.</string>
     <string name="pc_screen_setup_refused">%1$s n\'a pas dit oui. Touchez « Configurer mon PC » pour redemander.</string>
     <string name="wake_relay_title">Relais de réveil du PC</string>
     <string name="wake_relay_row_subtitle">Ce téléphone, resté à la maison, réveille votre PC quand vous êtes loin</string>
@@ -75,7 +75,7 @@
     <string name="pc_screen_waking">Réveil de %1$s…</string>
     <string name="pc_screen_trouble_unreachable">Impossible de joindre %1$s. Vérifiez que le PC est allumé, qu\'Apollo est lancé, et que le PC et le téléphone sont sur le même Wi-Fi.</string>
     <string name="pc_screen_trouble_permission">Apollo bloque ce téléphone. Sur le PC, ouvrez %1$s, allez dans Clients et activez Lancer des apps, Souris et Clavier pour ce téléphone. Puis touchez « Connecter ».</string>
-    <string name="pc_screen_trouble_unpaired">Le PC ne connaît plus ce téléphone. Touchez votre PC ci-dessus pour l\'associer à nouveau.</string>
+    <string name="pc_screen_trouble_unpaired">Le PC ne connaît plus ce téléphone. Touchez votre PC ci-dessous pour l\'associer à nouveau.</string>
     <string name="pc_screen_connect">Connecter</string>
     <string name="pc_screen_enter_pin">Saisissez le PIN %1$s sur le PC, dans la page web de Sunshine ou d\'Apollo (onglet PIN). Avec Apollo, donnez ensuite à cet appareil les autorisations Lancer des apps, souris et clavier.</string>
     <string name="pc_screen_paired_with">Associé à %1$s. Connectez-vous pour diffuser son écran.</string>
@@ -85,4 +85,6 @@
     <string name="pc_screen_connect_failed">Connexion impossible : %1$s</string>
     <string name="pc_screen_stage">Démarrage de %1$s</string>
     <string name="pc_screen_ended">La diffusion s\'est arrêtée (%1$d).</string>
+    <string name="pc_screen_disconnected">Déconnecté. Touchez Se connecter pour revenir, ou touchez un autre ordinateur.</string>
+    <string name="pc_screen_helper_typing">Autorisé sur %1$s. Saisie du code PIN pour vous, cela peut prendre quelques secondes…</string>
 </resources>

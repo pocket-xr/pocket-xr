@@ -136,6 +136,11 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         say(getString(if (store.paired) R.string.pc_screen_paired else R.string.pc_screen_intro))
         finder.start()
         relayFinder.start()
+        // Back on Android 13 and later: the system's back callback, not a key (this app targets SDK 36, so Back never came
+        // to dispatchKeyEvent and Android's own Back closed the window: Mike's glasses, 19 Nov 2026).
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) { back() }
+        }
         // Paired before: straight to the PC's screen, nothing to tap.
         if (store.paired && savedInstanceState == null) connect()
     }
@@ -210,6 +215,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             say(getString(R.string.pc_screen_host_taken, other + 1))
             return
         }
+        // Another computer than this PC screen's: its old pairing goes (kept, it read as paired to the new one, so the PIN
+        // to type was never shown: Mike's phone with his Mac, 19 Nov 2026).
+        if (PcScreenAddress.parse(address) != PcScreenAddress.parse(store.address)) store.unpair()
         addressField.setText(address)
         notePcName(address)
         pair()
@@ -242,9 +250,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     /** The PC helper on the PC at [address], if it answers there. Blocking. */
     private fun helperAt(address: String): Pair<com.hayeco.flipspaces.pcvr.PcVrHelper, com.hayeco.flipspaces.pcvr.PcVrHelper.Pc>? {
         val helper = com.hayeco.flipspaces.pcvr.PcVrHelper(this)
-        val pc = runCatching { helper.find() }.getOrNull() ?: return null
-        val host = PcScreenAddress.parse(address)?.first
-        if (host != null && pc.address.hostAddress != host && runCatching { java.net.InetAddress.getByName(host).hostAddress }.getOrNull() != pc.address.hostAddress) return null
+        val host = PcScreenAddress.parse(address)?.first ?: return null
+        val at = runCatching { java.net.InetAddress.getByName(host) }.getOrNull() ?: return null
+        val pc = runCatching { helper.findAt(at) }.getOrNull() ?: return null
         return helper to pc
     }
 
@@ -261,7 +269,11 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     allowed = helper.pair(pc)
                 }
                 if (!allowed) "not allowed on the PC"
-                else helper.apolloPin(pc, pin, PcScreenAddress.parse(address)?.second ?: PcScreenAddress.DEFAULT_PORT)
+                else {
+                    // Something to read while the helper types the PIN (Mike, 19 Nov 2026: 10 s with no change looked stuck).
+                    say(getString(R.string.pc_screen_helper_typing, pc.name))
+                    helper.apolloPin(pc, pin, PcScreenAddress.parse(address)?.second ?: PcScreenAddress.DEFAULT_PORT)
+                }
             }
         }
         Log.i(TAG, "pairing through the PC helper: ${why ?: "PIN typed for the user"}")
@@ -837,6 +849,14 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             lastKeyLogMs = nowMs
             Log.i(TAG, "key ${android.view.KeyEvent.keyCodeToString(event.keyCode)} action ${event.action} device ${event.deviceId} source 0x${Integer.toHexString(event.source)} flags 0x${Integer.toHexString(event.flags)} streaming $streaming")
         }
+        // Back (the window's back arrow, not a keyboard's) while streaming or connecting: disconnect, and the computers to
+        // choose from, the window staying (Mike, 19 Nov 2026: Back closed the window, with no way to pick another computer).
+        val keyboardBack = (event.source and android.view.InputDevice.SOURCE_KEYBOARD) == android.view.InputDevice.SOURCE_KEYBOARD &&
+            event.device?.keyboardType == android.view.InputDevice.KEYBOARD_TYPE_ALPHABETIC
+        if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && !keyboardBack && android.os.Build.VERSION.SDK_INT < 33) {
+            if (event.action == android.view.KeyEvent.ACTION_UP) back()
+            return true
+        }
         if (!streaming) return super.dispatchKeyEvent(event)
         if ((event.flags and android.view.KeyEvent.FLAG_VIRTUAL_HARD_KEY) != 0) return super.dispatchKeyEvent(event)
         val fromKeyboard = (event.source and android.view.InputDevice.SOURCE_KEYBOARD) == android.view.InputDevice.SOURCE_KEYBOARD &&
@@ -881,6 +901,22 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         connection?.let { c -> Thread({ c.stop() }, "PcScreen-stop").start() }
         connection = null
         decoder = null
+    }
+
+    /** Back: streaming or connecting, [disconnect]; on the page of computers, the window closes. */
+    private fun back() {
+        if (wantStream || connection != null || sessionStarted) disconnect() else finish()
+    }
+
+    /** Back while streaming: the session ends on the PC, and the page shows the computers found, to reconnect or pick another. */
+    private fun disconnect() {
+        Log.i(TAG, "Back: disconnected; the computers to choose from")
+        endSession(force = true)
+        surface.visibility = View.GONE
+        setup.visibility = View.VISIBLE
+        say(getString(R.string.pc_screen_disconnected))
+        finder.stop()
+        finder.start()
     }
 
     private fun showSetup(message: String) {
