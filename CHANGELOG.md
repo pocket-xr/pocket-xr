@@ -39,7 +39,7 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
 - **Immersive fills your view** (issue 118): a window far from the view's shape, such as YouTube before Fit video,
   now takes the view's shape so the app fills it. A 16:9 video keeps its own shape. Thanks to thejoeba again.
 - **XREAL XBX A01 and A01+** are recognised as Air family glasses, with head tracking read from their own USB
-  interface. Thanks to Pierre Zammit for the Steam Deck logs that showed where it was. Not yet tried on these glasses.
+  interface. Thanks to Pierre D. Zammit for the Steam Deck logs that showed where it was. Not yet tried on these glasses.
 - **Cursor follows head** is now off by default.
 - Tried on a Galaxy Z Flip 7 with XREAL Aura glasses, a Windows PC, an Intel MacBook Air and a Steam Deck in SteamOS
   Desktop Mode: three screens at once from Windows, two at once from the Mac and from the Deck at the windows' shapes,
