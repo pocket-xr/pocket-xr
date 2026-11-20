@@ -50,11 +50,44 @@ internal class CopyToken(val sync: Long, val eglImage: EGLImageKHR?, val buffer:
  * GPU graph) the display's queue filled and SurfaceFlinger's main thread waited in dequeueBuffer
  * until its watchdog reset the phone's graphics.
  */
-internal class PanelSource(width: Int, height: Int) {
-    val reader: ImageReader = ImageReader.newInstance(
-        width.coerceAtLeast(1), height.coerceAtLeast(1), PixelFormat.RGBA_8888,
-        PanelImageMailbox.DEFAULT_MAX_IMAGES, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT,
-    )
+internal class PanelSource(width: Int, height: Int, val decoded: Boolean = false) {
+    /**
+     * PC screens: for a decoded source, how long each picture took from going into the PC screen's decoder (its
+     * timestamp, System.nanoTime there, the same clock here) to the Space copying it, logged every 5 s. Render thread.
+     */
+    private val decodedAges = ArrayList<Float>()
+    private var decodedSinceMs = 0L
+
+    fun decodedAge(ms: Float) {
+        decodedAges += ms
+        val now = SystemClock.uptimeMillis()
+        if (decodedSinceMs == 0L) decodedSinceMs = now
+        if (now - decodedSinceMs < 5000) return
+        decodedAges.sort()
+        val p50 = decodedAges[decodedAges.size / 2]
+        val p95 = decodedAges[(decodedAges.size * 95 / 100).coerceAtMost(decodedAges.size - 1)]
+        Log.i("PcScreen", "into the Space: ${decodedAges.size} pictures copied in 5 s; decoder in to Space copy p50 %.1f ms, p95 %.1f ms, max %.1f ms"
+            .format(java.util.Locale.ROOT, p50, p95, decodedAges.last()))
+        decodedAges.clear()
+        decodedSinceMs = now
+    }
+
+    // PC screens: a decoded source takes a video decoder's own buffers (ImageFormat.PRIVATE, often YUV), which the copy
+    // reads through its external texture like any other; an app's display draws RGBA as before.
+    val reader: ImageReader = if (decoded) {
+        ImageReader.newInstance(
+            width.coerceAtLeast(1), height.coerceAtLeast(1), android.graphics.ImageFormat.PRIVATE,
+            // The decoder draws its output, reference pictures included, from this reader's buffers: with too few it
+            // waits for the Space to give one back. Decode read 13.5 ms with 2 more than an app display's (Mike's
+            // phone, 18 Nov 2026) against 3 to 6 ms into a window. 8 more gives it room.
+            PanelImageMailbox.DEFAULT_MAX_IMAGES + 8, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE,
+        )
+    } else {
+        ImageReader.newInstance(
+            width.coerceAtLeast(1), height.coerceAtLeast(1), PixelFormat.RGBA_8888,
+            PanelImageMailbox.DEFAULT_MAX_IMAGES, HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE or HardwareBuffer.USAGE_GPU_COLOR_OUTPUT,
+        )
+    }
     val surface: Surface = reader.surface
     // 0.5.26: two pictures may wait, so each is shown on the refresh its own timestamp says ([latch]).
     val mailbox = PanelImageMailbox<Image>(close = { runCatching { it.close() } }, maxWaiting = 2)
@@ -245,10 +278,14 @@ internal object PanelImport {
         s.blackCheckChain = false
         // 0.5.26: the picture due on the refresh at [presentNs] by its own timestamp ([com.hayeco.flipspaces.core.spatial.PanelLatch]).
         val latchNs = System.nanoTime()
-        val image = (if (presentNs > 0L) s.mailbox.lease { waiting ->
+        // PC screens: a decoded stream takes the newest picture at once, as Moonlight shows each as soon as it is decoded.
+        // The latch holds a picture back by its pictures' slowest recent arrival to keep video's rhythm even; for the
+        // stream that was the decode time and more, 44 ms p50 from decoder in to copy on Mike's phone (18 Nov 2026).
+        val image = (if (presentNs > 0L && !s.decoded) s.mailbox.lease { waiting ->
             val stamps = waiting.map { runCatching { it.timestamp }.getOrDefault(0L) }
             synchronized(s.latch) { s.latch.pick(stamps, presentNs, latchNs) }
         } else s.mailbox.lease()) ?: return false
+        if (s.decoded) runCatching { image.timestamp }.getOrNull()?.takeIf { it > 0 }?.let { s.decodedAge((latchNs - it) / 1e6f) }
         var buffer: HardwareBuffer? = null
         var eglImage: EGLImageKHR? = null
         var oes = 0

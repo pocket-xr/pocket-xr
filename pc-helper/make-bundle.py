@@ -33,7 +33,8 @@ SKIP_NAMES = ("crash_log.txt", "session_log.txt")
 def build_exe():
     csc = r"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
     subprocess.check_call([csc, "-nologo", "-target:winexe", "-win32icon:pocketxr.ico", "-r:System.Web.Extensions.dll",
-                           "-r:System.Windows.Forms.dll", "-r:System.Drawing.dll", "-out:PocketXrPcHelper.exe",
+                           "-r:System.Windows.Forms.dll", "-r:System.Drawing.dll", "-r:System.Security.dll",
+                           r"-resource:pc-screens\PocketXR-PC-Screens.ps1,PcScreens.ps1", "-out:PocketXrPcHelper.exe",
                            "PocketXrPcHelper.cs"], cwd=HERE)
 
 

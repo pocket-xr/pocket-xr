@@ -1,0 +1,126 @@
+---
+# Pocket XR PC Screens for Linux: Sunshine with two patches (0001 virtual outputs, 0002 sound per port), plus the Pocket XR
+# setup and PC helper. Built from Flathub's Sunshine manifest (flathub/dev.lizardbyte.app.Sunshine at 675426a,
+# Sunshine v2026.914.233613); build.sh puts this file and the patch next to that manifest's modules and builds.
+# Changes from Flathub's manifest: own app id and launcher, no CUDA (no NVIDIA encoding), no tests, the patches.
+app-id: com.hayeco.pocketxr.PCScreens
+runtime: org.kde.Platform
+runtime-version: "6.11"
+sdk: org.kde.Sdk
+add-build-extensions:
+  org.freedesktop.Sdk.Extension.node20:
+    directory: lib/sdk/node20
+    version: "25.08"
+    no-autodownload: true
+    autodelete: false
+command: pocketxr-setup
+separate-locales: false
+finish-args:
+  - --device=all  # virtual mouse, keyboard and gamepads; the GPU for encoding
+  - --env=PULSE_PROP_media.category=Manager  # Sunshine manages audio sinks
+  - --filesystem=home  # Sunshine's config, and the setup copies the helper to ~/.local/share/pocketxr
+  - --filesystem=xdg-run/pipewire-0  # screen capture
+  - --share=ipc
+  - --share=network
+  - --socket=pulseaudio
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --system-talk-name=org.freedesktop.Avahi  # mDNS, where the system allows it
+  - --talk-name=org.freedesktop.Flatpak  # the setup runs its steps on the computer (flatpak-spawn --host)
+  - --talk-name=org.kde.StatusNotifierWatcher
+
+cleanup:
+  - /include
+  - /lib/cmake
+  - /lib/pkgconfig
+  - /lib/*.la
+  - /lib/*.a
+  - /share/man
+
+modules:
+  - "modules/nlohmann_json.json"
+  - "modules/avahi.json"
+  - "modules/boost.json"
+  - "modules/libevdev.json"
+  - "modules/miniupnpc.json"
+  - "modules/numactl.json"
+  - "modules/ffmpeg.json"
+  - "glad-dependencies.json"
+
+  - name: sunshine
+    builddir: true
+    build-options:
+      append-path: /usr/lib/sdk/node20/bin
+      env:
+        BUILD_VERSION: "2026.914.233613"
+        BRANCH: "master"
+        COMMIT: "63d35f702ee9e362e43263742981836ec0710384"
+        XDG_CACHE_HOME: /run/build/sunshine/flatpak-node/cache
+        npm_config_cache: /run/build/sunshine/flatpak-node/npm-cache
+        npm_config_nodedir: /usr/lib/sdk/node20
+        npm_config_offline: 'true'
+        NPM_CONFIG_LOGLEVEL: info
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBOOST_USE_STATIC=OFF
+      - -DBUILD_DOCS=OFF
+      - -DBUILD_TESTS=OFF
+      - -DBUILD_WERROR=OFF
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DFFMPEG_PREPARED_BINARIES=/app/ffmpeg
+      - -DGLAD_SKIP_PIP_INSTALL=ON
+      - -DSUNSHINE_ASSETS_DIR=share/sunshine
+      - -DSUNSHINE_BUILD_FLATPAK=ON
+      - -DSUNSHINE_ENABLE_CUDA=OFF
+      - -DSUNSHINE_ENABLE_DRM=ON
+      - -DSUNSHINE_ENABLE_KWIN=ON
+      - -DSUNSHINE_ENABLE_PORTAL=ON
+      - -DSUNSHINE_ENABLE_WAYLAND=ON
+      - -DSUNSHINE_ENABLE_X11=ON
+      - -DSUNSHINE_EXECUTABLE_PATH=/app/bin/sunshine
+      - -DSUNSHINE_PUBLISHER_NAME='LizardByte, patched for Pocket XR'
+      - -DSUNSHINE_PUBLISHER_WEBSITE='https://app.lizardbyte.dev'
+      - -DSUNSHINE_PUBLISHER_ISSUE_URL='https://app.lizardbyte.dev/support'
+    no-make-install: false
+    post-install:
+      - install -D $FLATPAK_BUILDER_BUILDDIR/packaging/linux/flatpak/apps.json /app/share/sunshine/apps.json
+      # Sunshine's own launchers go; the app's one is the Pocket XR setup
+      - rm -f /app/share/applications/*.desktop /app/share/metainfo/*.xml
+    run-tests: false
+    sources:
+      - generated-sources.json
+      - type: git
+        url: "https://github.com/LizardByte/Sunshine.git"
+        commit: "63d35f702ee9e362e43263742981836ec0710384"
+      - type: file
+        path: package-lock.json
+      - type: patch
+        path: 0001-kwin-virtual-output.patch
+      - type: patch
+        path: 0002-audio-sinks-per-port.patch
+
+  - name: pocketxr
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 pocketxr-setup /app/bin/pocketxr-setup
+      - install -Dm755 pocketxr-pc-screens.sh /app/share/pocketxr/pocketxr-pc-screens.sh
+      - install -Dm644 pocketxr_pc_helper.py /app/share/pocketxr/pocketxr_pc_helper.py
+      - install -Dm644 pocketxr.png /app/share/icons/hicolor/256x256/apps/com.hayeco.pocketxr.PCScreens.png
+      # KWin lets a sandboxed app use its screencast protocol (a virtual output per PC screen, no dialog) when the
+      # app's own desktop file asks for it
+      - install -Dm644 com.hayeco.pocketxr.PCScreens.desktop /app/share/applications/com.hayeco.pocketxr.PCScreens.desktop
+      # Discover's Launch button needs the launchable in AppStream metadata
+      - install -Dm644 com.hayeco.pocketxr.PCScreens.metainfo.xml /app/share/metainfo/com.hayeco.pocketxr.PCScreens.metainfo.xml
+    sources:
+      - type: file
+        path: pocketxr-setup
+      - type: file
+        path: com.hayeco.pocketxr.PCScreens.desktop
+      - type: file
+        path: com.hayeco.pocketxr.PCScreens.metainfo.xml
+      - type: file
+        path: pocketxr-pc-screens.sh
+      - type: file
+        path: pocketxr_pc_helper.py
+      - type: file
+        path: pocketxr.png

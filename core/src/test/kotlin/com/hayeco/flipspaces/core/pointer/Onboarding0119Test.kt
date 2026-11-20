@@ -99,7 +99,7 @@ class Onboarding0119Test {
         assertEquals(GlassesModel.ONE, GlassesSetup.plugged(GlassesModel.USB_ONE, ""))
         // A One Pro's product id is not known: its USB name tells.
         assertEquals(GlassesModel.ONE_PRO, GlassesSetup.plugged(0x0440, "XREAL One Pro"))
-        assertEquals(GlassesModel.OTHER_XREAL, GlassesSetup.plugged(0x0440, null))
+        assertEquals("1.6.0: 0x0440 is the XBX A01, Air family", GlassesModel.AIR, GlassesSetup.plugged(0x0440, null))
     }
 
     @Test fun aNewModelShowsItsPageOnceWhenPluggedIn() {

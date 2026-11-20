@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PC screens: Sunshine and Apollo answer pairing and their server info over plain HTTP on the home network
+     (port 47989), as they do for Moonlight, whose config this follows. Everything else Pocket XR fetches is HTTPS. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

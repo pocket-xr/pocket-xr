@@ -313,6 +313,12 @@ enum class LauncherButton(private val key: String, private val english: String) 
      */
     PC_VR("spatial_launcher_pc_vr", "PC VR"),
 
+    /**
+     * PC screens, beside PC VR (19 Nov 2026, Mike: "itd be nicer if it was just one app and id rather it be next to the PC
+     * VR quick button"): each press opens the next PC screen not yet open, up to three.
+     */
+    PC_SCREEN("spatial_launcher_pc_screen", "PC screen"),
+
     /** Recentre: brings the Space back in front. */
     RECENTRE("spatial_launcher_recentre", "Recentre"),
 

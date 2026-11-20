@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.0 (GitHub #118): the window buttons' names, shown when one is pointed at for a moment. -->
+<resources>
+    <string name="space_tip_back">返回</string>
+    <string name="space_tip_move">移动：按住拖动</string>
+    <string name="space_tip_refresh">重新加载应用</string>
+    <string name="space_tip_switch_app">切换此窗口中的应用</string>
+    <string name="space_tip_reset">移回正前方</string>
+    <string name="space_tip_close">关闭窗口</string>
+    <string name="space_tip_wide_view">宽视图：横屏布局</string>
+    <string name="space_tip_fit_video">适配视频：16:9</string>
+    <string name="space_tip_immersive">沉浸：铺满视野</string>
+</resources>

@@ -1,0 +1,169 @@
+From aa088e3e0d5480e3d548f4ed8c54f81959d17a7a Mon Sep 17 00:00:00 2001
+From: Pocket XR <noreply@hayeco.invalid>
+Date: Fri, 20 Nov 2026 01:01:10 -0500
+Subject: [PATCH] KWin capture: stream a new virtual output at the client's
+ resolution
+
+New option kwin_virtual_output (default off). With capture = kwin, each stream asks KWin
+(zkde_screencast_unstable_v1 version 2+, stream_virtual_output) for a new output of the
+client's width and height, named sunshine-<port> so several Sunshines can run side by side.
+The output lasts as long as the stream.
+---
+ src/config.cpp                  |  2 +
+ src/config.h                    |  1 +
+ src/platform/linux/kwingrab.cpp | 65 ++++++++++++++++++++++++++++++++-
+ 3 files changed, 67 insertions(+), 1 deletion(-)
+
+diff --git a/src/config.cpp b/src/config.cpp
+index e0e8647..ff6d618 100644
+--- a/src/config.cpp
++++ b/src/config.cpp
+@@ -780,6 +780,7 @@ namespace config {
+     {},  // encoder
+     {},  // adapter_name
+     {},  // output_name
++    false,  // kwin_virtual_output
+ 
+     {
+       video_t::dd_t::config_option_e::disabled,  // configuration_option
+@@ -1698,6 +1699,7 @@ namespace config {
+     string_f(vars, "encoder", video.encoder);
+     string_f(vars, "adapter_name", video.adapter_name);
+     string_f(vars, "output_name", video.output_name);
++    bool_f(vars, "kwin_virtual_output", video.kwin_virtual_output);
+ 
+     generic_f(vars, "dd_configuration_option", video.dd.configuration_option, dd::config_option_from_view);
+     generic_f(vars, "dd_resolution_option", video.dd.resolution_option, dd::resolution_option_from_view);
+diff --git a/src/config.h b/src/config.h
+index 7861538..9cd675b 100644
+--- a/src/config.h
++++ b/src/config.h
+@@ -137,6 +137,7 @@ namespace config {
+     std::string encoder;  ///< Encoder backend name selected by configuration.
+     std::string adapter_name;  ///< Display adapter name selected in configuration.
+     std::string output_name;  ///< Display output name selected in configuration.
++    bool kwin_virtual_output;  ///< KWin capture: stream a new virtual output at the client's resolution.
+ 
+     /**
+      * @brief Display-device integration settings.
+diff --git a/src/platform/linux/kwingrab.cpp b/src/platform/linux/kwingrab.cpp
+index e82e580..e651d01 100644
+--- a/src/platform/linux/kwingrab.cpp
++++ b/src/platform/linux/kwingrab.cpp
+@@ -35,6 +35,7 @@
+ #include "cuda.h"
+ #include "graphics.h"
+ #include "pipewire.cpp"
++#include "src/config.h"
+ #include "src/platform/common.h"
+ #include "src/video.h"
+ 
+@@ -455,6 +456,55 @@ namespace kwin {
+       return 0;
+     }
+ 
++    /**
++     * @brief Request a screencast of a new virtual output (zkde_screencast_unstable_v1 version 2+).
++     * @param name Name of the virtual output (KWin shows it as "Virtual-<name>").
++     * @param description User visible description (version 4+).
++     * @param width Logical width of the output.
++     * @param height Logical height of the output.
++     * @return 0 on success, -1 on failure. On success, node_id and output width/height/x/y are populated.
++     */
++    int start_virtual(const std::string &name, const std::string &description, int width, int height) {
++      if (!kde_screencast_v1_ || kde_screencast_version_ < 2) {
++        BOOST_LOG(error) << "[kwingrab] virtual output needs zkde_screencast_unstable_v1 version 2 (bound: "sv << kde_screencast_version_ << ")"sv;
++        return -1;
++      }
++      if (kde_screencast_version_ >= 4) {
++        kde_screencast_stream_v1_ = zkde_screencast_unstable_v1_stream_virtual_output_with_description(kde_screencast_v1_, name.c_str(), description.c_str(), width, height, wl_fixed_from_int(1), ZKDE_SCREENCAST_UNSTABLE_V1_POINTER_EMBEDDED);
++      } else {
++        kde_screencast_stream_v1_ = zkde_screencast_unstable_v1_stream_virtual_output(kde_screencast_v1_, name.c_str(), width, height, wl_fixed_from_int(1), ZKDE_SCREENCAST_UNSTABLE_V1_POINTER_EMBEDDED);
++      }
++      zkde_screencast_stream_unstable_v1_add_listener(kde_screencast_stream_v1_, &stream_listener, this);
++      if (wait_for_stream() < 0) {
++        return -1;
++      }
++      if (stream_failed) {
++        BOOST_LOG(error) << "[kwingrab] stream_virtual_output failed: "sv << stream_error_msg;
++        return -1;
++      }
++      if (out_node_id == PW_ID_ANY && (out_objectserial & SPA_ID_INVALID) == SPA_ID_INVALID) {
++        BOOST_LOG(error) << "[kwingrab] timeout waiting for created event"sv;
++        return -1;
++      }
++      // The new output is announced as a wl_output global: two roundtrips bind it and read its name and position
++      wl_display_roundtrip(wl_display);
++      wl_display_roundtrip(wl_display);
++      for (auto const &params : outputs | std::views::values) {
++        if (params->name == name || params->name.ends_with("-" + name)) {
++          out_params = params;
++        }
++      }
++      if (!out_params) {
++        BOOST_LOG(warning) << "[kwingrab] virtual output "sv << name << " not found among outputs, assuming position 0x0"sv;
++        out_params = std::make_shared<output_parameter_t>(output_parameter_t {name, width, height, 0, 0});
++      }
++      BOOST_LOG(info) << "[kwingrab] Screencasting virtual output"sv
++                      << " name "sv << out_params->name
++                      << " position "sv << out_params->pos_x << "x"sv << out_params->pos_y
++                      << " resolution "sv << out_params->width << "x"sv << out_params->height;
++      return 0;
++    }
++
+     uint32_t out_node_id = PW_ID_ANY;  ///< Out node ID.
+     uint64_t out_objectserial = SPA_ID_INVALID;  ///< Out objectserial.
+     std::shared_ptr<output_parameter_t> out_params = nullptr;  ///< Out params.
+@@ -466,6 +516,7 @@ namespace kwin {
+     struct kde_output_order_v1 *kde_output_order = nullptr;
+     struct zkde_screencast_unstable_v1 *kde_screencast_v1_ = nullptr;
+     struct zkde_screencast_stream_unstable_v1 *kde_screencast_stream_v1_ = nullptr;
++    uint32_t kde_screencast_version_ = 0;
+     std::map<struct wl_output *, std::shared_ptr<output_parameter_t>> outputs;
+     std::vector<std::string> output_order;
+     bool stream_failed = false;
+@@ -526,6 +577,7 @@ namespace kwin {
+         self->kde_screencast_v1_ = static_cast<struct zkde_screencast_unstable_v1 *>(
+           wl_registry_bind(reg, name, &zkde_screencast_unstable_v1_interface, bind_ver)
+         );
++        self->kde_screencast_version_ = bind_ver;
+         BOOST_LOG(debug) << "[kwingrab] bound zkde_screencast_unstable_v1 version "sv << bind_ver;
+       } else if (!std::strcmp(interface, wl_output_interface.name)) {
+         // Bind version 4 - we need wl_output name for matching
+@@ -666,7 +718,14 @@ namespace kwin {
+       if (screencast->init(true) < 0) {
+         return -1;
+       }
+-      if (screencast->start(display_name) < 0) {
++      if (config::video.kwin_virtual_output && virtual_width > 0 && virtual_height > 0) {
++        // A new output of the client's size for this stream, named after this Sunshine's port so several can run
++        const auto name = std::format("sunshine-{}", config::sunshine.port);
++        const auto description = config::nvhttp.sunshine_name.empty() ? "Sunshine"s : config::nvhttp.sunshine_name;
++        if (screencast->start_virtual(name, description, virtual_width, virtual_height) < 0) {
++          return -1;
++        }
++      } else if (screencast->start(display_name) < 0) {
+         return -1;
+       }
+       if (screencast->out_params) {
+@@ -687,6 +746,8 @@ namespace kwin {
+     }
+ 
+     std::unique_ptr<screencast_t> screencast;  ///< Screencast.
++    int virtual_width = 0;  ///< Client width, for kwin_virtual_output.
++    int virtual_height = 0;  ///< Client height, for kwin_virtual_output.
+   };
+ }  // namespace kwin
+ 
+@@ -707,6 +768,8 @@ namespace platf {
+     }
+ 
+     auto display = std::make_shared<kwin::kwin_t>();
++    display->virtual_width = config.width;
++    display->virtual_height = config.height;
+     if (display->init(hwdevice_type, display_name, config)) {
+       return nullptr;
+     }
+-- 
+2.43.0
+

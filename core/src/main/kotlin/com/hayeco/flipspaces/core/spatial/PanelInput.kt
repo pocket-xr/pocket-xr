@@ -61,11 +61,14 @@ class PanelInputMapper(
     private var sentX = 0f
     private var sentY = 0f
 
-    /** The events for [action] on a panel of [width] by [height] pixels; empty when it is not panel input. */
-    fun map(action: SpaceAction, width: Int, height: Int): List<PanelMotion> = when (action) {
+    /**
+     * The events for [action] on a panel of [width] by [height] pixels; empty when it is not panel input. [fullArea]: the
+     * window fills its whole display with no status strip (a PC screen), so hover and wheel reach its top rows too.
+     */
+    fun map(action: SpaceAction, width: Int, height: Int, fullArea: Boolean = false): List<PanelMotion> = when (action) {
         is SpaceAction.Touch -> listOf(touch(action, width, height))
-        is SpaceAction.Hover -> listOf(hover(action, width, height))
-        is SpaceAction.Wheel -> wheel(action, width, height)
+        is SpaceAction.Hover -> listOf(hover(action, width, height, fullArea))
+        is SpaceAction.Wheel -> wheel(action, width, height, fullArea)
         is SpaceAction.Zoom -> zoom(action, width, height)
         is SpaceAction.LongPress -> {
             val (x, y) = pixel(action.u, action.v, width, height)
@@ -88,8 +91,10 @@ class PanelInputMapper(
         return PanelMotion(a, listOf(x), listOf(y), PanelMotion.SOURCE_TOUCHSCREEN, startsGesture = t.phase == TouchPhase.DOWN)
     }
 
-    private fun hover(h: SpaceAction.Hover, width: Int, height: Int): PanelMotion {
-        val (x, y) = contentPixel(h.u, h.v, width, height)
+    private fun hover(h: SpaceAction.Hover, width: Int, height: Int, fullArea: Boolean): PanelMotion {
+        // A PC screen's whole window: the content area kept the pointer 48 px under its top (Mike, 20 Nov 2026: the PC's
+        // cursor never reached the top row; the phone log showed 48 as the highest it got).
+        val (x, y) = if (fullArea) pixel(h.u, h.v, width, height) else contentPixel(h.u, h.v, width, height)
         val a = when (h.phase) {
             HoverPhase.ENTER -> PanelMotion.ACTION_HOVER_ENTER
             HoverPhase.MOVE -> PanelMotion.ACTION_HOVER_MOVE
@@ -103,7 +108,7 @@ class PanelInputMapper(
      * which is a wheel turned up (positive vertical); fingers moving left show what is to the
      * right (positive horizontal). Whole notches only, the remainder carries to the next update.
      */
-    private fun wheel(w: SpaceAction.Wheel, width: Int, height: Int): List<PanelMotion> {
+    private fun wheel(w: SpaceAction.Wheel, width: Int, height: Int, fullArea: Boolean = false): List<PanelMotion> {
         if (w.phase == Phase.BEGIN) {
             wheelX = 0f
             wheelY = 0f
@@ -120,7 +125,7 @@ class PanelInputMapper(
         if (h == 0f && v == 0f) return emptyList()
         sentX += h
         sentY += v
-        val (x, y) = contentPixel(w.u, w.v, width, height)
+        val (x, y) = if (fullArea) pixel(w.u, w.v, width, height) else contentPixel(w.u, w.v, width, height)
         return listOf(PanelMotion(PanelMotion.ACTION_SCROLL, listOf(x), listOf(y), PanelMotion.SOURCE_MOUSE, vScroll = v, hScroll = h))
     }
 

@@ -6,7 +6,10 @@
      access too. Android drops that access at each unplug; with the Beast here, the plug-in prompt's OK grants it again
      (and "Always" grants it with no prompt), so tracking comes back by itself after a replug. -->
 <!-- 1.5.3: the Beast on product 0x1201 too (a vivo V2562's Glasses report: "VITURE Beast XR Glasses", USB 35CA:1201). -->
+<!-- 1.6.0: the XREAL XBX A01 0x0440 and A01+ 0x0442, Air family, IMU on HID interface 1. -->
 <resources>
+    <usb-device vendor-id="13080" product-id="1088" />
+    <usb-device vendor-id="13080" product-id="1090" />
     <usb-device vendor-id="13770" product-id="4625" />
     <usb-device vendor-id="13770" product-id="4609" />
     <usb-device vendor-id="13080" product-id="1082" />

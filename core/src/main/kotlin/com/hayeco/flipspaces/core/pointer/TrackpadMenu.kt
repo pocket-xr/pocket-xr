@@ -56,6 +56,8 @@ object TrackpadMenu {
         SHAPE(Section.THIS_WINDOW),
         SIDE_BY_SIDE(Section.THIS_WINDOW),
         SIDE_BY_SIDE_FLAT(Section.THIS_WINDOW),
+        // 1.6.0 (issue 119): the app's scrolls as a finger's swipe ([com.hayeco.flipspaces.core.spatial.SwipeScrollStore]).
+        SWIPE_SCROLL(Section.THIS_WINDOW),
 
         SPACE_TRACKING(Section.SPACE),
         LOCK_SCREENS(Section.SPACE),
@@ -89,6 +91,8 @@ object TrackpadMenu {
         // 1.5.0: the tour of Pocket XR ([com.hayeco.flipspaces.core.tutorial.Tour]), over the gesture cards' row.
         TOUR(Section.HELP),
         HOW_TO(Section.HELP),
+        // PC screens: an old phone at home as the PC's wake relay ([com.hayeco.flipspaces.pcscreen.WakeRelayService]).
+        WAKE_RELAY(Section.HELP),
         // 1.3.3: settings to a file and back, to move between the GitHub and Google Play builds.
         BACKUP_SETTINGS(Section.HELP),
         RESTORE_SETTINGS(Section.HELP),
@@ -115,6 +119,7 @@ object TrackpadMenu {
         val shapeShown: Boolean = false,
         val sideBySideShown: Boolean = false,
         val sideBySideOn: Boolean = false,
+        val swipeScrollShown: Boolean = false,
         val windowCount: Int = 0,
         val glassesKnown: Boolean = false,
         val airOffered: Boolean = false,
@@ -138,6 +143,7 @@ object TrackpadMenu {
         Item.SHAPE -> s.shapeShown
         Item.SIDE_BY_SIDE -> s.sideBySideShown
         Item.SIDE_BY_SIDE_FLAT -> s.sideBySideShown && s.sideBySideOn
+        Item.SWIPE_SCROLL -> s.swipeScrollShown
         // 1.3.4 (a tester: "a lot of redundancy in the menus / UIs (ie multiple ways to do the same thing)"): Tracking,
         // Snap windows and Cursor follows head are the Control Center's on the glasses, so the Menu leaves them out.
         // Arrange and presets stay in both (Mike). [CONTROL_CENTER_ONLY] keeps the list; their rows stay in the app.
@@ -157,6 +163,7 @@ object TrackpadMenu {
         Item.AIR_DISPLAY_MODE -> s.airOffered && s.airOn
         // The tour is for the main screen; the cover is too small for it and keeps the gesture cards.
         Item.TOUR -> !s.cover
+        Item.WAKE_RELAY -> !s.cover
         Item.HOW_TO, Item.RESET, Item.DEVELOPER, Item.BACKUP_SETTINGS, Item.RESTORE_SETTINGS -> true
         Item.DEVELOPER_CARD -> s.developerShown
         Item.EXIT -> true

@@ -43,7 +43,33 @@ class PcVrHelper(context: Context) {
                     val parts = String(packet.data, 0, packet.length).trim().split(" ", limit = 4)
                     if (parts.size >= 4 && parts[0] == "POCKETXR-HERE") {
                         prefs.edit().putString("address", packet.address.hostAddress).apply()
-                        return Pc(packet.address, parts[2].toIntOrNull() ?: PORT, parts[3])
+                        return Pc(packet.address, parts[2].toIntOrNull() ?: PORT, hereName(parts[3]))
+                    }
+                } catch (_: SocketTimeoutException) {
+                }
+            }
+        }
+        return null
+    }
+
+    /**
+     * The helper on the computer at [host] only, asked there directly: a PC screen pairs with one computer, and the first
+     * helper to answer a broadcast may be another's (Mike's phone, 19 Nov 2026: pairing with his Mac found his Windows
+     * PC's helper, so nobody typed the PIN). Null if that computer's helper does not answer.
+     */
+    fun findAt(host: InetAddress): Pc? {
+        DatagramSocket().use { socket ->
+            socket.soTimeout = FIND_WAIT_MS
+            val ask = "POCKETXR-FIND 1".toByteArray()
+            repeat(FIND_TRIES) {
+                runCatching { socket.send(DatagramPacket(ask, ask.size, host, PORT)) }
+                val buf = ByteArray(256)
+                val packet = DatagramPacket(buf, buf.size)
+                try {
+                    socket.receive(packet)
+                    val parts = String(packet.data, 0, packet.length).trim().split(" ", limit = 4)
+                    if (packet.address == host && parts.size >= 4 && parts[0] == "POCKETXR-HERE") {
+                        return Pc(packet.address, parts[2].toIntOrNull() ?: PORT, hereName(parts[3]))
                     }
                 } catch (_: SocketTimeoutException) {
                 }
@@ -78,6 +104,29 @@ class PcVrHelper(context: Context) {
      * "off", "starting" or "ready"; "no_steam" or "no_alvr" when the PC is missing one; "unpaired" if the PC forgot this
      * phone; null if the helper doesn't answer. Starting also has the helper trust this phone in ALVR and set it up.
      */
+    /**
+     * PC screens: what the helper says of its computer: its system ("linux", "mac", or "" for Windows and older helpers)
+     * and whether it makes a virtual screen per PC screen (the Mac helper's own, beside Sunshine); null if it does not
+     * answer.
+     */
+    fun hostInfo(pc: Pc): Pair<String, Boolean>? {
+        val token = tokenFor(pc) ?: return null
+        val answer = ask(pc, JSONObject().put("op", "status").put("token", token), CONNECT_MS * 2) ?: return null
+        return answer.optString("os", "") to answer.optBoolean("virtual", false)
+    }
+
+    /**
+     * PC screens on a Mac: the helper brings the virtual screen of the Sunshine on [port] out of mirroring at this size,
+     * just before the stream launches (Sunshine cannot capture a mirrored screen, and checks its screen before its own
+     * prep command runs). True once the screen is ready (about 1 to 1.5 s).
+     */
+    fun screenPrepare(pc: Pc, port: Int, width: Int, height: Int, fps: Int): Boolean {
+        val token = tokenFor(pc) ?: return false
+        val answer = ask(pc, JSONObject().put("op", "screen-prepare").put("token", token).put("port", port)
+            .put("width", width).put("height", height).put("fps", fps), PREPARE_WAIT_MS) ?: return false
+        return answer.optBoolean("ok")
+    }
+
     fun status(pc: Pc, start: Boolean): String? {
         val token = tokenFor(pc) ?: return "unpaired"
         val request = JSONObject().put("op", if (start) "start" else "status").put("token", token).put("alvr", alvrName)
@@ -95,6 +144,27 @@ class PcVrHelper(context: Context) {
     fun freshFrame(pc: Pc) {
         val token = tokenFor(pc) ?: return
         ask(pc, JSONObject().put("op", "idr").put("token", token), CONNECT_MS)
+    }
+
+    /** This phone has been allowed on [pc] before. */
+    fun knows(pc: Pc): Boolean = tokenFor(pc) != null
+
+    /**
+     * PC screens: the helper types [pin] into the Apollo on HTTP port [port] for the user, and gives this phone the
+     * permissions a PC screen needs. Null when it worked, else why not.
+     */
+    fun apolloPin(pc: Pc, pin: String, port: Int): String? {
+        val token = tokenFor(pc) ?: return "not paired"
+        val answer = ask(pc, JSONObject().put("op", "apollo-pin").put("token", token).put("pin", pin).put("name", phoneName()).put("port", port), APOLLO_WAIT_MS)
+            ?: return "no answer"
+        if (answer.optString("why") == "not paired") prefs.edit().remove("token:${pc.name}").apply()
+        return if (answer.optBoolean("ok")) null else answer.optString("why", "refused")
+    }
+
+    /** PC screens: the helper asks the PC's user, then runs the PC screens setup there. True when it started. */
+    fun screensSetup(pc: Pc): Boolean {
+        val token = tokenFor(pc) ?: return false
+        return ask(pc, JSONObject().put("op", "screens-setup").put("token", token).put("phone", phoneName()), SETUP_WAIT_MS)?.optBoolean("ok") == true
     }
 
     /** The PC found by the last [startSteamVr], for later requests. */
@@ -158,6 +228,16 @@ class PcVrHelper(context: Context) {
             ?.takeIf { it.isNotBlank() } ?: Build.MODEL
 
     companion object {
+        /** The Linux helper ends its answer with its Sunshine ports ("steamdeck 47989,48989,49989"), only when they look like ports. */
+        private val HERE_PORTS = Regex("""\s+(\d{4,5}(?:,\d{4,5})*)$""")
+
+        /** The computer's name from the rest of a "POCKETXR-HERE 1 <port> <rest>" answer: a name may have spaces. */
+        fun hereName(rest: String): String = rest.replace(HERE_PORTS, "").trim()
+
+        /** The Sunshine ports at the end of that rest, or none. */
+        fun herePorts(rest: String): List<Int> =
+            HERE_PORTS.find(rest)?.groupValues?.get(1)?.split(",")?.mapNotNull { it.toIntOrNull() }.orEmpty()
+
         private const val TAG = "PocketXrAlvr"
         const val PORT = 47610
         private const val FIND_WAIT_MS = 700
@@ -169,5 +249,14 @@ class PcVrHelper(context: Context) {
         private const val START_WAIT_MS = 8_000
         private const val POLL_MS = 1_000L
         private const val READY_WAIT_MS = 120_000L
+        /** Apollo takes the PIN and the permissions in a few seconds; the helper tries for up to 20. */
+        // Up to 40 s on a Mac or Linux PC: its helper waits for the pairing to show in Sunshine before typing the PIN.
+        private const val APOLLO_WAIT_MS = 50_000
+        private const val PREPARE_WAIT_MS = 10_000
+        /** The PC's user has two minutes to say yes to the setup. */
+        private const val SETUP_WAIT_MS = 125_000
+
+        /** Where the PC helper is downloaded (its releases, tagged pc-helper-v*). */
+        const val DOWNLOAD_URL = "https://github.com/pocket-xr/pocket-xr/releases?q=pc-helper"
     }
 }

@@ -42,6 +42,18 @@ class Immersive0537Test {
     }
 
     @Test
+    fun aTallWindowTakesTheViewsShapeAndFillsIt() {
+        // 1.6.0 (GitHub #118): a phone-shaped YouTube window in Immersive filled only a strip of the view.
+        val tall = video.copy(id = 9, widthDeg = 12f, heightDeg = 24f)
+        val c = ImmersiveMode.cinema(tall, 0f, 0f, 52.2f, 30.8f)
+        assertEquals("across", ImmersiveMode.FIT * 52.2f, c.widthDeg, 0.6f)
+        assertEquals("up and down", ImmersiveMode.FIT * 30.8f, c.heightDeg, 0.6f)
+        // A 16:9 video is near the view's shape and keeps its own.
+        val v = ImmersiveMode.cinema(video, 0f, 0f, 52.2f, 30.8f)
+        assertEquals(video.widthM / video.heightM, v.widthM / v.heightM, 0.01f)
+    }
+
+    @Test
     fun exitingPutsEveryWindowBackExactly() {
         val m = ImmersiveMode()
         m.enter(layout, 1, 10f, 0f, 0L)

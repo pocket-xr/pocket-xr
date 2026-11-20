@@ -83,6 +83,23 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
         private set
     val surface: Surface get() = src.surface
 
+    /**
+     * PC screens: the stream's pictures, decoded by the PC screen's process straight into this reader, with no
+     * composite of its display in between. Null for every other panel. Drawn instead of the display's picture while
+     * it has a recent one ([streamLive]), fitted inside the window with black bars.
+     */
+    private val pcSlot = com.hayeco.flipspaces.pcscreen.PcScreenLink.slotOf(panel)
+    val stream: PanelSource? = if (pcSlot >= 0) {
+        PanelSource(com.hayeco.flipspaces.pcscreen.PcScreenLink.STREAM_W, com.hayeco.flipspaces.pcscreen.PcScreenLink.STREAM_H, decoded = true)
+            .also { frames.add(it); com.hayeco.flipspaces.pcscreen.PcScreenLink.offer(pcSlot, it.surface) }
+    } else {
+        null
+    }
+
+    /** PC screens: [stream] had a picture in the last 2 s. */
+    val streamLive: Boolean
+        get() = stream?.let { !it.released && it.copies > 0 && SystemClock.uptimeMillis() - it.lastImageMs < 2000 } == true
+
     /** A frame was copied and can be drawn. */
     val hasFrame: Boolean get() = drawn.copies > 0
     var width: Int
@@ -118,6 +135,9 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     var notice: String? = null
     var noticeUntilMs = 0L
 
+    /** PC screens: [streamLive] when last drawn, so a stream (re)starting shows the window's name. */
+    var streamWasLive = false
+
     /** 0.5.21: when Wide view was last pressed, for the line on whether the app filled the window. */
     var broadToggledMs = 0L
 
@@ -147,6 +167,16 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     /** 0.5.20: the window's floating round buttons (no title bar): Back, Reset and Close ([WindowControls]). */
     val back = IconTexture()
     val banner = LabelTexture(1024, 160)
+
+    /** PC screens: the stats overlay's line ([com.hayeco.flipspaces.pcscreen.PcScreenDecoder.onStats]), read once a second. */
+    val statsTex = LabelTexture(1024, 96)
+    var statsLine: String? = null
+    var statsReadMs = 0L
+
+    /** 1.6.0 (GitHub #118, "I don't know what buttons do what, maybe add hover text?"): the pointed-at button's name. */
+    val tipTex = LabelTexture(768, 96)
+    var tipControl: com.hayeco.flipspaces.core.spatial.WindowControls.Control? = null
+    var tipSinceMs = 0L
 
     /** 0.5.17: the window's Reset and Close, and the held window's guide ("FARTHER", ...). */
     val reset = IconTexture()
@@ -335,6 +365,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
     }
 
     fun release() {
+        stream?.let { com.hayeco.flipspaces.pcscreen.PcScreenLink.withdraw(pcSlot, it.surface); frames.remove(it) }
         previous?.let { frames.remove(it) }
         previous = null
         fadingOut?.let { frames.remove(it) }
@@ -343,6 +374,8 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
         placeholder.release()
         back.release()
         banner.release()
+        statsTex.release()
+        tipTex.release()
         reset.release()
         close.release()
         refresh.release()
@@ -406,6 +439,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     /** 1.2.3 (issue 58): the apps whose windows split a side by side picture between the eyes ([com.hayeco.flipspaces.core.spatial.SideBySide]). */
     private val sideBySide = com.hayeco.flipspaces.core.spatial.SideBySideStore(store.sideBySide)
+
+    /** 1.6.0 (issue 119): the apps whose windows take the trackpad's scrolls as a swipe ([com.hayeco.flipspaces.core.spatial.SwipeScrollStore]). */
+    private val swipeScroll = com.hayeco.flipspaces.core.spatial.SwipeScrollStore(store.swipeScroll)
     private val pointer = SpatialPointer(frustum, PointerSettings(handsSteer = store.handsSteer)).also { p ->
         p.directAim = { side -> directHandAim(side) }
     }
@@ -1192,6 +1228,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 1.2.3 (issue 58): 2D while moving, from the head's turn and the cursor shown in the last frame.
         sideBySideFlat = sideBySideFlatOn && sideBySideMotion.update(HeadTracker.turnSpeedDegS, headCursorAlpha > 0.02f, SystemClock.uptimeMillis())
         SpaceSession.focusedSideBySide = focused?.let { it.label to sideBySide.isOn(it.packageName) }
+        SpaceSession.focusedSwipeScroll = focused?.takeIf { it.packageName.isNotEmpty() }?.let { it.label to swipeScroll.isOn(it.packageName) }
+        pointer.swipePanels = layout.panels.filter { swipeScroll.isOn(it.packageName) }.mapTo(HashSet()) { it.id }
         SpaceSession.focusedShape = focused?.let { it.label to com.hayeco.flipspaces.core.spatial.PanelDisplaySize.aspect(it) }
         // 0.5.32: the head's turn speed to the glasses' duty on turns (it sends nothing unless its switch is on).
         GlassesDisplayControl.frame(HeadTracker.turnSpeedDegS, android.os.SystemClock.elapsedRealtime())
@@ -2919,7 +2957,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         // 1.1.15: a press on the app (a touch going down, a long press): its new screens are watched for on the phone.
         if ((sent is SpaceAction.Touch && sent.phase == com.hayeco.flipspaces.core.spatial.TouchPhase.DOWN) || sent is SpaceAction.LongPress) pressedApp(p)
-        for (m in input.map(sent, p.width, p.height)) {
+        val pcScreen = com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(p.panel.activityName) >= 0
+        for (m in input.map(sent, p.width, p.height, fullArea = pcScreen)) {
             if (m.startsGesture) p.downTime = SystemClock.uptimeMillis()
             val down = if (m.source == PanelMotion.SOURCE_MOUSE) 0L else p.downTime
             // Every scroll and its result (0.4.2: a dropped scroll used to leave no trace).
@@ -2971,6 +3010,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val display = p.displayId ?: return
         val closed = (p.state as? PanelState.Showing)?.appClosed == true
         if (closed || p.ask != null) return
+        // A PC screen handles Back itself: streaming, it disconnects and shows the computers to choose from; on that page,
+        // Back closes it. So no question first.
+        if (com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(p.panel.activityName) >= 0) {
+            sendBack(p, display)
+            return
+        }
         PanelHost.tasks(display) { tasks ->
             onGl {
                 if (p.removed || p.displayId != display) return@onGl
@@ -3344,6 +3389,20 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }, "air-display").start()
     }
 
+    /**
+     * 1.6.0 (issue 119): the Menu's Scroll by swiping for the focused window's app, remembered for it. On, the trackpad's
+     * scrolls over its windows drag a finger across the app ([com.hayeco.flipspaces.core.spatial.SpatialPointer.swipePanels]).
+     */
+    private fun swipeScrollChosen(on: Boolean) {
+        val p = focusedPanelId?.let { panels[it] } ?: return
+        val pkg = p.panel.packageName
+        if (pkg.isEmpty() || swipeScroll.isOn(pkg) == on) return
+        swipeScroll.set(pkg, on)
+        store.swipeScroll = swipeScroll.encode()
+        Log.i(PANEL_TAG, "panel ${p.panel.id} ${p.panel.label}: Scroll by swiping ${if (on) "on" else "off"} (remembered for $pkg)")
+        showNotice(p, str(if (on) R.string.space_swipe_scroll_on else R.string.space_swipe_scroll_off), SystemClock.uptimeMillis())
+    }
+
     /** 1.2.3 (issue 58): the Menu's 2D while moving ([com.hayeco.flipspaces.core.spatial.SideBySideMotion]), off by default. */
     private var sideBySideFlatOn = store.sideBySideFlat
     private val sideBySideMotion = com.hayeco.flipspaces.core.spatial.SideBySideMotion()
@@ -3658,7 +3717,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     val now = p.state as? PanelState.Showing ?: return@onGl
                     if (p.removed || now.displayId != display || now.appClosed) return@onGl
                     if (p.empty.sample(tasks, SystemClock.uptimeMillis())) {
-                        val newer = com.hayeco.flipspaces.core.spatial.SingleWindowApp.movedTo(p.window(), panels.values.map { it.window() })
+                        // PC screens are separate windows of one package, never one app moved to a newer window (Mike's
+                        // glasses, 19 Nov 2026: closing PC screen 1 said it "moved" to PC screen 2).
+                        val pcScreen = com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(p.panel.activityName) >= 0
+                        val newer = if (pcScreen) null else com.hayeco.flipspaces.core.spatial.SingleWindowApp.movedTo(p.window(), panels.values.map { it.window() })
                         p.state = now.copy(appClosed = true)
                         p.ask = null
                         p.movedTo = null
@@ -3872,6 +3934,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                         pickForPanel = null
                         com.hayeco.flipspaces.pcvr.PcVrSession.open("the launcher's PC VR button")
                     }
+                    com.hayeco.flipspaces.core.spatial.LauncherButton.PC_SCREEN -> {
+                        pickForPanel = null
+                        openPcScreen()
+                    }
                     com.hayeco.flipspaces.core.spatial.LauncherButton.RECENTRE -> recentre()
                     com.hayeco.flipspaces.core.spatial.LauncherButton.STEADY -> GlassesDisplayControl.userSteady(context, !GlassesDisplayControl.steadyOn, "the launcher's button")
                     com.hayeco.flipspaces.core.spatial.LauncherButton.VIEW -> SpaceActivity.alive()?.let { a -> a.runOnUiThread { a.switchView("the launcher's 3D / 2D button") } }
@@ -4078,6 +4144,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 is SpaceCommand.PadTouches -> padTouches(c.events)
                 SpaceCommand.FocusWindow -> focusedPanelId?.let { panels[it] }?.displayId?.let { PanelHost.focus(it, "the Game controller's gamepad") }
                 is SpaceCommand.SideBySide -> sideBySideChosen(c.on)
+                is SpaceCommand.SwipeScroll -> swipeScrollChosen(c.on)
                 is SpaceCommand.Shape -> shapeChosen(c.ratio)
                 is SpaceCommand.SideBySideFlat -> {
                     sideBySideFlatOn = c.on
@@ -4110,6 +4177,23 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     /**
+     * The launcher's PC screen button: the first PC screen not open yet ([com.hayeco.flipspaces.pcscreen.PcScreenSlots]),
+     * each its own window, process and PC; with all three open, the first comes to the front.
+     */
+    private fun openPcScreen() {
+        val slots = com.hayeco.flipspaces.pcscreen.PcScreenSlots
+        fun entry(slot: Int) = AppEntry(
+            if (slot == 0) str(R.string.pc_screen_tile) else context.getString(R.string.pc_screen_tile_n, slot + 1),
+            context.packageName, slots.activity(slot),
+        )
+        val open = layout.panels.map { it.activityName }.toSet()
+        val free = (0 until slots.COUNT).firstOrNull { slots.activity(it) !in open }
+        Log.i(tag, "launcher: PC screen button: ${if (free != null) "opens PC screen ${free + 1}" else "all three open, PC screen 1 to the front"}")
+        addApp(entry(free ?: 0), inFrontOfGaze = true)
+        launcher.close()
+    }
+
+    /**
      * A new panel for [app]: in front of the gaze from the launcher, else at the next free spot
      * around the heading (the phone list and the glasses dock, as before 0.4.0).
      */
@@ -4119,11 +4203,17 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.21: an app that already has a window gets that one back, in
         // front of the gaze and focused, not a second window that would take its task from the first.
         // 0.5.37: unless the Menu's "Open a new instance" is on, when it opens again in a window of its own.
-        if (!store.newInstance) layout.showing(app.packageName)?.let { open ->
+        // PC screens: each of the three is its own window ([com.hayeco.flipspaces.pcscreen.PcScreenSlots]), all from
+        // this app's package, so a PC screen's tile brings back its own window only.
+        val pcSlot = com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(app.activityName)
+        val alreadyOpen = if (pcSlot >= 0) layout.panels.firstOrNull { it.activityName == app.activityName } else layout.showing(app.packageName)
+        if (!store.newInstance || pcSlot >= 0) alreadyOpen?.let { open ->
             val (yaw, pitch) = at ?: gaze()
             val next = if (inFrontOfGaze) layout.bringTo(open.id, yaw, pitch) else layout.raise(open.id)
             setLayout(next, commit = true)
             focus(open.id)
+            // PC screens: its name on it, so the tile's window is the one that says so.
+            if (pcSlot >= 0) panels[open.id]?.let { showNotice(it, open.label, SystemClock.uptimeMillis()) }
             windowOpenMs.remove(-1)?.let { windowOpenMs[open.id] = it }
             launcher.clearSearch()
             Log.i(PANEL_TAG, "panel ${open.id} ${app.label} already open: brought ${if (inFrontOfGaze) "in front of the gaze" else "to the front"} instead of a second window")
@@ -4438,6 +4528,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // only down to the levels its shrink samples; near 1:1 one level and bilinear filtering.
         val levels = com.hayeco.flipspaces.core.spatial.PanelPrepare.mipLevels(PanelMips.texelsPerPixel(panel, p.width, frustum), d.texture.fullLevels)
         if (d.copies > 0) d.texture.prepare(levels).takeIf { it > 0 }?.let { prepareCounts.chain(it, forBlackCheck = false) }
+        // PC screens: the decoded stream is copied as it comes, at the window's cap like the display's picture.
+        p.stream?.takeIf { !it.released }?.let { st ->
+            val streamPlan = com.hayeco.flipspaces.core.spatial.PanelPrepare.copy(st.mailbox.hasNew, visible, capFps, nowMs, st.lastCopyMs)
+            if (streamPlan == com.hayeco.flipspaces.core.spatial.PanelPrepare.Copy.COPIED && copyDue) {
+                PanelImport.copy(st, nowMs, viewport.surfaceWidth, viewport.surfaceHeight, presentNs)
+            }
+            if (st.copies > 0) st.texture.prepare(com.hayeco.flipspaces.core.spatial.PanelPrepare.mipLevels(PanelMips.texelsPerPixel(panel, st.width, frustum), st.texture.fullLevels))
+        }
         p.freshThisFrame = s.copies != p.copiesSeen
         p.copiesSeen = s.copies
         perf.panel(panel.id, System.nanoTime() - t0, p.freshThisFrame)
@@ -4499,7 +4597,36 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             drawFocusHalo(p, panel, viewProj, windowAlpha, hover != null || pointer.allWindowsHeld, firstEye, hover?.frame == true || (grabZone == PanelZone.TITLE_BAR && pointer.heldPanelId != panel.id) || pointer.allWindowsHeld)
             if (old != null) drawOn(body, viewProj, old.texture.id, windowAlpha, matrixFor(old), footprint = false, round = bodyRounding(panel))
             val a = if (old != null) windowAlpha * (fade * fade * (3f - 2f * fade)) else windowAlpha
-            drawOn(body, viewProj, d.texture.id, a, matrixFor(d), footprint = !mips && store.footprintFilter, round = bodyRounding(panel, p, windowAlpha))
+            val st = p.stream?.takeIf { p.streamLive }
+            // PC screens look alike (Mike, 19 Nov 2026: "hard to tell which one ... which window is which"): the name,
+            // "PC screen 2", over the window for 4 s when its stream starts.
+            if (firstEye && (st != null) != p.streamWasLive) {
+                p.streamWasLive = st != null
+                if (st != null) showNotice(p, panel.label, nowMs)
+            }
+            if (st != null) {
+                // PC screens: black under the whole window, then the stream at its own shape in the middle of it, the
+                // same fit the PC screen's own window uses for the mouse ([com.hayeco.flipspaces.pcscreen.PcScreenFit]).
+                colorOn(body, viewProj, floatArrayOf(0f, 0f, 0f, windowAlpha), round = bodyRounding(panel, p, windowAlpha))
+                // The pictures' own size (the decoder's buffers), which follows the stream's: the window's shape with a
+                // virtual display, else 1920 x 1080.
+                val box = com.hayeco.flipspaces.pcscreen.PcScreenFit.uv(p.width, p.height, st.texture.width, st.texture.height)
+                drawOn(PanelCurve.rect(panel, box[0], box[1], box[2], box[3]), viewProj, st.texture.id, windowAlpha, GlKit.IDENTITY, footprint = !mips && store.footprintFilter)
+                // The stats overlay (the PC screen's Stats on the screen): its line, written once a second by the PC
+                // screen's process, at the picture's top left.
+                if (firstEye && nowMs - p.statsReadMs > 1000) {
+                    p.statsReadMs = nowMs
+                    val slot = com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(panel.activityName)
+                    val f = java.io.File(context.filesDir, "pc_screen_stats_${slot + 1}")
+                    p.statsLine = if (slot >= 0 && f.exists() && System.currentTimeMillis() - f.lastModified() < 3000) runCatching { f.readText() }.getOrNull() else null
+                }
+                p.statsLine?.let { line ->
+                    p.statsTex.set(listOf(line), 0xB0101418.toInt(), Look.INK, 40f)
+                    drawOn(PanelCurve.rect(panel, box[0] + 0.01f, box[1] + 0.01f, box[0] + 0.45f, box[1] + 0.07f), viewProj, p.statsTex.id, windowAlpha)
+                }
+            } else {
+                drawOn(body, viewProj, d.texture.id, a, matrixFor(d), footprint = !mips && store.footprintFilter, round = bodyRounding(panel, p, windowAlpha))
+            }
             if (firstEye) checkProtected(p, nowMs)
             p.offer?.takeIf { card == null }?.let { offer ->
                 p.banner.set(listOf(offer), Look.mix(Look.GLASS, Look.DANGER, 0.55f), Look.INK, 30f, badge = "\u2715")
@@ -4589,6 +4716,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 look(grip, a),
                 Rounding(gripV * panel.heightM, 2f * gripU * arcW, 2f * gripV * panel.heightM),
             )
+            drawTip(p, panel, l, viewProj, a, hover?.takeIf { !it.frame }?.zone, firstEye, arcW)
         }
         // 0.5.75 (Mike: the glow "does not make it obvious enough that its grabbable"): on the grab band the window gets a
         // crisp accent frame drawn in the band itself, where the cursor is, with a spot of light on it under the cursor.
@@ -4685,6 +4813,50 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * focused window, when there is more than one, gets a soft accent glow [HALO_PER_M] of its distance wide round its
      * edge. One quad on the window's surface (curved with it), drawn before its picture; no blur pass.
      */
+    /**
+     * 1.6.0 (GitHub #118: "I don't know what buttons do what, maybe add hover text?"): a window button's name in a small
+     * glass label, once the pointer has rested on it for [TIP_DELAY_MS]; above the buttons over the window, below the ones
+     * under it. The pill's says how to move the window.
+     */
+    private fun drawTip(
+        p: PanelGl, panel: SpacePanel, l: com.hayeco.flipspaces.core.spatial.WindowControls.Layout, viewProj: Mat4, alpha: Float,
+        zone: PanelZone?, firstEye: Boolean, arcW: Float,
+    ) {
+        val c = l.places.firstOrNull { it.control.zone == zone }?.control
+        if (firstEye && c != p.tipControl) {
+            p.tipControl = c
+            p.tipSinceMs = frameClockMs
+        }
+        val shown = p.tipControl ?: return
+        if (frameClockMs - p.tipSinceMs < TIP_DELAY_MS) return
+        val place = l.places.firstOrNull { it.control == shown } ?: return
+        val text = str(
+            when (shown) {
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.BACK -> R.string.space_tip_back
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.MOVE -> R.string.space_tip_move
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.REFRESH -> R.string.space_tip_refresh
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.SWITCH_APP -> R.string.space_tip_switch_app
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.RESET -> R.string.space_tip_reset
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.CLOSE -> R.string.space_tip_close
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.WIDE_VIEW -> R.string.space_tip_wide_view
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.FIT_VIDEO -> R.string.space_tip_fit_video
+                com.hayeco.flipspaces.core.spatial.WindowControls.Control.IMMERSIVE -> R.string.space_tip_immersive
+            },
+        )
+        if (firstEye) p.tipTex.set(listOf(text), 0xE6101418.toInt(), Look.INK, 44f, centred = true, medium = true, oneLine = true)
+        // The label: as tall as a button, eight times as wide (the texture's shape), a button's gap from it.
+        val hM = l.heightM
+        val wU = 8f * hM / arcW.coerceAtLeast(1e-3f)
+        val hV = hM / panel.heightM.coerceAtLeast(1e-3f)
+        val gapV = hV * 0.35f
+        val u0 = (place.uCentre - wU / 2f).coerceIn(minOf(-0.2f, 1.2f - wU), maxOf(-0.2f, 1.2f - wU))
+        val (v0, v1) = if (place.v1 <= 0f) (place.v0 - gapV - hV) to (place.v0 - gapV) else (place.v1 + gapV) to (place.v1 + gapV + hV)
+        drawOn(
+            lift(PanelCurve.rect(panel, u0, v0, u0 + wU, v1), Look.DEPTH_CONTROLS + Look.DEPTH_HOVER), viewProj, p.tipTex.id, alpha,
+            round = Rounding(hM / 2f, wU * arcW, hM),
+        )
+    }
+
     private fun drawFocusHalo(p: PanelGl, panel: SpacePanel, viewProj: Mat4, windowAlpha: Float, hovered: Boolean, firstEye: Boolean, onFrame: Boolean = false) {
         val focused = panel.id == focusedPanelId && layout.panels.size > 1
         val focus = if (firstEye) p.focusLook.at(focused, frameClockMs) else p.focusLook.value
@@ -4722,6 +4894,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private fun checkProtected(p: PanelGl, nowMs: Long) {
         // 0.5.2: the frame thread samples the brightness about once a second (PanelFrameThread).
         val s = p.src
+        // PC screens: while the stream is drawn straight from the decoder, the window's own display is black by design
+        // (its picture no longer passes through it), and black too while it connects or reconnects. Never protected
+        // video: no check, no banner at all (Mike, 19 Nov 2026: the red "shows only black here" banner on a PC screen
+        // that had no problem).
+        if (p.stream != null) {
+            p.offer = null
+            return
+        }
         if (p.offerDismissed || s.lumaSeq == p.lumaSeen) return
         p.lumaSeen = s.lumaSeq
         val wasLong = p.black.blackLongEnough
@@ -4855,7 +5035,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             val lit = if (btn.danger) Look.DANGER else Look.ACCENT
             val r = lift(PanelCurve.rect(panel, btn.u0, btn.v0, btn.u1, btn.v1), depth + Look.DEPTH_HOVER * hot)
             colorOn(r, viewProj, look(Look.mix(rest, lit, hot), show), Rounding(h / 2f, w, h, Look.alpha(Look.RIM, show * (1f - hot)), rimM))
-            tex.set(listOf(btn.label), Color.TRANSPARENT, Look.INK, CARD_BUTTON_PX, centred = true, medium = true)
+            tex.set(listOf(btn.label), Color.TRANSPARENT, Look.INK, CARD_BUTTON_PX, centred = true, medium = true, oneLine = true)
             // The label: half the pill's height, its texture's shape, centred on the pill.
             var hM = 0.62f * h
             var wM = hM * CARD_BUTTON_W / CARD_BUTTON_H
@@ -5172,6 +5352,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             if (headCursorAlpha < 0.01f) return
             val ray = pointer.ray(head)
             val hover = pointer.hover
+            // PC screens (Mike, 18 Nov 2026): over a PC screen's streamed picture only the PC's own mouse pointer shows,
+            // drawn in the stream where the PC put it; the dot comes back on the window's bar, frame and buttons, and
+            // over the PC screen's own Pair and Connect page, where there is no PC pointer (Mike's phone test).
+            if (com.hayeco.flipspaces.pcscreen.PcScreenCursor.hidesDot(hover) && hover?.let { panels[it.panel.id]?.streamLive } == true) return
             // 0.5.70 (Mike: the cursor is one of the things he dislikes; "Light on glass"): a crisp white dot with a dark
             // hairline (it reads on a bright page as on the room), a soft light bloom round it, a thin ring growing in over
             // anything it can press, the accent while pressing or busy, and a ripple ring on each press.
@@ -5656,6 +5840,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 }
 
 private const val PANEL_TAG = "FlipSpaces/Panel"
+
+/** 1.6.0: how long the pointer rests on a window button before its name shows ([SpaceRenderer.drawTip]). */
+private const val TIP_DELAY_MS = 450L
 private const val WATCHDOG_TAG = "FlipSpaces/Watchdog"
 
 /** Hand calibration lines go with the other hand lines. */

@@ -42,7 +42,7 @@ class MenuFollowsFocusTest {
                 m.name == "hashCode" -> System.identityHashCode(proxy)
                 m.name == "toString" -> "test host"
                 m.name in answers -> answers[m.name]
-                m.name == "focusedTextSize" || m.name == "focusedSideBySide" || m.name == "focusedShape" -> null
+                m.name == "focusedTextSize" || m.name == "focusedSideBySide" || m.name == "focusedSwipeScroll" || m.name == "focusedShape" -> null
                 t == java.lang.Boolean.TYPE -> false
                 t == Integer.TYPE -> 0
                 t == java.lang.Float.TYPE -> 0f
@@ -70,11 +70,14 @@ class MenuFollowsFocusTest {
         // A hand pinch, the gaze or a mouse focuses Chrome with the Menu open.
         answers["focusedTextSize"] = Pair("Chrome", 100)
         answers["focusedSideBySide"] = Pair("Chrome", false)
+        answers["focusedSwipeScroll"] = Pair("Chrome", false)
         screen.refreshDrawerForFocus()
         val row = screen.menuRow(PadScreen.MENU_TEXT_SIZE)
         assertNotNull(row)
         assertEquals("Text size in Chrome", texts(row!!).first())
         assertNotNull(screen.menuRow(PadScreen.MENU_SIDE_BY_SIDE))
+        // 1.6.0 (issue 119): Scroll by swiping for the focused window's app.
+        assertEquals("Scroll by swiping in Chrome: OFF", texts(screen.menuRow(PadScreen.MENU_SWIPE_SCROLL)!!).first())
         assertEquals("this_window", screen.menuRowTags().first { it.startsWith("menu:section:") }.removePrefix("menu:section:"))
     }
 

@@ -84,7 +84,8 @@
         android:localeConfig="@xml/locales_config"
         android:label="@string/app_label"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FlipSpaces">
+        android:theme="@style/Theme.FlipSpaces"
+        android:networkSecurityConfig="@xml/network_security_config">
         <!-- 0.5.43: Samsung's NPU driver, public to apps on the Flip7 (/vendor/etc/public.libraries.txt); the Samsung dispatch opens it. -->
         <uses-native-library android:name="libenn_public_api_cpp.so" android:required="false" />
         <uses-native-library android:name="libenn_user.samsung_slsi.so" android:required="false" />
@@ -233,6 +234,58 @@
                 android:name="com.samsung.android.dex.launchheight"
                 android:value="0" />
         </activity>
+        <!-- PC screens, first proof: a PC's screen streamed from Sunshine or Apollo, opened on a Space panel like an app
+             (exported, so the panel host can start it). Its own process: moonlight-common-c holds one connection per
+             process. Its own task affinity: with the app's default one, a start of the app on the phone (the ready
+             notification's tap) brought the PC screen's task off its panel (18 Nov 2026). -->
+        <activity
+            android:name=".pcscreen.PcScreenActivity"
+            android:exported="true"
+            android:label="@string/pc_screen_tile"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:process=":pcscreen"
+            android:taskAffinity="com.hayeco.flipspaces.pcscreen"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <!-- PC screens: takes the Space's surface for the stream into the PC screen's process (pcscreen.PcScreenLink). -->
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService"
+            android:exported="false"
+            android:process=":pcscreen" />
+        <!-- PC screen 2: its own process, as Moonlight's core keeps one stream per process (pcscreen.PcScreenSlots). -->
+        <activity
+            android:name=".pcscreen.PcScreen2Activity"
+            android:exported="true"
+            android:label="@string/pc_screen_tile_2"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:process=":pcscreen2"
+            android:taskAffinity="com.hayeco.flipspaces.pcscreen2"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService2"
+            android:exported="false"
+            android:process=":pcscreen2" />
+        <!-- PC screen 3: its own process, as Moonlight's core keeps one stream per process (pcscreen.PcScreenSlots). -->
+        <activity
+            android:name=".pcscreen.PcScreen3Activity"
+            android:exported="true"
+            android:label="@string/pc_screen_tile_3"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:process=":pcscreen3"
+            android:taskAffinity="com.hayeco.flipspaces.pcscreen3"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService3"
+            android:exported="false"
+            android:process=":pcscreen3" />
         <!-- The launcher's PC VR tile: a name and icon only. The Space opens PC VR over itself (pcvr.PcVrSession). -->
         <activity-alias
             android:name=".pcvr.PcVrTile"
@@ -250,6 +303,24 @@
             android:foregroundServiceType="camera" />
 
         <!-- 0.4.4: keeps the process awake for the glasses' plug-in, with a quiet notification. -->
+        <!-- PC screens: the wake relay, on a phone left at home (pcscreen.WakeRelayService), its screen and its restart
+             after a reboot. -->
+        <service
+            android:name=".pcscreen.WakeRelayService"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+        <activity
+            android:name=".pcscreen.WakeRelayActivity"
+            android:exported="false"
+            android:label="@string/wake_relay_title"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <receiver
+            android:name=".pcscreen.WakeRelayBoot"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
         <service
             android:name=".GlassesReadyService"
             android:exported="false"

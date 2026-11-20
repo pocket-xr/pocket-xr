@@ -618,6 +618,7 @@ internal class LauncherGl(private val context: Context) {
                 LauncherButton.VIEW -> g.twoWords(context.getString(R.string.space_launcher_depth), viewLabel, regular)
                 LauncherButton.NOTIFICATIONS -> g.bell()
                 LauncherButton.CONTROLS -> g.sliders()
+                LauncherButton.PC_SCREEN -> g.monitor()
                 LauncherButton.PC_VR -> {
                     g.headset()
                     // How the PC is: a small dot at the top right, green when SteamVR is ready, amber while it starts.
@@ -749,6 +750,16 @@ internal class LauncherGl(private val context: Context) {
             color = Color.WHITE
         }
         private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+
+        /** PC screen: a monitor on its stand. */
+        fun monitor() {
+            val w = box * 0.78f
+            val h = box * 0.5f
+            val top = cy - box * 0.36f
+            c.drawRoundRect(android.graphics.RectF(cx - w / 2f, top, cx + w / 2f, top + h), box * 0.06f, box * 0.06f, stroke)
+            c.drawLine(cx, top + h, cx, top + h + box * 0.16f, stroke)
+            c.drawLine(cx - box * 0.2f, top + h + box * 0.16f, cx + box * 0.2f, top + h + box * 0.16f, stroke)
+        }
 
         /** Recentre: a ring with four ticks and a centre dot. */
         fun crosshair() {

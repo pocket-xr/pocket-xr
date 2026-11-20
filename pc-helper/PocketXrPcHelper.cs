@@ -13,14 +13,28 @@
 //        {"op":"status"|"start","token":"...","alvr":"<the phone's ALVR name>"}
 //            {"ok":true,"pc":"...","steam":bool,"alvr":bool,"steamvr":"off|starting|ready"}; start also gets the PC ready
 //        {"op":"idr","token":"..."}                        asks the streamer for a fresh full frame
+//        {"op":"apollo-pin","token":"...","pin":"1234","name":"...","port":47989}
+//            PC screens: types the phone's pairing PIN into Apollo for the user and gives the phone the permissions a PC
+//            screen needs (launch, mouse, keyboard); with "virtual":true (Moonlight on Linux and macOS, which cannot ask for
+//            one) also Apollo's "always use virtual display"; {"ok":true} or {"ok":false,"why":"..."}
+//        {"op":"screens-setup","token":"...","phone":"..."}  asks the PC's user, then runs the PC screens setup
 // A phone is allowed once on the PC (pair); its token is enough after that. Tokens live in
 // %APPDATA%\PocketXR\pc-helper.json; "Forget phones" in the tray menu clears them.
 //
 // Installs itself: run from anywhere, it copies itself to %LOCALAPPDATA%\PocketXR\PcHelper and starts with Windows.
 //
+// PC screens: the PC screens setup (pc-screens\PocketXR-PC-Screens.ps1) is built in, run from the tray menu or when a
+// phone asks; it saves Apollo's web login for this helper (DPAPI, this Windows user only), so the helper can type
+// pairing PINs into Apollo.
+//
+// Sound: while a PC screen streams, Apollo makes Steam Streaming Speakers the PC's sound device and should put the PC's own
+// back after. With several PC screens the second Apollo took the first one's Steam Streaming Speakers for the PC's own and
+// put those back (Mike's PC, 19 Nov 2026). So the helper keeps the PC's own device itself ([SoundKeeper]).
+//
 // Build (Windows' own compiler, nothing to install):
 //   csc /target:winexe /win32icon:pocketxr.ico /r:System.Web.Extensions.dll /r:System.Windows.Forms.dll
-//       /r:System.Drawing.dll /out:PocketXrPcHelper.exe PocketXrPcHelper.cs
+//       /r:System.Drawing.dll /r:System.Security.dll /resource:pc-screens\PocketXR-PC-Screens.ps1,PcScreens.ps1
+//       /out:PocketXrPcHelper.exe PocketXrPcHelper.cs
 
 using System;
 using System.Collections;
@@ -586,6 +600,339 @@ namespace PocketXr
         public static void Forget() { lock (Gate) if (File.Exists(File_)) File.Delete(File_); }
     }
 
+    /**
+     * PC screens: Apollo's web API on this PC, signed in with the login the PC screens setup saved, to type a phone's
+     * pairing PIN for the user and give it the permissions a PC screen needs.
+     */
+    static class Apollo
+    {
+        static readonly string LoginFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PocketXR", "apollo-login.json");
+        static readonly JavaScriptSerializer Json = new JavaScriptSerializer();
+        /** Launch, view, list, all input and clipboard: what a PC screen needs, and what Apollo gives the first phone. */
+        const long PcScreenPerms = 0x07031F00;
+
+        static Apollo()
+        {
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+            // Apollo's web page has its own self-signed certificate; trusted for this PC's own address only.
+            ServicePointManager.ServerCertificateValidationCallback = (sender, cert, chain, errors) =>
+            {
+                var r = sender as HttpWebRequest;
+                return errors == System.Net.Security.SslPolicyErrors.None || (r != null && r.RequestUri.IsLoopback);
+            };
+        }
+
+        /** The saved login: user name, and the password protected by Windows for this user (PowerShell's ConvertFrom-SecureString). */
+        static bool Login(out string user, out string password)
+        {
+            user = null; password = null;
+            try
+            {
+                if (!File.Exists(LoginFile)) return false;
+                var d = (Dictionary<string, object>)Json.DeserializeObject(File.ReadAllText(LoginFile));
+                user = d["username"] as string;
+                string hex = d["password"] as string;
+                var blob = new byte[hex.Length / 2];
+                for (int i = 0; i < blob.Length; i++) blob[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+                var plain = System.Security.Cryptography.ProtectedData.Unprotect(blob, null, System.Security.Cryptography.DataProtectionScope.CurrentUser);
+                password = Encoding.Unicode.GetString(plain);
+                return !string.IsNullOrEmpty(user);
+            }
+            catch (Exception e) { Log.Line("apollo login file: " + e.Message); return false; }
+        }
+
+        static string Call(CookieContainer cookies, string method, string url, object body)
+        {
+            var r = (HttpWebRequest)WebRequest.Create(url);
+            r.Method = method;
+            r.CookieContainer = cookies;
+            r.Timeout = 5000;
+            if (body != null)
+            {
+                var bytes = Encoding.UTF8.GetBytes(Json.Serialize(body));
+                r.ContentType = "application/json";
+                r.ContentLength = bytes.Length;
+                using (var s = r.GetRequestStream()) s.Write(bytes, 0, bytes.Length);
+            }
+            using (var resp = (HttpWebResponse)r.GetResponse())
+            using (var reader = new StreamReader(resp.GetResponseStream())) return reader.ReadToEnd();
+        }
+
+        static Dictionary<string, object> No(string why) { Log.Line("apollo: " + why); return new Dictionary<string, object> { { "ok", false }, { "why", why } }; }
+
+        /** A record of the device named [name]: that name, or Apollo's numbered copy of it ("MIKE (2)"). */
+        static bool SameDevice(string recordName, string name)
+        {
+            if (recordName == null) return false;
+            if (recordName == name) return true;
+            return recordName.StartsWith(name + " (") && recordName.EndsWith(")") &&
+                recordName.Substring(name.Length + 2, recordName.Length - name.Length - 3).All(char.IsDigit);
+        }
+
+        /** Types [pin] into the Apollo instance on HTTP port [port] (its web page is port + 1), then sets the new client's permissions. */
+        public static Dictionary<string, object> Pin(string pin, string name, int port, bool virtualDisplay = false)
+        {
+            string user, password;
+            if (string.IsNullOrEmpty(pin)) return No("no PIN");
+            if (!Login(out user, out password)) return No("no Apollo login saved: run Set up PC screens from the tray menu");
+            string web = "https://localhost:" + (port + 1);
+            var cookies = new CookieContainer();
+            try { Call(cookies, "POST", web + "/api/login", new Dictionary<string, object> { { "username", user }, { "password", password } }); }
+            catch (Exception e) { return No("Apollo sign-in failed: " + e.Message); }
+            // A device pairing again: its old records go first. Apollo kept them and named the new one "MIKE (2)", so the
+            // permissions below went to the old record (the Windows app's test, 20 Nov 2026), as the Mac helper found
+            // with Sunshine (a certificate on two records is refused).
+            try
+            {
+                var before = (Dictionary<string, object>)Json.DeserializeObject(Call(cookies, "GET", web + "/api/clients/list", null));
+                var old = before["named_certs"] as object[] ?? (before["named_certs"] as ArrayList ?? new ArrayList()).ToArray();
+                foreach (var c in old)
+                {
+                    var d = c as Dictionary<string, object>;
+                    if (d == null || !SameDevice(d["name"] as string, name) || !d.ContainsKey("uuid")) continue;
+                    Call(cookies, "POST", web + "/api/clients/unpair", new Dictionary<string, object> { { "uuid", d["uuid"] } });
+                    Log.Line("apollo: old record \"" + d["name"] + "\" removed before pairing " + name + " again");
+                }
+            }
+            catch (Exception e) { Log.Line("apollo old records: " + e.Message); }
+            // The phone is waiting at its PIN step by now, or will be in a moment.
+            bool typed = false;
+            for (int i = 0; i < 10 && !typed; i++)
+            {
+                try
+                {
+                    var answer = (Dictionary<string, object>)Json.DeserializeObject(Call(cookies, "POST", web + "/api/pin", new Dictionary<string, object> { { "pin", pin }, { "name", name } }));
+                    typed = answer.ContainsKey("status") && true.Equals(answer["status"]);
+                }
+                catch (Exception e) { Log.Line("apollo pin: " + e.Message); }
+                if (!typed) Thread.Sleep(1000);
+            }
+            if (!typed) return No("Apollo did not take the PIN");
+            Log.Line("apollo: PIN typed for " + name + " on port " + port);
+            // The new client's permissions: Apollo gives a phone after the first only list and view.
+            for (int i = 0; i < 10; i++)
+            {
+                try
+                {
+                    var list = (Dictionary<string, object>)Json.DeserializeObject(Call(cookies, "GET", web + "/api/clients/list", null));
+                    var clients = list["named_certs"] as object[] ?? (list["named_certs"] as ArrayList ?? new ArrayList()).ToArray();
+                    Dictionary<string, object> mine = null;
+                    foreach (var c in clients) { var d = c as Dictionary<string, object>; if (d != null && SameDevice(d["name"] as string, name)) mine = d; }
+                    if (mine != null)
+                    {
+                        long perm = Convert.ToInt64(mine["perm"]);
+                        // A client that cannot ask for a virtual display itself (Moonlight on Linux and macOS: the Steam
+                        // Deck and Mac apps send "virtual") gets Apollo's "always use virtual display", so each of its
+                        // PC screens is its own display, not the PC's main one.
+                        bool vdWanted = virtualDisplay && !true.Equals(mine.ContainsKey("always_use_virtual_display") ? mine["always_use_virtual_display"] : null);
+                        if ((perm & PcScreenPerms) != PcScreenPerms || vdWanted)
+                        {
+                            // A full replace: every field back as it was, the permissions widened.
+                            var update = new Dictionary<string, object>();
+                            foreach (var k in new[] { "uuid", "name", "display_mode", "do", "undo", "enable_legacy_ordering", "allow_client_commands", "always_use_virtual_display" })
+                                if (mine.ContainsKey(k)) update[k] = mine[k];
+                            update["perm"] = perm | PcScreenPerms;
+                            if (virtualDisplay) update["always_use_virtual_display"] = true;
+                            Call(cookies, "POST", web + "/api/clients/update", update);
+                            Log.Line("apollo: permissions for " + name + " set to 0x" + (perm | PcScreenPerms).ToString("X") + (virtualDisplay ? ", always a virtual display" : ""));
+                        }
+                        return new Dictionary<string, object> { { "ok", true } };
+                    }
+                }
+                catch (Exception e) { Log.Line("apollo clients: " + e.Message); }
+                Thread.Sleep(1000);
+            }
+            return new Dictionary<string, object> { { "ok", true }, { "why", "paired; permissions not checked" } };
+        }
+    }
+
+    /** PC screens: the setup script built into this helper, run with admin rights (Windows asks). */
+    static class PcScreens
+    {
+        public static bool SetUp
+        {
+            get
+            {
+                string apollo = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Apollo", "config", "pocketxr_screen2.conf");
+                return File.Exists(apollo);
+            }
+        }
+
+        public static void RunSetup()
+        {
+            try
+            {
+                string script = Path.Combine(Path.GetTempPath(), "PocketXR-PC-Screens.ps1");
+                using (var res = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("PcScreens.ps1"))
+                using (var file = File.Create(script)) res.CopyTo(file);
+                Process.Start(new ProcessStartInfo("powershell.exe", "-NoProfile -ExecutionPolicy Bypass -File \"" + script + "\"") { UseShellExecute = true, Verb = "runas" });
+                Log.Line("PC screens setup started");
+            }
+            catch (Exception e) { Log.Line("PC screens setup: " + e.Message); }
+        }
+    }
+
+    /// <summary>
+    /// The PC's own sound device, back after PC screens. Apollo switches the PC to Steam Streaming Speakers while it streams
+    /// and switches back after, but a second Apollo started meanwhile remembers Steam Streaming Speakers as the PC's own and
+    /// switches back to those (Mike's PC, 19 Nov 2026: he had to choose his speakers again by hand). So every 2 s: the
+    /// default device that is not Steam Streaming Speakers is remembered; once Steam Streaming Speakers is the default with
+    /// no PC screen streaming (no Apollo virtual display on the desktop) for 4 s, after one was, the remembered one is set
+    /// back. Someone who picks Steam Streaming Speakers themselves, with no stream before, is left alone.
+    /// </summary>
+    static class SoundKeeper
+    {
+        static readonly string SavedFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PocketXR", "sound-device.txt");
+
+        public static void Start()
+        {
+            new Thread(Run) { IsBackground = true, Name = "sound" }.Start();
+        }
+
+        static void Run()
+        {
+            string saved = null;
+            try { if (File.Exists(SavedFile)) saved = File.ReadAllText(SavedFile).Trim(); } catch { }
+            bool streamed = false;
+            int quiet = 0;
+            while (true)
+            {
+                try
+                {
+                    string now = DefaultDevice();
+                    bool streaming = Streaming();
+                    if (streaming) streamed = true;
+                    if (now != null && !IsStreamingSpeakers(now))
+                    {
+                        if (now != saved)
+                        {
+                            saved = now;
+                            try { Directory.CreateDirectory(Path.GetDirectoryName(SavedFile)); File.WriteAllText(SavedFile, saved); } catch { }
+                        }
+                        if (!streaming) streamed = false;
+                        quiet = 0;
+                    }
+                    else if (now != null && !streaming && streamed && saved != null)
+                    {
+                        if (++quiet >= 2)
+                        {
+                            SetDefault(saved);
+                            Log.Line("sound: PC screens ended with Steam Streaming Speakers chosen; the PC's own device is back (" + saved + ")");
+                            streamed = false;
+                            quiet = 0;
+                        }
+                    }
+                    else quiet = 0;
+                }
+                catch (Exception e) { Log.Line("sound: " + e.Message); }
+                Thread.Sleep(2000);
+            }
+        }
+
+        /// <summary>Steam Streaming Speakers (Apollo's and Sunshine's silent device), by the device's adapter name.</summary>
+        static bool IsStreamingSpeakers(string id)
+        {
+            int dot = id.LastIndexOf('.');
+            string guid = dot >= 0 ? id.Substring(dot + 1) : id;
+            using (var k = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\" + guid + @"\Properties"))
+            {
+                var adapter = k == null ? null : k.GetValue("{b3f8fa53-0004-438e-9003-51a46e139bfc},6") as string;
+                return adapter != null && adapter.IndexOf("Steam Streaming", StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+        }
+
+        /// <summary>A PC screen streams: one of Apollo's virtual displays (SudoMaker's adapter) is on the desktop.</summary>
+        static bool Streaming()
+        {
+            var d = new DISPLAY_DEVICE();
+            d.cb = System.Runtime.InteropServices.Marshal.SizeOf(d);
+            for (uint i = 0; EnumDisplayDevices(null, i, ref d, 0); i++)
+            {
+                if ((d.StateFlags & 1) != 0 && d.DeviceString != null && d.DeviceString.IndexOf("SudoMaker", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                d.cb = System.Runtime.InteropServices.Marshal.SizeOf(d);
+            }
+            return false;
+        }
+
+        static string DefaultDevice()
+        {
+            var e = (IMMDeviceEnumerator)new MMDeviceEnumerator();
+            try
+            {
+                IMMDevice dev;
+                if (e.GetDefaultAudioEndpoint(0, 0, out dev) != 0 || dev == null) return null;
+                string id;
+                dev.GetId(out id);
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(dev);
+                return id;
+            }
+            finally { System.Runtime.InteropServices.Marshal.ReleaseComObject(e); }
+        }
+
+        static void SetDefault(string id)
+        {
+            var p = (IPolicyConfig)new PolicyConfigClient();
+            try { for (int role = 0; role < 3; role++) p.SetDefaultEndpoint(id, role); }
+            finally { System.Runtime.InteropServices.Marshal.ReleaseComObject(p); }
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        static extern bool EnumDisplayDevices(string device, uint index, ref DISPLAY_DEVICE info, uint flags);
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        struct DISPLAY_DEVICE
+        {
+            public int cb;
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 32)] public string DeviceName;
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceString;
+            public int StateFlags;
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceID;
+            [System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
+        }
+
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
+        class MMDeviceEnumerator { }
+
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"),
+         System.Runtime.InteropServices.InterfaceType(System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIUnknown)]
+        interface IMMDeviceEnumerator
+        {
+            [System.Runtime.InteropServices.PreserveSig] int EnumAudioEndpoints(int dataFlow, int stateMask, out IntPtr devices);
+            [System.Runtime.InteropServices.PreserveSig] int GetDefaultAudioEndpoint(int dataFlow, int role, out IMMDevice device);
+        }
+
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("D666063F-1587-4E43-81F1-B948E807363F"),
+         System.Runtime.InteropServices.InterfaceType(System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIUnknown)]
+        interface IMMDevice
+        {
+            [System.Runtime.InteropServices.PreserveSig] int Activate(ref Guid iid, int context, IntPtr activationParams, out IntPtr iface);
+            [System.Runtime.InteropServices.PreserveSig] int OpenPropertyStore(int access, out IntPtr store);
+            [System.Runtime.InteropServices.PreserveSig] int GetId([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] out string id);
+        }
+
+        // Windows' own (undocumented, stable since Windows 7) way to choose the default device, as the Sound settings do.
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("870AF99C-171D-4F9E-AF0D-E63DF40C2BC9")]
+        class PolicyConfigClient { }
+
+        [System.Runtime.InteropServices.ComImport, System.Runtime.InteropServices.Guid("F8679F50-850A-41CF-9C72-430F290290C8"),
+         System.Runtime.InteropServices.InterfaceType(System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIUnknown)]
+        interface IPolicyConfig
+        {
+            [System.Runtime.InteropServices.PreserveSig] int GetMixFormat(string id, IntPtr format);
+            [System.Runtime.InteropServices.PreserveSig] int GetDeviceFormat(string id, int def, IntPtr format);
+            [System.Runtime.InteropServices.PreserveSig] int ResetDeviceFormat(string id);
+            [System.Runtime.InteropServices.PreserveSig] int SetDeviceFormat(string id, IntPtr endpointFormat, IntPtr mixFormat);
+            [System.Runtime.InteropServices.PreserveSig] int GetProcessingPeriod(string id, int def, IntPtr defaultPeriod, IntPtr minPeriod);
+            [System.Runtime.InteropServices.PreserveSig] int SetProcessingPeriod(string id, IntPtr period);
+            [System.Runtime.InteropServices.PreserveSig] int GetShareMode(string id, IntPtr mode);
+            [System.Runtime.InteropServices.PreserveSig] int SetShareMode(string id, IntPtr mode);
+            [System.Runtime.InteropServices.PreserveSig] int GetPropertyValue(string id, IntPtr key, IntPtr value);
+            [System.Runtime.InteropServices.PreserveSig] int SetPropertyValue(string id, IntPtr key, IntPtr value);
+            [System.Runtime.InteropServices.PreserveSig] int SetDefaultEndpoint([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string id, int role);
+            [System.Runtime.InteropServices.PreserveSig] int SetEndpointVisibility(string id, int visible);
+        }
+    }
+
     class Tray : ApplicationContext
     {
         const int Port = 47610;
@@ -613,6 +960,7 @@ namespace PocketXr
             menu.Items.Add(state);
             menu.Items.Add(new ToolStripSeparator());
             menu.Items.Add("Start SteamVR now", null, (s, e) => Pc.StartSteamVr());
+            menu.Items.Add("Set up PC screens...", null, (s, e) => PcScreens.RunSetup());
             startWithWindows.Checked = Install.StartsWithWindows;
             startWithWindows.Click += (s, e) => { Install.SetStartWithWindows(!Install.StartsWithWindows); startWithWindows.Checked = Install.StartsWithWindows; };
             menu.Items.Add(startWithWindows);
@@ -628,6 +976,7 @@ namespace PocketXr
 
             new Thread(Discovery) { IsBackground = true, Name = "discovery" }.Start();
             new Thread(Requests) { IsBackground = true, Name = "requests" }.Start();
+            SoundKeeper.Start();
             Log.Line("listening on port " + Port);
             Balloon(Environment.GetCommandLineArgs().Contains("--installed")
                 ? "Installed. It starts with Windows, and Pocket XR can now start SteamVR from your phone."
@@ -703,6 +1052,16 @@ namespace PocketXr
             string op = Text(request, "op");
             if (op == "pair") return Pair(Text(request, "phone") ?? "A phone");
             if (!Phones.Known(Text(request, "token"))) return new Dictionary<string, object> { { "ok", false }, { "why", "not paired" } };
+            // PC screens.
+            if (op == "apollo-pin")
+            {
+                object port;
+                int p = request.TryGetValue("port", out port) ? Convert.ToInt32(port) : 47989;
+                object vd;
+                bool wantsVirtual = request.TryGetValue("virtual", out vd) && true.Equals(vd);
+                return Apollo.Pin(Text(request, "pin"), Text(request, "name") ?? "Pocket XR", p, wantsVirtual);
+            }
+            if (op == "screens-setup") return ScreensSetup(Text(request, "phone") ?? "A phone");
             bool steam = Pc.SteamExe != null;
             bool alvr = Streamer.Installed || Streamer.Matches(Pc.AlvrDir);
             if (op == "idr")
@@ -727,6 +1086,28 @@ namespace PocketXr
             };
         }
 
+        /// <summary>PC screens: asks the PC's user, then runs the setup (Windows then asks for admin rights).</summary>
+        Dictionary<string, object> ScreensSetup(string phone)
+        {
+            lock (pairGate)
+            {
+                var done = new ManualResetEvent(false);
+                bool yes = false;
+                ui.Post(_ =>
+                {
+                    using (var owner = new Form { TopMost = true, ShowInTaskbar = false })
+                    {
+                        yes = MessageBox.Show(owner, phone + " asks to set up PC screens on this PC: more screens from this PC in your glasses, and optionally use away from home.\n\nSet it up now? Windows asks for permission next.",
+                            Name, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+                    }
+                    done.Set();
+                }, null);
+                if (!done.WaitOne(TimeSpan.FromSeconds(120)) || !yes) return new Dictionary<string, object> { { "ok", false }, { "why", "not now" } };
+                PcScreens.RunSetup();
+                return new Dictionary<string, object> { { "ok", true } };
+            }
+        }
+
         /// <summary>Asks the PC's user once, on the tray's thread; one question at a time.</summary>
         Dictionary<string, object> Pair(string phone)
         {
@@ -738,7 +1119,7 @@ namespace PocketXr
                 {
                     using (var owner = new Form { TopMost = true, ShowInTaskbar = false })
                     {
-                        var answer = MessageBox.Show(owner, phone + " wants to start SteamVR on this PC for Pocket XR.\n\nAllow it?",
+                        var answer = MessageBox.Show(owner, phone + " wants to use this PC with Pocket XR (PC screens and PC VR).\n\nAllow it?",
                             Name, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                         allowed = answer == DialogResult.Yes;
                     }

@@ -19,8 +19,8 @@ android {
         resValue("string", "app_label", if (findProperty("pocketxr.dev") == "true") "Pocket XR Test" else "Pocket XR")
         minSdk = 30
         targetSdk = 36
-        versionCode = 185
-        versionName = "1.5.5"
+        versionCode = 186
+        versionName = "1.6.0"
         // The Flip 7 is arm64; MediaPipe's native code for other ABIs only adds size.
         ndk { abiFilters += "arm64-v8a" }
         // 1.5.2: Google Play requires every native library to load on 16 KB memory pages. NDK r27 still links with 4 KB
@@ -109,6 +109,8 @@ android {
     }
 
     packaging {
+        // PC screens: Bouncy Castle's three jars each carry the same licence files.
+        resources.excludes += setOf("META-INF/LICENSE.md", "META-INF/NOTICE.md", "META-INF/versions/9/OSGI-INF/MANIFEST.MF")
         jniLibs {
             // 0.5.43: our LiteRT build (jniLibs) over the AAR's; the dispatch is opened from the native library folder.
             pickFirsts += "**/libLiteRt.so"
@@ -136,6 +138,8 @@ android {
     sourceSets {
         getByName("main") {
             aidl.directories.add("../addon/src/main/aidl")
+            // PC screens: Moonlight's Java streaming code (GPLv3), kept apart from Pocket XR's own (src/moonlight/README.md).
+            java.directories.add("src/moonlight/java")
             // 1.1.14: the Samsung NPU parts (src/npu: the hand models, our LiteRT build and the Samsung dispatch) are not
             // in the public repository. For a GitHub release, tools/fetch-npu.sh copies them in from the private one
             // (docs/RELEASE.md). Play builds never take them; there, and when src/npu is absent, LiteRT is the AAR's and
@@ -178,6 +182,11 @@ dependencies {
     // 0.5.49: the release build's lint (InvalidFragmentVersionForActivityResult): a library brings an old Fragment, under
     // which registerForActivityResult's permission results can be lost; this one is new enough.
     implementation("androidx.fragment:fragment:1.9.1")
+    // PC screens: what Moonlight's stream code uses, at moonlight-android's versions: OkHttp for the host's HTTP API and
+    // Bouncy Castle for the client certificate that pairing makes.
+    implementation("com.squareup.okhttp3:okhttp:5.5.0")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.85.2")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.85")
 
     testImplementation(libs.junit)
     // 1.1.14: Send logs to Mike and the Head tracking switch, tested on Robolectric (app/src/test).

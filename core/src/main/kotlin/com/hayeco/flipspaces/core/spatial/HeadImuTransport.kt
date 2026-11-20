@@ -101,8 +101,8 @@ object HeadImuTransport {
         0x0431, 0x0432, // Air 2 Pro
         0x0427, 0x0428, // Air 2
         0x0425, 0x0426, // Air 2 Ultra
-        0x043F, 0x0440, // Helen
-        0x0441, 0x0442, // Helen Pro
+        0x043F, 0x0440, // Helen; 0x0440 is the XBX A01
+        0x0441, 0x0442, // Helen Pro; 0x0442 is the XBX A01+ (IMU on HID interface 1, [AirImuProtocol.imuInterface])
     )
 
     fun hasCdcNetwork(interfaces: List<UsbInterfaceInfo>): Boolean = interfaces.any { i ->

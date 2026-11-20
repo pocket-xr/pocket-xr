@@ -24,12 +24,17 @@ class FlipSpacesApp : Application() {
         com.hayeco.flipspaces.core.UiText.lookup = { key -> appString(key) }
         // 1.0.1: a crash is kept and offered the next time the app opens ([CrashCatcher]); first, so it catches the rest.
         CrashCatcher.install(this)
+        // The bundled font, in every process: a PC screen's page uses it too (Mike's glasses, 19 Nov 2026: it showed the
+        // phone's own font).
+        com.hayeco.flipspaces.ui.LookType.init(this)
+        // PC screens: a PC screen's own process (":pcscreen") only streams. The watchers, services and log file below
+        // belong to the main process, and a second copy would open the Space or write the log twice.
+        if (android.app.Application.getProcessName().substringAfter(':', "").startsWith("pcscreen")) return
         // 1.1.10: the open screens, so Exit Pocket XR can finish each one.
         AppExit.track(this)
         // 0.5.28: the app's own rotating log file, before anything logs.
         AppLogFile.start(this)
-        // 0.5.68: the bundled font, before the Space or the trackpad paints any text.
-        com.hayeco.flipspaces.ui.LookType.init(this)
+        // 0.5.68: the bundled font, before the Space or the trackpad paints any text: loaded above, for every process.
         GlassesAutoOpen.start(this)
         // 1.1.0: the add-on's pointer service and notification listener, when the add-on is installed.
         com.hayeco.flipspaces.platform.AddonLink.connect(this)

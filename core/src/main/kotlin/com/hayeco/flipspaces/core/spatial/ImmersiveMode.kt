@@ -120,6 +120,9 @@ class ImmersiveMode {
         const val CINEMA_M = 5.0f
         const val FIT = 0.88f
 
+        /** 1.6.0: how far a window's shape may be from the view's before Immersive gives it the view's shape. */
+        const val RESHAPE_RATIO = 1.2f
+
         /** The Aura's picture, degrees (vc57's log: 52.2 by 30.8), when the renderer does not pass its own. */
         const val VIEW_W_DEG = 52.2f
         const val VIEW_H_DEG = 30.8f
@@ -137,8 +140,15 @@ class ImmersiveMode {
          * fits with the buttons above and below it.
          */
         fun cinema(p: SpacePanel, gazeYaw: Float, gazePitch: Float, viewWDeg: Float = VIEW_W_DEG, viewHDeg: Float = VIEW_H_DEG, fixedView: Boolean = false): SpacePanel {
-            val aspect = p.heightM / p.widthM.coerceAtLeast(1e-3f)
+            val shapeAspect = p.heightM / p.widthM.coerceAtLeast(1e-3f)
             val d = CINEMA_M
+            // 1.6.0 (GitHub #118: Immersive left much of the view empty for a tall YouTube window): a window whose shape is
+            // far from the view's (more than [RESHAPE_RATIO] either way) takes the view's shape, so the app lays itself out
+            // to fill it; a window near it (a 16:9 video) keeps its own, so its picture is not letterboxed. Not in Steady
+            // mode, whose shape is the ultrawide row's.
+            val viewAspect = kotlin.math.tan(viewHDeg * DEG / 2f) / kotlin.math.tan(viewWDeg * DEG / 2f)
+            val ratio = shapeAspect / viewAspect.coerceAtLeast(1e-3f)
+            val aspect = if (!fixedView && (ratio > RESHAPE_RATIO || ratio < 1f / RESHAPE_RATIO)) viewAspect else shapeAspect
             val pitch = if (fixedView) gazePitch else (gazePitch * 0.3f).coerceIn(-6f, 6f)
             fun metres(deg: Float) = 2f * d * kotlin.math.tan(deg * DEG / 2f)
             fun fitted(roomM: Float): SpacePanel {

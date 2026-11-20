@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Pocket XR PC Screens
+Comment=Use this computer's screens on your phone and glasses with Pocket XR
+Exec=pocketxr-setup
+Icon=com.hayeco.pocketxr.PCScreens
+Categories=Network;RemoteAccess;
+Keywords=Pocket XR;PC screen;Sunshine;Moonlight;
+X-KDE-Wayland-Interfaces=zkde_screencast_unstable_v1

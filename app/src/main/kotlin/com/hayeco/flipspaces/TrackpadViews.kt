@@ -715,6 +715,12 @@ interface PadHost {
     /** 1.3.3: the focused window's name and shape, for the Shape row; null without one. */
     fun focusedShape(): Pair<String, Float>?
 
+    /** 1.6.0 (issue 119): the focused window's label and whether its app has Scroll by swiping on, or null with none focused. */
+    fun focusedSwipeScroll(): Pair<String, Boolean>?
+
+    /** 1.6.0 (issue 119): Scroll by swiping on or off for the focused window's app. */
+    fun swipeScrollChosen(on: Boolean)
+
     fun shapeChosen(ratio: Float)
 
     /** 1.3.3: Save settings to a file, and Restore settings from one. */
@@ -847,6 +853,10 @@ interface PadHost {
     fun textChanged(old: String, new: String)
     fun textEnter()
     fun typing(on: Boolean)
+
+    /** The shortcut row ([ShortcutKeys]): a plain key, or a modifier tapped. */
+    fun shortcutKey(keyCode: Int)
+    fun shortcutModifier(mod: ShortcutKeys.Mod)
 
     /** 0.5.19: a slide along a Curve key, [dyPx] screen pixels up since the last call. */
     fun curveSlide(dyPx: Float, phase: com.hayeco.flipspaces.core.pointer.Phase)
@@ -1156,6 +1166,31 @@ internal fun coverIcon(b: CoverButton): Int = when (b) {
  */
 @SuppressLint("ViewConstructor")
 internal class PadScreen(context: Context, private val host: PadHost) : ViewGroup(context) {
+    /**
+     * The keyboard's cover when the text field was last placed. The trackpad never hears of the keyboard through its own
+     * insets (phone test, 18 Nov 2026: the field stayed at the top with the keyboard up), so each drawn frame looks,
+     * and a change places the field again (keyboardCover). One comparison a frame while the field is open.
+     */
+    private var placedKeyboardCover = -1
+    private var lastKeyboardSeen = ""
+    private val keyboardWatch = android.view.ViewTreeObserver.OnPreDrawListener {
+        if (textOpen) {
+            val kb = keyboardCover()
+            if (kb != placedKeyboardCover) requestLayout()
+        }
+        true
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        viewTreeObserver.addOnPreDrawListener(keyboardWatch)
+    }
+
+    override fun onDetachedFromWindow() {
+        viewTreeObserver.removeOnPreDrawListener(keyboardWatch)
+        super.onDetachedFromWindow()
+    }
+
     private var settings = TrackpadSettings()
     private var cover = false
 
@@ -1498,6 +1533,49 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
 
     val textOpen: Boolean get() = textBar.visibility == View.VISIBLE
 
+    /**
+     * 19 Nov 2026 (PC screens roadmap): the shortcut row over the keyboard while typing ([ShortcutKeys]): Esc, Tab, the
+     * arrows and Del go at once; Ctrl, Alt, Shift and Win light up and hold for the next key, typed or from the row; a
+     * lit one tapped again goes on its own (Win alone: the Start menu).
+     */
+    private val modKeys = HashMap<ShortcutKeys.Mod, TextView>()
+    private fun shortcutChip(text: String, tap: () -> Unit) = context.padText(text, 15f, WHITE, bold = true).apply {
+        gravity = Gravity.CENTER
+        setPadding(context.dp(14f), 0, context.dp(14f), 0)
+        minWidth = context.dp(48f)
+        background = chipLook(false)
+        setOnClickListener { tap() }
+    }
+    private fun chipLook(lit: Boolean) = GradientDrawable().apply {
+        cornerRadius = context.dpf(10f)
+        setColor(if (lit) com.hayeco.flipspaces.core.Look.ACCENT else com.hayeco.flipspaces.core.Look.GLASS_RAISED or 0xFF000000.toInt())
+        setStroke(context.dp(1f), DIVIDER_33)
+    }
+    private val shortcutRow = android.widget.HorizontalScrollView(context).apply {
+        isHorizontalScrollBarEnabled = false
+        visibility = View.GONE
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            fun add(v: View) = addView(v, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT).apply { marginEnd = context.dp(6f) })
+            for (code in ShortcutKeys.PLAIN.take(2)) add(shortcutChip(ShortcutKeys.label(code)) { host.shortcutKey(code) })
+            for (m in ShortcutKeys.Mod.entries) add(shortcutChip(ShortcutKeys.label(m)) { host.shortcutModifier(m) }.also { modKeys[m] = it })
+            for (code in ShortcutKeys.PLAIN.drop(2)) add(shortcutChip(ShortcutKeys.label(code)) { host.shortcutKey(code) })
+        }, ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT))
+    }
+
+    /** The shortcut row's held modifiers, lit. */
+    fun showHeld(held: Set<ShortcutKeys.Mod>) {
+        for ((m, v) in modKeys) v.background = chipLook(m in held)
+    }
+
+    /** The field emptied without sending (its text went as shortcuts). */
+    fun clearTyped() {
+        textField.post {
+            typedSoFar = ""
+            textField.setText("")
+        }
+    }
+
     /** 1.2.3 (issue 59): Game keys, a cluster for each thumb ([GameKeysView]), on the open phone while on. */
     private val gameLeft = GameKeysView(context, com.hayeco.flipspaces.core.pointer.GameKeyLayout.LEFT) { host.gameKey(it) }.apply { visibility = View.GONE }
     private val gameRight = GameKeysView(context, com.hayeco.flipspaces.core.pointer.GameKeyLayout.RIGHT) { host.gameKey(it) }.apply { visibility = View.GONE }
@@ -1523,7 +1601,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         addView(gameRight)
         addView(padLeft)
         addView(padRight)
-        listOf(textBar, mask, popup, intro, dialog, drawerScrim, drawer, toast, lock).forEach { addView(it) }
+        listOf(textBar, shortcutRow, mask, popup, intro, dialog, drawerScrim, drawer, toast, lock).forEach { addView(it) }
         pressable(barBack, barBackIcon, R.drawable.ic_back, R.drawable.ic_back_pressed, R.drawable.left_black_gradient_bg_pressed, isHome = false)
         pressable(barHome, barHomeIcon, R.drawable.ic_home_new, R.drawable.ic_home_new_pressed, R.drawable.right_black_gradient_bg_pressed, isHome = true)
         pressable(sideBack, sideBackIcon, R.drawable.ic_back, R.drawable.ic_back_pressed, R.drawable.black_gradient_rounded_rect_pressed, isHome = false, restore = R.drawable.black_gradient_rounded_rect)
@@ -1675,6 +1753,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     fun showText(show: Boolean) {
         if (show == textOpen) return
         textBar.visibility = if (show) View.VISIBLE else View.GONE
+        shortcutRow.visibility = textBar.visibility
         for ((b, k) in coverKeys) k.visibility = if (cover && !show && coverShown(b)) View.VISIBLE else View.GONE
         host.typing(show)
         val ime = context.getSystemService(android.view.inputmethod.InputMethodManager::class.java)
@@ -1683,7 +1762,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             textField.setText("")
             textField.requestFocus()
             keyboardOnFocus = !textField.hasWindowFocus()
-            if (!keyboardOnFocus) textField.post { ime?.showSoftInput(textField, 0) }
+            if (!keyboardOnFocus) askKeyboard()
         } else {
             keyboardOnFocus = false
             ime?.hideSoftInputFromWindow(textField.windowToken, 0)
@@ -1697,9 +1776,45 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         if (!keyboardOnFocus || !textOpen) return
         keyboardOnFocus = false
         textField.requestFocus()
+        askKeyboard()
+    }
+
+    /**
+     * The keyboard for the open text field, asked for in two ways, and once more 300 ms later if it is not up: on the
+     * open Flip 7 the Keyboard button's field came up without its keyboard, and Mike had to tap the field (18 Nov 2026).
+     */
+    private fun askKeyboard(retry: Boolean = true) {
         textField.post {
-            context.getSystemService(android.view.inputmethod.InputMethodManager::class.java)?.showSoftInput(textField, 0)
+            if (!textOpen) return@post
+            textField.requestFocus()
+            context.getSystemService(android.view.inputmethod.InputMethodManager::class.java)?.showSoftInput(textField, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            textField.windowInsetsController?.show(android.view.WindowInsets.Type.ime())
+            if (retry) textField.postDelayed({
+                val up = textField.rootWindowInsets?.isVisible(android.view.WindowInsets.Type.ime()) == true
+                if (textOpen && !up) askKeyboard(retry = false)
+            }, 300)
         }
+    }
+
+    /** How much of this view the keyboard covers, from its bottom, in pixels (0 with no keyboard). */
+    private fun keyboardCover(): Int {
+        val insets = rootWindowInsets ?: return 0
+        var ime = insets.getInsets(android.view.WindowInsets.Type.ime()).bottom
+        if (ime <= 0 && insets.isVisible(android.view.WindowInsets.Type.ime())) {
+            // Insets without the keyboard's size: the part of the window it hides instead.
+            val r = android.graphics.Rect().also { getWindowVisibleDisplayFrame(it) }
+            ime = (rootView.height - r.bottom).coerceAtLeast(0)
+        }
+        val at = IntArray(2).also { getLocationInWindow(it) }
+        val belowView = (rootView.height - (at[1] + height)).coerceAtLeast(0)
+        val cover = if (ime <= 0) 0 else (ime - belowView).coerceIn(0, height)
+        // Phone test (18 Nov 2026: the field stayed at the top): what the keyboard's size was read as, on each change.
+        val seen = "ime $ime visible ${insets.isVisible(android.view.WindowInsets.Type.ime())} view y ${at[1]} h $height root ${rootView.height} cover $cover"
+        if (seen != lastKeyboardSeen) {
+            lastKeyboardSeen = seen
+            com.hayeco.flipspaces.Log.i("FlipSpaces/Trackpad", "keyboard field: $seen")
+        }
+        return cover
     }
 
     /** The gesture hint shows only while gestures are on (state 2). */
@@ -1759,7 +1874,8 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             if (textOpen) {
                 val m = dp(CoverLayoutMath.MARGIN)
                 put(textBar, m, m, w - 2 * m, dp(52f))
-                val top = m + dp(52f) + dp(CoverLayoutMath.GAP)
+                put(shortcutRow, m, m + dp(52f) + dp(6f), w - 2 * m, dp(40f))
+                val top = m + dp(52f) + dp(6f) + dp(40f) + dp(CoverLayoutMath.GAP)
                 put(pad, m, top, w - 2 * m, (h - top - m).coerceAtLeast(dp(48f)))
             } else {
                 at(pad, l.pad)
@@ -1844,7 +1960,17 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         val (hw, hh) = wrap(hint, w)
         // 0.5.82 (Mike: the launcher's "Search apps bar doesnt work"): on the open phone too the text field shows at the top,
         // over the selector, while typing into the Space (the cover's has its own place above).
-        if (!cover && textOpen) put(textBar, dp(20f), dp(12f), w - dp(40f), dp(52f))
+        // 18 Nov 2026 (Mike: the field "is placed terribly and way too far up"): just above the keyboard, where the
+        // eye is while typing; at the top only while the keyboard is not up.
+        if (!cover && textOpen) {
+            val kb = keyboardCover()
+            placedKeyboardCover = kb
+            // The shortcut row just above the keyboard, the field above it.
+            val rowTop = if (kb > 0) (h - kb - dp(8f) - dp(44f)).coerceAtLeast(dp(72f)) else dp(72f)
+            val top = if (kb > 0) rowTop - dp(8f) - dp(52f) else dp(12f)
+            put(textBar, dp(20f), top, w - dp(40f), dp(52f))
+            put(shortcutRow, dp(20f), rowTop, w - dp(40f), dp(44f))
+        }
         if (landscape) put(hint, w - dp(23f) - dp(20f) - hw, selectorBottom + dp(35f), hw, hh) else put(hint, (w - hw) / 2, selectorBottom + dp(35f), hw, hh)
         put(mask, 0, 0, w, h)
         put(drawerScrim, 0, 0, w, h)
@@ -2099,7 +2225,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
     /** What the open Menu's This window and Arrange were built from ([refreshDrawerForFocus]). */
     private var builtFor: Any? = null
 
-    private fun focusInputs(): Any = listOf(host.focusedTextSize(), host.focusedSideBySide(), host.windowCount(), host.textSizeBusy())
+    private fun focusInputs(): Any = listOf(host.focusedTextSize(), host.focusedSideBySide(), host.focusedSwipeScroll(), host.windowCount(), host.textSizeBusy())
 
     /**
      * 1.2.6 (Mike: the Menu "has become congested and feels like too much"): built from [TrackpadMenu], which picks the
@@ -2182,6 +2308,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
             shapeShown = host.focusedShape() != null,
             sideBySideShown = sideBySide != null,
             sideBySideOn = sideBySide?.second == true,
+            swipeScrollShown = host.focusedSwipeScroll() != null,
             windowCount = host.windowCount(),
             glassesKnown = host.glassesCheckAvailable(),
             airOffered = air,
@@ -2299,6 +2426,13 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                     closeDrawer()
                     host.sideBySideChosen(!on)
                 }.apply { tag = MENU_SIDE_BY_SIDE })
+            }.orEmpty()
+            // 1.6.0 (issue 119): Scroll by swiping for the focused window's app.
+            MenuItem.SWIPE_SCROLL -> host.focusedSwipeScroll()?.let { (label, on) ->
+                listOf(row(R.drawable.ic_scroll_right, onOff(c.getString(R.string.pad_swipe_scroll_in, label), on), tick = on, subtitle = c.getString(R.string.pad_swipe_scroll_subtitle)) {
+                    host.swipeScrollChosen(!on)
+                    postDelayed({ buildDrawer() }, SHAPE_REFRESH_MS)
+                }.apply { tag = MENU_SWIPE_SCROLL })
             }.orEmpty()
             // 1.2.3 (issue 58): 2D while moving, offered while the window shows Side by side 3D; off by default.
             MenuItem.SIDE_BY_SIDE_FLAT -> {
@@ -2508,6 +2642,10 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 closeDrawer()
                 host.openTour()
             }.apply { tag = MENU_TOUR })
+            MenuItem.WAKE_RELAY -> listOf(row(R.drawable.ic_pcvr_tile, c.getString(R.string.wake_relay_title), subtitle = c.getString(R.string.wake_relay_row_subtitle)) {
+                closeDrawer()
+                c.startActivity(android.content.Intent(c, com.hayeco.flipspaces.pcscreen.WakeRelayActivity::class.java))
+            })
             MenuItem.HOW_TO -> listOf(row(R.drawable.ic_usage_intro, c.getString(R.string.pad_how_to_use)) {
                 closeDrawer()
                 showIntro(host.introPages())
@@ -3409,6 +3547,7 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         const val TEXT_SIZE_BUSY_LABEL = "Resizing"
         const val TEXT_SIZE_BUSY_ALPHA = 0.4f
         const val MENU_SIDE_BY_SIDE = "menu:side-by-side"
+        const val MENU_SWIPE_SCROLL = "menu:swipe-scroll"
 
         /** 0.5.28: a toast with a one-tap action stays this long. */
         const val ACTION_TOAST_MS = 5000L

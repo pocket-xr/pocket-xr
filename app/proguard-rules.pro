@@ -36,3 +36,9 @@
 # MediaPipe's image embedder on LiteRT-LM and its graph profiler protos: not in its AAR, never used by Pocket XR.
 -dontwarn com.google.ai.edge.litertlm.**
 -dontwarn com.google.mediapipe.proto.**
+# PC screens: libmoonlight-core calls MoonBridge's static methods and reads its fields by name from C.
+-keep class com.limelight.nvstream.jni.** { *; }
+-keep class com.limelight.nvstream.av.** { *; }
+-dontwarn org.bouncycastle.**
+-dontwarn org.conscrypt.**
+-dontwarn org.openjsse.**

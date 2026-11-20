@@ -62,6 +62,11 @@ class AirTracking101Test {
         assertEquals(3, AirImuProtocol.imuInterface(0x0432))
         assertEquals(3, AirImuProtocol.imuInterface(0x0424))
         assertEquals(2, AirImuProtocol.imuInterface(0x0426))
+        // 1.6.0: the XBX A01 and A01+ stream on interface 1.
+        assertTrue(AirImuProtocol.isAir(0x3318, 0x0442))
+        assertEquals("XREAL XBX A01+", AirImuProtocol.modelName(0x0442))
+        assertEquals(1, AirImuProtocol.imuInterface(0x0442))
+        assertEquals(1, AirImuProtocol.imuInterface(0x0440))
         // The Aura and the One keep their network stream.
         assertFalse(AirImuProtocol.isAir(0x3318, GlassesModel.USB_AURA))
         assertFalse(AirImuProtocol.isAir(0x3318, GlassesModel.USB_ONE))

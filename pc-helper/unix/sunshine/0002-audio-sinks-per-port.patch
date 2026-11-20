@@ -1,0 +1,46 @@
+From 6bff8759f03654a04c2c443bc43e171e5a5720a2 Mon Sep 17 00:00:00 2001
+From: Pocket XR <noreply@hayeco.invalid>
+Date: Fri, 20 Nov 2026 02:42:49 -0500
+Subject: [PATCH] Linux audio: own null sinks for a Sunshine on another port
+
+Sunshines on ports other than the default name their null sinks sink-sunshine-<kind>-<port>.
+Before, every Sunshine on one computer found and used the same sinks, and the first whose
+session ended unloaded them, cutting the others' sound.
+---
+ src/platform/linux/audio.cpp | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/src/platform/linux/audio.cpp b/src/platform/linux/audio.cpp
+index fe246bf..4f2414a 100644
+--- a/src/platform/linux/audio.cpp
++++ b/src/platform/linux/audio.cpp
+@@ -4,6 +4,7 @@
+  */
+ // standard includes
+ #include <bitset>
++#include <format>
+ #include <sstream>
+ #include <thread>
+ 
+@@ -424,9 +425,15 @@ namespace platf {
+        * @return Host and virtual sink names when the backend can report them.
+        */
+       std::optional<sink_t> sink_info() override {
+-        constexpr auto stereo = "sink-sunshine-stereo";
+-        constexpr auto surround51 = "sink-sunshine-surround51";
+-        constexpr auto surround71 = "sink-sunshine-surround71";
++        // Sunshines on other ports than the default get sinks of their own, so several can stream side by side:
++        // each unloads its sinks when its last session ends, which would cut another Sunshine's sound.
++        const auto suffix = config::sunshine.port == 47989 ? std::string {} : std::format("-{}", config::sunshine.port);
++        const auto stereo_name = "sink-sunshine-stereo" + suffix;
++        const auto surround51_name = "sink-sunshine-surround51" + suffix;
++        const auto surround71_name = "sink-sunshine-surround71" + suffix;
++        const auto *stereo = stereo_name.c_str();
++        const auto *surround51 = surround51_name.c_str();
++        const auto *surround71 = surround71_name.c_str();
+ 
+         auto alarm = safe::make_alarm<int>();
+ 
+-- 
+2.43.0
+

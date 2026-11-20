@@ -163,6 +163,10 @@
     <string name="pad_shape_of">%1$s 的形狀</string>
     <string name="pad_side_by_side_in">%1$s 中的左右並排 3D</string>
     <string name="pad_side_by_side_subtitle">適用於分成左右兩半的影片，每隻眼睛各看一半。</string>
+    <string name="pad_swipe_scroll_in">在 %1$s 中滑動捲動</string>
+    <string name="pad_swipe_scroll_subtitle">捲動時用手指在應用程式上拖曳，適用於影片子母畫面或切換分頁等滑動手勢。</string>
+    <string name="space_swipe_scroll_on">滑動捲動已開啟</string>
+    <string name="space_swipe_scroll_off">滑動捲動已關閉</string>
     <string name="pad_tracking">追蹤</string>
     <string name="pad_adjust_all_windows">一起調整所有視窗</string>
     <string name="pad_presets_empty_with_windows">儲存目前開啟的視窗，之後輕觸一下就能全部重新開啟，每個都在原來的位置。</string>
