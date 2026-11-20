@@ -84,6 +84,7 @@
     <string name="pc_screen_connecting">Verbinde mit %1$s</string>
     <string name="pc_screen_connect_failed">Verbindung fehlgeschlagen: %1$s</string>
     <string name="pc_screen_stage">Starte %1$s</string>
+    <string name="pc_screen_no_picture">Der Computer ist verbunden, sendet aber kein Bild. Auf einem Mac erlaube Pocket XR unter Systemeinstellungen › Datenschutz &amp; Sicherheit › Bildschirm- &amp; Systemaudioaufnahme und tippe dann auf „Verbinden“.</string>
     <string name="pc_screen_ended">Der Stream wurde beendet (%1$d).</string>
     <string name="pc_screen_disconnected">Getrennt. Tippe auf Verbinden, um zurückzukehren, oder tippe auf einen anderen Computer.</string>
     <string name="pc_screen_helper_typing">Auf %1$s erlaubt. Die PIN wird für dich eingegeben, das kann ein paar Sekunden dauern…</string>

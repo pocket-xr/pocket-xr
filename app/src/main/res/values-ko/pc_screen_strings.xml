@@ -84,6 +84,7 @@
     <string name="pc_screen_connecting">%1$s에 연결하는 중</string>
     <string name="pc_screen_connect_failed">연결할 수 없음: %1$s</string>
     <string name="pc_screen_stage">%1$s 시작하는 중</string>
+    <string name="pc_screen_no_picture">컴퓨터에 연결했지만 화면이 전송되지 않습니다. Mac이라면 시스템 설정 › 개인정보 보호 및 보안 › 화면 및 시스템 오디오 녹음에서 Pocket XR을 허용한 다음 연결을 탭하세요.</string>
     <string name="pc_screen_ended">스트리밍이 끝났어요 (%1$d).</string>
     <string name="pc_screen_disconnected">연결이 끊어졌습니다. 돌아가려면 연결을 탭하거나 다른 컴퓨터를 탭하세요.</string>
     <string name="pc_screen_helper_typing">%1$s에서 허용되었습니다. PIN을 입력하는 중이며 몇 초 걸릴 수 있습니다…</string>

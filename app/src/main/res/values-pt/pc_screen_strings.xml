@@ -84,6 +84,7 @@
     <string name="pc_screen_connecting">Conectando a %1$s</string>
     <string name="pc_screen_connect_failed">Não foi possível conectar: %1$s</string>
     <string name="pc_screen_stage">Iniciando %1$s</string>
+    <string name="pc_screen_no_picture">O computador ligou-se mas não envia imagem. Num Mac, permita o Pocket XR em Definições do Sistema › Privacidade e segurança › Gravação de ecrã e áudio do sistema e toque em «Ligar».</string>
     <string name="pc_screen_ended">A transmissão terminou (%1$d).</string>
     <string name="pc_screen_disconnected">Desligado. Toque em Ligar para voltar ou toque noutro computador.</string>
     <string name="pc_screen_helper_typing">Permitido em %1$s. A introduzir o PIN por si, pode demorar alguns segundos…</string>

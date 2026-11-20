@@ -84,6 +84,7 @@
     <string name="pc_screen_connecting">正在连接 %1$s</string>
     <string name="pc_screen_connect_failed">无法连接：%1$s</string>
     <string name="pc_screen_stage">正在启动 %1$s</string>
+    <string name="pc_screen_no_picture">电脑已连接，但没有发送画面。如果是 Mac，请在“系统设置 › 隐私与安全性”的“录屏与系统录音”中允许 Pocket XR，然后点按“连接”。</string>
     <string name="pc_screen_ended">串流已结束（%1$d）。</string>
     <string name="pc_screen_disconnected">已断开连接。点按“连接”返回，或点按另一台电脑。</string>
     <string name="pc_screen_helper_typing">已在 %1$s 上允许。正在为你输入 PIN，可能需要几秒钟…</string>

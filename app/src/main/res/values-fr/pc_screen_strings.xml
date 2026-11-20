@@ -84,6 +84,7 @@
     <string name="pc_screen_connecting">Connexion à %1$s</string>
     <string name="pc_screen_connect_failed">Connexion impossible : %1$s</string>
     <string name="pc_screen_stage">Démarrage de %1$s</string>
+    <string name="pc_screen_no_picture">L\'ordinateur est connecté mais n\'envoie aucune image. Sur un Mac, autorisez Pocket XR dans Réglages Système › Confidentialité et sécurité › Enregistrement de l\'écran et de l\'audio système, puis touchez « Connecter ».</string>
     <string name="pc_screen_ended">La diffusion s\'est arrêtée (%1$d).</string>
     <string name="pc_screen_disconnected">Déconnecté. Touchez Se connecter pour revenir, ou touchez un autre ordinateur.</string>
     <string name="pc_screen_helper_typing">Autorisé sur %1$s. Saisie du code PIN pour vous, cela peut prendre quelques secondes…</string>

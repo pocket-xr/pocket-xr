@@ -84,6 +84,7 @@
     <string name="pc_screen_connecting">Connessione a %1$s</string>
     <string name="pc_screen_connect_failed">Impossibile connettersi: %1$s</string>
     <string name="pc_screen_stage">Avvio di %1$s</string>
+    <string name="pc_screen_no_picture">Il computer è connesso ma non invia immagini. Su un Mac, consenti Pocket XR in Impostazioni di Sistema › Privacy e sicurezza › Registrazione schermo e audio di sistema, poi tocca «Connetti».</string>
     <string name="pc_screen_ended">La trasmissione è terminata (%1$d).</string>
     <string name="pc_screen_disconnected">Disconnesso. Tocca Connetti per tornare indietro o tocca un altro computer.</string>
     <string name="pc_screen_helper_typing">Consentito su %1$s. Inserimento del PIN per te, può richiedere qualche secondo…</string>

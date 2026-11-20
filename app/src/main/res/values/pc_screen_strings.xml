@@ -85,6 +85,7 @@
     <string name="pc_screen_connecting">Connecting to %1$s</string>
     <string name="pc_screen_connect_failed">Could not connect: %1$s</string>
     <string name="pc_screen_stage">Starting %1$s</string>
+    <string name="pc_screen_no_picture">The computer connected but sent no picture. On a Mac, allow Pocket XR under Screen &amp; System Audio Recording in System Settings › Privacy &amp; Security, then tap Connect.</string>
     <string name="pc_screen_ended">The stream ended (%1$d).</string>
     <string name="pc_screen_disconnected">Disconnected. Tap Connect to go back, or tap another computer.</string>
     <string name="pc_screen_helper_typing">Allowed on %1$s. Typing the PIN for you, this can take a few seconds…</string>

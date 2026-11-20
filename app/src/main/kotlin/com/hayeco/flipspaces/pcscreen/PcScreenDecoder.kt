@@ -27,12 +27,39 @@ import java.io.ByteArrayOutputStream
  * moonlight-common-c calls [submitDecodeUnit] once per NAL group. An IDR comes as its parameter sets (SPS, PPS and,
  * for HEVC, VPS) then its picture. The sets are gathered and queued as one codec config buffer before the picture.
  */
-class PcScreenDecoder(private val surface: Surface, private val fullRange: Boolean = false) : VideoDecoderRenderer() {
+class PcScreenDecoder(private var surface: Surface, private val fullRange: Boolean = false) : VideoDecoderRenderer() {
     /** The stream's numbers once a second, for the stats overlay; null with it off. Called on the decoder's threads. */
     @Volatile var onStats: ((String) -> Unit)? = null
 
+    /**
+     * Decoded pictures are put on the surface. Off while the stream is held for the Space coming back
+     * ([PcScreenParked]): the pictures are still decoded, so the next one shown needs no key frame, but nothing is
+     * drawn on the stand-in surface, which has no reader.
+     */
+    @Volatile var showing = true
+
+    /** Whether the pictures go to [s] now. */
+    fun isOn(s: Surface): Boolean = surface === s
+
+    /**
+     * The pictures go to [s] from now on, the stream and the decoder kept (MediaCodec.setOutputSurface). False when the
+     * decoder is not set up yet or refuses; the caller then starts the stream again as before.
+     */
+    fun retarget(s: Surface): Boolean {
+        val c = codec ?: return false
+        return try {
+            c.setOutputSurface(s)
+            surface = s
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "decoder: could not move to another surface: $e")
+            false
+        }
+    }
+
     private var codec: MediaCodec? = null
     private var output: Thread? = null
+    private var lastOutputWarnMs = 0L
     @Volatile private var running = false
     private val config = ByteArrayOutputStream()
     private var mime = MediaFormat.MIMETYPE_VIDEO_AVC
@@ -122,14 +149,26 @@ class PcScreenDecoder(private val surface: Surface, private val fullRange: Boole
                     dropped++
                     index = next
                 }
+                if (!showing) {
+                    c.releaseOutputBuffer(index, false)
+                    dropped++
+                    continue
+                }
                 c.releaseOutputBuffer(index, true)
                 shown++
                 stats.decode((System.nanoTime() / 1000 - info.presentationTimeUs) / 1000.0)
                 stats.maybeLog()
                 stats.maybeStats(onStats)
             } catch (e: IllegalStateException) {
-                if (running) Log.w(TAG, "output: $e")
-                break
+                if (!running) break
+                // The surface went under it (the Space closing before the stream is moved off): keep draining, so the
+                // pictures carry on once it has a surface again ([retarget]). At most one line a second.
+                val now = android.os.SystemClock.uptimeMillis()
+                if (now - lastOutputWarnMs > 1000) {
+                    lastOutputWarnMs = now
+                    Log.w(TAG, "output: $e")
+                }
+                try { Thread.sleep(10) } catch (_: InterruptedException) { break }
             }
         }
     }

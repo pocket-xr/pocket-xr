@@ -84,6 +84,7 @@
     <string name="pc_screen_connecting">Подключение к %1$s</string>
     <string name="pc_screen_connect_failed">Не удалось подключиться: %1$s</string>
     <string name="pc_screen_stage">Запуск: %1$s</string>
+    <string name="pc_screen_no_picture">Компьютер подключён, но не передаёт изображение. На Mac разрешите Pocket XR в разделе «Системные настройки › Конфиденциальность и безопасность › Запись экрана и системного звука», затем нажмите «Подключить».</string>
     <string name="pc_screen_ended">Трансляция завершена (%1$d).</string>
     <string name="pc_screen_disconnected">Отключено. Нажмите «Подключить», чтобы вернуться, или выберите другой компьютер.</string>
     <string name="pc_screen_helper_typing">Разрешено на %1$s. PIN вводится автоматически, это может занять несколько секунд…</string>

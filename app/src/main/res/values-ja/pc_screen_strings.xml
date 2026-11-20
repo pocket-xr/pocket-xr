@@ -84,6 +84,7 @@
     <string name="pc_screen_connecting">%1$s に接続しています</string>
     <string name="pc_screen_connect_failed">接続できませんでした: %1$s</string>
     <string name="pc_screen_stage">%1$s を開始しています</string>
+    <string name="pc_screen_no_picture">コンピュータに接続しましたが、映像が送られてきません。Mac の場合は「システム設定 › プライバシーとセキュリティ › 画面収録とシステムオーディオ録音」で Pocket XR を許可してから「接続」をタップしてください。</string>
     <string name="pc_screen_ended">ストリーミングが終了しました (%1$d)。</string>
     <string name="pc_screen_disconnected">切断しました。戻るには［接続］をタップするか、別のコンピュータをタップしてください。</string>
     <string name="pc_screen_helper_typing">%1$s で許可されました。PIN を入力しています。数秒かかることがあります…</string>

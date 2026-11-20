@@ -69,6 +69,12 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
 
     private var connection: NvConnection? = null
     private var decoder: PcScreenDecoder? = null
+
+    /** The connection's listener, which passes its calls to this window; a held stream's comes with it ([adopt]). */
+    private var listener = PcScreenListener()
+
+    /** A held stream was taken over and its pictures are not yet on this window's surface ([moveDecoder]). */
+    private var adoptedPending = false
     @Volatile private var streaming = false
     private var heldButton: Byte = 0
 
@@ -126,6 +132,10 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                     // session ends with it ([endSession]), not moved onto this window.
                     Log.i(TAG, "the Space's surface was taken back: ending the session")
                     endSession()
+                } else if (connection != null && PcScreenSurfaces.current?.isValid == true &&
+                    moveDecoder(PcScreenSurfaces.current!!, "the Space's new surface")
+                ) {
+                    // The picture moved onto it, the stream kept.
                 } else if (connection != null && surface.holder.surface.isValid) {
                     Log.i(TAG, "the Space's surface changed: starting the stream again")
                     stopStream()
@@ -141,8 +151,60 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) { back() }
         }
-        // Paired before: straight to the PC's screen, nothing to tap.
-        if (store.paired && savedInstanceState == null) connect()
+        listener.target = this
+        // A stream held while the Space reopened (the glasses switching 2D and 3D): carried on here, no reconnect.
+        // Else, paired before: straight to the PC's screen, nothing to tap.
+        val held = PcScreenParked.take()
+        if (held != null) adopt(held)
+        else if (store.paired && savedInstanceState == null) connect()
+    }
+
+    /** Takes over a held stream ([PcScreenParked]) as if this window had started it. Main thread. */
+    private fun adopt(s: PcScreenParked.Stream) {
+        connection = s.connection
+        decoder = s.decoder
+        listener = s.listener
+        listener.target = this
+        activeAddress = s.activeAddress
+        relativeMouse = s.relativeMouse
+        mouseFactor = s.mouseFactor
+        placeOnEnter = s.placeOnEnter
+        streamW = s.streamW
+        streamH = s.streamH
+        shapedToWindow = s.shapedToWindow
+        wantStream = true
+        sessionStarted = true
+        streaming = true
+        adoptedPending = true
+        surface.visibility = View.VISIBLE
+        setup.visibility = View.GONE
+        Log.i(TAG, "the Space came back: carrying on the held stream, no reconnect")
+        PcScreenSurfaces.current?.takeIf { it.isValid }?.let { moveDecoder(it, "the Space's panel") }
+        startClipboard()
+    }
+
+    /**
+     * The pictures onto [target], the stream kept. If the decoder cannot move, the stream starts again on this window,
+     * as before (a fresh session). Returns whether it moved. Main thread.
+     */
+    private fun moveDecoder(target: android.view.Surface, what: String): Boolean {
+        val d = decoder ?: return false
+        if (!d.retarget(target)) {
+            if (adoptedPending) {
+                Log.i(TAG, "held stream: the decoder could not move onto $what: starting the stream again")
+                adoptedPending = false
+                d.showing = true
+                PcScreenParked.releaseStandIn()
+                stopStream()
+                connect()
+            }
+            return false
+        }
+        d.showing = true
+        if (adoptedPending) PcScreenParked.releaseStandIn()
+        adoptedPending = false
+        Log.i(TAG, "the picture moved onto $what, the stream kept")
+        return true
     }
 
     /** The PCs found on the Wi-Fi, each a button; one already used by another PC screen says which. */
@@ -380,7 +442,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
             addView(foundTitle)
             foundList = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
             addView(foundList)
-            connectButton = kit.primary(getString(R.string.pc_screen_connect)) { connect() }
+            connectButton = kit.primary(getString(R.string.pc_screen_connect)) { noPictureEnds = 0; connect() }
             addView(connectButton, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = kit.dp(12f) })
             // Setting the PC up, and away from home.
             addView(kit.section(getString(R.string.pc_screen_section_setup)))
@@ -574,11 +636,19 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     override fun surfaceCreated(holder: SurfaceHolder) = Unit
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        // A held stream with no Space panel surface yet: onto this window meanwhile (the panel's, when it comes, takes it).
+        if (adoptedPending && PcScreenSurfaces.current?.isValid != true) {
+            moveDecoder(holder.surface, "this window")
+            return
+        }
         if (connection != null || starting || surface.visibility != View.VISIBLE) return
         startStream(holder, width, height)
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
+        // Pictures going into the Space's panel do not need this window's surface: the stream carries on (and is held
+        // if the window itself goes, [park]). Only a stream drawing on this window stops with it.
+        if (decoder?.isOn(holder.surface) == false) return
         stopStream()
     }
 
@@ -634,6 +704,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         val home = store.address
         val cert = store.serverCert ?: return
         starting = true
+        hostMessage = null
         val gen = ++generation
         // The stream's size: 1920 x 1080. The phone test (18 Nov 2026) asked for the panel's shape, 1976 x 1080, while
         // Apollo captured a 1920 x 1080 desktop: the host stretched it and the phone shrank it again, a little soft.
@@ -766,7 +837,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 connection = NvConnection(applicationContext, tuple(address), store.httpsPort, store.uniqueId, config, crypto, cert)
                     .also {
                         // One PC screen plays the PC's sound: the latest one Apollo sends it to ([PcScreenAudio]).
-                        it.start(PcScreenAudio(applicationContext, slot, AndroidAudioRenderer(applicationContext, false), muted = store.sound != "glasses"), d, this)
+                        it.start(PcScreenAudio(applicationContext, slot, AndroidAudioRenderer(applicationContext, false), muted = store.sound != "glasses"), d, listener)
                     }
             } catch (e: Exception) {
                 Log.w(TAG, "connect: $e")
@@ -1102,8 +1173,42 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         finder.stop()
         relayFinder.stop()
         PcScreenSurfaces.listener = null
-        endSession()
+        if (!park()) endSession()
         super.onDestroy()
+    }
+
+    /**
+     * The window going while it streams, not by the user's hand (Back, the panel closed and the glasses unplugged each
+     * end the session first): the Space reopening for the glasses' new display. The stream is held for the next window
+     * ([PcScreenParked]) instead of ended. False when there is nothing to hold.
+     */
+    private fun park(): Boolean {
+        val c = connection ?: return false
+        val d = decoder ?: return false
+        if (!streaming) return false
+        val cert = store.serverCert ?: return false
+        val address = tuple(activeAddress ?: store.address)
+        val port = store.httpsPort
+        val id = store.uniqueId
+        val crypto = crypto
+        val end = {
+            Thread({
+                runCatching { c.stop() }
+                val r = runCatching { NvHTTP(address, port, id, cert, crypto).quitApp() }
+                Log.i(TAG, "session ended on the PC: ${r.exceptionOrNull() ?: r.getOrNull()}")
+                main.post { PcScreenParked.releaseStandIn() }
+            }, "PcScreen-quit").start()
+        }
+        val held = PcScreenParked.Stream(c, d, listener, activeAddress, relativeMouse, mouseFactor, placeOnEnter, streamW, streamH, shapedToWindow, end)
+        if (!PcScreenParked.park(held)) return false
+        runCatching { gamepad.releaseAll() }
+        clip?.stop()
+        clip = null
+        connection = null
+        decoder = null
+        streaming = false
+        Log.i(TAG, "window closing while streaming: holding the stream ${PcScreenParked.HOLD_MS / 1000} s for the Space to come back")
+        return true
     }
 
     // NvConnectionListener
@@ -1111,6 +1216,21 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     override fun stageComplete(stage: String) = Unit
     override fun stageFailed(stage: String, portFlags: Int, errorCode: Int) {
         Log.w(TAG, "stage $stage failed: ports $portFlags, error $errorCode")
+        // The computer refused the launch and said why (Pocket XR for Mac without Screen Recording: "Pocket XR on the Mac
+        // is not allowed to record its screen yet. ..."): say that and stop, rather than retry every 10 s (Mike's phone,
+        // 20 Nov 2026, 12:24 on).
+        val why = hostMessage?.let { refusalText(it) }
+        if (portFlags == 0 && errorCode == 503 && why != null) {
+            Log.i(TAG, "the computer refused the launch: $why")
+            main.post {
+                wantStream = false
+                lostAtMs = 0
+                attempt = 0
+                main.removeCallbacks(reconnect)
+            }
+            showSetup(why)
+            return
+        }
         val kind = PcScreenTrouble.ofCode(errorCode)
         if (wantStream && kind.canRetry()) main.post { lost("stage $stage failed ($errorCode)") }
         else showSetup(trouble(kind, getString(R.string.pc_screen_connect_failed, "$stage ($errorCode)")))
@@ -1128,14 +1248,7 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     override fun connectionStarted() {
         streaming = true
         sessionStarted = true
-        if (store.clipboard) main.post {
-            val address = activeAddress ?: store.address
-            val cert = store.serverCert
-            clip?.stop()
-            if (cert != null) clip = PcScreenClipboard(this) {
-                NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto)
-            }.also { it.start(); it.phoneToPc() }
-        }
+        main.post { startClipboard() }
         main.post {
             setup.visibility = View.GONE
             if (lostAtMs > 0) Log.i(TAG, "reconnect: back after ${(android.os.SystemClock.uptimeMillis() - lostAtMs) / 1000} s, try $attempt")
@@ -1144,14 +1257,62 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         }
         Log.i(TAG, "streaming")
     }
+    /** The clipboard shared with the PC while streaming, when on ([PcScreenClipboard]). Main thread. */
+    private fun startClipboard() {
+        if (!store.clipboard) return
+        val address = activeAddress ?: store.address
+        val cert = store.serverCert ?: return
+        clip?.stop()
+        clip = PcScreenClipboard(this) {
+            NvHTTP(tuple(address), store.httpsPort, store.uniqueId, cert, crypto)
+        }.also { it.start(); it.phoneToPc() }
+    }
+
+    /**
+     * Streams in a row that connected but ended with no picture shown. A Mac without Screen Recording allowed for Pocket
+     * XR sends none: the phone resumed again and again, and the Mac's virtual screen came and went each time (Mike's Air,
+     * 20 Nov 2026, 12:01 to 12:08: "ended -100" every 30 s).
+     */
+    private var noPictureEnds = 0
+
     override fun connectionTerminated(errorCode: Int) {
         Log.i(TAG, "ended: $errorCode, ${decoder?.shown ?: 0} shown, ${decoder?.dropped ?: 0} dropped")
+        val noPicture = (errorCode == MoonBridge.ML_ERROR_NO_VIDEO_TRAFFIC || errorCode == MoonBridge.ML_ERROR_NO_VIDEO_FRAME) &&
+            (decoder?.shown ?: 0L) == 0L
+        if (!noPicture) noPictureEnds = 0
+        else if (++noPictureEnds >= NO_PICTURE_TRIES) {
+            Log.i(TAG, "no picture from the computer $noPictureEnds times in a row: stopping and saying what to check")
+            noPictureEnds = 0
+            main.post {
+                endSession(force = true)
+                surface.visibility = View.GONE
+                setup.visibility = View.VISIBLE
+                say(getString(R.string.pc_screen_no_picture))
+            }
+            return
+        }
         // Ended by the PC on purpose (0): say so. Lost (Wi-Fi, sleep, no video): reconnect.
         if (errorCode != MoonBridge.ML_ERROR_GRACEFUL_TERMINATION) main.post { lost("ended $errorCode") }
         else showSetup(getString(R.string.pc_screen_ended, errorCode))
     }
     override fun connectionStatusUpdate(connectionStatus: Int) = Unit
-    override fun displayMessage(message: String) = say(message)
+    /** The last message the connection passed on (a refused launch's reason comes this way, just before [stageFailed]). */
+    @Volatile private var hostMessage: String? = null
+
+    override fun displayMessage(message: String) {
+        hostMessage = message
+        say(message)
+    }
+
+    /**
+     * The computer's own words from Moonlight's "Host PC returned error: <words> (Error code: 503)"; null when it gave
+     * none worth showing (a bare code, or Moonlight's generic text).
+     */
+    private fun refusalText(message: String): String? {
+        val m = Regex("""^Host PC returned error: (.*) \(Error code: -?\d+\)$""", RegexOption.DOT_MATCHES_ALL).find(message.trim()) ?: return null
+        val words = m.groupValues[1].trim()
+        return words.takeIf { it.length > 12 && it.any { c -> c == ' ' } && !it.equals("null", ignoreCase = true) }
+    }
     override fun displayTransientMessage(message: String) = Unit
     override fun rumble(controllerNumber: Short, lowFreqMotor: Short, highFreqMotor: Short) = Unit
     override fun rumbleTriggers(controllerNumber: Short, leftTrigger: Short, rightTrigger: Short) = Unit
@@ -1162,6 +1323,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
     private companion object {
         const val BASE_TAG = "PcScreen"
         const val VK_LWIN: Short = 0x5b
+
+        /** Streams in a row with no picture before the phone stops trying ([noPictureEnds]). */
+        const val NO_PICTURE_TRIES = 2
 
         /** Apollo's permission bits a PC screen needs: launch apps (0x4000000), mouse (0x800) and keyboard (0x1000). */
         const val PERMS_NEEDED = 0x4000000L or 0x800L or 0x1000L
