@@ -2,11 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## 1.6.2 (unreleased)
+## 1.6.2: simpler hands, Android 15 fix
 
 - **Hand aim calibration removed.** Pointing at dots and pinching to calibrate your hands is gone, from the Hands
   screen and from the Space, which no longer offers it the first time it sees your hands. The launcher gives that
   tile's place back to your apps. A calibration you saved with an older version is no longer used.
+- **Android 15 and later:** stopping hand tracking no longer reaches the camera service from code that starts with the
+  phone, which Google Play flagged as a possible crash after a restart. Hands still start, stop from their notification
+  and close with Exit as before.
 
 ## 1.6.1: Immersive and swipe fixes
 
