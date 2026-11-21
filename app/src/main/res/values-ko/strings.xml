@@ -672,6 +672,8 @@
     <string name="home_screen_size_2d">2D에서 글래스 화면 크기: %1$.0f %%(%2$.1f × %3$.1f도)</string>
     <string name="home_screen_size_3d">3D 모드에서: %1$.0f %%(%2$.1f × %3$.1f도)</string>
     <string name="home_screen_size_help" formatted="false">글래스 자체 메뉴의 디스플레이 크기와 같게 맞추세요. 전체 화면을 보려면 글래스와 여기 모두 디스플레이 크기를 100 %로 설정하세요. 130 %는 패널보다 넓어서 가장자리가 잘려요. 3D 크기는 글래스 워프가 켜져 있으면 글래스 자체 로그에서 읽어 와요.</string>
+    <string name="home_readability">가독성</string>
+    <string name="home_readability_help">모든 창의 글자를 크게 합니다(3분의 1 더 크게). 1080p 안경용. 창 크기는 그대로이며, 끄면 모든 창이 원래대로 돌아갑니다.</string>
     <string name="home_stereo">3D: 실제 깊이에 창 배치</string>
     <string name="home_stereo_help">켜짐: 각 눈에 서로 다른 화면을 보여 줘서 창이 실제 거리에 있는 것처럼 보여요. 꺼짐: 양쪽 눈에 같은 화면을 보여 줘서 가장 안정적이에요. 런처의 3D / 2D 버튼으로도 전환할 수 있어요. 3D용 눈 사이 거리: %1$.0f mm</string>
     <string name="home_window_glow_percent">창 빛: %1$d %%</string>

@@ -672,6 +672,8 @@
     <string name="home_screen_size_2d">2D 模式的眼鏡螢幕大小：%1$.0f %% (%2$.1f × %3$.1f 度)</string>
     <string name="home_screen_size_3d">3D 模式：%1$.0f %% (%2$.1f × %3$.1f 度)</string>
     <string name="home_screen_size_help" formatted="false">請設為與眼鏡本身的「顯示大小」(眼鏡選單中) 相同。如要完整視野，請在眼鏡和這裡都將顯示大小設為 100 %；130 % 比眼鏡面板更寬，邊緣會被裁切。只要「眼鏡畫面校正」開啟，就會從眼鏡本身的記錄讀取 3D 大小。</string>
+    <string name="home_readability">易讀模式</string>
+    <string name="home_readability_help">所有視窗中的文字更大（大三分之一），適用於 1080p 眼鏡。視窗大小不變；關閉後每個視窗恢復原狀。</string>
     <string name="home_stereo">3D：視窗呈現真實深度</string>
     <string name="home_stereo_help">開啟：每隻眼睛看到各自的畫面，視窗會位於各自的距離。關閉：兩眼看到相同的畫面，最穩定。啟動器中的 3D / 2D 按鈕也能切換。3D 眼距：%1$.0f mm</string>
     <string name="home_window_glow_percent">視窗光暈：%1$d %%</string>

@@ -672,6 +672,8 @@
     <string name="home_screen_size_2d">2D でのグラスの画面サイズ: %1$.0f %%（%2$.1f × %3$.1f 度）</string>
     <string name="home_screen_size_3d">3D モードでは: %1$.0f %%（%2$.1f × %3$.1f 度）</string>
     <string name="home_screen_size_help" formatted="false">グラス本体の「表示サイズ」（グラスのメニュー）に合わせてください。全体を表示するには、グラスとここの両方で表示サイズを 100 % にします。130 % はグラスのパネルより広く、端が切れます。3D のサイズは、グラスのワープがオンのときにグラスのログから読み取ります。</string>
+    <string name="home_readability">読みやすさ</string>
+    <string name="home_readability_help">すべてのウィンドウの文字を大きくします（3分の1大きく）。1080pのグラス向け。ウィンドウのサイズは変わらず、オフにすると各ウィンドウは元に戻ります。</string>
     <string name="home_stereo">3D: ウィンドウを実際の奥行きで表示</string>
     <string name="home_stereo_help">オン: 左右の目に別々の映像を表示し、ウィンドウが本来の距離に見えます。オフ: 両目に同じ映像を表示し、最も安定します。ランチャーの 3D / 2D ボタンでも切り替えられます。3D の目の間隔: %1$.0f mm</string>
     <string name="home_window_glow_percent">ウィンドウの光: %1$d %%</string>
