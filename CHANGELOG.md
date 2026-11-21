@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## 1.6.3 (unreleased)
+## 1.6.3: DeX cursor and notifications on Google Play
 
 - **Google Play version: the DeX cursor and the Notifications page work without a second app.** The Pocket XR add-on
   was never on Google Play, so in the Play version "Get the add-on" led nowhere and neither could be used. The Play
