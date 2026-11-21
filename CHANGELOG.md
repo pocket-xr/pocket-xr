@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.1: Immersive and swipe fixes
+
+- **Immersive** now fills about 90 % of your view with a small margin all round, and sits at the window's own height
+  rather than where your head pointed when you pressed the button. Thanks to thejoeba for the One Pro logs.
+- **Scroll by swiping** works for YouTube's mini player: a swipe down on the video shrinks it, and a swipe up on the
+  mini player brings it back. The finger now waits until it knows which way you're swiping, starts with room to travel,
+  and keeps straight. In Immersive, YouTube shows its full screen player, which has no mini player swipe. Thanks to
+  thejoeba again.
+
 ## 1.6.0: PC screens
 
 - **PC screens:** your computer's screens in the glasses, up to three at once from a Windows PC, a Mac or a Linux
