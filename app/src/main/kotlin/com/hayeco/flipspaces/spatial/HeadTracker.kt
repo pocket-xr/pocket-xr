@@ -816,6 +816,32 @@ object HeadTracker {
     /** The open VITURE link, for the axis switches; null with none open. */
     @Volatile private var vitureLink: VitureImuLink? = null
 
+    /**
+     * 1.6.5: which HID interface of the VITURE glasses the reader opens next (an index into
+     * [VitureImuLink.hidInterfaces]). After a round in which it read nothing, the next round tries the next HID interface
+     * ([com.hayeco.flipspaces.core.spatial.VitureInterfaceChoice]); other glasses start again from the first.
+     */
+    @Volatile private var vitureInterfaceIndex = 0
+    @Volatile private var vitureInterfaceDevice: String? = null
+
+    private fun vitureInterfaceFor(device: android.hardware.usb.UsbDevice): Int {
+        val key = "%04X:%04X".format(java.util.Locale.ROOT, device.vendorId, device.productId)
+        if (key != vitureInterfaceDevice) {
+            vitureInterfaceDevice = key
+            vitureInterfaceIndex = 0
+        }
+        return vitureInterfaceIndex
+    }
+
+    private fun vitureInterfaceAfter(device: android.hardware.usb.UsbDevice, bytes: Long) {
+        val hids = VitureImuLink.hidInterfaces(device)
+        val next = com.hayeco.flipspaces.core.spatial.VitureInterfaceChoice.next(vitureInterfaceIndex, hids.size, bytes)
+        if (next != vitureInterfaceIndex) {
+            Log.i(TAG, "head tracking: HID interface ${hids.getOrNull(vitureInterfaceIndex)?.id} of ${VitureImuLink.glassesName(device)} sent nothing; the next try opens HID interface ${hids.getOrNull(next)?.id} (${next + 1} of ${hids.size})")
+        }
+        vitureInterfaceIndex = next
+    }
+
     /** Closes the open VITURE link (the stop, its answer, the interface released) and marks it closed. Reader thread. */
     private fun closeViture() {
         val link = synchronized(vitureReconnect) {
@@ -981,10 +1007,12 @@ object HeadTracker {
             VitureReconnect.Step.OPEN -> Unit
         }
         val link = try {
-            VitureImuLink.open(context, device, axes, READ_TIMEOUT_MS)
+            VitureImuLink.open(context, device, axes, READ_TIMEOUT_MS, vitureInterfaceFor(device))
         } catch (e: Exception) {
             if (Thread.currentThread().isInterrupted) return false
             val error = "${e.javaClass.simpleName}: ${e.message}"
+            // 1.6.5: an interface that would not open or start counts as silent, so the next try is the next one.
+            if (VitureImuLink.manager(context).hasPermission(device)) vitureInterfaceAfter(device, 0)
             val delay = backoff.nextDelayMs()
             report(HeadTrackingStatus.UsbFailed(name, error))
             _attempts.value = listOf("$name over USB HID (experimental VITURE reader): $error")
@@ -1010,6 +1038,7 @@ object HeadTracker {
             _route.value = null
         }
         Log.i(TAG, "head tracking stream over ${link.label} ended after ${(SystemClock.elapsedRealtime() - opened) / 1000.0} s: ${_status.value.summary}; ${link.clockLine}; ${link.counts}")
+        vitureInterfaceAfter(device, link.counts.bytes)
         if (Thread.currentThread().isInterrupted) return false
         if (streamed) backoff.reset()
         val delay = backoff.nextDelayMs()

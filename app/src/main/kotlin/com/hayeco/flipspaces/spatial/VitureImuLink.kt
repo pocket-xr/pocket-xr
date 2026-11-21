@@ -122,14 +122,16 @@ class VitureImuLink private constructor(
             (0 until device.interfaceCount).map { device.getInterface(it) }.filter { it.interfaceClass == UsbConstants.USB_CLASS_HID && inEndpoint(it) != null }
 
         /**
-         * Opens the first HID interface that has an OUT path and starts the raw stream; throws [IOException] with what
-         * went wrong. 1.2.10: USB access is checked first, a link still open is waited for (and closed if it does not let
-         * go), and the start is sent after reading what the glasses hold.
+         * Opens a HID interface ([interfaceIndex] among those with an interrupt IN endpoint) and starts the raw stream;
+         * throws [IOException] with what went wrong. 1.2.10: USB access is checked first, a link still open is waited for
+         * (and closed if it does not let go), and the start is sent after reading what the glasses hold. 1.6.5: not always
+         * the first HID interface ([com.hayeco.flipspaces.core.spatial.VitureInterfaceChoice]).
          */
-        fun open(context: Context, device: UsbDevice, axes: VitureAxes, readTimeoutMs: Int): VitureImuLink {
+        fun open(context: Context, device: UsbDevice, axes: VitureAxes, readTimeoutMs: Int, interfaceIndex: Int = 0): VitureImuLink {
             val manager = manager(context)
             if (!manager.hasPermission(device)) throw IOException("no USB permission for ${glassesName(device)}")
-            val intf = hidInterfaces(device).firstOrNull()
+            val hids = hidInterfaces(device)
+            val intf = hids.getOrNull(com.hayeco.flipspaces.core.spatial.VitureInterfaceChoice.valid(interfaceIndex, hids.size))
                 ?: throw IOException("no HID interface with an interrupt IN endpoint; Android lists: " + com.hayeco.flipspaces.hands.GlassesUsbAccess.interfaces(device).replace('\n', ';'))
             if (!gate.tryAcquire(HANDOVER_MS, TimeUnit.MILLISECONDS)) {
                 current?.close()

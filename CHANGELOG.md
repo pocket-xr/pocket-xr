@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+- **VITURE glasses with more than one HID interface:** the experimental VITURE reader no longer tries only the first.
+  When an interface sends nothing (or won't start), the next try opens the next one, and an interface that sends
+  anything is kept. A VITURE Luma XR (35CA:1131) sent nothing on its first of two. Untested on a Luma: which of its
+  interfaces carries its motion is not yet known. Thanks to Crr66 for the logs.
+
 ## 1.6.4: Readability
 
 - **Readability.** A new switch in Pocket XR's Space settings, off by default, for larger text on 1080p glasses. When
