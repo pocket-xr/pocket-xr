@@ -85,7 +85,10 @@ android {
             // hooks. Signed with the same debug key as every build so far, so it installs over them; the debug-only
             // tools (src/debug: DebugReceiver, the hand replays, the NPU self test) are not in it. 0.5.98: an official
             // release is signed with the release key instead (above).
-            signingConfig = signingConfigs.getByName(if (play) "play" else if (official) "official" else "debug")
+            // 1.6.3: -Ppocketxr.playTest=true with both -Ppocketxr.play=true and -Ppocketxr.official=true signs a Play-shaped
+            // copy with the release key, so it installs over Mike's own Pocket XR for a test. Never uploaded to Play.
+            val playTest = (findProperty("pocketxr.playTest") as String?) == "true"
+            signingConfig = signingConfigs.getByName(if (play && !(playTest && official)) "play" else if (official) "official" else "debug")
         }
         debug {
             // Debug builds also run on an x86_64 Android emulator (docs/EMULATOR_TESTING.md).
@@ -134,10 +137,11 @@ android {
         unitTests.isIncludeAndroidResources = true
     }
 
-    // 1.1.0: the add-on's link (IAddon, IAddonCallback) is compiled into both apps from the add-on's one copy.
+    // 1.1.0: the add-on's link (IAddon, IAddonCallback) is compiled into both apps from the add-on's one copy. 1.6.3: in the
+    // Play build it comes with the add-on's services from :addon-play instead (below), so there is still one copy.
     sourceSets {
         getByName("main") {
-            aidl.directories.add("../addon/src/main/aidl")
+            if (!play) aidl.directories.add("../addon/src/main/aidl")
             // PC screens: Moonlight's Java streaming code (GPLv3), kept apart from Pocket XR's own (src/moonlight/README.md).
             java.directories.add("src/moonlight/java")
             // 1.1.14: the Samsung NPU parts (src/npu: the hand models, our LiteRT build and the Samsung dispatch) are not
@@ -152,11 +156,20 @@ android {
         // 1.2.1: REQUEST_INSTALL_PACKAGES for the add-on's one-tap install, in every release but Google Play's (debug
         // builds declare it in src/debug).
         if (!play) getByName("release").manifest.srcFile("src/selfinstall/AndroidManifest.xml")
+        // 1.6.3: the Play build carries the add-on's services itself (:addon-play), so its words for them say "turn on",
+        // never "install the add-on" (src/play/res, every language). On the build types, so they win over main's.
+        if (play) {
+            getByName("debug").res.directories.add("src/play/res")
+            getByName("release").res.directories.add("src/play/res")
+        }
     }
 }
 
 dependencies {
     implementation(project(":core"))
+    // 1.6.3 (Google Play): the add-on's pointer service, notification listener, link and setup screen, built from the
+    // add-on's own files (addon-play/build.gradle.kts; the module exists only in the Play build, settings.gradle.kts).
+    if ((findProperty("pocketxr.play") as String?) == "true") implementation(project(":addon-play"))
 
     // OpenXR: the Java side of Monado, built from the pocket-xr branch of our Monado fork (docs/OPENXR.md).
     implementation(files("libs/monado/monado-ipc.aar", "libs/monado/monado-auxiliary.aar"))

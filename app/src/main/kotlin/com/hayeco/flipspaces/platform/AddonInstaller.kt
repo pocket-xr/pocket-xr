@@ -184,8 +184,15 @@ object AddonInstaller {
             .onFailure { Log.i(TAG, "the notification access page did not open: ${it.message}") }
     }
 
-    /** The add-on releases page, or the add-on's Play page for a copy from Google Play. */
+    /**
+     * The add-on releases page, or the add-on's Play page for a copy from Google Play. 1.6.3: the Play build has the
+     * add-on's services built in, so there is nothing to get: it opens their setup instead.
+     */
     fun openReleases(context: Context) {
+        if (AddonLink.BUILT_IN) {
+            openSetup(context)
+            return
+        }
         val url = if (selfInstall(context)) AddonSetup.RELEASES_PAGE else AddonLink.PLAY_URL
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
             .onFailure { Log.i(TAG, "no browser for $url: ${it.message}") }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3: the Google Play build only (app/build.gradle.kts adds src/play/res there, over main's). The Play build carries
+     the add-on's services itself (addon-play), so these say "turn on" where main's strings say "install the add-on" or
+     name the add-on as a second app. Same keys as main's (and the add-on's core_disclosure_notes_title), in every language. -->
+<resources>
+    <string name="hands_pointer_why">Вне Пространства руки и трекпад достают до очков через службу специальных возможностей. Это единственный способ, которым Android позволяет обычному приложению действовать в окнах других приложений. Она:</string>
+    <string name="hands_addon_app_info">Сведения о приложении</string>
+    <string name="sys_pointer_install_addon">Включите службу указателя Pocket XR, чтобы нажимать в очках.</string>
+    <string name="sys_pointer_prompt_text">%1$s: нажимать кнопку полноэкранного режима DeX может только служба специальных возможностей «Указатель Pocket XR». Нажмите, чтобы узнать, что она делает, и включить её.</string>
+    <string name="core_addon_what">Pocket XR может показывать уведомления телефона в очках, а также указатель вне Пространства. И то и другое необязательно.</string>
+    <string name="core_addon_note">Необязательно. Можно пропустить и включить позже.</string>
+    <string name="core_addon_setup">Открыть настройку</string>
+    <string name="core_addon_access_on">Уведомления включены.</string>
+    <string name="core_addon_access_off">Включите доступ к уведомлениям, чтобы видеть их в очках.</string>
+    <string name="tour_addon">Уведомления телефона в очках</string>
+    <string name="core_disclosure_notes_title">Pocket XR использует доступ к уведомлениям</string>
+</resources>

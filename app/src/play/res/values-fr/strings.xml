@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3: the Google Play build only (app/build.gradle.kts adds src/play/res there, over main's). The Play build carries
+     the add-on's services itself (addon-play), so these say "turn on" where main's strings say "install the add-on" or
+     name the add-on as a second app. Same keys as main's (and the add-on's core_disclosure_notes_title), in every language. -->
+<resources>
+    <string name="hands_pointer_why">En dehors de l\'Espace, les mains et le pavé tactile atteignent les lunettes via un service d\'accessibilité. C\'est le seul moyen qu\'Android laisse à une app ordinaire pour agir sur les fenêtres d\'autres apps. Il :</string>
+    <string name="hands_addon_app_info">Infos sur l\'application</string>
+    <string name="sys_pointer_install_addon">Activez le service de pointeur de Pocket XR pour cliquer sur les lunettes.</string>
+    <string name="sys_pointer_prompt_text">%1$s : seul le service d\'accessibilité du pointeur Pocket XR peut appuyer sur le bouton plein écran de DeX. Touchez pour lire ce qu\'il fait et l\'activer.</string>
+    <string name="core_addon_what">Pocket XR peut afficher les notifications de votre téléphone dans les lunettes, ainsi que le pointeur en dehors de l\'Espace. Les deux sont facultatifs.</string>
+    <string name="core_addon_note">Facultatif. Vous pouvez l\'ignorer et l\'activer plus tard.</string>
+    <string name="core_addon_setup">Ouvrir la configuration</string>
+    <string name="core_addon_access_on">Les notifications sont activées.</string>
+    <string name="core_addon_access_off">Activez l\'accès aux notifications pour les voir dans les lunettes.</string>
+    <string name="tour_addon">Les notifications du téléphone dans vos lunettes</string>
+    <string name="core_disclosure_notes_title">Pocket XR utilise l\'accès aux notifications</string>
+</resources>

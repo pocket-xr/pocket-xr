@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3: the Google Play build only (app/build.gradle.kts adds src/play/res there, over main's). The Play build carries
+     the add-on's services itself (addon-play), so these say "turn on" where main's strings say "install the add-on" or
+     name the add-on as a second app. Same keys as main's (and the add-on's core_disclosure_notes_title), in every language. -->
+<resources>
+    <string name="hands_pointer_why">在空间之外，手部和触控板通过一项无障碍服务操作眼镜。这是 Android 允许普通应用操作其他应用窗口的唯一方式。它会：</string>
+    <string name="hands_addon_app_info">应用信息</string>
+    <string name="sys_pointer_install_addon">请开启 Pocket XR 指针服务，才能在眼镜上点击。</string>
+    <string name="sys_pointer_prompt_text">%1$s：只有 Pocket XR 指针无障碍服务才能按下 DeX 的全屏按钮。点按即可了解它的作用并开启。</string>
+    <string name="core_addon_what">Pocket XR 可以在眼镜中显示手机通知，并在空间之外提供指针。两者都是可选的。</string>
+    <string name="core_addon_note">可选。你可以跳过，以后再开启。</string>
+    <string name="core_addon_setup">打开设置</string>
+    <string name="core_addon_access_on">通知已开启。</string>
+    <string name="core_addon_access_off">开启通知访问权限即可在眼镜中查看通知。</string>
+    <string name="tour_addon">在眼镜中查看手机通知</string>
+    <string name="core_disclosure_notes_title">Pocket XR 使用通知访问权限</string>
+</resources>

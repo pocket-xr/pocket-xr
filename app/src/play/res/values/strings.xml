@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3: the Google Play build only (app/build.gradle.kts adds src/play/res there, over main's). The Play build carries
+     the add-on's services itself (addon-play), so these say "turn on" where main's strings say "install the add-on" or
+     name the add-on as a second app. Same keys as main's (and the add-on's core_disclosure_notes_title), in every language. -->
+<resources>
+    <string name="hands_pointer_why">Outside the Space, hands and the trackpad reach the glasses through an accessibility service. It is the only way Android lets an ordinary app act on other apps\' windows. It:</string>
+    <string name="hands_addon_app_info">App info</string>
+    <string name="sys_pointer_install_addon">Turn on the Pocket XR pointer service to click on the glasses.</string>
+    <string name="sys_pointer_prompt_text">%1$s: only the Pocket XR pointer accessibility service may press DeX\'s full screen button. Tap to read what it does and turn it on.</string>
+    <string name="core_addon_what">Pocket XR can show your phone\'s notifications in the glasses, and the pointer outside the Space. Both are optional.</string>
+    <string name="core_addon_note">Optional. Skip it if you like, and turn it on later.</string>
+    <string name="core_addon_setup">Open setup</string>
+    <string name="core_addon_access_on">Notifications are on.</string>
+    <string name="core_addon_access_off">Turn on notification access to see them in the glasses.</string>
+    <string name="tour_addon">Phone notifications in your glasses</string>
+    <string name="core_disclosure_notes_title">Pocket XR uses notification access</string>
+</resources>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3 (Google Play): the add-on's services and setup screen, merged into Pocket XR's own manifest in the Play build only
+     (addon-play/build.gradle.kts). As addon/src/main/AndroidManifest.xml, except:
+     - SetupActivity is not a launcher entry: Pocket XR opens it at one disclosure, as it opens the add-on's. It stays
+       exported so the Settings link in Android's Accessibility page (xml/pointer_service) can open it.
+     - LinkService is not exported: Pocket XR binds it in its own process. The ADDON_LINK permission is Pocket XR's own
+       (app/src/main/AndroidManifest.xml) and is not declared here again.
+     - No launcher <queries>: Pocket XR's manifest has the same one. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!-- The disclosure and consent before either service below is switched on. -->
+        <activity
+            android:name="com.hayeco.flipspaces.addon.SetupActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
+
+        <!-- What Pocket XR binds, in its own process: the calls into the two services below. -->
+        <service
+            android:name="com.hayeco.flipspaces.addon.LinkService"
+            android:exported="false" />
+
+        <!-- Draws the cursor on the glasses, reads where windows are there and performs taps
+             and drags on that display, for Pocket XR. -->
+        <service
+            android:name="com.hayeco.flipspaces.addon.PointerAccess"
+            android:exported="true"
+            android:label="@string/pointer_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/pointer_service" />
+        </service>
+
+        <!-- The Space's Notifications page and which apps play media; Android binds it once notification access is on. -->
+        <service
+            android:name="com.hayeco.flipspaces.addon.NotesListener"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

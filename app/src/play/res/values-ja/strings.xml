@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3: the Google Play build only (app/build.gradle.kts adds src/play/res there, over main's). The Play build carries
+     the add-on's services itself (addon-play), so these say "turn on" where main's strings say "install the add-on" or
+     name the add-on as a second app. Same keys as main's (and the add-on's core_disclosure_notes_title), in every language. -->
+<resources>
+    <string name="hands_pointer_why">スペースの外では、ハンドとトラックパッドはユーザー補助サービスを通じてグラスを操作します。Android で通常のアプリがほかのアプリのウィンドウを操作できる唯一の方法です。このサービスは:</string>
+    <string name="hands_addon_app_info">アプリ情報</string>
+    <string name="sys_pointer_install_addon">グラスでクリックするには、Pocket XR のポインターサービスをオンにしてください。</string>
+    <string name="sys_pointer_prompt_text">%1$s: DeX の全画面ボタンを押せるのは Pocket XR ポインターのユーザー補助サービスだけです。タップすると、機能の説明を読んでオンにできます。</string>
+    <string name="core_addon_what">Pocket XR では、スマホの通知をグラスに表示し、スペースの外でもポインターを使えます。どちらも任意です。</string>
+    <string name="core_addon_note">任意です。スキップして、後からオンにすることもできます。</string>
+    <string name="core_addon_setup">設定を開く</string>
+    <string name="core_addon_access_on">通知はオンです。</string>
+    <string name="core_addon_access_off">グラスで通知を見るには、通知へのアクセスをオンにしてください。</string>
+    <string name="tour_addon">スマホの通知をグラスで</string>
+    <string name="core_disclosure_notes_title">Pocket XR は通知へのアクセスを使用します</string>
+</resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3: the Google Play build only (app/build.gradle.kts adds src/play/res there, over main's). The Play build carries
+     the add-on's services itself (addon-play), so these say "turn on" where main's strings say "install the add-on" or
+     name the add-on as a second app. Same keys as main's (and the add-on's core_disclosure_notes_title), in every language. -->
+<resources>
+    <string name="hands_pointer_why">在空間之外，手部和觸控板是透過無障礙服務操作眼鏡上的內容。這是 Android 唯一允許一般應用程式操作其他應用程式視窗的方式。它會：</string>
+    <string name="hands_addon_app_info">應用程式資訊</string>
+    <string name="sys_pointer_install_addon">請開啟 Pocket XR 指標服務，才能在眼鏡上點擊。</string>
+    <string name="sys_pointer_prompt_text">%1$s：只有 Pocket XR 指標無障礙服務可以按下 DeX 的全螢幕按鈕。輕觸即可了解它的功能並開啟。</string>
+    <string name="core_addon_what">Pocket XR 可以在眼鏡中顯示手機通知，並在空間之外提供指標。兩者都是選用的。</string>
+    <string name="core_addon_note">選用。你可以略過，之後再開啟。</string>
+    <string name="core_addon_setup">開啟設定</string>
+    <string name="core_addon_access_on">通知已開啟。</string>
+    <string name="core_addon_access_off">開啟通知存取權，就能在眼鏡中查看通知。</string>
+    <string name="tour_addon">在眼鏡中顯示手機通知</string>
+    <string name="core_disclosure_notes_title">Pocket XR 使用通知存取權</string>
+</resources>
