@@ -281,7 +281,13 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
      * back for the apps with Scroll by swiping on ([swipePanels]), from two fingers, the strip and Spatial Mouse's one
      * finger scroll alike; [moved] once it went past [SWIPE_SLOP], so a drag too short to be a swipe never lands as a tap.
      */
-    private data class PadScrolling(val panelId: Int, val u0: Float, val v0: Float, var u: Float, var v: Float, var moved: Boolean = false) : Grab
+    private data class PadScrolling(val panelId: Int, val u0: Float, val v0: Float, var u: Float, var v: Float, var moved: Boolean = false) : Grab {
+        /** 1.6.1: the finger is down (it waits for the swipe's direction), the axis it keeps to (1 across, 2 up and down), and where it went down. */
+        var down = false
+        var axis = 0
+        var su = u0
+        var sv = v0
+    }
 
     /**
      * 0.5.41 (Mike: "two finger scroll on the trackpad doesn't work well"): the two finger scroll as the window's smooth
@@ -1704,7 +1710,6 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
     private fun swipeDown(hit: PanelHit, out: MutableList<SpaceAction>): PadScrolling {
         out += SpaceAction.Focus(hit.panel.id)
         liftThrow(hit.panel.id, out)
-        out += SpaceAction.Touch(hit.panel.id, TouchPhase.DOWN, hit.u, hit.v)
         out += SpaceAction.Note("scroll on window ${hit.panel.id} ${hit.panel.label} as a swipe (Scroll by swiping)")
         return PadScrolling(hit.panel.id, hit.u, hit.v, hit.u, hit.v)
     }
@@ -1714,16 +1719,39 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
      * since the start), kept on the window. It lifts at the end, or is cancelled when it never went past [SWIPE_SLOP].
      */
     private fun swipeMove(g: PadScrolling, dx: Float, dy: Float, phase: Phase, out: MutableList<SpaceAction>) {
-        g.u = (g.u0 + dx * SCROLL_DRAG).coerceIn(0f, 1f)
-        g.v = (g.v0 - dy * SCROLL_DRAG).coerceIn(0f, 1f)
-        if (abs(g.u - g.u0) > SWIPE_SLOP || abs(g.v - g.v0) > SWIPE_SLOP) g.moved = true
-        val touch = when {
-            phase != Phase.END -> TouchPhase.MOVE
-            g.moved -> TouchPhase.UP
-            else -> TouchPhase.CANCEL
+        val du = dx * SWIPE_DRAG
+        val dv = -dy * SWIPE_DRAG
+        if (!g.down) {
+            // 1.6.1 (the YouTube test: each swipe started at the cursor, 74 % down the video, and hit the bottom edge a
+            // quarter of the way, drifting sideways): the finger goes down once the swipe has a direction, with room to
+            // travel (a [SWIPE_START] share in from the edge it moves away from), and keeps to that one axis.
+            if (abs(du) <= SWIPE_SLOP && abs(dv) <= SWIPE_SLOP) {
+                if (phase == Phase.END) {
+                    out += SpaceAction.Note("swipe on window ${g.panelId}: too short to be a swipe, nothing sent")
+                    main.grab = null
+                }
+                return
+            }
+            g.axis = if (abs(dv) >= abs(du)) 2 else 1
+            if (g.axis == 2) {
+                g.su = g.u0
+                g.sv = if (dv > 0) SWIPE_START else 1f - SWIPE_START
+            } else {
+                g.sv = g.v0
+                g.su = if (du > 0) SWIPE_START else 1f - SWIPE_START
+            }
+            out += SpaceAction.Touch(g.panelId, TouchPhase.DOWN, g.su, g.sv)
+            g.down = true
+            g.moved = true
         }
+        g.u = if (g.axis == 1) (g.su + du).coerceIn(0f, 1f) else g.su
+        g.v = if (g.axis == 2) (g.sv + dv).coerceIn(0f, 1f) else g.sv
+        val touch = if (phase != Phase.END) TouchPhase.MOVE else TouchPhase.UP
         out += SpaceAction.Touch(g.panelId, touch, g.u, g.v)
-        if (phase == Phase.END) main.grab = null
+        if (phase == Phase.END) {
+            out += SpaceAction.Note("swipe on window ${g.panelId} ended as ${touch.name.lowercase()}: ${if (g.axis == 2) "up and down" else "across"}, from %.2f,%.2f to %.2f,%.2f of the window".fmt(g.su, g.sv, g.u, g.v))
+            main.grab = null
+        }
     }
 
     private fun stripWheel(s: PadSignal.Scroll, head: Quat, layout: SpaceLayout, out: MutableList<SpaceAction>) {
@@ -2386,7 +2414,7 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
                 endStretch(latest, out, commit = stretch != null && latest.panel(g.panelId) != null)
             }
             is Scrolling -> out += SpaceAction.Touch(g.panelId, TouchPhase.CANCEL, g.u, g.v)
-            is PadScrolling -> out += SpaceAction.Touch(g.panelId, if (cancel) TouchPhase.CANCEL else TouchPhase.UP, g.u, g.v)
+            is PadScrolling -> if (g.down) out += SpaceAction.Touch(g.panelId, if (cancel) TouchPhase.CANCEL else TouchPhase.UP, g.u, g.v)
             // 0.5.21: a wheel has nothing held down to let go of.
             is PadWheeling -> Unit
             is PadWheelScroll -> out += SpaceAction.Wheel(g.panelId, g.u, g.v, g.x, g.y, Phase.END, smooth = true)
@@ -2619,6 +2647,16 @@ private fun String.fmt(vararg args: Any?) = String.format(java.util.Locale.ROOT,
 
 /** 0.5.17: a trackpad scroll drags the touch 1.5 panel sizes a pad unit, tuned on the phone and glasses. */
 const val SCROLL_DRAG = 1.5f
+
+/**
+ * 1.6.1 (issue 119: YouTube's player moved "down about 1/3rd of the screen and nothing else happens"): a Scroll by swiping
+ * drag goes 3 window sizes a pad unit, twice [SCROLL_DRAG], so an ordinary two finger swipe drags past the half way that
+ * YouTube needs to shrink or grow its player.
+ */
+const val SWIPE_DRAG = 3.0f
+
+/** 1.6.1: where a Scroll by swiping finger goes down, this share of the window in from the edge it moves away from. */
+const val SWIPE_START = 0.2f
 
 /** 1.6.0 (issue 119): a Scroll by swiping drag shorter than this share of the window lifts as a cancel, never a tap. */
 const val SWIPE_SLOP = 0.02f

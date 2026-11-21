@@ -118,7 +118,10 @@ class ImmersiveMode {
         // 0.5.38 (Mike: "the screen is too close. it needs to fit well within the user's FoV so the edges aren't cut off"):
         // 0.5.37's 66 deg at 3 m was wider than the glasses' 52 deg view. Now further, and inside [FIT] of the view each way.
         const val CINEMA_M = 5.0f
-        const val FIT = 0.88f
+        // 1.6.1 (issue 118, an XREAL One Pro's logs: a 16:9 YouTube window filled only 88 % of the view, with visible room
+        // round it): more of the view. 0.96 reached the very edges on Mike's Aura (he had to turn his head a little to see
+        // them), and 0.92 still left no margin; 0.90 nearly fills it with a small margin all round.
+        const val FIT = 0.90f
 
         /** 1.6.0: how far a window's shape may be from the view's before Immersive gives it the view's shape. */
         const val RESHAPE_RATIO = 1.2f
@@ -149,7 +152,9 @@ class ImmersiveMode {
             val viewAspect = kotlin.math.tan(viewHDeg * DEG / 2f) / kotlin.math.tan(viewWDeg * DEG / 2f)
             val ratio = shapeAspect / viewAspect.coerceAtLeast(1e-3f)
             val aspect = if (!fixedView && (ratio > RESHAPE_RATIO || ratio < 1f / RESHAPE_RATIO)) viewAspect else shapeAspect
-            val pitch = if (fixedView) gazePitch else (gazePitch * 0.3f).coerceIn(-6f, 6f)
+            // 1.6.1: at the window's own height, not the head's tilt while pressing the button below it (the One Pro's log: pressed
+            // looking down at pitch -25, so the screen sat low and left room above). Lying back, the window is up there too.
+            val pitch = if (fixedView) gazePitch else p.pitchDeg
             fun metres(deg: Float) = 2f * d * kotlin.math.tan(deg * DEG / 2f)
             fun fitted(roomM: Float): SpacePanel {
                 var wM = metres(FIT * viewWDeg)
