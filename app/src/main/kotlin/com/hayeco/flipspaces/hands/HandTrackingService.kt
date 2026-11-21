@@ -24,6 +24,7 @@ class HandTrackingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         // 0.4.2: a running foreground service keeps the plug-in watcher alive too.
         GlassesAutoOpen.start(this)
     }
@@ -44,11 +45,18 @@ class HandTrackingService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        if (stopRequested) {
+            // A stop came between startForegroundService and here: in the foreground once (Android's rule), then end.
+            android.util.Log.i("FlipSpacesHands", "hand tracking stopped before it began")
+            stopSelf()
+            return START_NOT_STICKY
+        }
         GlassesCameraProvider.start(this)
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
+        if (instance === this) instance = null
         GlassesCameraProvider.stop()
         super.onDestroy()
     }
@@ -88,12 +96,24 @@ class HandTrackingService : Service() {
                 android.util.Log.i("FlipSpacesHands", "hand tracking not started: no Pocket XR screen is showing, and Android lets the camera service start only from one")
                 return false
             }
+            stopRequested = false
             context.startForegroundService(Intent(context, HandTrackingService::class.java))
             return true
         }
 
+        /** The running service, so [stop] needs no Intent to it. */
+        @Volatile private var instance: HandTrackingService? = null
+        @Volatile private var stopRequested = false
+
+        /**
+         * 1.6.2 (Google Play, again on 1.6.0: "restricted foreground service types" from BOOT_COMPLETED, at
+         * onStartCommand): stops the running service directly. The Intent to it that stop used to send was the only link
+         * from code a boot starts (GlassesReadyService and AppExit) to this camera service.
+         */
+        @Suppress("UNUSED_PARAMETER")
         fun stop(context: Context) {
-            context.stopService(Intent(context, HandTrackingService::class.java))
+            stopRequested = true
+            instance?.stopSelf()
         }
 
         fun isRunning(): Boolean = GlassesCameraProvider.running || GlassesCameraProvider.status.value is ProviderStatus.Running
