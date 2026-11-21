@@ -10,6 +10,11 @@
 </p>
 
 <p align="center">
+  <a href="https://play.google.com/store/apps/details?id=com.hayeco.flipspaces"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="220" alt="Get it on Google Play"></a><br>
+  or download the APK from <a href="https://github.com/pocket-xr/pocket-xr/releases/latest">GitHub Releases</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/pocket-xr/pocket-xr/releases/latest"><img src="https://img.shields.io/github/v/release/pocket-xr/pocket-xr?label=download&color=5A93FF" alt="Latest release"></a>
   <a href="https://github.com/pocket-xr/pocket-xr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/pocket-xr/pocket-xr/ci.yml?branch=main&label=build" alt="Build status"></a>
   <img src="https://img.shields.io/badge/Android-11%2B-3DDC84?logo=android&logoColor=white" alt="Android 11+">
@@ -17,7 +22,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/pocket-xr/pocket-xr/releases/latest"><b>Download</b></a> ·
+  <a href="https://play.google.com/store/apps/details?id=com.hayeco.flipspaces"><b>Google Play</b></a> ·
+  <a href="https://github.com/pocket-xr/pocket-xr/releases/latest"><b>Download the APK</b></a> ·
   <a href="https://youtu.be/H8dBKm-I6zw"><b>Watch the demo</b></a> ·
   <a href="#setup">Setup</a> ·
   <a href="#supported-glasses-and-phones">Glasses and phones</a> ·
@@ -143,9 +149,9 @@ The [Roadmap](https://github.com/pocket-xr/pocket-xr/issues/11) has the full lis
 
 ## Setup
 
-1. **Install Pocket XR** from the [Releases](https://github.com/pocket-xr/pocket-xr/releases/latest) page.
-   You can check it's the official build with the signing fingerprint under [Updates](#updates), and all the code is
-   here to read.
+1. **Install Pocket XR** from [Google Play](https://play.google.com/store/apps/details?id=com.hayeco.flipspaces), or download the APK from the
+   [Releases](https://github.com/pocket-xr/pocket-xr/releases/latest) page. You can check a GitHub build is official
+   with the signing fingerprint under [Updates](#updates), and all the code is here to read.
 2. **Install and start [Shizuku](https://shizuku.rikka.app/)**, and allow Pocket XR in it. Pocket XR uses it to
    create a window for each app and to start the Space on the glasses. Without Shizuku, apps open as ordinary desktop
    windows instead.
@@ -220,17 +226,11 @@ Tap **Install add-on** in the trackpad's tutorial or at the end of the glasses s
 with that key. If Play Protect blocks the add-on, install it from a computer with `adb install pocketxr-addon-x.y.apk`,
 which the block does not cover, or turn off "Scan apps with Play Protect" in the Play Store for the install.
 
-## Help get Pocket XR on Google Play
+## Moving to the Google Play version
 
-Pocket XR needs 12 testers in its Google Play test for 14 days before it can go public on Play. If you'd like to
-help, it takes two taps:
+Pocket XR is on [Google Play](https://play.google.com/store/apps/details?id=com.hayeco.flipspaces). Thanks to everyone who joined the Play test to get it there!
 
-1. Join the testers group: [groups.google.com/a/mikehaye.com/g/pocketxr-testers](https://groups.google.com/a/mikehaye.com/g/pocketxr-testers).
-2. Open the Play invite and tap Become a tester:
-   [play.google.com/apps/testing/com.hayeco.flipspaces](https://play.google.com/apps/testing/com.hayeco.flipspaces).
-
-Then install Pocket XR from Play. You'll need to uninstall the copy you have first, as the Play version is signed with
-a different key. To keep your settings (since 1.3.3):
+To move a copy installed from GitHub to Play, uninstall it first, as the Play version is signed with a different key. To keep your settings (since 1.3.3):
 
 1. In the trackpad's Menu, open **Help and more** and tap **Save settings to a file**. Save it in Downloads or Drive.
 2. Uninstall Pocket XR and install it from Play.
@@ -241,9 +241,10 @@ only thing to do again. The trackpad's Menu has a card with both links.
 
 ## Updates
 
-Every update is free. There are three ways to get them:
+Every update is free. There are four ways to get them:
 
-- **In the app.** Pocket XR checks GitHub Releases when it starts and every 12 hours in the background. When a newer
+- **Google Play** updates the Play version by itself.
+- **In the app** (the GitHub version). Pocket XR checks GitHub Releases when it starts and every 12 hours in the background. When a newer
   version is out, "Update available" shows across the top of the trackpad and of Pocket XR Settings, with a line in the
   Menu and on the glasses' Control Center, and one notification says "Pocket XR x.y.z is ready". Tap Update to download
   it, or Later to hide it until the next version. On Android 13 and later, Pocket XR asks once to allow notifications
