@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.6.4: Readability
 
 - **Readability.** A new switch in Pocket XR's Space settings, off by default, for larger text on 1080p glasses. When
   on, every window's apps lay out at 4/3 the density (a default window goes from 330 to 440 dpi, 853 x 480 to
