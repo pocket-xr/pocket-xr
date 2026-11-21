@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.6: hand tracking on Google Play
+
+- **Google Play version: hand tracking starts again.** Since the Play version was first shrunk for upload, starting
+  hand tracking with the Aura's camera crashed it ("no caller found on the stack"): the shrinker had renamed and
+  folded away part of MediaPipe's logging library, which then could not find itself. That library is now kept as it
+  is. Seen on a Google Pixel 10 Pro XL on Android 17 with 1.6.2 from Google Play; thanks to John Rapponotti for the
+  crash reports. The GitHub version was never affected. Checked in the new build's shrinker map; not yet tried with
+  hands on a phone.
+
 ## 1.6.5: VITURE Luma first try
 
 - **VITURE glasses with more than one HID interface:** the experimental VITURE reader no longer tries only the first.

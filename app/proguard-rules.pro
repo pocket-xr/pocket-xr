@@ -12,6 +12,13 @@
 -keep class com.google.protobuf.** { *; }
 -keep class com.google.android.datatransport.** { *; }
 
+# 1.6.6: Flogger, MediaPipe's logger. FluentLogger.forEnclosingClass() finds the class that asked for a logger by
+# walking the call stack for FluentLogger's own frame. With R8 renaming it (to df0 in 1.6.2) and inlining and
+# outlining its helpers, the walk found no caller and MediaPipe's Graph failed in its static setup
+# ("IllegalStateException: no caller found on the stack for: df0"), so hand tracking never started in the Play build
+# (a Pixel 10 Pro XL on Android 17, 1.6.2 from Google Play). Kept whole, so its frames and names stay as written.
+-keep class com.google.common.flogger.** { *; }
+
 # Shizuku: the binder handed over by its provider, and the user service it starts.
 -keep class rikka.** { *; }
 -keep class moe.shizuku.** { *; }
