@@ -314,3 +314,25 @@ object VitureHidCommands {
     /** Whether a start's [result] lets the reader go on: taken, or the stream is already coming. */
     fun streamWillCome(result: Result): Boolean = result.accepted || result.rawSeen > 0
 }
+
+/**
+ * 1.6.5 (Discussion, Crr66: a VITURE Luma XR, 35CA:1131, on a Galaxy S20, Pocket XR 1.6.2): which of the glasses' HID
+ * interfaces the experimental reader opens next. The Luma lists two HID interfaces (#0 and #1, each with 64 byte
+ * interrupt IN and OUT); the reader always took the first, sent the start there and got 0 bytes in 12 s. The Beast's
+ * motion is on its interface 5, so a model's motion need not be on its first HID interface.
+ *
+ * After a round in which an interface sent nothing at all, the next round opens the next HID interface, in Android's
+ * order, coming back round to the first. An interface that sent anything is kept. Untested on a Luma: which interface
+ * carries its motion is not yet known.
+ */
+object VitureInterfaceChoice {
+    /** The HID interface (an index into the device's HID interfaces) to open after a round on [index] that read [bytes]. */
+    fun next(index: Int, count: Int, bytes: Long): Int = when {
+        count <= 1 -> 0
+        bytes > 0 -> index.coerceIn(0, count - 1)
+        else -> (index + 1).mod(count)
+    }
+
+    /** [index] kept inside [count] interfaces (the device may list fewer after a replug). */
+    fun valid(index: Int, count: Int): Int = if (count <= 0) 0 else index.mod(count)
+}
