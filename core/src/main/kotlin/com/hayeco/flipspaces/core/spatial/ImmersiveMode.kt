@@ -119,8 +119,9 @@ class ImmersiveMode {
         // 0.5.37's 66 deg at 3 m was wider than the glasses' 52 deg view. Now further, and inside [FIT] of the view each way.
         const val CINEMA_M = 5.0f
         // 1.6.1 (issue 118, an XREAL One Pro's logs: a 16:9 YouTube window filled only 88 % of the view, with visible room
-        // round it): nearly the whole view each way, a sliver kept so the edges stay inside it.
-        const val FIT = 0.96f
+        // round it): more of the view. 0.96 reached the very edges on Mike's Aura (he had to turn his head a little to see
+        // them), and 0.92 still left no margin; 0.90 nearly fills it with a small margin all round.
+        const val FIT = 0.90f
 
         /** 1.6.0: how far a window's shape may be from the view's before Immersive gives it the view's shape. */
         const val RESHAPE_RATIO = 1.2f

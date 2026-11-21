@@ -27,15 +27,19 @@ class SwipeScroll156Test {
     fun aTwoFingerScrollDragsAFingerDownTheAppWhenSwipingIsOn() {
         val p = pointer(swipe = true)
         val begin = p.handle(PadSignal.Scroll(0f, 0f, 0f, 0f, Phase.BEGIN), Quat.IDENTITY, layout, px)
-        assertEquals(TouchPhase.DOWN, touches(begin).single().phase)
+        // 1.6.1: nothing touches the app until the swipe has a direction.
+        assertTrue("no touch yet", touches(begin).isEmpty())
         assertTrue("no wheel", begin.none { it is SpaceAction.Wheel })
-        val down0 = touches(begin).single()
-        // The fingers go down 0.2 pad units: the finger on the app goes down too (YouTube's swipe to its mini player).
-        val move = touches(p.handle(PadSignal.Scroll(0f, 0f, 0f, -0.2f, Phase.UPDATE), Quat.IDENTITY, layout, px)).single()
+        // The fingers go down 0.1 pad units (and drift a little sideways): the finger goes down near the top, with room,
+        // and follows straight down (YouTube's swipe to its mini player).
+        val first = touches(p.handle(PadSignal.Scroll(0f, 0f, 0.02f, -0.1f, Phase.UPDATE), Quat.IDENTITY, layout, px))
+        assertEquals(TouchPhase.DOWN, first[0].phase)
+        assertEquals(SWIPE_START, first[0].v, 1e-4f)
+        val move = first[1]
         assertEquals(TouchPhase.MOVE, move.phase)
-        assertEquals(down0.v + 0.2f * SCROLL_DRAG, move.v, 1e-4f)
-        assertEquals(down0.u, move.u, 1e-4f)
-        val end = touches(p.handle(PadSignal.Scroll(0f, 0f, 0f, -0.2f, Phase.END), Quat.IDENTITY, layout, px)).single()
+        assertEquals(SWIPE_START + 0.1f * SWIPE_DRAG, move.v, 1e-4f)
+        assertEquals("it keeps to up and down", first[0].u, move.u, 1e-4f)
+        val end = touches(p.handle(PadSignal.Scroll(0f, 0f, 0f, -0.1f, Phase.END), Quat.IDENTITY, layout, px)).single()
         assertEquals(TouchPhase.UP, end.phase)
     }
 
@@ -43,25 +47,26 @@ class SwipeScroll156Test {
     fun sidewaysGoesSidewaysAndStaysOnTheWindow() {
         val p = pointer(swipe = true)
         p.handle(PadSignal.Scroll(0f, 0f, 0f, 0f, Phase.BEGIN), Quat.IDENTITY, layout, px)
-        val move = touches(p.handle(PadSignal.Scroll(0f, 0f, -3f, 0f, Phase.UPDATE), Quat.IDENTITY, layout, px)).single()
+        val move = touches(p.handle(PadSignal.Scroll(0f, 0f, -3f, 0f, Phase.UPDATE), Quat.IDENTITY, layout, px)).last()
         assertEquals(0f, move.u, 1e-6f)
     }
 
     @Test
-    fun aDragTooShortToBeASwipeIsCancelledNotTapped() {
+    fun aDragTooShortToBeASwipeSendsNothing() {
         val p = pointer(swipe = true)
         p.handle(PadSignal.Scroll(0f, 0f, 0f, 0f, Phase.BEGIN), Quat.IDENTITY, layout, px)
-        val end = touches(p.handle(PadSignal.Scroll(0f, 0f, 0f, 0.005f, Phase.END), Quat.IDENTITY, layout, px)).single()
-        assertEquals(TouchPhase.CANCEL, end.phase)
+        // 1.6.1: the finger never went down, so nothing reaches the app (no tap, no cancel).
+        assertTrue(touches(p.handle(PadSignal.Scroll(0f, 0f, 0f, 0.005f, Phase.END), Quat.IDENTITY, layout, px)).isEmpty())
     }
 
     @Test
     fun theStripSwipesToo() {
         val p = pointer(swipe = true)
-        val begin = p.handle(PadSignal.Scroll(0f, 0f, 0f, 0f, Phase.BEGIN, strip = true, wheel = true), Quat.IDENTITY, layout, px)
-        assertEquals(TouchPhase.DOWN, touches(begin).single().phase)
-        val move = touches(p.handle(PadSignal.Scroll(0f, 0f, 0f, 0.1f, Phase.UPDATE, strip = true, wheel = true), Quat.IDENTITY, layout, px)).single()
-        assertEquals(touches(begin).single().v - 0.1f * SCROLL_DRAG, move.v, 1e-4f)
+        p.handle(PadSignal.Scroll(0f, 0f, 0f, 0f, Phase.BEGIN, strip = true, wheel = true), Quat.IDENTITY, layout, px)
+        val first = touches(p.handle(PadSignal.Scroll(0f, 0f, 0f, 0.1f, Phase.UPDATE, strip = true, wheel = true), Quat.IDENTITY, layout, px))
+        assertEquals(TouchPhase.DOWN, first[0].phase)
+        assertEquals("up: it starts near the bottom", 1f - SWIPE_START, first[0].v, 1e-4f)
+        assertEquals(1f - SWIPE_START - 0.1f * SWIPE_DRAG, first[1].v, 1e-4f)
         val end = touches(p.handle(PadSignal.Scroll(0f, 0f, 0f, 0.1f, Phase.END, strip = true, wheel = true), Quat.IDENTITY, layout, px)).single()
         assertEquals(TouchPhase.UP, end.phase)
     }
