@@ -1,12 +1,14 @@
 package com.hayeco.flipspaces.hands
 
 import android.content.Context
-import com.hayeco.flipspaces.core.hands.RayCalibration
 
 /**
  * Saved hand settings (0.5.0). Before, nothing about
  * hands survived a process start: Mike pressed Set up and Start hands every time, and the
- * mirror switch and any calibration were gone.
+ * mirror switch were gone.
+ *
+ * 1.6.2: the hand aim calibration (pinch on the dots) is gone. Older versions saved it under "ray_calibration",
+ * "ray_calibration_rms" and "calibration_offered"; those keys may still be in the file but nothing reads them.
  */
 class HandsPrefs(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("hands", Context.MODE_PRIVATE)
@@ -28,16 +30,6 @@ class HandsPrefs(context: Context) {
     var mirror: Boolean
         get() = false
         set(value) = prefs.edit().putBoolean(KEY_MIRROR, value).apply()
-
-    /** The hand ray's "pinch on the dots" correction; identity until calibrated. */
-    var calibration: RayCalibration
-        get() = RayCalibration.decode(prefs.getString(KEY_CALIBRATION, null)) ?: RayCalibration.IDENTITY
-        set(value) = prefs.edit().putString(KEY_CALIBRATION, value.encode()).apply()
-
-    /** The last calibration's error in degrees, for the setup screen; negative before any. */
-    var calibrationRmsDeg: Float
-        get() = prefs.getFloat(KEY_CALIBRATION_RMS, -1f)
-        set(value) = prefs.edit().putFloat(KEY_CALIBRATION_RMS, value).apply()
 
     /**
      * 0.5.1: aim with 0.5.0's shoulder ray (true) instead of the camera ray through the pinch
@@ -72,20 +64,12 @@ class HandsPrefs(context: Context) {
         get() = prefs.getBoolean(KEY_MIC_ASKED, false)
         set(value) = prefs.edit().putBoolean(KEY_MIC_ASKED, value).apply()
 
-    /** 0.5.1: the Space offered the hand calibration once, on the first Space with hands. */
-    var calibrationOffered: Boolean
-        get() = prefs.getBoolean(KEY_CALIBRATION_OFFERED, false)
-        set(value) = prefs.edit().putBoolean(KEY_CALIBRATION_OFFERED, value).apply()
-
     private companion object {
         const val KEY_AUTO_START = "auto_start"
         const val KEY_MIRROR = "mirror"
-        const val KEY_CALIBRATION = "ray_calibration"
-        const val KEY_CALIBRATION_RMS = "ray_calibration_rms"
         const val KEY_SHOULDER_RAY = "shoulder_ray"
         const val KEY_USB_HINT = "usb_hint_shown"
         const val KEY_MIC_ASKED = "mic_asked"
-        const val KEY_CALIBRATION_OFFERED = "calibration_offered"
         const val KEY_TWO_HANDS = "two_hands"
         const val KEY_NPU_HANDS = "npu_hands"
     }

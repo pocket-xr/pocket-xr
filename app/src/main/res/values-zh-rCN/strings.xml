@@ -100,12 +100,6 @@
     <string name="space_problem_service_restarted">面板服务已重启，正在重新打开面板。</string>
     <string name="space_problem_protects">%1$s 会保护其屏幕内容；捏合它的横幅即可以 DeX 窗口打开。</string>
     <string name="space_problem_looks_protected">%1$s 在其面板上似乎受保护；捏合它的横幅即可以 DeX 窗口打开。</string>
-    <string name="space_calib_skipped">已跳过手部校准。随时可在手机上的“手部”中校准。</string>
-    <string name="space_calib_off">偏差 %1$.1f 度。请再慢慢来一次：指向、保持不动、捏合。</string>
-    <string name="space_calib_done">手部已校准：%1$.1f 度</string>
-    <string name="space_calib_first">先校准一次手部：指向圆点并捏合（第 1 个，共 %1$d 个）</string>
-    <string name="space_calib_dot">指向圆点并捏合（第 %1$d 个，共 %2$d 个）</string>
-    <string name="space_calib_skip">张开手掌即可跳过</string>
     <string name="space_info_mode">Pocket XR：%1$s</string>
     <string name="space_info_starting">正在启动</string>
     <string name="space_info_head_tracking">头部追踪：%1$s</string>
@@ -476,7 +470,7 @@
     <string name="head_level_no_context">未保存：没有应用上下文。</string>
     <string name="head_level_saved">已保存：显示水平时 IMU 读数为翻滚 %1$.2f 度、俯仰 %2$.2f 度；从现在起生效。</string>
     <string name="hands_title">手部</string>
-    <string name="hands_reset_text">手部瞄准校准会被清除（空间会再次提示校准），开发者瞄准恢复为摄像头射线。手部设置、权限和随眼镜启动保持不变。</string>
+    <string name="hands_reset_text">开发者瞄准恢复为摄像头射线。手部设置、权限和随眼镜启动保持不变。</string>
     <string name="hands_tick_always">在插入提示中勾选“始终”</string>
     <string name="hands_remember_glasses">记住你的眼镜</string>
     <string name="hands_mic_reason">Pocket XR 需要麦克风权限，Android 才能记住你的眼镜。它从不录音。</string>
@@ -486,10 +480,6 @@
     <string name="hands_start_with_glasses">随眼镜启动手部追踪</string>
     <string name="hands_auto_note">第一次成功“启动手部追踪”时会自动开启。之后在眼镜上打开空间时就会启动手部追踪。在通知中点“停止”会暂停，直到下次插上眼镜。</string>
     <string name="hands_cursor_note">光标会出现在眼镜摄像头看到的你指节捏合点的位置（就在食指指节前方），与你看到的手的位置大致 1:1 对应。握拢手指不会移动光标。</string>
-    <string name="hands_calibrate_state">校准手部瞄准：%1$s</string>
-    <string name="hands_calibrate_howto">在眼镜上打开空间，点“校准手部瞄准”，然后依次指向它显示的五个圆点并捏合。这会校正眼镜摄像头的角度和视野。空间第一次看到你的手时会主动提示一次；张开手掌即可跳过。</string>
-    <string name="hands_calibrate">校准手部瞄准</string>
-    <string name="hands_reset_calibration">重置校准</string>
     <string name="hands_pointer_title">1. Pocket XR 指针（无障碍服务）</string>
     <string name="hands_pointer_why">在空间之外，手部和触控板通过一项无障碍服务操作眼镜。这是 Android 允许普通应用操作其他应用窗口的唯一方式。它随 Pocket XR 附加组件（另一个小应用）提供，因为在某些国家/地区 Google 会阻止安装带有无障碍服务的应用。它会：</string>
     <string name="hands_pointer_does">- 在眼镜显示屏上绘制光标、提示和程序坞\n- 读取应用窗口在眼镜上的位置（仅位置、大小和标题），以及那里 DeX 标题栏按钮的标签，以找到它的全屏按钮\n- 在眼镜显示屏上执行点按和拖动，用来点击、移动（拖动 DeX 标题栏）和调整窗口大小（拖动边角）\n它不会在手机自身的屏幕上做任何操作，也不会把任何数据发出手机。</string>
@@ -544,12 +534,7 @@
     <string name="hands_usb_allowed">已允许 USB 访问眼镜。</string>
     <string name="hands_usb_denied">未允许 USB 访问眼镜。</string>
     <string name="hands_starting">正在用眼镜摄像头启动手部追踪。</string>
-    <string name="hands_calibrate_look">看向眼镜：依次指向每个圆点并捏合。再点一次可取消。</string>
-    <string name="hands_open_space_first">请先在眼镜上打开空间，并让手部追踪保持运行。</string>
-    <string name="hands_calibration_reset">手部校准已重置。</string>
     <string name="hands_reset_done">手部设置已恢复为 Pocket XR 的默认值。</string>
-    <string name="hands_not_calibrated_defaults">未校准（摄像头默认值：%1$s）</string>
-    <string name="hands_calibrated_fit">%1$s，在圆点上偏差 %2$.1f 度</string>
     <string name="hands_model_downloaded">手部模型已下载。</string>
     <string name="hands_download_failed_http">下载失败：HTTP %1$d %2$s</string>
     <plurals name="hands_download_too_small">
@@ -630,7 +615,7 @@
     <string name="home_glasses_setup_check">眼镜设置检查</string>
     <string name="home_glasses_setup_check_detail">你的眼镜需要的设置，以及一项 10 秒钟的检查，确认窗口保持在原位</string>
     <string name="home_hands">手部</string>
-    <string name="home_hands_detail">手部追踪、校准手部瞄准、手势</string>
+    <string name="home_hands_detail">手部追踪、手势</string>
     <string name="home_trackpad">触控板</string>
     <string name="home_trackpad_detail">光标和滚动速度、滚动条、窗口弧度，在其“菜单”中</string>
     <string name="home_advanced">高级</string>

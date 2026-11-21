@@ -182,8 +182,8 @@ fun PhoneScreen(
             item { SectionTitle(stringResource(R.string.home_settings)) }
             item {
                 GlassCard {
-                    // 0.5.101 (Mike: each settings screen only what is needed, each with a reset): Track two hands and
-                    // Calibrate hand aim are on the Hands screen only; Trackpad opens the trackpad's own Menu, where its
+                    // 0.5.101 (Mike: each settings screen only what is needed, each with a reset): Track two hands is
+                    // on the Hands screen only (1.6.2: Calibrate hand aim is gone); Trackpad opens the trackpad's own Menu, where its
                     // settings are, instead of repeating the Open trackpad button.
                     // 1.5.0: the tour first, where someone looking for help looks.
                     NavRow(stringResource(R.string.tour_row), stringResource(R.string.tour_row_detail), onOpenTour)

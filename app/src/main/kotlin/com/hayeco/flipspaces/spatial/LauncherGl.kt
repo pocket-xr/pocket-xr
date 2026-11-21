@@ -772,13 +772,6 @@ internal class LauncherGl(private val context: Context) {
             c.drawCircle(cx, cy, box * 0.07f, fill)
         }
 
-        /** Calibrate hands: the calibration's dots, one in the middle and one in each corner. */
-        fun dots() {
-            val d = box * 0.4f
-            for ((x, y) in listOf(0f to 0f, -d to -d, d to -d, -d to d, d to d)) c.drawCircle(cx + x, cy + y, box * 0.09f, fill)
-            c.drawCircle(cx, cy, box * 0.22f, stroke)
-        }
-
         /** Control panel: two sliders, as Quick Settings' glyph. */
         fun sliders() {
             val y1 = cy - box * 0.22f

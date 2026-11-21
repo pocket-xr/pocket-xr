@@ -75,8 +75,6 @@ data class HandsSetup(
     val twoHands: Boolean = false,
     /** 0.5.0: show the one time "Always open Pocket XR" hint. */
     val usbHint: Boolean = false,
-    /** 0.5.0: the saved hand calibration, in words. */
-    val calibration: String = "Not calibrated",
     /** 0.5.1: RECORD_AUDIO is granted, so Android offers "Always" on the plug-in prompt. */
     val micAllowed: Boolean = false,
     /** 0.5.1: what the plug-in prompt hint says now (core UsbAsk.hint). */
@@ -102,8 +100,6 @@ fun HandsScreen(
     onShoulderRayChange: (Boolean) -> Unit = {},
     onAllowMic: () -> Unit = {},
     onUsbHintDone: () -> Unit = {},
-    onCalibrate: () -> Unit = {},
-    onResetCalibration: () -> Unit = {},
     onResetAll: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
@@ -128,7 +124,7 @@ fun HandsScreen(
             // always on since 0.5.37); the trackpad card went to the trackpad's own Menu; the gestures are the Space's.
             item { GlassesCameraCard(setup, onAskCamera, onAskUsb, onDownloadModel, onStartHands, onStopHands) }
             if (setup.usbHint && setup.micAllowed) item { UsbHintCard(setup, onAllowMic, onUsbHintDone) }
-            item { HandsAutoCard(setup, onAutoStartChange, onCalibrate, onResetCalibration) }
+            item { HandsAutoCard(setup, onAutoStartChange) }
             item { GesturesCard() }
             item { HandsDeveloperCard(setup, onRefresh, onReadFormats, onShoulderRayChange) }
             item {
@@ -168,13 +164,11 @@ private fun UsbHintCard(setup: HandsSetup, onAllowMic: () -> Unit, onDone: () ->
     }
 }
 
-/** 0.5.0: hands that start by themselves, the hand ray and its calibration. */
+/** 0.5.0: hands that start by themselves, and the hand ray. */
 @Composable
 private fun HandsAutoCard(
     setup: HandsSetup,
     onAutoStartChange: (Boolean) -> Unit,
-    onCalibrate: () -> Unit,
-    onResetCalibration: () -> Unit,
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -191,15 +185,6 @@ private fun HandsAutoCard(
                 stringResource(R.string.hands_cursor_note),
                 style = MaterialTheme.typography.bodySmall,
             )
-            Text(stringResource(R.string.hands_calibrate_state, setup.calibration), style = MaterialTheme.typography.bodyMedium)
-            Text(
-                stringResource(R.string.hands_calibrate_howto),
-                style = MaterialTheme.typography.bodySmall,
-            )
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onCalibrate) { Text(stringResource(R.string.hands_calibrate)) }
-                OutlinedButton(onClick = onResetCalibration) { Text(stringResource(R.string.hands_reset_calibration)) }
-            }
         }
     }
 }

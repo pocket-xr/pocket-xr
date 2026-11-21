@@ -24,9 +24,6 @@ sealed interface TileKind {
     data object NextPage : TileKind
     data object Recentre : TileKind
 
-    /** 0.5.10: the "pinch on the dots" hand calibration, easy to find in the Space too. */
-    data object CalibrateHands : TileKind
-
     /** 0.5.14: the 3D / 2D switch; shows what a press switches to. */
     data object ViewMode : TileKind
 
@@ -74,9 +71,6 @@ sealed interface LauncherAction {
     data class Favourites(val keys: List<String>) : LauncherAction
 
     data object Recentre : LauncherAction
-
-    /** 0.5.10: start (or stop) the hand calibration. */
-    data object CalibrateHands : LauncherAction
 
     /** 0.5.14: switch between 3D side by side and 2D, and remember it. */
     data object ToggleView : LauncherAction
@@ -310,12 +304,10 @@ class SpaceLauncher(val columns: Int = 5, val rows: Int = 3) {
         val searchWidth = 2 * step - gap
         out += LauncherTile(TileKind.Search(query), anchorYaw + columnYaw(0) - tile / 2f + searchWidth / 2f, topPitch, searchWidth, stripH)
         val byKey = apps.associateBy { it.key }
-        // 0.5.10: one column fewer for favourites, for the calibration tile beside recentre.
-        val favs = favouriteKeys.mapNotNull { byKey[it] }.take(columns - 4)
+        val favs = favouriteKeys.mapNotNull { byKey[it] }.take(columns - 3)
         favs.forEachIndexed { i, app ->
             out += LauncherTile(TileKind.Favourite(app), anchorYaw + columnYaw(2 + i), topPitch, tile, stripH)
         }
-        out += LauncherTile(TileKind.CalibrateHands, anchorYaw + columnYaw(columns - 2), topPitch, tile, stripH)
         out += LauncherTile(TileKind.Recentre, anchorYaw + columnYaw(columns - 1), topPitch, tile, stripH)
 
         // The grid.
@@ -422,10 +414,6 @@ class SpaceLauncher(val columns: Int = 5, val rows: Int = 3) {
             TileKind.Recentre -> {
                 close()
                 LauncherAction.Recentre
-            }
-            TileKind.CalibrateHands -> {
-                close()
-                LauncherAction.CalibrateHands
             }
             TileKind.ViewMode -> {
                 close()

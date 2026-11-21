@@ -100,12 +100,6 @@
     <string name="space_problem_service_restarted">パネルサービスが再起動しました。パネルを開き直しています。</string>
     <string name="space_problem_protects">%1$s は画面を保護しています。バナーをピンチすると DeX ウィンドウで開けます。</string>
     <string name="space_problem_looks_protected">%1$s はパネル上で保護されているようです。バナーをピンチすると DeX ウィンドウで開けます。</string>
-    <string name="space_calib_skipped">ハンドのキャリブレーションをスキップしました。スマホの「ハンド」からいつでもキャリブレーションできます。</string>
-    <string name="space_calib_off">%1$.1f 度ずれていました。もう一度ゆっくり: 指して、静止して、ピンチ。</string>
-    <string name="space_calib_done">ハンドのキャリブレーション完了: %1$.1f 度</string>
-    <string name="space_calib_first">最初にハンドをキャリブレーションします: ドットを指してピンチしてください（1/%1$d）</string>
-    <string name="space_calib_dot">ドットを指してピンチしてください（%1$d/%2$d）</string>
-    <string name="space_calib_skip">手のひらを開くとスキップ</string>
     <string name="space_info_mode">Pocket XR: %1$s</string>
     <string name="space_info_starting">起動中</string>
     <string name="space_info_head_tracking">ヘッドトラッキング: %1$s</string>
@@ -476,7 +470,7 @@
     <string name="head_level_no_context">保存されませんでした: アプリのコンテキストがありません。</string>
     <string name="head_level_saved">保存しました: ディスプレイが水平のとき、IMU はロール %1$.2f 度、ピッチ %2$.2f 度を示します。今後はこれを適用します。</string>
     <string name="hands_title">ハンド</string>
-    <string name="hands_reset_text">ハンドの照準キャリブレーションが消去され（スペースで再度案内されます）、開発者向けの照準はカメラの光線に戻ります。ハンドの設定、権限、グラスとの同時起動はそのままです。</string>
+    <string name="hands_reset_text">開発者向けの照準はカメラの光線に戻ります。ハンドの設定、権限、グラスとの同時起動はそのままです。</string>
     <string name="hands_tick_always">接続時の確認で「常に」にチェック</string>
     <string name="hands_remember_glasses">グラスを記憶</string>
     <string name="hands_mic_reason">Android がグラスを記憶できるように、Pocket XR にはマイクの権限が必要です。録音は一切しません。</string>
@@ -486,10 +480,6 @@
     <string name="hands_start_with_glasses">グラスと一緒にハンドを開始</string>
     <string name="hands_auto_note">「ハンドを開始」が初めて動作したときにオンになります。以降はグラスでスペースが開くとハンドが開始します。通知の「停止」で、次に接続するまで一時停止します。</string>
     <string name="hands_cursor_note">カーソルは、グラスのカメラが捉えた指の関節のピンチ位置（人差し指の付け根のすぐ前）に移動し、見えている手の位置とほぼ 1:1 で対応します。指を閉じても動きません。</string>
-    <string name="hands_calibrate_state">ハンドの照準をキャリブレーション: %1$s</string>
-    <string name="hands_calibrate_howto">グラスにスペースを表示した状態で「ハンドの照準をキャリブレーション」をタップし、表示される 5 つのドットをそれぞれ指してピンチします。グラスのカメラの角度と視野を補正します。スペースは初めて手を認識したときに一度だけ自動で案内します。手のひらを開くとスキップできます。</string>
-    <string name="hands_calibrate">ハンドの照準をキャリブレーション</string>
-    <string name="hands_reset_calibration">キャリブレーションをリセット</string>
     <string name="hands_pointer_title">1. Pocket XR ポインター（ユーザー補助サービス）</string>
     <string name="hands_pointer_why">スペースの外では、ハンドとトラックパッドはユーザー補助サービスを通じてグラスを操作します。Android で通常のアプリがほかのアプリのウィンドウを操作できる唯一の方法です。一部の国では Google がこれを含むアプリのインストールをブロックするため、2 つ目の小さなアプリである Pocket XR アドオンに含まれています。このサービスは:</string>
     <string name="hands_pointer_does">- グラスのディスプレイにカーソル、ヒント、ドックを描画します\n- グラス上のアプリのウィンドウの位置（位置、サイズ、タイトルのみ）と、DeX のタイトルバーのボタンのラベルを読み取り、全画面ボタンを見つけます\n- グラスのディスプレイでタップとドラッグを行います。これでウィンドウのクリック、移動（DeX のタイトルバーをドラッグ）、サイズ変更（角をドラッグ）をします\nスマホ本体の画面では何もせず、スマホの外には何も送りません。</string>
@@ -544,12 +534,7 @@
     <string name="hands_usb_allowed">グラスへの USB アクセスを許可しました。</string>
     <string name="hands_usb_denied">グラスへの USB アクセスが許可されませんでした。</string>
     <string name="hands_starting">グラスのカメラでハンドトラッキングを開始しています。</string>
-    <string name="hands_calibrate_look">グラスを見て、各ドットを指してピンチしてください。もう一度タップするとキャンセルします。</string>
-    <string name="hands_open_space_first">先にハンドを動作させた状態で、グラスでスペースを開いてください。</string>
-    <string name="hands_calibration_reset">ハンドのキャリブレーションをリセットしました。</string>
     <string name="hands_reset_done">ハンドの設定を Pocket XR の初期設定に戻しました。</string>
-    <string name="hands_not_calibrated_defaults">未キャリブレーション（カメラの初期値: %1$s）</string>
-    <string name="hands_calibrated_fit">%1$s、ドット上で %2$.1f 度のずれ</string>
     <string name="hands_model_downloaded">ハンドモデルをダウンロードしました。</string>
     <string name="hands_download_failed_http">ダウンロードに失敗しました: HTTP %1$d %2$s</string>
     <plurals name="hands_download_too_small">
@@ -630,7 +615,7 @@
     <string name="home_glasses_setup_check">グラスの設定チェック</string>
     <string name="home_glasses_setup_check_detail">グラスに必要な設定と、ウィンドウが静止しているかの 10 秒間のチェック</string>
     <string name="home_hands">ハンド</string>
-    <string name="home_hands_detail">ハンドトラッキング、ハンドの照準のキャリブレーション、ジェスチャー</string>
+    <string name="home_hands_detail">ハンドトラッキング、ジェスチャー</string>
     <string name="home_trackpad">トラックパッド</string>
     <string name="home_trackpad_detail">カーソルとスクロールの速度、スクロールストリップ、ウィンドウのカーブ（トラックパッドのメニュー内）</string>
     <string name="home_advanced">詳細設定</string>

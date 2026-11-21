@@ -22,15 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.hayeco.flipspaces.core.hands.CameraModel
-import com.hayeco.flipspaces.core.hands.RayCalibration
 import com.hayeco.flipspaces.core.hands.UsbAsk
 import com.hayeco.flipspaces.hands.UsbPrompt
 import com.hayeco.flipspaces.hands.GlassesCameraProvider
 import com.hayeco.flipspaces.hands.HandFeed
 import com.hayeco.flipspaces.hands.HandsPrefs
-import com.hayeco.flipspaces.spatial.SpaceCommand
-import com.hayeco.flipspaces.spatial.SpaceSession
 import com.hayeco.flipspaces.hands.GlassesUsbAccess
 import com.hayeco.flipspaces.hands.HandInputManager
 import com.hayeco.flipspaces.hands.HandModelStore
@@ -118,7 +114,6 @@ class HandsActivity : ComponentActivity() {
                         shoulderRay = checks.shoulderRay,
                         twoHands = checks.twoHands,
                         usbHint = checks.usbHint,
-                        calibration = checks.calibration,
                         micAllowed = checks.micAllowed,
                         usbHintText = UsbAsk.hint(checks.micAllowed),
                     ),
@@ -157,28 +152,9 @@ class HandsActivity : ComponentActivity() {
                         prefs.usbHintShown = true
                         refresh()
                     },
-                    onCalibrate = {
-                        message = if (SpaceSession.active) {
-                            SpaceSession.send(SpaceCommand.CalibrateHands)
-                            getString(R.string.hands_calibrate_look)
-                        } else {
-                            getString(R.string.hands_open_space_first)
-                        }
-                    },
-                    onResetCalibration = {
-                        prefs.calibration = RayCalibration.IDENTITY
-                        prefs.calibrationRmsDeg = -1f
-                        HandFeed.endCalibration(RayCalibration.IDENTITY)
-                        message = getString(R.string.hands_calibration_reset)
-                        refresh()
-                    },
                     // 0.5.101 (Mike: a reset to Pocket XR's defaults on each settings screen).
                     onResetAll = {
-                        prefs.calibration = RayCalibration.IDENTITY
-                        prefs.calibrationRmsDeg = -1f
-                        prefs.calibrationOffered = false
                         prefs.shoulderRay = false
-                        HandFeed.endCalibration(RayCalibration.IDENTITY)
                         HandFeed.resize()
                         message = getString(R.string.hands_reset_done)
                         refresh()
@@ -230,7 +206,6 @@ class HandsActivity : ComponentActivity() {
         val shoulderRay: Boolean,
         val twoHands: Boolean,
         val usbHint: Boolean,
-        val calibration: String,
         val micAllowed: Boolean,
     )
 
@@ -242,8 +217,6 @@ class HandsActivity : ComponentActivity() {
 
     private fun checks(): Checks {
         val device = GlassesUsbAccess.find(this)
-        val fit = prefs.calibration
-        val rms = prefs.calibrationRmsDeg
         return Checks(
             addonInstalled = AddonLink.isInstalled(this),
             serviceEnabled = PointerHub.enabledInSettings(this),
@@ -256,8 +229,6 @@ class HandsActivity : ComponentActivity() {
             twoHands = prefs.twoHands,
             // Shown once, after hands have been started (when the plug-in prompt matters).
             usbHint = !prefs.usbHintShown && prefs.autoStart,
-            calibration = if (fit.isIdentity) getString(R.string.hands_not_calibrated_defaults, CameraModel().line()) else
-                getString(R.string.hands_calibrated_fit, fit.line(), rms),
             micAllowed = UsbPrompt.recordAudioGranted(this),
         )
     }

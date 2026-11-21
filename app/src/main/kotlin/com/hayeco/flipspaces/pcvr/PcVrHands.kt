@@ -8,7 +8,7 @@ import com.hayeco.flipspaces.core.pointer.HandSide
 
 /**
  * The glasses' tracked hands for SteamVR, as the Space uses them:
- * - the aim is the Space's own hand ray (filtered, calibrated, the same that moves its cursor), so pointing works as it
+ * - the aim is the Space's own hand ray (filtered, the same that moves its cursor), so pointing works as it
  *   does in the Space (8 November 2026: the raw wrist pointed "very off");
  * - a click is the Space's own pinch, sent as the trigger (ALVR's guess from finger distances did nothing);
  * - the 26 joints ([HandSkeleton]) are smoothed, and only give the fingers' shape.

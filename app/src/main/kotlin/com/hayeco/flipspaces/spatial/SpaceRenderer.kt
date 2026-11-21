@@ -15,9 +15,7 @@ import android.view.KeyEvent
 import android.view.Surface
 import com.hayeco.flipspaces.core.AppEntry
 import com.hayeco.flipspaces.core.ShizukuStatus
-import com.hayeco.flipspaces.core.hands.HandCalibration
 import com.hayeco.flipspaces.core.pointer.HandSide
-import com.hayeco.flipspaces.core.pointer.PointerSignal
 import com.hayeco.flipspaces.core.spatial.Angles
 import com.hayeco.flipspaces.core.spatial.BackDecision
 import com.hayeco.flipspaces.core.spatial.BackGuard
@@ -64,8 +62,6 @@ import com.hayeco.flipspaces.core.spatial.ThermalGuard
 import com.hayeco.flipspaces.core.spatial.TouchPhase
 import com.hayeco.flipspaces.core.spatial.Vec3
 import com.hayeco.flipspaces.core.spatial.ViewFrustum
-import com.hayeco.flipspaces.hands.HandFeed
-import com.hayeco.flipspaces.hands.HandsPrefs
 import com.hayeco.flipspaces.platform.AppLauncher
 import com.hayeco.flipspaces.platform.InstalledApps
 import com.hayeco.flipspaces.platform.ShizukuBridge
@@ -1018,7 +1014,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     }
 
     /**
-     * 1.2.5: a hand's aim for [SpatialPointer.directAim]: its calibrated ray turned into the room with the head the Space
+     * 1.2.5: a hand's aim for [SpatialPointer.directAim]: its ray turned into the room with the head the Space
      * drew at the camera frame's moment, then smoothed ([DirectAimSmoother]). Null when the hand is gone or stale.
      */
     private fun directHandAim(side: com.hayeco.flipspaces.core.pointer.HandSide): com.hayeco.flipspaces.core.spatial.Vec3? {
@@ -1198,7 +1194,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         drawnHeads.add(presentNs, head)
         launcher.followHead(Angles.of(head.forward).yawDeg)
         updateHome(nowMs)
-        offerCalibration()
         // 0.5.26: the trackpad's moves spread over the refreshes ([com.hayeco.flipspaces.core.spatial.MoveSpreader]), so a
         // 60 Hz finger moves the cursor and a held window on every refresh of a 120 Hz Space.
         // 0.5.55: one list kept for every frame's signals, not a new one a frame.
@@ -1206,7 +1201,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         incoming.clear()
         while (true) {
             val s = SpaceSession.signals.poll() ?: break
-            if (calibrationTakes(s)) continue
             incoming += s
         }
         val refreshNs = displayPeriodNs.takeIf { it > 0L } ?: (pacer.snapped() * 1e6).toLong()
@@ -1599,7 +1593,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 com.hayeco.flipspaces.core.spatial.SpaceLayer.CONTROL_PANEL -> if (controls.isOpen) drawControls(viewProj, rays)
                 com.hayeco.flipspaces.core.spatial.SpaceLayer.LAUNCHER -> drawLauncherTiles(viewProj, rays)
                 com.hayeco.flipspaces.core.spatial.SpaceLayer.HOME -> drawHome(viewProj, rays)
-                com.hayeco.flipspaces.core.spatial.SpaceLayer.CALIBRATION -> drawCalibration(viewProj, head)
                 com.hayeco.flipspaces.core.spatial.SpaceLayer.DELAY_CHECK -> drawDelayCheck(viewProj, head)
                 com.hayeco.flipspaces.core.spatial.SpaceLayer.LEVEL_CHECK -> drawLevelCheck(eyeShift?.let { projection * it } ?: projection)
                 com.hayeco.flipspaces.core.spatial.SpaceLayer.EDGE_HINT -> drawEdgeHint(viewProj, head, hint)
@@ -4140,7 +4133,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 is SpaceCommand.Remove -> removePanel(c.panelId)
                 SpaceCommand.Recentre -> recentre()
                 SpaceCommand.ClearLayout -> layout.panels.map { it.id }.forEach(::removePanel)
-                SpaceCommand.CalibrateHands -> toggleCalibration()
                 is SpaceCommand.PadTouches -> padTouches(c.events)
                 SpaceCommand.FocusWindow -> focusedPanelId?.let { panels[it] }?.displayId?.let { PanelHost.focus(it, "the Game controller's gamepad") }
                 is SpaceCommand.SideBySide -> sideBySideChosen(c.on)
@@ -5585,123 +5577,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     private val cursorShrink = java.util.EnumMap<HandSide, CursorShrink>(HandSide::class.java)
 
-    // ---- hand calibration (0.5.0) ----
-
-    /** The "pinch on the dots" calibration while it runs; null otherwise. GL thread. */
-    private var calibration: HandCalibration? = null
-    private var calibrationLabel: LabelTexture? = null
-    private var calibrationNote: String? = null
-
-    private fun toggleCalibration() {
-        if (calibration != null) {
-            calibration = null
-            calibrationOffer = false
-            HandFeed.endCalibration(null)
-            Log.i(HANDS_TAG, "Hand calibration cancelled; the saved one stays")
-            return
-        }
-        calibration = HandCalibration()
-        calibrationNote = null
-        HandFeed.beginCalibration()
-        Log.i(HANDS_TAG, "Hand calibration started: ${HandCalibration.DEFAULT_TARGETS.size} dots")
-    }
-
-    /** The first hands in the Space were looked at for the calibration offer (0.5.1). */
-    private var calibrationOfferChecked = false
-
-    /** The running calibration is the one-time offer: an open palm skips it. */
-    private var calibrationOffer = false
-
-    /**
-     * 0.5.1: Mike never found the calibration in 0.5.0 (none was ever saved). The first time the
-     * Space sees a hand with no calibration saved, it starts the dots by itself, once ever.
-     */
-    private fun offerCalibration() {
-        if (calibrationOfferChecked || calibration != null) return
-        if (SpaceSession.hands.values.none { it.present }) return
-        calibrationOfferChecked = true
-        // Debug replays aim through the air box and have no use for it.
-        if (HandFeed.forceImageMode) return
-        val prefs = HandsPrefs(context)
-        if (prefs.calibrationOffered || !prefs.calibration.isIdentity) return
-        prefs.calibrationOffered = true
-        toggleCalibration()
-        calibrationOffer = true
-        Log.i(HANDS_TAG, "First Space with hands and no calibration saved: offering the ${HandCalibration.DEFAULT_TARGETS.size} dot calibration once (an open palm skips it)")
-    }
-
-    /**
-     * While calibrating, a hand's press is a sample on the current dot and never reaches a
-     * panel; its release is swallowed too. True when [s] was taken.
-     */
-    private fun calibrationTakes(s: PointerSignal): Boolean {
-        val c = calibration ?: return false
-        val hand = s as? PointerSignal.ForHand ?: return false
-        return when (val inner = hand.signal) {
-            PointerSignal.ShowDock -> {
-                // An open palm skips the offered calibration; Calibrate on the Hands screen brings it back.
-                if (calibrationOffer) {
-                    toggleCalibration()
-                    problem = str(R.string.space_calib_skipped)
-                }
-                true
-            }
-            is PointerSignal.Down -> {
-                val dir = hand.dir ?: inner.at?.let { at ->
-                    val (x, y) = viewport.toSurface(at.x, at.y)
-                    frustum.rayThrough(x, y)
-                } ?: return true
-                val origin = hand.origin ?: Vec3.ZERO
-                c.record(origin, dir)
-                Log.i(HANDS_TAG, "Hand calibration dot ${c.index} of ${c.targets.size}: ${hand.hand.label} hand ray %.1f, %.1f deg".format(Angles.of(dir).yawDeg, Angles.of(dir).pitchDeg))
-                if (c.done) finishCalibration(c)
-                true
-            }
-            is PointerSignal.Up, PointerSignal.Cancel, is PointerSignal.Scale -> true
-            else -> false
-        }
-    }
-
-    private fun finishCalibration(c: HandCalibration) {
-        val r = c.result()
-        Log.i(HANDS_TAG, "Hand ${r.line()}")
-        if (!r.ok) {
-            calibrationNote = str(R.string.space_calib_off, r.rmsDeg)
-            c.restart()
-            return
-        }
-        val prefs = HandsPrefs(context)
-        prefs.calibration = r.calibration
-        prefs.calibrationRmsDeg = r.rmsDeg
-        HandFeed.endCalibration(r.calibration)
-        calibration = null
-        calibrationOffer = false
-        problem = str(R.string.space_calib_done, r.rmsDeg)
-    }
-
-    /** The current dot, fixed in front of the head, and what to do, while calibrating. */
-    private fun drawCalibration(viewProj: Mat4, head: Quat) {
-        val c = calibration ?: return
-        val local = c.dotPosition() ?: return
-        val at = head.rotate(local)
-        val dir = at.normalized()
-        // 1.4.0: fixed in front of the eyes wherever the head is (6DoF).
-        val placed = at + headPos
-        val right = (dir cross Vec3.UP).let { if (it.length < 1e-6f) Vec3.RIGHT else it.normalized() }
-        val up = right cross dir
-        val size = at.length * 0.03f
-        drawColor(viewProj * Mat4.basis(placed, right, up, -dir, size, size), floatArrayOf(1f, 1f, 1f, 0.95f), circle = true)
-        drawColor(viewProj * Mat4.basis(at - dir * 0.001f, right, up, -dir, size * 0.45f, size * 0.45f), floatArrayOf(0.95f, 0.3f, 0.25f, 1f), circle = true)
-        val tex = calibrationLabel ?: LabelTexture(1024, 128).also { calibrationLabel = it }
-        val lines = listOfNotNull(
-            if (calibrationOffer && c.index == 0) str(R.string.space_calib_first, c.targets.size) else str(R.string.space_calib_dot, c.index + 1, c.targets.size),
-            calibrationNote ?: if (calibrationOffer) str(R.string.space_calib_skip) else null,
-        )
-        tex.set(lines, Look.GLASS, Look.INK, 34f, centred = true)
-        val below = at - up * (size * 1.6f)
-        drawLabel(tex.id, viewProj * Mat4.basis(below, right, up, -dir, at.length * 0.2f, at.length * 0.025f), 0.95f)
-    }
-
     /** 0.5.8: the hint while a hand is near the bottom of the camera picture. */
     private val edgeHint = com.hayeco.flipspaces.core.hands.CameraEdgeHint()
     private var edgeHintLabel: LabelTexture? = null
@@ -5845,7 +5720,7 @@ private const val PANEL_TAG = "FlipSpaces/Panel"
 private const val TIP_DELAY_MS = 450L
 private const val WATCHDOG_TAG = "FlipSpaces/Watchdog"
 
-/** Hand calibration lines go with the other hand lines. */
+/** Hand lines go with the other hand lines. */
 private const val HANDS_TAG = "FlipSpacesHands"
 
 /** Every scroll injected into a panel and its result (0.4.2). */

@@ -104,12 +104,6 @@
     <string name="space_problem_service_restarted">El servicio de paneles se reinició; reabriendo los paneles.</string>
     <string name="space_problem_protects">%1$s protege su pantalla; pellizca su banner para abrirla como ventana de DeX.</string>
     <string name="space_problem_looks_protected">%1$s parece protegida en su panel; pellizca su banner para abrirla como ventana de DeX.</string>
-    <string name="space_calib_skipped">Calibración de manos omitida. Calibra cuando quieras desde Manos en el teléfono.</string>
-    <string name="space_calib_off">Hubo un desvío de %1$.1f grados. Otra vez, despacio: apunta, quédate quieto, pellizca.</string>
-    <string name="space_calib_done">Manos calibradas: %1$.1f grados</string>
-    <string name="space_calib_first">Calibra tus manos una vez: apunta al punto y pellizca (1 de %1$d)</string>
-    <string name="space_calib_dot">Apunta al punto y pellizca (%1$d de %2$d)</string>
-    <string name="space_calib_skip">Abre la palma para omitir</string>
     <string name="space_info_mode">Pocket XR: %1$s</string>
     <string name="space_info_starting">iniciando</string>
     <string name="space_info_head_tracking">Seguimiento de cabeza: %1$s</string>
@@ -492,7 +486,7 @@
     <string name="head_level_no_context">No guardado: no hay contexto de la app.</string>
     <string name="head_level_saved">Guardado: la IMU marca roll %1$.2f y pitch %2$.2f grados cuando la pantalla está nivelada; se aplica a partir de ahora.</string>
     <string name="hands_title">Manos</string>
-    <string name="hands_reset_text">Se borra la calibración de puntería de las manos (el Espacio la ofrece de nuevo) y la puntería de desarrollador vuelve al rayo de la cámara. La configuración de manos, los permisos y el inicio con las gafas se mantienen.</string>
+    <string name="hands_reset_text">La puntería de desarrollador vuelve al rayo de la cámara. La configuración de manos, los permisos y el inicio con las gafas se mantienen.</string>
     <string name="hands_tick_always">Marca Siempre en el aviso al conectar</string>
     <string name="hands_remember_glasses">Recordar tus gafas</string>
     <string name="hands_mic_reason">Pocket XR necesita el permiso del micrófono para que Android pueda recordar tus gafas. Nunca graba.</string>
@@ -502,10 +496,6 @@
     <string name="hands_start_with_glasses">Iniciar manos con las gafas</string>
     <string name="hands_auto_note">Se activa la primera vez que Iniciar manos funciona. Luego las manos se inician cuando el Espacio se abre en las gafas. Detener en la notificación las pausa hasta la próxima conexión.</string>
     <string name="hands_cursor_note">El cursor va donde la cámara de las gafas ve el punto de pellizco de tus nudillos, justo delante del nudillo del índice, más o menos 1:1 con donde ves tu mano. Cerrar los dedos no lo mueve.</string>
-    <string name="hands_calibrate_state">Calibrar puntería de manos: %1$s</string>
-    <string name="hands_calibrate_howto">Con el Espacio en las gafas, toca Calibrar y pellizca en cada uno de los cinco puntos que muestra, apuntando a cada uno. Corrige el ángulo y el campo de visión de la cámara de las gafas. El Espacio la ofrece una vez por sí solo la primera vez que ve tus manos; una palma abierta la omite.</string>
-    <string name="hands_calibrate">Calibrar puntería de manos</string>
-    <string name="hands_reset_calibration">Restablecer calibración</string>
     <string name="hands_pointer_title">1. Puntero de Pocket XR (servicio de accesibilidad)</string>
     <string name="hands_pointer_why">Fuera del Espacio, las manos y el panel táctil llegan a las gafas mediante un servicio de accesibilidad. Es la única forma en que Android deja que una app normal actúe sobre las ventanas de otras apps. Viene con el complemento de Pocket XR, una segunda app pequeña, porque Google bloquea en algunos países la instalación de apps que lo incluyen. El servicio:</string>
     <string name="hands_pointer_does">- dibuja el cursor, las indicaciones y el dock en la pantalla de las gafas\n- lee dónde están las ventanas de apps en las gafas (solo posición, tamaño y título) y las etiquetas de los botones de la barra de título de DeX allí, para encontrar su botón de pantalla completa\n- hace toques y arrastres en la pantalla de las gafas, que es como se hace clic en las ventanas, se mueven (arrastrando la barra de título de DeX) y se cambia su tamaño (arrastrando una esquina)\nNo hace nada en las pantallas del teléfono ni envía nada fuera del teléfono.</string>
@@ -560,12 +550,7 @@
     <string name="hands_usb_allowed">Acceso USB a las gafas permitido.</string>
     <string name="hands_usb_denied">No se permitió el acceso USB a las gafas.</string>
     <string name="hands_starting">Iniciando el seguimiento de manos con la cámara de las gafas.</string>
-    <string name="hands_calibrate_look">Mira las gafas: apunta a cada punto y pellizca. Toca de nuevo para cancelar.</string>
-    <string name="hands_open_space_first">Primero abre el Espacio en las gafas, con las manos en marcha.</string>
-    <string name="hands_calibration_reset">Calibración de manos restablecida.</string>
     <string name="hands_reset_done">Los ajustes de manos volvieron a los valores de Pocket XR.</string>
-    <string name="hands_not_calibrated_defaults">sin calibrar (valores de la cámara: %1$s)</string>
-    <string name="hands_calibrated_fit">%1$s, desvío de %2$.1f grados en sus puntos</string>
     <string name="hands_model_downloaded">Modelo de manos descargado.</string>
     <string name="hands_download_failed_http">Error en la descarga: HTTP %1$d %2$s</string>
     <plurals name="hands_download_too_small">
@@ -648,7 +633,7 @@
     <string name="home_glasses_setup_check">Comprobar configuración de las gafas</string>
     <string name="home_glasses_setup_check_detail">Los ajustes que necesitan tus gafas y una comprobación de 10 segundos de que las ventanas se quedan en su sitio</string>
     <string name="home_hands">Manos</string>
-    <string name="home_hands_detail">Seguimiento de manos, calibrar la puntería, gestos</string>
+    <string name="home_hands_detail">Seguimiento de manos, gestos</string>
     <string name="home_trackpad">Panel táctil</string>
     <string name="home_trackpad_detail">Velocidades del cursor y del desplazamiento, barra de desplazamiento, curva de ventanas, en su Menú</string>
     <string name="home_advanced">Avanzado</string>

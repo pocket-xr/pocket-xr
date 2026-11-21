@@ -15,7 +15,6 @@ import com.hayeco.flipspaces.core.hands.HandStatus
 import com.hayeco.flipspaces.core.hands.HandUpdate
 import com.hayeco.flipspaces.core.hands.HandsRecognizer
 import com.hayeco.flipspaces.core.hands.PinchTrace
-import com.hayeco.flipspaces.core.hands.RayCalibration
 import com.hayeco.flipspaces.core.pointer.HandSide
 import com.hayeco.flipspaces.core.pointer.PointerSignal
 import com.hayeco.flipspaces.core.spatial.StereoLayout
@@ -31,9 +30,9 @@ import com.hayeco.flipspaces.spatial.SpaceStore
  * runs through exactly the filter, pinch lock, recognizer and pointer the camera does. Logs
  * every pinch step under FlipSpacesHands and hands the signals to [PointerHub].
  *
- * 0.5.0: two hands, each with its own recognizer, and a hand ray with the saved camera
- * calibration instead of the air box. The head pose at each frame's capture time turns the ray's
- * neck when head tracking is live; when it is not, that is logged, and the rays move with the head.
+ * 0.5.0: two hands, each with its own recognizer, and a hand ray instead of the air box. The
+ * head pose at each frame's capture time turns the ray's neck when head tracking is live; when
+ * it is not, that is logged, and the rays move with the head.
  *
  * 0.5.1: the ray goes from the camera through the hand by default (0.4.8's near 1:1 mapping, in
  * angles); 0.5.0's shoulder ray is an option ([HandsPrefs.shoulderRay]). 0.5.2: through Meta's
@@ -50,15 +49,6 @@ object HandFeed {
 
     /** 0.5.89: when [HandsRecognizer.bothPalms]'s reason was last logged. */
     private var bothPalmsLoggedMs = 0L
-
-    /** The ray correction in use; identity while the Space's calibration takes its samples. */
-    @Volatile
-    private var calibration: RayCalibration? = null
-
-    /** True while the Space's "pinch on the dots" calibration runs: rays are left uncorrected. */
-    @Volatile
-    var calibrating: Boolean = false
-        private set
 
     /** Debug replays aim at display pixels through the air box, not a ray (see HandReplayPlayer). */
     @Volatile
@@ -88,7 +78,6 @@ object HandFeed {
         )
         val prefs = HandsPrefs(context)
         val rayMode = !forceImageMode
-        val fit = calibration ?: prefs.calibration.also { calibration = it }
         // 0.5.9: the glasses' real field of view (GlassesOptics), the same projection the Space draws with.
         // 0.5.26: the glasses' screen in the mode in use, as the Space's projection.
         val frustum = store.optics(StereoLayout.isSbsMode(display?.widthPx ?: 1920, display?.heightPx ?: 1080)).pictureFrustum(w, h)
@@ -97,7 +86,7 @@ object HandFeed {
         val settings = if (prefs.shoulderRay) HandRaySettings.SHOULDER else HandRaySettings()
         fun make(side: HandSide) = HandGestureRecognizer(w, h, GlassesCameraProvider.airBox).also { r ->
             r.frustum = frustum
-            if (rayMode) r.ray = HandRayBuilder(side, camera, settings, calibration = if (calibrating) RayCalibration.IDENTITY else fit)
+            if (rayMode) r.ray = HandRayBuilder(side, camera, settings)
             r.headAt = { t -> HeadTracker.poseAt(t) }
             // 0.5.46: a pinch with the palm turned to the glasses opens the launcher (Meta Quest's).
             r.palmPinchOpensLauncher = true
@@ -112,7 +101,7 @@ object HandFeed {
             Log.i(
                 TAG,
                 "Hand recognizer for ${w}x$h${display?.let { d -> " (display ${d.id})" } ?: " (no glasses display yet)"}, two hands, " +
-                    if (rayMode) "${settings.line()}, ${camera.line()}, display %.1f by %.1f degrees, calibration ${fit.line()}".format(java.util.Locale.ROOT, frustum.horizontalFovDeg, frustum.verticalFovDeg) else "air box in the picture (image mode)",
+                    if (rayMode) "${settings.line()}, ${camera.line()}, display %.1f by %.1f degrees".format(java.util.Locale.ROOT, frustum.horizontalFovDeg, frustum.verticalFovDeg) else "air box in the picture (image mode)",
             )
         }
     }
@@ -220,27 +209,6 @@ object HandFeed {
                 Log.w(TAG, "Hand rays: head tracking has no sensor data (${status.summary}); the Space is head locked and the cursors move with the head")
             else ->
                 Log.i(TAG, "Hand rays: no head tracking (${status.summary}), so rays move with the head")
-        }
-    }
-
-    /** The Space's calibration starts: rays from now on are uncorrected. */
-    fun beginCalibration() {
-        calibrating = true
-        applyCalibration(RayCalibration.IDENTITY)
-    }
-
-    /** The calibration ended with [result] (null: cancelled or refused, keep the old one). */
-    fun endCalibration(result: RayCalibration?) {
-        calibrating = false
-        if (result != null) calibration = result
-        applyCalibration(calibration ?: RayCalibration.IDENTITY)
-    }
-
-    private fun applyCalibration(c: RayCalibration) {
-        synchronized(this) {
-            val r = hands ?: return
-            r.primary.ray?.calibration = c
-            r.second?.ray?.calibration = c
         }
     }
 
