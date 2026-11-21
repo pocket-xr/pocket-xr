@@ -72,7 +72,7 @@ Pocket XR is not made by or affiliated with XREAL. "XREAL" and the glasses' name
 | --- | --- | --- |
 | App icon | [images/icon-512.png](images/icon-512.png) | 512 x 512, 32-bit PNG |
 | Feature graphic | [images/feature-graphic-1024x500.png](images/feature-graphic-1024x500.png) | 1024 x 500 |
-| Phone screenshots (6) | [images/phone/](images/phone/) | 1200 x 2400 each (2:1, Play's limit) |
+| Phone screenshots (6) | [images/phone/](images/phone/) | 1920 x 1080 each (16:9), designed scenes (MANIFEST.md) |
 
 Upload the phone screenshots in their numbered order. No tablet, Chromebook, TV, Wear or XR screenshots: Pocket XR is a
 phone app.
@@ -221,7 +221,7 @@ Nothing the add-on reads is stored, collected or sent off the phone. It is share
 It works only with Pocket XR installed. Pocket XR is not made by or affiliated with XREAL. "XREAL" is XREAL's trademark.
 ```
 
-Graphics: the same icon and feature graphic as Pocket XR, and screenshots 04 and 05 from [images/phone/](images/phone/)
+Graphics: the same icon and feature graphic as Pocket XR, and screenshots 04 and 05 from [images/addon/](images/addon/)
 (the Hands card and the pointer's disclosure) plus a screenshot of the notification disclosure if Mike wants a third.
 
 Data safety: collects nothing, shares nothing ("No" to the first question). Its permissions: none beyond the two
