@@ -104,12 +104,6 @@
     <string name="space_problem_service_restarted">Il servizio pannelli si è riavviato; riapertura dei pannelli.</string>
     <string name="space_problem_protects">%1$s protegge il suo schermo; pizzica il suo banner per aprirla come finestra DeX.</string>
     <string name="space_problem_looks_protected">%1$s sembra protetta sul suo pannello; pizzica il suo banner per aprirla come finestra DeX.</string>
-    <string name="space_calib_skipped">Calibrazione delle mani saltata. Puoi calibrarle quando vuoi da Mani sul telefono.</string>
-    <string name="space_calib_off">Errore di %1$.1f gradi. Di nuovo, piano: punta, resta fermo, pizzica.</string>
-    <string name="space_calib_done">Mani calibrate: %1$.1f gradi</string>
-    <string name="space_calib_first">Calibra le mani una volta: punta il punto e pizzica (1 di %1$d)</string>
-    <string name="space_calib_dot">Punta il punto e pizzica (%1$d di %2$d)</string>
-    <string name="space_calib_skip">Mano aperta per saltare</string>
     <string name="space_info_mode">Pocket XR: %1$s</string>
     <string name="space_info_starting">avvio</string>
     <string name="space_info_head_tracking">Tracciamento della testa: %1$s</string>
@@ -492,7 +486,7 @@
     <string name="head_level_no_context">Non salvato: nessun contesto dell\'app.</string>
     <string name="head_level_saved">Salvato: l\'IMU legge roll %1$.2f, pitch %2$.2f gradi quando il display è in piano; applicato da ora.</string>
     <string name="hands_title">Mani</string>
-    <string name="hands_reset_text">La calibrazione della mira delle mani viene cancellata (lo Spazio la propone di nuovo) e la mira sviluppatore torna al raggio della fotocamera. Configurazione delle mani, autorizzazioni e avvio con gli occhiali restano.</string>
+    <string name="hands_reset_text">La mira sviluppatore torna al raggio della fotocamera. Configurazione delle mani, autorizzazioni e avvio con gli occhiali restano.</string>
     <string name="hands_tick_always">Spunta Sempre nella richiesta al collegamento</string>
     <string name="hands_remember_glasses">Ricorda i tuoi occhiali</string>
     <string name="hands_mic_reason">Pocket XR ha bisogno dell\'autorizzazione al microfono perché Android possa ricordare i tuoi occhiali. Non registra mai.</string>
@@ -502,10 +496,6 @@
     <string name="hands_start_with_glasses">Avvia le mani con gli occhiali</string>
     <string name="hands_auto_note">Si attiva la prima volta che Avvia mani funziona. Poi le mani si avviano quando lo Spazio si apre sugli occhiali. Stop nella notifica le mette in pausa fino al prossimo collegamento.</string>
     <string name="hands_cursor_note">Il cursore va dove la fotocamera degli occhiali vede il punto di pizzico delle tue nocche, appena davanti alla nocca dell\'indice, circa 1:1 con dove vedi la tua mano. Chiudere le dita non lo sposta.</string>
-    <string name="hands_calibrate_state">Calibra la mira delle mani: %1$s</string>
-    <string name="hands_calibrate_howto">Con lo Spazio sugli occhiali, tocca Calibra e pizzica su ognuno dei cinque punti mostrati, puntandoli uno per uno. Corregge l\'angolo e il campo visivo della fotocamera degli occhiali. Lo Spazio la propone da solo una volta, la prima volta che vede le tue mani; una mano aperta la salta.</string>
-    <string name="hands_calibrate">Calibra la mira delle mani</string>
-    <string name="hands_reset_calibration">Reimposta calibrazione</string>
     <string name="hands_pointer_title">1. Puntatore Pocket XR (servizio di accessibilità)</string>
     <string name="hands_pointer_why">Fuori dallo Spazio, le mani e il trackpad raggiungono gli occhiali tramite un servizio di accessibilità. È l\'unico modo in cui Android permette a un\'app normale di agire sulle finestre di altre app. È incluso nel componente aggiuntivo di Pocket XR, una seconda piccola app, perché in alcuni Paesi Google blocca l\'installazione di app che ne contengono uno. Il servizio:</string>
     <string name="hands_pointer_does">- disegna il cursore, i suggerimenti e il dock sul display degli occhiali\n- legge dove si trovano le finestre delle app sugli occhiali (solo posizione, dimensione e titolo) e le etichette dei pulsanti della barra del titolo di DeX, per trovare il pulsante schermo intero\n- esegue tocchi e trascinamenti sul display degli occhiali, ed è così che si fa clic sulle finestre, si spostano (trascinando la barra del titolo di DeX) e si ridimensionano (trascinando un angolo)\nNon fa nulla sugli schermi del telefono e non invia nulla fuori dal telefono.</string>
@@ -560,12 +550,7 @@
     <string name="hands_usb_allowed">Accesso USB agli occhiali consentito.</string>
     <string name="hands_usb_denied">L\'accesso USB agli occhiali non è stato consentito.</string>
     <string name="hands_starting">Avvio del tracciamento mani con la fotocamera degli occhiali.</string>
-    <string name="hands_calibrate_look">Guarda negli occhiali: punta ogni punto e pizzica. Tocca di nuovo per annullare.</string>
-    <string name="hands_open_space_first">Prima apri lo Spazio sugli occhiali, con le mani attive.</string>
-    <string name="hands_calibration_reset">Calibrazione delle mani reimpostata.</string>
     <string name="hands_reset_done">Le impostazioni delle mani sono tornate ai valori predefiniti di Pocket XR.</string>
-    <string name="hands_not_calibrated_defaults">non calibrata (valori predefiniti della fotocamera: %1$s)</string>
-    <string name="hands_calibrated_fit">%1$s, errore di %2$.1f gradi sui suoi punti</string>
     <string name="hands_model_downloaded">Modello delle mani scaricato.</string>
     <string name="hands_download_failed_http">Download non riuscito: HTTP %1$d %2$s</string>
     <plurals name="hands_download_too_small">
@@ -648,7 +633,7 @@
     <string name="home_glasses_setup_check">Verifica configurazione occhiali</string>
     <string name="home_glasses_setup_check_detail">Le impostazioni che servono ai tuoi occhiali e una verifica di 10 secondi che le finestre restino ferme</string>
     <string name="home_hands">Mani</string>
-    <string name="home_hands_detail">Tracciamento mani, calibrazione della mira, gesti</string>
+    <string name="home_hands_detail">Tracciamento mani, gesti</string>
     <string name="home_trackpad">Trackpad</string>
     <string name="home_trackpad_detail">Velocità di cursore e scorrimento, barra di scorrimento, curvatura delle finestre, nel suo Menu</string>
     <string name="home_advanced">Avanzate</string>

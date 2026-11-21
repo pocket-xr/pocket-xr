@@ -104,12 +104,6 @@
     <string name="space_problem_service_restarted">O serviço de painéis reiniciou; reabrindo os painéis.</string>
     <string name="space_problem_protects">%1$s protege a própria tela; faça pinça no banner dele para abri-lo como janela do DeX.</string>
     <string name="space_problem_looks_protected">%1$s parece protegido no painel dele; faça pinça no banner dele para abri-lo como janela do DeX.</string>
-    <string name="space_calib_skipped">Calibração das mãos pulada. Calibre quando quiser em Mãos, no celular.</string>
-    <string name="space_calib_off">Ficou %1$.1f graus fora. De novo, devagar: aponte, fique parado, faça pinça.</string>
-    <string name="space_calib_done">Mãos calibradas: %1$.1f graus</string>
-    <string name="space_calib_first">Calibre suas mãos uma vez: aponte para o ponto e faça pinça (1 de %1$d)</string>
-    <string name="space_calib_dot">Aponte para o ponto e faça pinça (%1$d de %2$d)</string>
-    <string name="space_calib_skip">Mão aberta para pular</string>
     <string name="space_info_mode">Pocket XR: %1$s</string>
     <string name="space_info_starting">iniciando</string>
     <string name="space_info_head_tracking">Rastreamento de cabeça: %1$s</string>
@@ -492,7 +486,7 @@
     <string name="head_level_no_context">Não salvo: sem contexto do app.</string>
     <string name="head_level_saved">Salvo: a IMU lê roll %1$.2f e pitch %2$.2f graus com a tela nivelada; aplicado a partir de agora.</string>
     <string name="hands_title">Mãos</string>
-    <string name="hands_reset_text">A calibração da mira das mãos é apagada (o Espaço a oferece de novo) e a mira de desenvolvedor volta ao raio da câmera. A configuração das mãos, as permissões e iniciar com os óculos continuam.</string>
+    <string name="hands_reset_text">A mira de desenvolvedor volta ao raio da câmera. A configuração das mãos, as permissões e iniciar com os óculos continuam.</string>
     <string name="hands_tick_always">Marque Sempre no aviso ao conectar</string>
     <string name="hands_remember_glasses">Lembrar dos seus óculos</string>
     <string name="hands_mic_reason">O Pocket XR precisa da permissão de microfone para o Android lembrar dos seus óculos. Ele nunca grava.</string>
@@ -502,10 +496,6 @@
     <string name="hands_start_with_glasses">Iniciar as mãos com os óculos</string>
     <string name="hands_auto_note">Ativado na primeira vez que Iniciar mãos funciona. Depois as mãos iniciam quando o Espaço abre nos óculos. Parar na notificação as pausa até a próxima conexão.</string>
     <string name="hands_cursor_note">O cursor vai para onde a câmera dos óculos vê o ponto de pinça dos seus dedos, logo à frente da junta do indicador, mais ou menos 1:1 com onde você vê a mão. Fechar os dedos não o move.</string>
-    <string name="hands_calibrate_state">Calibrar mira das mãos: %1$s</string>
-    <string name="hands_calibrate_howto">Com o Espaço nos óculos, toque em Calibrar mira das mãos e faça pinça em cada um dos cinco pontos que aparecem, apontando para cada um. Isso corrige o ângulo e o campo de visão da câmera dos óculos. O Espaço oferece isso sozinho uma vez, na primeira vez que vê suas mãos; a mão aberta pula.</string>
-    <string name="hands_calibrate">Calibrar mira das mãos</string>
-    <string name="hands_reset_calibration">Redefinir calibração</string>
     <string name="hands_pointer_title">1. Ponteiro do Pocket XR (serviço de acessibilidade)</string>
     <string name="hands_pointer_why">Fora do Espaço, as mãos e o trackpad chegam aos óculos por um serviço de acessibilidade. É o único jeito que o Android dá para um app comum agir nas janelas de outros apps. Ele vem com o complemento do Pocket XR, um segundo app pequeno, porque o Google bloqueia a instalação de apps com um desses em alguns países. Ele:</string>
     <string name="hands_pointer_does">- desenha o cursor, as dicas e a dock na tela dos óculos\n- lê onde estão as janelas dos apps nos óculos (só posição, tamanho e título) e os rótulos dos botões da barra de título do DeX ali, para achar o botão de tela cheia\n- faz toques e arrastes na tela dos óculos, que é como as janelas são clicadas, movidas (arrastar na barra de título do DeX) e redimensionadas (arrastar num canto)\nEle não faz nada nas telas do próprio celular e não envia nada para fora do celular.</string>
@@ -560,12 +550,7 @@
     <string name="hands_usb_allowed">Acesso USB aos óculos permitido.</string>
     <string name="hands_usb_denied">O acesso USB aos óculos não foi permitido.</string>
     <string name="hands_starting">Iniciando o rastreamento de mãos na câmera dos óculos.</string>
-    <string name="hands_calibrate_look">Olhe para os óculos: aponte para cada ponto e faça pinça. Toque de novo para cancelar.</string>
-    <string name="hands_open_space_first">Abra primeiro o Espaço nos óculos, com as mãos funcionando.</string>
-    <string name="hands_calibration_reset">Calibração das mãos redefinida.</string>
     <string name="hands_reset_done">As configurações das mãos voltaram ao padrão do Pocket XR.</string>
-    <string name="hands_not_calibrated_defaults">não calibrado (padrão da câmera: %1$s)</string>
-    <string name="hands_calibrated_fit">%1$s, %2$.1f graus de erro nos pontos</string>
     <string name="hands_model_downloaded">Modelo das mãos baixado.</string>
     <string name="hands_download_failed_http">Falha no download: HTTP %1$d %2$s</string>
     <plurals name="hands_download_too_small">
@@ -648,7 +633,7 @@
     <string name="home_glasses_setup_check">Verificação dos óculos</string>
     <string name="home_glasses_setup_check_detail">As configurações de que seus óculos precisam e uma verificação de 10 segundos de que as janelas ficam paradas</string>
     <string name="home_hands">Mãos</string>
-    <string name="home_hands_detail">Rastreamento de mãos, calibração da mira das mãos, gestos</string>
+    <string name="home_hands_detail">Rastreamento de mãos, gestos</string>
     <string name="home_trackpad">Trackpad</string>
     <string name="home_trackpad_detail">Velocidades do cursor e da rolagem, faixa de rolagem, curvatura das janelas, no Menu dele</string>
     <string name="home_advanced">Avançado</string>

@@ -106,12 +106,6 @@
     <string name="space_problem_service_restarted">Служба панелей перезапустилась; открываем панели снова.</string>
     <string name="space_problem_protects">%1$s защищает свой экран; сведите пальцы на его баннере, чтобы открыть как окно DeX.</string>
     <string name="space_problem_looks_protected">%1$s, похоже, защищено на своей панели; сведите пальцы на его баннере, чтобы открыть как окно DeX.</string>
-    <string name="space_calib_skipped">Калибровка рук пропущена. Откалибруйте в любой момент в разделе «Руки» на телефоне.</string>
-    <string name="space_calib_off">Ошибка %1$.1f градуса. Ещё раз, медленно: наведите, замрите, сведите пальцы.</string>
-    <string name="space_calib_done">Руки откалиброваны: %1$.1f градуса</string>
-    <string name="space_calib_first">Откалибруйте руки один раз: наведите на точку и сведите пальцы (1 из %1$d)</string>
-    <string name="space_calib_dot">Наведите на точку и сведите пальцы (%1$d из %2$d)</string>
-    <string name="space_calib_skip">Раскрытая ладонь, чтобы пропустить</string>
     <string name="space_info_mode">Pocket XR: %1$s</string>
     <string name="space_info_starting">запуск</string>
     <string name="space_info_head_tracking">Отслеживание головы: %1$s</string>
@@ -500,7 +494,7 @@
     <string name="head_level_no_context">Не сохранено: нет контекста приложения.</string>
     <string name="head_level_saved">Сохранено: IMU показывает roll %1$.2f, pitch %2$.2f градуса, когда дисплей ровный; применяется с этого момента.</string>
     <string name="hands_title">Руки</string>
-    <string name="hands_reset_text">Калибровка наведения рук очищается (Пространство предложит её снова), а наведение для разработчиков возвращается к лучу камеры. Настройка рук, разрешения и запуск вместе с очками сохраняются.</string>
+    <string name="hands_reset_text">Наведение для разработчиков возвращается к лучу камеры. Настройка рук, разрешения и запуск вместе с очками сохраняются.</string>
     <string name="hands_tick_always">Отметьте «Всегда» в запросе при подключении</string>
     <string name="hands_remember_glasses">Запомнить ваши очки</string>
     <string name="hands_mic_reason">Pocket XR нужно разрешение на микрофон, чтобы Android мог запомнить ваши очки. Он никогда ничего не записывает.</string>
@@ -510,10 +504,6 @@
     <string name="hands_start_with_glasses">Запускать руки вместе с очками</string>
     <string name="hands_auto_note">Включается, когда «Запустить руки» впервые сработает. Затем руки запускаются, когда в очках открывается Пространство. «Стоп» в уведомлении приостанавливает их до следующего подключения.</string>
     <string name="hands_cursor_note">Курсор идёт туда, где камера очков видит точку щипка у костяшек, прямо перед костяшкой указательного пальца, примерно 1:1 с тем, где вы видите руку. Сжатие пальцев его не сдвигает.</string>
-    <string name="hands_calibrate_state">Калибровка наведения рук: %1$s</string>
-    <string name="hands_calibrate_howto">Когда в очках открыто Пространство, нажмите «Калибровать наведение рук» и сведите пальцы на каждой из пяти точек, наводя на каждую. Это исправляет угол и поле зрения камеры очков. Пространство само предложит это один раз, когда впервые увидит ваши руки; раскрытая ладонь пропускает калибровку.</string>
-    <string name="hands_calibrate">Калибровать наведение рук</string>
-    <string name="hands_reset_calibration">Сбросить калибровку</string>
     <string name="hands_pointer_title">1. Указатель Pocket XR (служба специальных возможностей)</string>
     <string name="hands_pointer_why">Вне Пространства руки и трекпад достают до очков через службу специальных возможностей. Это единственный способ, которым Android позволяет обычному приложению действовать в окнах других приложений. Она входит в дополнение Pocket XR, второе небольшое приложение, потому что в некоторых странах Google блокирует установку приложений с такой службой. Она:</string>
     <string name="hands_pointer_does">- рисует курсор, подсказки и док на дисплее очков\n- считывает, где находятся окна приложений в очках (только положение, размер и заголовок), и подписи кнопок строки заголовка DeX там, чтобы найти кнопку полноэкранного режима\n- выполняет нажатия и перетаскивания на дисплее очков: так окна нажимаются, перемещаются (перетаскивание за строку заголовка DeX) и меняют размер (перетаскивание за угол)\nОна ничего не делает на экранах самого телефона и ничего не отправляет с телефона.</string>
@@ -568,12 +558,7 @@
     <string name="hands_usb_allowed">Доступ к очкам по USB разрешён.</string>
     <string name="hands_usb_denied">Доступ к очкам по USB не разрешён.</string>
     <string name="hands_starting">Запускаем отслеживание рук камерой очков.</string>
-    <string name="hands_calibrate_look">Посмотрите в очки: наведите на каждую точку и сведите пальцы. Нажмите снова, чтобы отменить.</string>
-    <string name="hands_open_space_first">Сначала откройте Пространство в очках с запущенными руками.</string>
-    <string name="hands_calibration_reset">Калибровка рук сброшена.</string>
     <string name="hands_reset_done">Настройки рук вернулись к значениям Pocket XR по умолчанию.</string>
-    <string name="hands_not_calibrated_defaults">не откалибровано (значения камеры по умолчанию: %1$s)</string>
-    <string name="hands_calibrated_fit">%1$s, отклонение %2$.1f градуса на точках</string>
     <string name="hands_model_downloaded">Модель рук скачана.</string>
     <string name="hands_download_failed_http">Ошибка скачивания: HTTP %1$d %2$s</string>
     <plurals name="hands_download_too_small">
@@ -657,7 +642,7 @@
     <string name="home_glasses_setup_check">Проверка настройки очков</string>
     <string name="home_glasses_setup_check_detail">Нужные очкам настройки и проверка за 10 секунд, что окна стоят на месте</string>
     <string name="home_hands">Руки</string>
-    <string name="home_hands_detail">Отслеживание рук, калибровка наведения рук, жесты</string>
+    <string name="home_hands_detail">Отслеживание рук, жесты</string>
     <string name="home_trackpad">Трекпад</string>
     <string name="home_trackpad_detail">Скорость курсора и прокрутки, полоса прокрутки, изгиб окон, в его Меню</string>
     <string name="home_advanced">Дополнительно</string>

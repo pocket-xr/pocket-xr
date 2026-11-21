@@ -12,7 +12,7 @@ import java.io.File
  * 1.3.3 (a tester: "is there a way to preserve settings? I've got the standalone apk set up exactly how I want"): every
  * Pocket XR setting to one file the user keeps, and back. Moving from the GitHub build to the Google Play one means
  * uninstalling (the two are signed differently), and Android's own backup is off for Pocket XR, so this is how the
- * layouts, presets, glasses and trackpad settings, hand calibration and Joy-Con fit come along.
+ * layouts, presets, glasses, hand and trackpad settings and Joy-Con fit come along.
  *
  * The file is JSON: each preferences file with its values' types, and the glasses calibration files. Left out: the PC
  * helper's pairing (a secret for the PC; pairing again is one tap) and anything that is not a setting (logs, the hand

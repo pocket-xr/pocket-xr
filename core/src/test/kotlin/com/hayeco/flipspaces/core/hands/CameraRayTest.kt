@@ -107,15 +107,6 @@ class CameraRayTest {
     }
 
     @Test
-    fun theCalibrationsOffsetAndScaleApply() {
-        val fit = RayCalibration(a = 1.1f, c = 2f, e = 0.9f, f = -3f)
-        val plain = HandRayBuilder(HandSide.RIGHT, camera).build(pinchAt(0.65f, 0.4f), 0).angles
-        val fitted = HandRayBuilder(HandSide.RIGHT, camera, calibration = fit).build(pinchAt(0.65f, 0.4f), 0).angles
-        assertEquals(1.1f * plain.yawDeg + 2f, fitted.yawDeg, 0.02f)
-        assertEquals(0.9f * plain.pitchDeg - 3f, fitted.pitchDeg, 0.02f)
-    }
-
-    @Test
     fun theShoulderRayUsesAFixedDistanceAndASmallOffset() {
         val s = HandRaySettings.SHOULDER.copy(aim = AimPoint.PINCH)
         assertEquals(RayOrigin.SHOULDER, s.origin)

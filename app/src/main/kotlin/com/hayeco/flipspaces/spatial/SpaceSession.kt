@@ -55,9 +55,6 @@ sealed interface SpaceCommand {
     /** Field of view, background or pointer settings changed in SpaceStore. */
     data object SettingsChanged : SpaceCommand
 
-    /** 0.5.0: start the "pinch on the dots" hand calibration in the Space, or stop it if it runs. */
-    data object CalibrateHands : SpaceCommand
-
     /** 1.2.3 (issue 59): the Game controller's touches on the focused window, in order. */
     data class PadTouches(val events: List<com.hayeco.flipspaces.core.pointer.TouchPointers.Event>) : SpaceCommand
 

@@ -102,12 +102,6 @@
     <string name="space_problem_service_restarted">Der Panel-Dienst wurde neu gestartet; die Panels werden neu geöffnet.</string>
     <string name="space_problem_protects">%1$s schützt seinen Bildschirm; mach auf dem Banner einen Pinch, um es als DeX-Fenster zu öffnen.</string>
     <string name="space_problem_looks_protected">%1$s wirkt auf seinem Panel geschützt; mach auf dem Banner einen Pinch, um es als DeX-Fenster zu öffnen.</string>
-    <string name="space_calib_skipped">Hand-Kalibrierung übersprungen. Du kannst jederzeit unter „Hände“ am Handy kalibrieren.</string>
-    <string name="space_calib_off">Das lag %1$.1f Grad daneben. Noch mal, langsam: zeigen, stillhalten, Pinch.</string>
-    <string name="space_calib_done">Hände kalibriert: %1$.1f Grad</string>
-    <string name="space_calib_first">Kalibriere einmal deine Hände: zeig auf den Punkt und mach einen Pinch (1 von %1$d)</string>
-    <string name="space_calib_dot">Zeig auf den Punkt und mach einen Pinch (%1$d von %2$d)</string>
-    <string name="space_calib_skip">Offene Hand zum Überspringen</string>
     <string name="space_info_mode">Pocket XR: %1$s</string>
     <string name="space_info_starting">startet</string>
     <string name="space_info_head_tracking">Kopf-Tracking: %1$s</string>
@@ -484,7 +478,7 @@
     <string name="head_level_no_context">Nicht gespeichert: kein App-Kontext.</string>
     <string name="head_level_saved">Gespeichert: die IMU misst Roll %1$.2f, Pitch %2$.2f Grad, wenn das Display waagerecht ist; gilt ab jetzt.</string>
     <string name="hands_title">Hände</string>
-    <string name="hands_reset_text">Die Kalibrierung der Handausrichtung wird gelöscht (der Space bietet sie wieder an) und die Entwickler-Ausrichtung geht zurück auf den Kamerastrahl. Hand-Einrichtung, Berechtigungen und Start mit der Brille bleiben.</string>
+    <string name="hands_reset_text">Die Entwickler-Ausrichtung geht zurück auf den Kamerastrahl. Hand-Einrichtung, Berechtigungen und Start mit der Brille bleiben.</string>
     <string name="hands_tick_always">Hake bei der Abfrage beim Anschließen „Immer“ an</string>
     <string name="hands_remember_glasses">Brille merken</string>
     <string name="hands_mic_reason">Pocket XR braucht die Mikrofonberechtigung, damit Android sich deine Brille merken kann. Es nimmt nie etwas auf.</string>
@@ -494,10 +488,6 @@
     <string name="hands_start_with_glasses">Hände mit der Brille starten</string>
     <string name="hands_auto_note">Wird eingeschaltet, sobald „Hände starten“ das erste Mal funktioniert. Danach starten die Hände, wenn sich der Space auf der Brille öffnet. „Stopp“ in der Benachrichtigung pausiert sie bis zum nächsten Anschließen.</string>
     <string name="hands_cursor_note">Der Cursor geht dorthin, wo die Brillenkamera den Pinch-Punkt deiner Knöchel sieht, knapp vor dem Zeigefingerknöchel, etwa 1:1 mit der Stelle, an der du deine Hand siehst. Fingerschließen bewegt ihn nicht.</string>
-    <string name="hands_calibrate_state">Handausrichtung kalibrieren: %1$s</string>
-    <string name="hands_calibrate_howto">Mit dem Space auf der Brille tippe auf „Kalibrieren“, zeig auf jeden der fünf Punkte und mach jeweils einen Pinch. Das korrigiert Winkel und Sichtfeld der Brillenkamera. Der Space bietet es von selbst einmal an, wenn er deine Hände zum ersten Mal sieht; eine offene Hand überspringt es.</string>
-    <string name="hands_calibrate">Handausrichtung kalibrieren</string>
-    <string name="hands_reset_calibration">Kalibrierung zurücksetzen</string>
     <string name="hands_pointer_title">1. Pocket XR-Zeiger (Bedienungshilfe-Dienst)</string>
     <string name="hands_pointer_why">Außerhalb des Space erreichen Hände und Trackpad die Brille über einen Bedienungshilfe-Dienst. Nur so lässt Android eine normale App auf die Fenster anderer Apps einwirken. Er kommt mit dem Pocket XR Add-on, einer zweiten kleinen App, weil Google in einigen Ländern die Installation von Apps mit so einem Dienst blockiert. Er:</string>
     <string name="hands_pointer_does">- zeichnet Cursor, Hinweise und das Dock auf das Brillendisplay\n- liest, wo App-Fenster auf der Brille sind (nur Position, Größe und Titel), und die Beschriftungen der Tasten in der DeX-Titelleiste dort, um die Vollbildtaste zu finden\n- führt Tipp- und Ziehgesten auf dem Brillendisplay aus, so werden Fenster angeklickt, verschoben (an der DeX-Titelleiste ziehen) und in der Größe geändert (an einer Ecke ziehen)\nAuf den Bildschirmen des Handys selbst tut er nichts, und er sendet nichts vom Handy weg.</string>
@@ -552,12 +542,7 @@
     <string name="hands_usb_allowed">USB-Zugriff auf die Brille erlaubt.</string>
     <string name="hands_usb_denied">USB-Zugriff auf die Brille wurde nicht erlaubt.</string>
     <string name="hands_starting">Hand-Tracking mit der Brillenkamera wird gestartet.</string>
-    <string name="hands_calibrate_look">Schau in die Brille: zeig auf jeden Punkt und mach einen Pinch. Zum Abbrechen erneut tippen.</string>
-    <string name="hands_open_space_first">Öffne zuerst den Space auf der Brille, während die Hände laufen.</string>
-    <string name="hands_calibration_reset">Hand-Kalibrierung zurückgesetzt.</string>
     <string name="hands_reset_done">Hand-Einstellungen sind wieder auf Pocket XR-Standard.</string>
-    <string name="hands_not_calibrated_defaults">nicht kalibriert (Kamera-Standard: %1$s)</string>
-    <string name="hands_calibrated_fit">%1$s, %2$.1f Grad Abweichung auf den Punkten</string>
     <string name="hands_model_downloaded">Handmodell geladen.</string>
     <string name="hands_download_failed_http">Download fehlgeschlagen: HTTP %1$d %2$s</string>
     <plurals name="hands_download_too_small">
@@ -639,7 +624,7 @@
     <string name="home_glasses_setup_check">Brillen-Setup prüfen</string>
     <string name="home_glasses_setup_check_detail">Die Einstellungen, die deine Brille braucht, und ein 10-Sekunden-Check, ob Fenster an ihrem Platz bleiben</string>
     <string name="home_hands">Hände</string>
-    <string name="home_hands_detail">Hand-Tracking, Handausrichtung kalibrieren, Gesten</string>
+    <string name="home_hands_detail">Hand-Tracking, Gesten</string>
     <string name="home_trackpad">Trackpad</string>
     <string name="home_trackpad_detail">Cursor- und Scrolltempo, Scrollleiste, Fensterkrümmung, in seinem Menü</string>
     <string name="home_advanced">Erweitert</string>

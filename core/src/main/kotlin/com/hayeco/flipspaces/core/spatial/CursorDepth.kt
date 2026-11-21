@@ -102,7 +102,6 @@ enum class SpaceLayer {
     CONTROL_PANEL,
     LAUNCHER,
     HOME,
-    CALIBRATION,
     DELAY_CHECK,
     LEVEL_CHECK,
     EDGE_HINT,

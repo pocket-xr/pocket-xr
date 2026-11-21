@@ -132,17 +132,6 @@
     <string name="space_problem_protects">%1$s protects its screen; pinch its banner to open it as a DeX window.</string>
     <string name="space_problem_looks_protected">%1$s looks protected on its panel; pinch its banner to open it as a DeX window.</string>
 
-    <!-- Hand calibration on the glasses -->
-    <string name="space_calib_skipped">Hand calibration skipped. Calibrate any time from Hands on the phone.</string>
-    <!-- %1$.1f: degrees -->
-    <string name="space_calib_off">That was %1$.1f degrees off. Again, slowly: point, hold still, pinch.</string>
-    <string name="space_calib_done">Hands calibrated: %1$.1f degrees</string>
-    <!-- %1$d: number of dots -->
-    <string name="space_calib_first">Calibrate your hands once: point at the dot and pinch (1 of %1$d)</string>
-    <!-- %1$d: this dot, %2$d: number of dots -->
-    <string name="space_calib_dot">Point at the dot and pinch (%1$d of %2$d)</string>
-    <string name="space_calib_skip">Open palm to skip</string>
-
     <!-- The Space's debug info panel (Developer) -->
     <!-- %1$s: the display mode -->
     <string name="space_info_mode">Pocket XR: %1$s</string>
@@ -612,7 +601,7 @@
 
     <!-- Hands screen -->
     <string name="hands_title">Hands</string>
-    <string name="hands_reset_text">Hand aim calibration is cleared (the Space offers it again) and the developer aim goes back to the camera ray. Hand setup, permissions and starting with the glasses stay.</string>
+    <string name="hands_reset_text">The developer aim goes back to the camera ray. Hand setup, permissions and starting with the glasses stay.</string>
     <string name="hands_tick_always">Tick Always on the plug-in prompt</string>
     <string name="hands_remember_glasses">Remember your glasses</string>
     <string name="hands_mic_reason">Pocket XR needs the microphone permission so Android can remember your glasses. It never records.</string>
@@ -622,11 +611,6 @@
     <string name="hands_start_with_glasses">Start hands with the glasses</string>
     <string name="hands_auto_note">Turned on the first time Start hands works. Hands then start when the Space opens on the glasses. Stop in the notification pauses them until the next plug-in.</string>
     <string name="hands_cursor_note">The cursor goes where the glasses camera sees your knuckles\' pinch point, just in front of the index knuckle, about 1:1 with where you see your hand. Closing the fingers does not move it.</string>
-    <!-- %1$s: the saved calibration in words -->
-    <string name="hands_calibrate_state">Calibrate hand aim: %1$s</string>
-    <string name="hands_calibrate_howto">With the Space on the glasses, tap Calibrate and pinch on each of the five dots it shows, pointing at each one. It corrects the glasses camera\'s angle and field of view. The Space offers it once by itself the first time it sees your hands; an open palm skips it.</string>
-    <string name="hands_calibrate">Calibrate hand aim</string>
-    <string name="hands_reset_calibration">Reset calibration</string>
     <string name="hands_pointer_title">1. Pocket XR pointer (accessibility service)</string>
     <string name="hands_pointer_why">Outside the Space, hands and the trackpad reach the glasses through an accessibility service. It is the only way Android lets an ordinary app act on other apps\' windows. It comes with the Pocket XR add-on, a second small app, because Google blocks installing apps with one in some countries. It:</string>
     <string name="hands_pointer_does">- draws the cursor, hints and the dock on the glasses display\n- reads where app windows are on the glasses (position, size and title only), and the labels of DeX\'s title bar buttons there, to find its full screen button\n- performs taps and drags on the glasses display, which is how windows are clicked, moved (drag on the DeX title bar) and resized (drag on a corner)\nIt does nothing on the phone\'s own screens and sends nothing off the phone.</string>
@@ -685,14 +669,7 @@
     <string name="hands_usb_allowed">USB access to the glasses allowed.</string>
     <string name="hands_usb_denied">USB access to the glasses was not allowed.</string>
     <string name="hands_starting">Starting hand tracking on the glasses camera.</string>
-    <string name="hands_calibrate_look">Look at the glasses: point at each dot and pinch. Tap again to cancel.</string>
-    <string name="hands_open_space_first">Open the Space on the glasses first, with hands running.</string>
-    <string name="hands_calibration_reset">Hand calibration reset.</string>
     <string name="hands_reset_done">Hands settings are back to Pocket XR\'s defaults.</string>
-    <!-- %1$s: the camera's default angles, technical -->
-    <string name="hands_not_calibrated_defaults">not calibrated (camera defaults: %1$s)</string>
-    <!-- %1$s: the calibration, technical; %2$.1f: average error in degrees -->
-    <string name="hands_calibrated_fit">%1$s, %2$.1f degrees off on its dots</string>
     <string name="hands_model_downloaded">Hand model downloaded.</string>
     <!-- %1$d: HTTP status code; %2$s: the server's message -->
     <string name="hands_download_failed_http">Download failed: HTTP %1$d %2$s</string>
@@ -810,7 +787,7 @@
     <string name="home_glasses_setup_check">Glasses setup check</string>
     <string name="home_glasses_setup_check_detail">The settings your glasses need, and a 10 second check that windows stay put</string>
     <string name="home_hands">Hands</string>
-    <string name="home_hands_detail">Hand tracking, calibrating hand aim, gestures</string>
+    <string name="home_hands_detail">Hand tracking, gestures</string>
     <string name="home_trackpad">Trackpad</string>
     <string name="home_trackpad_detail">Cursor and scroll speeds, scroll strip, window curve, in its Menu</string>
     <string name="home_advanced">Advanced</string>

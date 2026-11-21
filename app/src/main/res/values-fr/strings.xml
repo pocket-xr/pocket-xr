@@ -104,12 +104,6 @@
     <string name="space_problem_service_restarted">Le service des panneaux a redémarré ; réouverture des panneaux.</string>
     <string name="space_problem_protects">%1$s protège son écran ; pincez sa bannière pour l\'ouvrir en fenêtre DeX.</string>
     <string name="space_problem_looks_protected">%1$s semble protégé sur son panneau ; pincez sa bannière pour l\'ouvrir en fenêtre DeX.</string>
-    <string name="space_calib_skipped">Calibrage des mains ignoré. Calibrez à tout moment depuis Mains sur le téléphone.</string>
-    <string name="space_calib_off">Écart de %1$.1f degrés. Recommencez lentement : visez, restez immobile, pincez.</string>
-    <string name="space_calib_done">Mains calibrées : %1$.1f degrés</string>
-    <string name="space_calib_first">Calibrez vos mains une fois : visez le point et pincez (1 sur %1$d)</string>
-    <string name="space_calib_dot">Visez le point et pincez (%1$d sur %2$d)</string>
-    <string name="space_calib_skip">Main ouverte pour ignorer</string>
     <string name="space_info_mode">Pocket XR : %1$s</string>
     <string name="space_info_starting">démarrage</string>
     <string name="space_info_head_tracking">Suivi de la tête : %1$s</string>
@@ -492,7 +486,7 @@
     <string name="head_level_no_context">Non enregistré : pas de contexte d\'app.</string>
     <string name="head_level_saved">Enregistré : l\'IMU indique un roulis de %1$.2f et un tangage de %2$.2f degrés quand l\'affichage est de niveau ; appliqué dès maintenant.</string>
     <string name="hands_title">Mains</string>
-    <string name="hands_reset_text">Le calibrage de la visée des mains est effacé (l\'Espace le propose à nouveau) et la visée développeur revient au rayon de la caméra. La configuration des mains, les autorisations et le démarrage avec les lunettes sont conservés.</string>
+    <string name="hands_reset_text">La visée développeur revient au rayon de la caméra. La configuration des mains, les autorisations et le démarrage avec les lunettes sont conservés.</string>
     <string name="hands_tick_always">Cochez Toujours dans la demande au branchement</string>
     <string name="hands_remember_glasses">Mémoriser vos lunettes</string>
     <string name="hands_mic_reason">Pocket XR a besoin de l\'autorisation du micro pour qu\'Android mémorise vos lunettes. Il n\'enregistre jamais.</string>
@@ -502,10 +496,6 @@
     <string name="hands_start_with_glasses">Démarrer les mains avec les lunettes</string>
     <string name="hands_auto_note">Activé la première fois que Démarrer les mains fonctionne. Les mains démarrent ensuite quand l\'Espace s\'ouvre sur les lunettes. Arrêter dans la notification les met en pause jusqu\'au prochain branchement.</string>
     <string name="hands_cursor_note">Le curseur va là où la caméra des lunettes voit le point de pincement de vos phalanges, juste devant la phalange de l\'index, à peu près à l\'endroit où vous voyez votre main. Refermer les doigts ne le déplace pas.</string>
-    <string name="hands_calibrate_state">Calibrer la visée des mains : %1$s</string>
-    <string name="hands_calibrate_howto">Avec l\'Espace sur les lunettes, touchez Calibrer et pincez sur chacun des cinq points affichés, en visant chacun d\'eux. Cela corrige l\'angle et le champ de vision de la caméra des lunettes. L\'Espace le propose une fois de lui-même la première fois qu\'il voit vos mains ; une main ouverte l\'ignore.</string>
-    <string name="hands_calibrate">Calibrer la visée des mains</string>
-    <string name="hands_reset_calibration">Réinitialiser le calibrage</string>
     <string name="hands_pointer_title">1. Pointeur Pocket XR (service d\'accessibilité)</string>
     <string name="hands_pointer_why">En dehors de l\'Espace, les mains et le pavé tactile atteignent les lunettes via un service d\'accessibilité. C\'est le seul moyen qu\'Android laisse à une app ordinaire pour agir sur les fenêtres d\'autres apps. Il est fourni avec l\'extension Pocket XR, une seconde petite app, car Google bloque l\'installation d\'apps qui en contiennent un dans certains pays. Il :</string>
     <string name="hands_pointer_does">- dessine le curseur, les indications et le dock sur l\'écran des lunettes\n- lit où se trouvent les fenêtres d\'apps sur les lunettes (position, taille et titre uniquement), ainsi que les libellés des boutons de la barre de titre DeX, pour trouver son bouton plein écran\n- effectue des touches et des glissements sur l\'écran des lunettes, ce qui permet de cliquer sur les fenêtres, de les déplacer (glisser sur la barre de titre DeX) et de les redimensionner (glisser un coin)\nIl n\'agit pas sur les écrans du téléphone et n\'envoie rien hors du téléphone.</string>
@@ -560,12 +550,7 @@
     <string name="hands_usb_allowed">Accès USB aux lunettes autorisé.</string>
     <string name="hands_usb_denied">L\'accès USB aux lunettes n\'a pas été autorisé.</string>
     <string name="hands_starting">Démarrage du suivi des mains avec la caméra des lunettes.</string>
-    <string name="hands_calibrate_look">Regardez dans les lunettes : visez chaque point et pincez. Touchez à nouveau pour annuler.</string>
-    <string name="hands_open_space_first">Ouvrez d\'abord l\'Espace sur les lunettes, avec les mains en marche.</string>
-    <string name="hands_calibration_reset">Calibrage des mains réinitialisé.</string>
     <string name="hands_reset_done">Les réglages des mains sont revenus aux valeurs par défaut de Pocket XR.</string>
-    <string name="hands_not_calibrated_defaults">non calibré (valeurs par défaut de la caméra : %1$s)</string>
-    <string name="hands_calibrated_fit">%1$s, écart de %2$.1f degrés sur ses points</string>
     <string name="hands_model_downloaded">Modèle de main téléchargé.</string>
     <string name="hands_download_failed_http">Échec du téléchargement : HTTP %1$d %2$s</string>
     <plurals name="hands_download_too_small">
@@ -648,7 +633,7 @@
     <string name="home_glasses_setup_check">Vérification des lunettes</string>
     <string name="home_glasses_setup_check_detail">Les réglages dont vos lunettes ont besoin, et une vérification de 10 secondes que les fenêtres restent en place</string>
     <string name="home_hands">Mains</string>
-    <string name="home_hands_detail">Suivi des mains, calibrage de la visée, gestes</string>
+    <string name="home_hands_detail">Suivi des mains, gestes</string>
     <string name="home_trackpad">Pavé tactile</string>
     <string name="home_trackpad_detail">Vitesses du curseur et du défilement, bande de défilement, courbure des fenêtres, dans son Menu</string>
     <string name="home_advanced">Avancé</string>

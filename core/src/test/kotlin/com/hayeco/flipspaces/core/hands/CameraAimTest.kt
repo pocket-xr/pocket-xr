@@ -33,13 +33,13 @@ class CameraAimTest {
     private data class Miss(val target: Angles, val yawErr: Float, val pitchErr: Float)
 
     /** For every dot: the cursor's yaw and pitch minus the dot's, degrees, with [assumed] reading a [real] camera. */
-    private fun misses(real: CameraModel, assumed: CameraModel, side: HandSide, calibration: RayCalibration = RayCalibration.IDENTITY): List<Miss> {
+    private fun misses(real: CameraModel, assumed: CameraModel, side: HandSide): List<Miss> {
         val out = mutableListOf<Miss>()
         for (yaw in listOf(-25f, -15f, -5f, 0f, 5f, 15f, 25f)) {
             for (pitch in listOf(-14f, 0f, 14f)) {
                 val dot = Vec3.direction(yaw, pitch) * DOT_M
                 val hand = Vec3.direction(yaw, pitch) * HAND_M
-                val b = HandRayBuilder(side, assumed, calibration = calibration)
+                val b = HandRayBuilder(side, assumed)
                 val r = b.build(handAt(project(real, hand)), 0L)
                 // Where the ray reaches the dot's distance, seen from the eyes.
                 val t = solveSphere(r.origin, r.dir, DOT_M)
@@ -76,7 +76,7 @@ class CameraAimTest {
     }
 
     @Test
-    fun theAuraDefaultsLandOnTheDotsForBothHandsWithoutCalibration() {
+    fun theAuraDefaultsLandOnTheDotsForBothHands() {
         val real = CameraModel()
         for (side in HandSide.entries) {
             val m = misses(real, CameraModel(), side)
@@ -91,31 +91,6 @@ class CameraAimTest {
             val pitchSpread = m.maxOf { it.pitchErr } - m.minOf { it.pitchErr }
             assertTrue("$side: pitch error spread $pitchSpread (a gain error would grow with pitch)", pitchSpread < 0.6f)
         }
-    }
-
-    @Test
-    fun calibrationTakesOutAKnownGainError() {
-        // The real camera is narrower than the defaults (the default reads its angles about 15%
-        // too wide, across and up and down): five dot calibration, then dots it never saw.
-        val real = CameraModel(hfovDeg = 60f, vfovDeg = 35f)
-        val assumed = CameraModel()
-        val cal = HandCalibration()
-        while (!cal.done) {
-            val target = cal.current!!
-            val hand = Vec3.direction(target.yawDeg, target.pitchDeg) * HAND_M
-            val b = HandRayBuilder(HandSide.RIGHT, assumed)
-            val r = b.build(handAt(project(real, hand)), 0L)
-            cal.record(r.origin, r.dir)
-        }
-        val result = cal.result()
-        assertTrue(result.line(), result.ok)
-        val before = misses(real, assumed, HandSide.RIGHT).maxOf { hypot(it.yawErr, it.pitchErr) }
-        val after = misses(real, assumed, HandSide.RIGHT, result.calibration).filter { abs(it.target.yawDeg) <= 20f }.maxOf { hypot(it.yawErr, it.pitchErr) }
-        println("gain error: worst miss %.2f deg before, %.2f deg after the 5 dot calibration (%s)".format(before, after, result.line()))
-        assertTrue("before $before", before > 3f)
-        assertTrue("after $after", after < 0.8f)
-        // It fitted gain (spread), not only an offset: the default reads this camera's angles too wide.
-        assertTrue(result.calibration.line(), result.calibration.a < 0.95f && result.calibration.e < 0.95f)
     }
 
     @Test

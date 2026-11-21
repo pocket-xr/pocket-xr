@@ -7,10 +7,8 @@ import com.hayeco.flipspaces.core.spatial.Quat
 import com.hayeco.flipspaces.core.spatial.Vec3
 import com.hayeco.flipspaces.core.spatial.wrapDegrees
 import java.util.Locale
-import kotlin.math.abs
 import kotlin.math.atan
 import kotlin.math.hypot
-import kotlin.math.sqrt
 import kotlin.math.tan
 
 /**
@@ -21,8 +19,7 @@ import kotlin.math.tan
  *
  * The Aura publishes no intrinsics or extrinsics (no published camera model), so the defaults
  * are our estimates, looking straight ahead from the bridge of the glasses, 1 cm above and 1 cm
- * in front of the eyes' centre. The user calibration ([RayCalibration]) takes up what they get
- * wrong.
+ * in front of the eyes' centre.
  *
  * 0.5.10: 68 by 41.6 degrees across the 16:9 frame (was 80 by 51). 0.5.0 to 0.5.9 took the "80
  * degrees" as the frame's width; a camera's quoted angle is its diagonal, and 80 degrees on the
@@ -232,7 +229,6 @@ class HandRayBuilder(
     var side: HandSide,
     var camera: CameraModel = CameraModel(),
     val settings: HandRaySettings = HandRaySettings(),
-    var calibration: RayCalibration = RayCalibration.IDENTITY,
 ) {
     private val depth = OneEuroFilter(settings.depthMinCutoffHz, 0f, 1f)
     private val ox = OneEuroFilter(settings.originMinCutoffHz, 0f, 1f)
@@ -256,7 +252,7 @@ class HandRayBuilder(
         val aimAt = if (settings.aim == AimPoint.STEADY_PINCH) anchor.point(hand, nowMs) else hand.point(settings.aim)
         if (settings.origin == RayOrigin.CAMERA) {
             // 0.5.1: no depth or shoulder in it: where the camera, by the eyes, sees the pinch.
-            val dir = calibration.apply(camera.direction(aimAt))
+            val dir = camera.direction(aimAt)
             return HandRayResult(camera.offset, dir, settings.fixedDepthM ?: CameraModel.DEFAULT_DEPTH_M, camera.offset, camera.palmSize(hand)).also { last = it }
         }
         val z = settings.fixedDepthM ?: depth.filter(camera.depthOf(hand), nowMs)
@@ -268,12 +264,12 @@ class HandRayBuilder(
         val toAim = aim - origin
         val body = if (toAim.length < 1e-4f) Vec3.FORWARD else toAim.normalized()
         val eyeAt = settings.eyeViewAtM
-            ?: return HandRayResult(origin, calibration.apply(body), z, shoulder, camera.palmSize(hand)).also { last = it }
+            ?: return HandRayResult(origin, body, z, shoulder, camera.palmSize(hand)).also { last = it }
         // 0.5.1: where the body ray reaches the panels, seen from the eyes (the camera), so the
         // shoulder's parallax does not read as aiming high.
         val seen = (origin + body * eyeAt) - camera.offset
         val dir = if (seen.length < 1e-4f) body else seen.normalized()
-        return HandRayResult(camera.offset, calibration.apply(dir), z, shoulder, camera.palmSize(hand)).also { last = it }
+        return HandRayResult(camera.offset, dir, z, shoulder, camera.palmSize(hand)).also { last = it }
     }
 
     /** The shoulder in the head frame, turned by the neck's yaw when the head pose is known. */
@@ -307,167 +303,6 @@ class HandRayBuilder(
                 else -> neck
             }
         }
-    }
-}
-
-/**
- * A correction of hand ray angles (0.5.0): yaw' = [a] yaw + [b] pitch + [c], pitch' = [d] yaw +
- * [e] pitch + [f], in degrees of the head frame. Fitted by [fit] from the "pinch on the dots"
- * calibration; it takes up the camera's unknown yaw, pitch, roll and field of view and the
- * shoulder estimate's error, near the calibrated hand distance.
- */
-data class RayCalibration(
-    val a: Float = 1f,
-    val b: Float = 0f,
-    val c: Float = 0f,
-    val d: Float = 0f,
-    val e: Float = 1f,
-    val f: Float = 0f,
-) {
-    val isIdentity: Boolean get() = this == IDENTITY
-
-    fun apply(angles: Angles): Angles =
-        Angles(a * angles.yawDeg + b * angles.pitchDeg + c, d * angles.yawDeg + e * angles.pitchDeg + f)
-
-    fun apply(dir: Vec3): Vec3 {
-        if (isIdentity) return dir
-        val out = apply(Angles.of(dir))
-        return Vec3.direction(out.yawDeg, out.pitchDeg.coerceIn(-89f, 89f))
-    }
-
-    /** For SharedPreferences: six numbers. */
-    fun encode(): String = listOf(a, b, c, d, e, f).joinToString(",") { "%.5f".fmt(it) }
-
-    fun line(): String = if (isIdentity) "none" else "yaw %.3f x %+.3f p %+.2f, pitch %.3f x %+.3f p %+.2f".fmt(a, b, c, d, e, f)
-
-    companion object {
-        val IDENTITY = RayCalibration()
-
-        fun decode(text: String?): RayCalibration? {
-            val n = text?.split(',')?.mapNotNull { it.trim().toFloatOrNull() } ?: return null
-            if (n.size != 6 || n.any { !it.isFinite() }) return null
-            return RayCalibration(n[0], n[1], n[2], n[3], n[4], n[5])
-        }
-
-        /** Gains outside this range or cross terms above [MAX_CROSS] are a bad fit, not a camera. */
-        const val MIN_GAIN = 0.6f
-        const val MAX_GAIN = 1.6f
-        const val MAX_CROSS = 0.4f
-
-        /**
-         * The least squares correction from [measured] ray angles to the [wanted] ones. With
-         * three or more pairs a full affine fit, kept only when its gains and cross terms are
-         * sensible; otherwise (or with one or two pairs) the mean offset alone.
-         */
-        fun fit(measured: List<Angles>, wanted: List<Angles>): RayCalibration {
-            require(measured.size == wanted.size) { "One wanted angle per measured one" }
-            if (measured.isEmpty()) return IDENTITY
-            val offset = RayCalibration(
-                c = wanted.indices.map { wrapDegrees(wanted[it].yawDeg - measured[it].yawDeg) }.average().toFloat(),
-                f = wanted.indices.map { wanted[it].pitchDeg - measured[it].pitchDeg }.average().toFloat(),
-            )
-            if (measured.size < 3) return offset
-            val rows = measured.map { doubleArrayOf(it.yawDeg.toDouble(), it.pitchDeg.toDouble(), 1.0) }
-            val yaw = solve(rows, wanted.mapIndexed { i, w -> (measured[i].yawDeg + wrapDegrees(w.yawDeg - measured[i].yawDeg)).toDouble() })
-            val pitch = solve(rows, wanted.map { it.pitchDeg.toDouble() })
-            if (yaw == null || pitch == null) return offset
-            val full = RayCalibration(yaw[0].toFloat(), yaw[1].toFloat(), yaw[2].toFloat(), pitch[0].toFloat(), pitch[1].toFloat(), pitch[2].toFloat())
-            val sane = full.a in MIN_GAIN..MAX_GAIN && full.e in MIN_GAIN..MAX_GAIN && abs(full.b) <= MAX_CROSS && abs(full.d) <= MAX_CROSS
-            return if (sane) full else offset
-        }
-
-        /** Root mean square angle, degrees, between [fit] applied to [measured] and [wanted]. */
-        fun rmsDeg(fit: RayCalibration, measured: List<Angles>, wanted: List<Angles>): Float {
-            if (measured.isEmpty()) return 0f
-            var sum = 0.0
-            for (i in measured.indices) {
-                val got = fit.apply(measured[i])
-                val dy = wrapDegrees(got.yawDeg - wanted[i].yawDeg)
-                val dp = got.pitchDeg - wanted[i].pitchDeg
-                sum += (dy * dy + dp * dp).toDouble()
-            }
-            return sqrt(sum / measured.size).toFloat()
-        }
-
-        /** Least squares x for rows * x = y with three unknowns (normal equations), or null when singular. */
-        private fun solve(rows: List<DoubleArray>, y: List<Double>): DoubleArray? {
-            val m = Array(3) { DoubleArray(4) }
-            for ((k, r) in rows.withIndex()) {
-                for (i in 0..2) {
-                    for (j in 0..2) m[i][j] += r[i] * r[j]
-                    m[i][3] += r[i] * y[k]
-                }
-            }
-            for (col in 0..2) {
-                val pivot = (col..2).maxBy { abs(m[it][col]) }
-                if (abs(m[pivot][col]) < 1e-9) return null
-                val t = m[col]; m[col] = m[pivot]; m[pivot] = t
-                for (row in 0..2) {
-                    if (row == col) continue
-                    val k = m[row][col] / m[col][col]
-                    for (j in col..3) m[row][j] -= k * m[col][j]
-                }
-            }
-            return DoubleArray(3) { m[it][3] / m[it][it] }
-        }
-    }
-}
-
-/**
- * The "pinch on the dots" calibration (0.5.0): [targets] are dots fixed in the head frame,
- * drawn [distanceM] away. For each one Mike points a hand at the dot and pinches; [record]
- * takes that hand's ray (head frame, uncalibrated) and works out the direction the ray should
- * have had to pass through the dot, since its origin is not the eye. After the last dot
- * [result] fits a [RayCalibration] and says whether it is good enough ([maxRmsDeg]).
- */
-class HandCalibration(
-    val targets: List<Angles> = DEFAULT_TARGETS,
-    val distanceM: Float = 1.5f,
-    val maxRmsDeg: Float = 2.5f,
-) {
-    init {
-        require(targets.isNotEmpty()) { "Needs at least one dot" }
-    }
-
-    private val measured = mutableListOf<Angles>()
-    private val wanted = mutableListOf<Angles>()
-
-    /** The dot to pinch on now, or null when all are done. */
-    val current: Angles? get() = targets.getOrNull(measured.size)
-
-    val index: Int get() = measured.size
-    val done: Boolean get() = measured.size >= targets.size
-
-    /** Where the current dot is, head frame, metres. */
-    fun dotPosition(): Vec3? = current?.let { Vec3.direction(it.yawDeg, it.pitchDeg) * distanceM }
-
-    /** A pinch on the current dot with a ray from [origin] along [dir] (head frame). */
-    fun record(origin: Vec3, dir: Vec3) {
-        val dot = dotPosition() ?: return
-        measured += Angles.of(dir)
-        wanted += Angles.of(dot - origin)
-    }
-
-    data class Result(val calibration: RayCalibration, val rmsDeg: Float, val ok: Boolean, val pairs: Int) {
-        fun line(): String = "calibration from %d dots: %s, %.2f degrees RMS%s".fmt(pairs, calibration.line(), rmsDeg, if (ok) "" else " (too far off, not kept)")
-    }
-
-    fun result(): Result {
-        val fit = RayCalibration.fit(measured, wanted)
-        val rms = RayCalibration.rmsDeg(fit, measured, wanted)
-        return Result(fit, rms, rms <= maxRmsDeg && measured.isNotEmpty(), measured.size)
-    }
-
-    fun restart() {
-        measured.clear()
-        wanted.clear()
-    }
-
-    companion object {
-        /** The centre, then the four corners at 15 degrees across and 8 up and down. */
-        val DEFAULT_TARGETS = listOf(
-            Angles(0f, 0f), Angles(-15f, 8f), Angles(15f, 8f), Angles(15f, -8f), Angles(-15f, -8f),
-        )
     }
 }
 

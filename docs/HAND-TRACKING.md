@@ -34,7 +34,7 @@ section 9.
 - **Aiming.** Core's `HandRay` treats the glasses camera as a pinhole camera and aims a ray from the camera through a
   steady point on the hand's knuckles, so a pinch does not move the cursor. A ray from an estimated shoulder is an
   option. The head pose at each frame's capture time places the ray in the room, so a still hand keeps its cursor while
-  the head turns. A "pinch on the dots" calibration (`RayCalibration`) corrects the camera estimates.
+  the head turns. There is no aim calibration (1.6.2 removed the "pinch on the dots" one).
 - **Pinch.** Core's `HandsRecognizer`, `PinchDetector` and `PinchLock`: the pinch is measured on MediaPipe's world
   landmarks, the aim locks where the cursor was before the fingers started closing, the press threshold is learnt per
   hand, and a pinch is a tap until it is held still past its learnt tap limit. One hand is tracked by default; two
