@@ -8,7 +8,8 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   was never on Google Play, so in the Play version "Get the add-on" led nowhere and neither could be used. The Play
   version now has the add-on's pointer service and notification access built in: turn either on from Pocket XR as
   before, and it shows what it reads and asks first. Tried on a Galaxy Z Flip 7 with XREAL Aura glasses: the pointer
-  service switched on from Pocket XR's own consent screen and drew the cursor. Notification access not yet tried.
+  service and notification access each switched on from Pocket XR's own consent screen; the cursor was drawn and
+  the listener connected.
 - **GitHub version unchanged:** it still uses the separate add-on from the add-on releases.
 - **The Space stays on the glasses.** Opening Pocket XR's card in the phone's Recent apps could move the Space onto the
   phone's screen, where it stayed. It now closes there and opens on the glasses again while they are plugged in.
