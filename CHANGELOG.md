@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.6.5: VITURE Luma first try
 
 - **VITURE glasses with more than one HID interface:** the experimental VITURE reader no longer tries only the first.
   When an interface sends nothing (or won't start), the next try opens the next one, and an interface that sends
