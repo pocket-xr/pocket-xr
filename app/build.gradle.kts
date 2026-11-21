@@ -85,7 +85,10 @@ android {
             // hooks. Signed with the same debug key as every build so far, so it installs over them; the debug-only
             // tools (src/debug: DebugReceiver, the hand replays, the NPU self test) are not in it. 0.5.98: an official
             // release is signed with the release key instead (above).
-            signingConfig = signingConfigs.getByName(if (play) "play" else if (official) "official" else "debug")
+            // 1.6.3: -Ppocketxr.playTest=true with both -Ppocketxr.play=true and -Ppocketxr.official=true signs a Play-shaped
+            // copy with the release key, so it installs over Mike's own Pocket XR for a test. Never uploaded to Play.
+            val playTest = (findProperty("pocketxr.playTest") as String?) == "true"
+            signingConfig = signingConfigs.getByName(if (play && !(playTest && official)) "play" else if (official) "official" else "debug")
         }
         debug {
             // Debug builds also run on an x86_64 Android emulator (docs/EMULATOR_TESTING.md).
