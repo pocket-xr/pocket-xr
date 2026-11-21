@@ -26,23 +26,43 @@ not in it, so on Play hand tracking runs MediaPipe on the GPU or CPU. The GitHub
 `app/src/npu` before it builds (docs/RELEASE.md), but `-Ppocketxr.play=true` leaves that folder out of the build even
 when it is there.
 
-### Two apps
+### Two apps, one on Play
 
-Since 1.1.0 the accessibility service and the notification listener are in the add-on, so Pocket XR itself declares
-neither. Play Protect's block on sideloaded apps with those services now hits the add-on, so the add-on should go on Play
-too. Pocket XR talks to the add-on only through a signature permission (ADDON_LINK), so **both apps must be signed with
-the same app signing key on Play**, and that key decides whether Play copies work with GitHub copies:
+Since 1.1.0 the accessibility service and the notification listener are in the add-on, so the GitHub build of Pocket XR
+declares neither, and Play Protect's block on sideloaded apps with those services hits only the add-on.
+
+**Since 1.6.3 the Google Play build carries the two services itself**, so on Play there is one app and no add-on. The
+add-on was never published on Play: before this, "Get the add-on" in a Play copy opened a Play page that does not exist,
+and the DeX cursor and the Notifications page could not be used there. Not yet tried on a phone: so far the Play build
+is only built, its merged manifest checked and its unit test run (21 November 2026).
+
+- With `-Ppocketxr.play=true`, settings.gradle.kts includes the `addon-play` module and the app depends on it
+  ([addon-play/build.gradle.kts](../addon-play/build.gradle.kts)). It has no source files of its own: it builds the
+  add-on's (`addon/src/main/kotlin`, `res` and `aidl`) as a library under the add-on's namespace, so their package
+  (`com.hayeco.flipspaces.addon`) and R class stay as they are, inside the app `com.hayeco.flipspaces`.
+- Its manifest ([addon-play/src/main/AndroidManifest.xml](../addon-play/src/main/AndroidManifest.xml)) declares
+  `PointerAccess` (with `xml/pointer_service`), `NotesListener`, `LinkService` (not exported: Pocket XR binds it in its
+  own process) and `SetupActivity` (no launcher icon: Pocket XR opens it at one disclosure, as it opened the add-on's).
+  ADDON_LINK stays declared once, by Pocket XR.
+- Pocket XR's own resources win over the add-on's where both have one (`app_name`, the launcher icon,
+  `locales_config`), so its name stays Pocket XR in every language. `app/src/play/res` gives the Play build its own
+  words, "turn on" rather than "install the add-on", in all 14 languages.
+- `AddonLink` sees the services as Pocket XR's own there (`BUILT_IN`, tested by `AddonLink163Test`) and the add-on
+  always counts as installed, so no screen offers to install or get it.
+
+The GitHub build is unchanged: it still uses the separate add-on from the add-on releases, linked by the ADDON_LINK
+signature permission. A Play copy never binds a GitHub add-on; someone moving from GitHub to Play can uninstall the
+add-on, or Android's Accessibility list shows two "Pocket XR pointer" entries.
+
+Signing still decides whether Play and GitHub copies of Pocket XR install over each other:
 
 - **Recommended: give Play the existing Pocket XR release key** (the one `pocketxr.storeFile` in Mike's `~/.gradle/gradle.properties` points to, which signs the GitHub releases)
-  when creating each app, under App integrity, App signing, "Use a different key", "Export and upload a key from Java
-  keystore" (Play's PEPK tool). Then Play's Pocket XR and add-on are signed exactly like the GitHub releases: a Play
-  update installs over a GitHub install without uninstalling, and a Play Pocket XR works with a GitHub add-on and the
-  other way round.
-- Or let Google generate the key for Pocket XR, and for the add-on choose "Use the same key as another app in this
-  developer account". Play copies then work together, but not with GitHub copies, and someone moving from GitHub to Play
-  must uninstall first (losing their settings).
+  when creating the app, under App integrity, App signing, "Use a different key", "Export and upload a key from Java
+  keystore" (Play's PEPK tool). Then Play's Pocket XR is signed exactly like the GitHub releases, and a Play update
+  installs over a GitHub install without uninstalling.
+- Or let Google generate the key. Then someone moving from GitHub to Play must uninstall first (losing their settings).
 
-The choice cannot be changed after the first upload of each app.
+The choice cannot be changed after the first upload.
 
 ## What changed for Play (1.1.11)
 
@@ -74,11 +94,11 @@ Pocket XR release (merged manifest of the bundle):
 | `INTERACT_ACROSS_USERS_FULL` | Not requested. Used only as the guarding permission on SpaceActivity and the Shizuku provider, so only the shell and the system can start them |
 | RECORD_AUDIO | Declared, never used to record (see LISTING.md). No Play form; covered by the privacy policy |
 | Foreground service types | `camera` (HandTrackingService) and `connectedDevice` (GlassesReadyService): each needs the foreground service declaration below |
-| Accessibility, notification listener | None in Pocket XR (they are the add-on's) |
+| Accessibility, notification listener | 1.6.3: the Play build declares the add-on's `PointerAccess` and `NotesListener` itself (from `addon-play`), with `SetupActivity` and an unexported `LinkService`. The GitHub build declares neither (they are the add-on's) |
 | Exported components | All with intent filters set `android:exported` explicitly |
 
-Add-on release: the AccessibilityService (`PointerAccess`, not `isAccessibilityTool`) and the NotificationListenerService
-(`NotesListener`), the ADDON_LINK signature permission, no other permissions.
+The services (in the Play build of Pocket XR since 1.6.3, and in the add-on's GitHub release): the AccessibilityService
+(`PointerAccess`, not `isAccessibilityTool`) and the NotificationListenerService (`NotesListener`), no other permissions.
 
 ## Signing and building
 
@@ -100,78 +120,22 @@ Build with Android Studio's JBR:
 
 ```
 $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-gradle -Ppocketxr.play=true :core:test :app:bundleRelease :addon:bundleRelease
+gradle -Ppocketxr.play=true :core:test :app:bundleRelease
 ```
 
 Run `:app:testDebugUnitTest` in its own Gradle run without `-Ppocketxr.play=true`: with it the app's tests run as a Play
-copy, and the add-on tests that expect the GitHub install step fail (1.2.6).
+copy, and the add-on tests that expect the GitHub install step fail (1.2.6). 1.6.3: the add-on is no longer built for
+Play; the Play bundle has its services.
 
-The bundles are `app/build/outputs/bundle/release/app-release.aab` and `addon/build/outputs/bundle/release/addon-release.aab`,
-the mapping `app/build/outputs/mapping/release/mapping.txt`. Copy them to release/play with the version in the name and
+The bundle is `app/build/outputs/bundle/release/app-release.aab`, the mapping `app/build/outputs/mapping/release/mapping.txt`. Copy them to release/play with the version in the name and
 update SHA256SUMS. Raise `versionCode` for every upload.
 
 ## Declarations for Play Console
 
-### Accessibility API (add-on, App content, Sensitive app permissions, Accessibility API)
+### Accessibility API and notification access (Pocket XR)
 
-Is the app an accessibility tool? **No** (`isAccessibilityTool` is not set).
-
-Why the app uses the AccessibilityService API: **App functionality** only. Not analytics, advertising, personalisation,
-account management, fraud prevention or developer communications.
-
-Description to paste:
-
-```
-The Pocket XR add-on gives the Pocket XR app (a multi-window workspace for XREAL glasses) a cursor on the glasses outside Pocket XR's own 3D Space, when the glasses show Samsung DeX. The user moves the cursor with their hands (glasses camera) or with the phone's screen as a trackpad. The AccessibilityService API is the only way Android lets an app do the following on the glasses' display: draw the cursor in an accessibility overlay window (TYPE_ACCESSIBILITY_OVERLAY) on the glasses' display; read where app windows are on that display (their bounds and window titles, from getWindowsOnAllDisplays) so a pinch or tap lands on the right window; read the labels of the buttons in DeX's window title bars on that display to find and press DeX's full screen button; and perform the taps and drags the user makes (dispatchGesture) and Back. It does nothing on the phone's own screen, does not read text the user types or the content of app windows, and takes no action on its own: every tap and drag comes from the user's hand or finger. Nothing it reads is stored or sent off the phone; it is passed only to the Pocket XR app on the same phone, through a service guarded by a signature permission.
-```
-
-Does the app collect or share personal or sensitive user data through the API? **No.**
-
-Prominent disclosure (as shown in the add-on, `core/Disclosure.kt`, Kind.POINTER):
-
-```
-Pocket XR pointer uses the Accessibility service API
-
-Pocket XR is not an accessibility tool. It uses Android's AccessibilityService API for one job: to give your XR glasses a cursor you move with your hands or the phone's screen, outside the Space.
-
-It reads:
-- Where app windows are on the glasses display: their position, size and window title.
-- The labels of the buttons in DeX's window title bars on the glasses display, to find and press its full screen button.
-
-It draws the cursor on the glasses and performs the taps and drags you make there, so you can click, move and resize windows. It does nothing on the phone's own screen, and does not read what you type or what is inside app windows.
-
-Nothing it reads is stored, collected or sent off the phone. It is shared only with the Pocket XR app on this phone, and with no one else.
-
-Without it, the Space, the trackpad and hand tracking still work; only the cursor outside the Space is missing.
-
-[Agree and turn on]  [No thanks]
-```
-
-The service's description in Android's Accessibility settings (`pointer_service_description`) says the same in short.
-
-### Notification access (add-on)
-
-Play has no separate form for a NotificationListenerService; it falls under the User Data policy (prominent disclosure
-and consent, privacy policy, Data safety). The add-on shows this before opening Android's notification access page
-(`Disclosure.Kind.NOTES`):
-
-```
-Pocket XR add-on uses notification access
-
-Pocket XR can show your phone's notifications on the Space's Notifications page in your XR glasses.
-
-It reads:
-- Your notifications: the app, title and text of each, and when it came.
-- Which apps are playing media, for the now playing controls.
-
-It shows them in the glasses, opens a notification's app when you press it and dismisses the ones you clear.
-
-Nothing it reads is stored, collected or sent off the phone. It is shared only with the Pocket XR app on this phone, and with no one else.
-
-Without it, everything else in Pocket XR works; the Notifications page stays empty.
-
-[Agree and turn on]  [No thanks]
-```
+1.6.3: these belong to Pocket XR's own Play listing, now that its Play build carries both services. The declaration to
+paste and the two disclosures are in [store/play/LISTING.md](../store/play/LISTING.md), under "Accessibility API".
 
 ### Foreground services (Pocket XR, App content, Foreground service permissions)
 
@@ -203,11 +167,11 @@ Each declaration needs a video link (YouTube, unlisted is fine). Record on the G
 glasses side, Pocket XR's own "Record the glasses" (trackpad Menu) saves a clean 1080p video; record the phone with the
 phone's screen recorder at the same time and put them side by side, or film both with a second camera.
 
-1. **Accessibility (add-on), about 60 to 90 seconds.** Start with the add-on not yet enabled (switch it off in
-   Accessibility first).
+1. **Accessibility (Pocket XR since 1.6.3), about 60 to 90 seconds.** Start with the pointer service not yet enabled
+   (switch it off in Accessibility first).
    1. Open Pocket XR on the phone, Settings, Hands.
    2. Show the "Pocket XR pointer" card and tap "Open accessibility settings".
-   3. The add-on's disclosure opens: scroll through it slowly so every line can be read.
+   3. The disclosure opens: scroll through it slowly so every line can be read.
    4. Tap "No thanks": it closes and the service stays off (show the card still says Off).
    5. Tap "Open accessibility settings" again, then "Agree and turn on".
    6. Android's Accessibility page opens: switch on "Pocket XR pointer" and accept Android's dialog.
@@ -215,8 +179,8 @@ phone's screen recorder at the same time and put them side by side, or film both
       the trackpad, a tap opening an app, a drag moving a window by its title bar, and the full screen button pressed.
    8. Say or caption: "The service draws the cursor and performs the user's taps and drags on the glasses' display. It
       does nothing on the phone's screen and sends nothing off the phone."
-2. **Notification access (add-on), optional but recommended, about 45 seconds.** In the Space, open the Control Center,
-   Notifications, press Allow; on the phone the add-on's disclosure appears; show "No thanks", then "Agree and turn on",
+2. **Notification access (Pocket XR since 1.6.3), optional but recommended, about 45 seconds.** In the Space, open the
+   Control Center, Notifications, press Allow; on the phone the disclosure appears; show "No thanks", then "Agree and turn on",
    Android's Notification access page, switching it on, and the notifications appearing on the glasses.
 3. **camera foreground service (Pocket XR), about 30 seconds.** Hands screen, Start hand tracking; the notification
    appears; put the phone away and point and pinch at a window in the glasses.
@@ -225,8 +189,8 @@ phone's screen recorder at the same time and put them side by side, or film both
 
 ## Only Mike can do
 
-- Create both apps in Play Console (Haye & Co), choose the app signing key (see Two apps), and upload the bundles and the
-  mapping.
+- Create Pocket XR in Play Console (Haye & Co), choose the app signing key (see Two apps, one on Play), and upload the
+  bundle and the mapping. Since 1.6.3 the add-on needs no Play app of its own.
 - Record and upload the videos above and paste their links into the declarations.
 - Answer the forms from LISTING.md and this file, and confirm the Data safety choice on "Shared" (LISTING.md).
 - Create a closed test if Play asks (new personal developer accounts must run a closed test with testers before

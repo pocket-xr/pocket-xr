@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3: the Google Play build only (app/build.gradle.kts adds src/play/res there, over main's). The Play build carries
+     the add-on's services itself (addon-play), so these say "turn on" where main's strings say "install the add-on" or
+     name the add-on as a second app. Same keys as main's (and the add-on's core_disclosure_notes_title), in every language. -->
+<resources>
+    <string name="hands_pointer_why">Fuera del Espacio, las manos y el panel táctil llegan a las gafas mediante un servicio de accesibilidad. Es la única forma en que Android deja que una app normal actúe sobre las ventanas de otras apps. El servicio:</string>
+    <string name="hands_addon_app_info">Información de la app</string>
+    <string name="sys_pointer_install_addon">Activa el servicio de puntero de Pocket XR para hacer clic en las gafas.</string>
+    <string name="sys_pointer_prompt_text">%1$s: solo el servicio de accesibilidad Puntero de Pocket XR puede pulsar el botón de pantalla completa de DeX. Toca para leer qué hace y activarlo.</string>
+    <string name="core_addon_what">Pocket XR puede mostrar las notificaciones del teléfono en las gafas, y el puntero fuera del Espacio. Ambos son opcionales.</string>
+    <string name="core_addon_note">Opcional. Si quieres, omítelo y actívalo más tarde.</string>
+    <string name="core_addon_setup">Abrir configuración</string>
+    <string name="core_addon_access_on">Las notificaciones están activadas.</string>
+    <string name="core_addon_access_off">Activa el acceso a notificaciones para verlas en las gafas.</string>
+    <string name="tour_addon">Notificaciones del teléfono en tus gafas</string>
+    <string name="core_disclosure_notes_title">Pocket XR usa el acceso a notificaciones</string>
+</resources>

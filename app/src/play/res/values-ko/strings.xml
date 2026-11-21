@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.3: the Google Play build only (app/build.gradle.kts adds src/play/res there, over main's). The Play build carries
+     the add-on's services itself (addon-play), so these say "turn on" where main's strings say "install the add-on" or
+     name the add-on as a second app. Same keys as main's (and the add-on's core_disclosure_notes_title), in every language. -->
+<resources>
+    <string name="hands_pointer_why">스페이스 밖에서는 손과 트랙패드가 접근성 서비스를 통해 글래스를 조작해요. Android에서 일반 앱이 다른 앱의 창을 조작할 수 있는 유일한 방법이에요. 하는 일:</string>
+    <string name="hands_addon_app_info">앱 정보</string>
+    <string name="sys_pointer_install_addon">글래스에서 클릭하려면 Pocket XR 포인터 서비스를 켜세요.</string>
+    <string name="sys_pointer_prompt_text">%1$s: DeX의 전체 화면 버튼은 Pocket XR 포인터 접근성 서비스만 누를 수 있어요. 탭하면 하는 일을 읽고 켤 수 있어요.</string>
+    <string name="core_addon_what">Pocket XR에서 글래스로 휴대전화 알림을 보고, 스페이스 밖에서도 포인터를 쓸 수 있어요. 둘 다 선택 사항이에요.</string>
+    <string name="core_addon_note">선택 사항이에요. 원하면 건너뛰고 나중에 켤 수 있어요.</string>
+    <string name="core_addon_setup">설정 열기</string>
+    <string name="core_addon_access_on">알림이 켜져 있어요.</string>
+    <string name="core_addon_access_off">글래스에서 알림을 보려면 알림 접근을 켜세요.</string>
+    <string name="tour_addon">글래스에서 휴대전화 알림 보기</string>
+    <string name="core_disclosure_notes_title">Pocket XR은 알림 접근 권한을 사용해요</string>
+</resources>

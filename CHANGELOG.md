@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.3 (unreleased)
+
+- **Google Play version: the DeX cursor and the Notifications page work without a second app.** The Pocket XR add-on
+  was never on Google Play, so in the Play version "Get the add-on" led nowhere and neither could be used. The Play
+  version now has the add-on's pointer service and notification access built in: turn either on from Pocket XR as
+  before, and it shows what it reads and asks first. Not yet tried on a phone.
+- **GitHub version unchanged:** it still uses the separate add-on from the add-on releases.
+
 ## 1.6.2: simpler hands, Android 15 fix
 
 - **Hand aim calibration removed.** Pointing at dots and pinching to calibrate your hands is gone, from the Hands

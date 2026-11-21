@@ -1,8 +1,10 @@
 # Google Play listing: Pocket XR
 
-Everything to paste into Play Console for **Pocket XR** (`com.hayeco.flipspaces`), developer account Haye & Co. The
-add-on's listing is at the end. Images are in [images/](images/) and described in [MANIFEST.md](MANIFEST.md). The
-declarations (accessibility, notification access, foreground services) and the demo videos are in
+Everything to paste into Play Console for **Pocket XR** (`com.hayeco.flipspaces`), developer account Haye & Co. Since
+1.6.3 the Play build carries the add-on's two services (the pointer and notification access) itself, so their
+Accessibility API declaration and disclosures are Pocket XR's, below under App content answers, and the add-on needs no
+listing of its own (its old one is kept at the end for reference). Images are in [images/](images/) and described in
+[MANIFEST.md](MANIFEST.md). The foreground service declarations and the demo videos are in
 [docs/PLAY.md](../../docs/PLAY.md).
 
 ## Store settings
@@ -56,7 +58,7 @@ WHAT IT NEEDS
 - A phone whose USB-C port carries video (DisplayPort alt mode), on Android 11 or later.
 - XREAL glasses: the Aura and the One are tested; the One Pro and 1S are in community testing.
 - Shizuku, a free app, to create a window for each app.
-- Optional: the Pocket XR add-on, for the cursor outside the Space and the Notifications page. It holds the accessibility service and notification access, so Pocket XR itself needs neither, and it explains each one and asks before either is switched on.
+- Optional: the cursor outside the Space and the Notifications page. They use Android's accessibility service and notification access; Pocket XR explains each one and asks before either is switched on, and you can switch either off in Android's settings at any time. Pocket XR is not an accessibility tool.
 
 PRIVACY
 Pocket XR has no accounts, no ads and no tracking of its own. Your apps, windows, notifications and camera frames stay on your phone. Hand tracking runs on Google's MediaPipe library, which sends Google anonymous usage statistics while it runs. Details are in the privacy policy.
@@ -133,6 +135,70 @@ None.
 
 No health features.
 
+### Accessibility API (App content, Sensitive app permissions, Accessibility API)
+
+1.6.3: Pocket XR's own, as its Play build carries the pointer service (`com.hayeco.flipspaces.addon.PointerAccess` inside
+`com.hayeco.flipspaces`). Before, this was meant for the add-on's listing.
+
+Is the app an accessibility tool? **No** (`isAccessibilityTool` is not set).
+
+Why the app uses the AccessibilityService API: **App functionality** only. Not analytics, advertising, personalisation,
+account management, fraud prevention or developer communications.
+
+Description to paste:
+
+```
+Pocket XR, a multi-window workspace for XREAL glasses, gives the glasses a cursor outside Pocket XR's own 3D Space, when the glasses show Samsung DeX. The user moves the cursor with their hands (glasses camera) or with the phone's screen as a trackpad. The AccessibilityService API is the only way Android lets an app do the following on the glasses' display: draw the cursor in an accessibility overlay window (TYPE_ACCESSIBILITY_OVERLAY) on the glasses' display; read where app windows are on that display (their bounds and window titles, from getWindowsOnAllDisplays) so a pinch or tap lands on the right window; read the labels of the buttons in DeX's window title bars on that display to find and press DeX's full screen button; and perform the taps and drags the user makes (dispatchGesture) and Back. It does nothing on the phone's own screen, does not read text the user types or the content of app windows, and takes no action on its own: every tap and drag comes from the user's hand or finger. Nothing it reads is stored or sent off the phone; it stays within the Pocket XR app on the phone.
+```
+
+Does the app collect or share personal or sensitive user data through the API? **No.**
+
+Prominent disclosure (as shown by Pocket XR's setup screen, `SetupActivity`, from `core/Disclosure.kt`, Kind.POINTER):
+
+```
+Pocket XR pointer uses the Accessibility service API
+
+Pocket XR is not an accessibility tool. It uses Android's AccessibilityService API for one job: to give your XR glasses a cursor you move with your hands or the phone's screen, outside the Space.
+
+It reads:
+- Where app windows are on the glasses display: their position, size and window title.
+- The labels of the buttons in DeX's window title bars on the glasses display, to find and press its full screen button.
+
+It draws the cursor on the glasses and performs the taps and drags you make there, so you can click, move and resize windows. It does nothing on the phone's own screen, and does not read what you type or what is inside app windows.
+
+Nothing it reads is stored, collected or sent off the phone. It is shared only with the Pocket XR app on this phone, and with no one else.
+
+Without it, the Space, the trackpad and hand tracking still work; only the cursor outside the Space is missing.
+
+[Agree and turn on]  [No thanks]
+```
+
+The service's description in Android's Accessibility settings (`pointer_service_description`) says the same in short.
+
+### Notification access
+
+Play has no separate form for a NotificationListenerService; it falls under the User Data policy (prominent disclosure
+and consent, privacy policy, Data safety). Pocket XR's setup screen shows this before opening Android's notification
+access page (`Disclosure.Kind.NOTES`; the Play build's title names Pocket XR, not the add-on):
+
+```
+Pocket XR uses notification access
+
+Pocket XR can show your phone's notifications on the Space's Notifications page in your XR glasses.
+
+It reads:
+- Your notifications: the app, title and text of each, and when it came.
+- Which apps are playing media, for the now playing controls.
+
+It shows them in the glasses, opens a notification's app when you press it and dismisses the ones you clear.
+
+Nothing it reads is stored, collected or sent off the phone. It is shared only with the Pocket XR app on this phone, and with no one else.
+
+Without it, everything else in Pocket XR works; the Notifications page stays empty.
+
+[Agree and turn on]  [No thanks]
+```
+
 ### Data safety
 
 These answers follow from the code and from PRIVACY.md. The one thing that leaves the phone automatically is the usage
@@ -157,7 +223,7 @@ frames, no hand data, no identifiers). Play counts data an SDK sends as collecte
 
 Every other data type: **not collected**. In particular, none of these leave the phone: photos and videos (the glasses'
 camera frames for hand tracking, recordings saved to Movies/Pocket XR), audio (never recorded), app activity and
-installed apps (the launcher's list), messages and notifications (the add-on's Notifications page), device or other IDs,
+installed apps (the launcher's list), messages and notifications (the Notifications page), device or other IDs,
 location, contacts, files.
 
 Why "Shared: No": Google receives the statistics as the provider of the MediaPipe library that runs inside Pocket XR,
@@ -178,7 +244,8 @@ with Google; nothing else changes.
 | VIBRATE | Trackpad taps |
 | WAKE_LOCK | Added by a library (WorkManager) |
 | moe.shizuku.manager.permission.API_V23 | Shizuku, which the user installs and starts |
-| ADDON_LINK (signature) | The link to the Pocket XR add-on, signed by the same key |
+| ADDON_LINK (signature) | Pocket XR's own link to its pointer and notification services (1.6.3). In the GitHub build it links the separate add-on, signed by the same key |
+| BIND_ACCESSIBILITY_SERVICE, BIND_NOTIFICATION_LISTENER_SERVICE | Not held by Pocket XR: they guard its pointer service and notification listener (1.6.3), so only Android can bind them. The user switches each on in Android's settings after Pocket XR's disclosure |
 
 Not in the release: SYSTEM_ALERT_WINDOW (debug builds only), QUERY_ALL_PACKAGES (not used; a `<queries>` element asks
 only for launcher apps, DeX, Shizuku and the add-on), REQUEST_INSTALL_PACKAGES, any location permission,
@@ -188,7 +255,9 @@ FOREGROUND_SERVICE_DATA_SYNC (a library's unused service, removed from the manif
 
 # Google Play listing: Pocket XR add-on
 
-Needed only if the add-on also goes on Play (recommended; see docs/PLAY.md, "Two apps").
+Not needed since 1.6.3: the Play build of Pocket XR carries the add-on's services itself, so the add-on does not go on
+Play (docs/PLAY.md, "Two apps, one on Play"). Its Accessibility API declaration and disclosures are now Pocket XR's
+(above). Kept for reference only.
 
 | Field | Answer |
 | --- | --- |

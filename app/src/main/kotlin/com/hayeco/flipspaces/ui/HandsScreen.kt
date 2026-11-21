@@ -228,8 +228,9 @@ private fun PointerServiceCard(setup: HandsSetup, onOpenAccessibility: () -> Uni
                     style = MaterialTheme.typography.bodySmall,
                 )
                 SelectionContainer {
+                    // 1.6.3: the pointer service's own name: the add-on's, or Pocket XR's in the Play build.
                     Text(
-                        "adb shell settings put secure enabled_accessibility_services com.hayeco.flipspaces.addon/.PointerAccess\n" +
+                        "adb shell settings put secure enabled_accessibility_services ${com.hayeco.flipspaces.platform.AddonLink.POINTER.flattenToShortString()}\n" +
                             "adb shell settings put secure accessibility_enabled 1",
                         fontFamily = FontFamily.Monospace,
                         style = MaterialTheme.typography.bodySmall,

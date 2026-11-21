@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import com.hayeco.flipspaces.BuildConfig
 import com.hayeco.flipspaces.Log
 import com.hayeco.flipspaces.addon.IAddon
 import com.hayeco.flipspaces.addon.IAddonCallback
@@ -27,24 +28,37 @@ import kotlinx.coroutines.flow.asStateFlow
  * Binds the add-on's link service with BIND_AUTO_CREATE (both apps are signed with the same key: the ADDON_LINK
  * signature permission) and keeps it bound, so Android binds it again after the add-on restarts. [connect] is called
  * as the process starts and as each phone screen comes to the front, which also picks up an add-on installed since.
+ *
+ * 1.6.3 (Google Play): the Play build carries the add-on's services and setup screen itself (the addon-play module, built
+ * from the add-on's own files), as the add-on was never on Play. There they are Pocket XR's own components ([BUILT_IN]):
+ * the link is bound the same way, in Pocket XR's own process, and the add-on always counts as installed. Every other
+ * build still uses the separate add-on app.
  */
 object AddonLink {
     private const val TAG = "FlipSpacesAddon"
-    const val PACKAGE = "com.hayeco.flipspaces.addon"
+
+    /** The add-on app's package. Its classes keep this package name in every build, the Play build's included. */
+    const val ADDON_PACKAGE = "com.hayeco.flipspaces.addon"
+
+    /** 1.6.3: the services are Pocket XR's own (the Google Play build), not a second app's. */
+    val BUILT_IN: Boolean = BuildConfig.PLAY_BUILD
+
+    /** The package that holds the services: the add-on's, or Pocket XR's own in the Play build ([BUILT_IN]). */
+    val PACKAGE: String = holder(BUILT_IN, BuildConfig.APPLICATION_ID)
 
     /** The add-on's accessibility service and notification listener. */
-    val POINTER = ComponentName(PACKAGE, "$PACKAGE.PointerAccess")
-    val NOTES = ComponentName(PACKAGE, "$PACKAGE.NotesListener")
-    private val LINK = ComponentName(PACKAGE, "$PACKAGE.LinkService")
+    val POINTER = component(PACKAGE, "PointerAccess")
+    val NOTES = component(PACKAGE, "NotesListener")
+    private val LINK = component(PACKAGE, "LinkService")
 
     /** Where the README says how to get the add-on. */
     const val GET_URL = "https://github.com/pocket-xr/pocket-xr#the-add-on"
 
     /** 1.1.11: the add-on's Google Play page, for a copy of Pocket XR from Google Play. */
-    const val PLAY_URL = "https://play.google.com/store/apps/details?id=$PACKAGE"
+    const val PLAY_URL = "https://play.google.com/store/apps/details?id=$ADDON_PACKAGE"
 
     /** 1.1.11: the add-on's setup screen (its disclosures and consent, SetupActivity), and which one to show. */
-    private val SETUP = ComponentName(PACKAGE, "$PACKAGE.SetupActivity")
+    private val SETUP = component(PACKAGE, "SetupActivity")
     const val SETUP_POINTER = "pointer"
     const val SETUP_NOTES = "notes"
 
@@ -88,9 +102,16 @@ object AddonLink {
     /** The add-on's notification listener is connected and Pocket XR is linked to it. */
     val notesOn: StateFlow<Boolean> = _notesOn.asStateFlow()
 
+    /** Whether the add-on is installed; always in the Play build, which carries its services itself ([BUILT_IN]). */
     fun isInstalled(context: Context): Boolean =
-        runCatching { context.packageManager.getPackageInfo(PACKAGE, 0); true }
+        BUILT_IN || runCatching { context.packageManager.getPackageInfo(PACKAGE, 0); true }
             .getOrElse { if (it is PackageManager.NameNotFoundException) false else throw it }
+
+    /** 1.6.3: the package that holds the services: Pocket XR's own ([appPackage]) when [builtIn], else the add-on's. */
+    internal fun holder(builtIn: Boolean, appPackage: String): String = if (builtIn) appPackage else ADDON_PACKAGE
+
+    /** 1.6.3: one of the add-on's classes ([name]) in the package that holds it ([holder]). */
+    internal fun component(holder: String, name: String): ComponentName = ComponentName(holder, "$ADDON_PACKAGE.$name")
 
     /** Binds the add-on if it is installed and not bound yet. Main thread. */
     fun connect(context: Context) {
