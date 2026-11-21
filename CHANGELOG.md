@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
+- **Readability.** A new switch in Pocket XR's Space settings, off by default, for larger text on 1080p glasses. When
+  on, every window's apps lay out at 4/3 the density (a default window goes from 330 to 440 dpi, 853 x 480 to
+  640 x 360 dp), so text is a third bigger and drawn with more pixels. Windows keep their size, place and pixels. It
+  works on top of each app's own Text size, never narrows an app below 320 dp, and leaves Fit video windows as they
+  are. Turning it off puts every window back exactly as it was. Each change is logged with every window's size and
+  density before and after. Untested on glasses so far: only the unit tests have been run.
+
 ## 1.6.3: DeX cursor and notifications on Google Play
 
 - **Google Play version: the DeX cursor and the Notifications page work without a second app.** The Pocket XR add-on

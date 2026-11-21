@@ -45,7 +45,7 @@ class SpatialActivity : ComponentActivity() {
                 val head by HeadTracker.status.collectAsStateWithLifecycle()
                 val space by SpaceSession.state.collectAsStateWithLifecycle()
                 val host by PanelHost.state.collectAsStateWithLifecycle()
-                fun saved() = SpaceSettings(store.screen(false).sizeFactor, store.screen(true).sizeFactor, store.handsSteer, store.stereo, store.ipdMm, store.plainDisplay, store.windowGlowPercent, store.windowGlowColor)
+                fun saved() = SpaceSettings(store.screen(false).sizeFactor, store.screen(true).sizeFactor, store.handsSteer, store.stereo, store.ipdMm, store.plainDisplay, store.windowGlowPercent, store.windowGlowColor, store.readability)
                 var settings by remember { mutableStateOf(saved()) }
                 val shizuku = remember(resumes, host) { ShizukuBridge.status(this) }
                 val glasses = DisplaySelector.state(displays, choices.preferredDisplayId) as? GlassesState.Connected
@@ -88,6 +88,8 @@ class SpatialActivity : ComponentActivity() {
                         // 1.2.2: Window glow, applied to a running Space at once (SettingsChanged).
                         store.windowGlowPercent = it.windowGlow
                         store.windowGlowColor = it.windowGlowColor
+                        // Readability: every window's density, applied to a running Space at once (SettingsChanged).
+                        store.readability = it.readability
                         // 0.5.9: the field of view and stereo change the hands' projection too.
                         com.hayeco.flipspaces.hands.HandFeed.resize()
                         SpaceSession.send(SpaceCommand.SettingsChanged)

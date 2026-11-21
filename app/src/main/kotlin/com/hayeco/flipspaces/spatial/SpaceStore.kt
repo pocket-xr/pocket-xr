@@ -101,7 +101,7 @@ class SpaceStore(context: Context) {
         }
         e.remove(KEY_VIEW).remove(KEY_IPD).remove(KEY_HANDS_STEER).remove(KEY_PLAIN_DISPLAY)
             .remove(KEY_SEE_THROUGH).remove(KEY_DEX_FULL_SCREEN).remove(KEY_WINDOW_GLOW)
-            .remove(KEY_WINDOW_GLOW_COLOR).apply()
+            .remove(KEY_WINDOW_GLOW_COLOR).remove(KEY_READABILITY).apply()
     }
 
     // 0.5.36 (Mike: Further/Closer and Curve should act on the selected window only): the wraparound is retired, so a
@@ -226,6 +226,11 @@ class SpaceStore(context: Context) {
     var windowGlowColor: Int
         get() = com.hayeco.flipspaces.core.spatial.WindowGlow.color(prefs.getInt(KEY_WINDOW_GLOW_COLOR, com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_COLOR))
         set(value) = prefs.edit().putInt(KEY_WINDOW_GLOW_COLOR, com.hayeco.flipspaces.core.spatial.WindowGlow.color(value)).apply()
+
+    /** Readability: every window's text 4/3 the size ([com.hayeco.flipspaces.core.spatial.Readability]); off unless switched on. */
+    var readability: Boolean
+        get() = prefs.getBoolean(KEY_READABILITY, false)
+        set(value) = prefs.edit().putBoolean(KEY_READABILITY, value).apply()
 
     /**
      * 0.5.9: press DeX's own full screen button on the Space's window, hiding the taskbar and the title bar. 0.5.101 (Mike's
@@ -826,5 +831,6 @@ class SpaceStore(context: Context) {
         private const val KEY_PLAIN_DISPLAY = "plain_display"
         private const val KEY_WINDOW_GLOW = "window_glow_122"
         private const val KEY_WINDOW_GLOW_COLOR = "window_glow_color_122"
+        private const val KEY_READABILITY = "readability"
     }
 }

@@ -74,7 +74,7 @@ import javax.microedition.khronos.opengles.GL10
  * One app panel's GL side: the frames its virtual display renders ([PanelSource], an ImageReader
  * drained by the [PanelDrain] thread since 0.5.3). GL thread only.
  */
-private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, broad: Boolean = false, videoSmallestDp: Float? = null, textPercent: Int = 100) {
+private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, broad: Boolean = false, videoSmallestDp: Float? = null, textPercent: Int = 100, readable: Boolean = false) {
     var src: PanelSource
         private set
     val surface: Surface get() = src.surface
@@ -259,7 +259,7 @@ private class PanelGl(var panel: SpacePanel, private val frames: PanelDrain, bro
 
     init {
         // 0.5.21: the app's own size, the window's shape, and Wide view's density ([PanelDisplaySize]).
-        val s = com.hayeco.flipspaces.core.spatial.PanelDisplaySize.of(panel, broad, videoSmallestDp = videoSmallestDp, textPercent = textPercent)
+        val s = com.hayeco.flipspaces.core.spatial.PanelDisplaySize.of(panel, broad, videoSmallestDp = videoSmallestDp, textPercent = textPercent, readable = readable)
         width = s.widthPx
         height = s.heightPx
         dpi = s.dpi
@@ -469,6 +469,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     /** 1.2.2: Settings' Window glow ([com.hayeco.flipspaces.core.spatial.WindowGlow]), read again on [SpaceCommand.SettingsChanged]. */
     private var windowGlowPercent = store.windowGlowPercent
     private var windowGlowColor = store.windowGlowColor
+
+    /** Readability ([com.hayeco.flipspaces.core.spatial.Readability]): every window at 4/3 its density, read again on [SpaceCommand.SettingsChanged]. */
+    private var readable = store.readability
     private var manualYaw = 0f
 
     /** 1.4.6 (John Davis): Head scroll ([com.hayeco.flipspaces.core.spatial.HeadScroll]), from the Menu; read each settings beat. */
@@ -786,7 +789,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         edgeHintLabel = LabelTexture(1024, 96)
         homeTexture = LabelTexture(192, 192)
         capReopened()
-        layout.panels.forEach { panels[it.id] = PanelGl(it, frames!!, wideView.isOn(it.packageName), appDensity.smallestDp(it.packageName), appTextSize.percent(it.packageName)) }
+        layout.panels.forEach { panels[it.id] = PanelGl(it, frames!!, wideView.isOn(it.packageName), appDensity.smallestDp(it.packageName), appTextSize.percent(it.packageName), readable) }
         // Unreleased (John Davis: no Text size in the Menu after clicking a window): the window focused in the Space before
         // keeps its focus in this one, so a 2D / 3D re-plug does not leave the Menu's This window empty.
         if (focusedPanelId == null) com.hayeco.flipspaces.core.spatial.FocusedWindow.restored(SpaceSession.focusKept, layout.panels)?.let { id ->
@@ -3258,6 +3261,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             videoSmallestDp = appDensity.smallestDp(panel.packageName),
             // 1.2.3 (issue 57): the app's own text size, from the trackpad's Menu.
             textPercent = appTextSize.percent(panel.packageName),
+            // Readability, from the Space settings ([com.hayeco.flipspaces.core.spatial.Readability]).
+            readable = readable,
         )
 
     /**
@@ -3434,6 +3439,23 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         setLayout(layout, commit = true)
         val waitOn = focused?.takeIf { it.panel.packageName in finals } ?: panels.values.firstOrNull { it.panel.packageName in finals }
         if (waitOn == null) textSizeSettled(seq) else textSizeSettle.waitFor(waitOn.panel.id, seq, now)
+    }
+
+    /**
+     * Readability switched in the Space settings ([com.hayeco.flipspaces.core.spatial.Readability]): every window's display
+     * is asked for again at its new density, and each window's before and after is logged. Nothing else is changed, so
+     * switching it off gives each display back what it had.
+     */
+    private fun readabilityChanged(on: Boolean) {
+        if (on == readable) return
+        val before = panels.values.associate { it.panel.id to displaySpec(it.panel, wideView.isOn(it.panel.packageName), it.appShape) }
+        readable = on
+        if (panels.isEmpty()) Log.i(PANEL_TAG, "readability ${if (on) "on" else "off"}: no windows open")
+        for (p in panels.values) {
+            val after = displaySpec(p.panel, wideView.isOn(p.panel.packageName), p.appShape)
+            Log.i(PANEL_TAG, com.hayeco.flipspaces.core.spatial.Readability.line(on, p.panel.id, p.panel.label, before.getValue(p.panel.id), after))
+        }
+        setLayout(layout, commit = true)
     }
 
     /** 1.2.7: the Text size requests taken off the queue this frame, applied once after it ([applyTextSizes]). */
@@ -4155,6 +4177,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     seeThrough = store.seeThrough
                     windowGlowPercent = store.windowGlowPercent
                     windowGlowColor = store.windowGlowColor
+                    readabilityChanged(store.readability)
                     // Steady mode's Screen gap: the windows on the canvas are arranged again at once with it.
                     val gap = store.steadyScreenGap
                     if (gap != steadyGap) {
@@ -4227,7 +4250,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         setLayout(added.first, commit = true)
         windowOpenMs.remove(-1)?.let { windowOpenMs[added.second.id] = it }
-        panels[added.second.id] = PanelGl(added.second, frames ?: return, wideView.isOn(app.packageName), appDensity.smallestDp(app.packageName), appTextSize.percent(app.packageName))
+        panels[added.second.id] = PanelGl(added.second, frames ?: return, wideView.isOn(app.packageName), appDensity.smallestDp(app.packageName), appTextSize.percent(app.packageName), readable)
         store.recents = launcher.noteOpened(app)
         // An app opened: the search is done with, wherever the app was opened from.
         launcher.clearSearch()
@@ -4252,7 +4275,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             )
             setLayout(added.first.replace(placed), commit = true)
             windowOpenMs[placed.id] = SystemClock.uptimeMillis()
-            panels[placed.id] = PanelGl(placed, f, wideView.isOn(sp.packageName), appDensity.smallestDp(sp.packageName), appTextSize.percent(sp.packageName))
+            panels[placed.id] = PanelGl(placed, f, wideView.isOn(sp.packageName), appDensity.smallestDp(sp.packageName), appTextSize.percent(sp.packageName), readable)
             opened++
         }
         spaceNotice = context.resources.getQuantityString(R.plurals.space_preset_opened, opened, preset.name, opened)

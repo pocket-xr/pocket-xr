@@ -690,6 +690,8 @@
     <string name="home_screen_size_2d">Tamanho da tela dos óculos em 2D: %1$.0f %% (%2$.1f por %3$.1f graus)</string>
     <string name="home_screen_size_3d">No modo 3D deles: %1$.0f %% (%2$.1f por %3$.1f graus)</string>
     <string name="home_screen_size_help" formatted="false">Defina estes valores igual ao Display size dos próprios óculos (no menu deles). Para a visão completa, defina Display size em 100 % nos óculos e aqui; 130 % é mais largo que os painéis deles e corta as bordas. O tamanho em 3D é lido do próprio log dos óculos sempre que Distorção dos óculos o tem ligado.</string>
+    <string name="home_readability">Legibilidade</string>
+    <string name="home_readability_help">Texto maior em todas as janelas (um terço maior), para óculos 1080p. As janelas mantêm o tamanho; ao desligar, cada janela volta a ficar como estava.</string>
     <string name="home_stereo">3D: janelas em profundidade real</string>
     <string name="home_stereo_help">Ligado: cada olho recebe sua própria imagem, então as janelas ficam na distância delas. Desligado: a mesma imagem nos dois olhos, o mais estável. O botão 3D / 2D do inicializador também alterna isso. Distância dos olhos para 3D: %1$.0f mm</string>
     <string name="home_window_glow_percent">Brilho da janela: %1$d %%</string>

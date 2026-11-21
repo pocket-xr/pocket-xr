@@ -73,6 +73,8 @@ data class SpaceSettings(
     val windowGlow: Int = com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_PERCENT,
     /** 1.2.2: the focused window's glow colour, opaque ARGB, the accent blue unless changed. */
     val windowGlowColor: Int = com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_COLOR,
+    /** Readability: every window's text 4/3 the size ([com.hayeco.flipspaces.core.spatial.Readability]), off by default. */
+    val readability: Boolean = false,
 )
 
 @Composable
@@ -232,6 +234,12 @@ private fun SettingsCard(settings: SpaceSettings, onChange: (SpaceSettings) -> U
             )
             Text(
                 stringResource(R.string.home_screen_size_help),
+                style = MaterialTheme.typography.bodySmall,
+            )
+            // Readability: larger text in every window, for 1080p glasses.
+            Toggle(stringResource(R.string.home_readability), settings.readability) { onChange(settings.copy(readability = it)) }
+            Text(
+                stringResource(R.string.home_readability_help),
                 style = MaterialTheme.typography.bodySmall,
             )
             Toggle(stringResource(R.string.home_stereo), settings.stereo) { onChange(settings.copy(stereo = it)) }

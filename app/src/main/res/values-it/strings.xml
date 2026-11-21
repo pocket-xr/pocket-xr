@@ -690,6 +690,8 @@
     <string name="home_screen_size_2d">Dimensione schermo degli occhiali in 2D: %1$.0f %% (%2$.1f per %3$.1f gradi)</string>
     <string name="home_screen_size_3d">Nella loro modalità 3D: %1$.0f %% (%2$.1f per %3$.1f gradi)</string>
     <string name="home_screen_size_help" formatted="false">Impostale come la Dimensione display degli occhiali (nel loro menu). Per la vista completa imposta Dimensione display al 100 % sugli occhiali e qui; 130 % è più largo dei loro pannelli e taglia i bordi. La dimensione 3D viene letta dal log degli occhiali ogni volta che Warp degli occhiali è attivo.</string>
+    <string name="home_readability">Leggibilità</string>
+    <string name="home_readability_help">Testo più grande in ogni finestra (un terzo in più), per occhiali 1080p. Le finestre mantengono la loro dimensione; spento, ogni finestra torna com\'era.</string>
     <string name="home_stereo">3D: finestre a profondità reale</string>
     <string name="home_stereo_help">On: ogni occhio riceve la sua immagine, così le finestre stanno alla loro distanza. Off: la stessa immagine in entrambi gli occhi, la più stabile. Anche il pulsante 3D / 2D nel launcher lo cambia. Distanza degli occhi per il 3D: %1$.0f mm</string>
     <string name="home_window_glow_percent">Alone finestra: %1$d %%</string>

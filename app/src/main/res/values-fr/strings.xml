@@ -690,6 +690,8 @@
     <string name="home_screen_size_2d">Taille de l\'écran des lunettes en 2D : %1$.0f %% (%2$.1f sur %3$.1f degrés)</string>
     <string name="home_screen_size_3d">Dans leur mode 3D : %1$.0f %% (%2$.1f sur %3$.1f degrés)</string>
     <string name="home_screen_size_help" formatted="false">Réglez-les comme le Display size des lunettes (dans leur menu). Pour la vue complète, réglez Display size sur 100 % sur les lunettes et ici ; 130 % dépasse leurs écrans et coupe les bords. La taille 3D est lue dans le journal des lunettes dès que Déformation des lunettes l\'active.</string>
+    <string name="home_readability">Lisibilité</string>
+    <string name="home_readability_help">Texte plus grand dans chaque fenêtre (un tiers de plus), pour les lunettes 1080p. Les fenêtres gardent leur taille ; désactivé, chaque fenêtre redevient comme avant.</string>
     <string name="home_stereo">3D : fenêtres à profondeur réelle</string>
     <string name="home_stereo_help">Activé : chaque œil reçoit sa propre image, les fenêtres sont donc à leur distance. Désactivé : la même image dans les deux yeux, le plus stable. Le bouton 3D / 2D du lanceur le bascule aussi. Écart des yeux pour la 3D : %1$.0f mm</string>
     <string name="home_window_glow_percent">Halo des fenêtres : %1$d %%</string>

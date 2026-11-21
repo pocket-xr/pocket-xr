@@ -681,6 +681,8 @@
     <string name="home_screen_size_2d">Bildschirmgröße der Brille in 2D: %1$.0f %% (%2$.1f mal %3$.1f Grad)</string>
     <string name="home_screen_size_3d">In ihrem 3D-Modus: %1$.0f %% (%2$.1f mal %3$.1f Grad)</string>
     <string name="home_screen_size_help" formatted="false">Stell diese Werte auf die Display size der Brille (in ihrem Menü). Für die volle Ansicht stell Display size auf der Brille und hier auf 100 %; 130 % ist breiter als ihre Panels und schneidet die Ränder ab. Die 3D-Größe wird aus dem eigenen Log der Brille gelesen, sobald Brillen-Warp es eingeschaltet hat.</string>
+    <string name="home_readability">Lesbarkeit</string>
+    <string name="home_readability_help">Größere Schrift in jedem Fenster (ein Drittel größer), für 1080p-Brillen. Die Fenster behalten ihre Größe; ausgeschaltet ist jedes Fenster wieder wie vorher.</string>
     <string name="home_stereo">3D: Fenster in echter Tiefe</string>
     <string name="home_stereo_help">An: jedes Auge bekommt sein eigenes Bild, so stehen Fenster in ihrem Abstand. Aus: dasselbe Bild für beide Augen, am ruhigsten. Die Taste 3D / 2D im Launcher schaltet es auch um. Augenabstand für 3D: %1$.0f mm</string>
     <string name="home_window_glow_percent">Fensterleuchten: %1$d %%</string>

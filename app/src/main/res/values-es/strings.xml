@@ -690,6 +690,8 @@
     <string name="home_screen_size_2d">Tamaño de pantalla de las gafas en 2D: %1$.0f %% (%2$.1f por %3$.1f grados)</string>
     <string name="home_screen_size_3d">En su modo 3D: %1$.0f %% (%2$.1f por %3$.1f grados)</string>
     <string name="home_screen_size_help" formatted="false">Pon aquí el mismo valor que Display size en las gafas (en su menú). Para la vista completa, pon Display size al 100 % en las gafas y aquí; 130 % es más ancho que sus paneles y corta los bordes. El tamaño en 3D se lee del propio registro de las gafas siempre que Warp de las gafas lo tenga activado.</string>
+    <string name="home_readability">Legibilidad</string>
+    <string name="home_readability_help">Texto más grande en cada ventana (un tercio más), para gafas de 1080p. Las ventanas mantienen su tamaño; al apagarlo, cada ventana vuelve a estar como antes.</string>
     <string name="home_stereo">3D: ventanas a profundidad real</string>
     <string name="home_stereo_help">Activado: cada ojo recibe su propia imagen, así que las ventanas quedan a su distancia. Desactivado: la misma imagen en ambos ojos, lo más estable. El botón 3D / 2D del lanzador también lo cambia. Distancia entre ojos para 3D: %1$.0f mm</string>
     <string name="home_window_glow_percent">Brillo de ventana: %1$d %%</string>

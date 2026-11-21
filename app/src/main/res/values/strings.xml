@@ -853,6 +853,8 @@
     <string name="home_screen_size_2d">Glasses screen size in 2D: %1$.0f %% (%2$.1f by %3$.1f degrees)</string>
     <string name="home_screen_size_3d">In their 3D mode: %1$.0f %% (%2$.1f by %3$.1f degrees)</string>
     <string name="home_screen_size_help" formatted="false">Set these to the glasses\' own Display size (their menu). For the full view set Display size to 100 % on the glasses and here; 130 % is wider than their panels and cuts the edges. The 3D size is read from the glasses\' own log whenever Glasses warp has it on.</string>
+    <string name="home_readability">Readability</string>
+    <string name="home_readability_help">Larger text in every window (a third bigger), for 1080p glasses. The windows keep their size; turning it off puts every window back as it was.</string>
     <string name="home_stereo">3D: windows at real depth</string>
     <!-- %1$.0f: eye distance in millimetres -->
     <string name="home_stereo_help">On: each eye gets its own picture, so windows sit at their distance. Off: the same picture in both eyes, the steadiest. The 3D / 2D button in the launcher switches it too. Eye distance for 3D: %1$.0f mm</string>

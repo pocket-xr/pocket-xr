@@ -85,7 +85,7 @@ object PanelDisplaySize {
      *   smoothly too. The smallest width rules (320 dp, Wide view's 600 dp, 569 dp tall for a letterboxed
      *   portrait app) take a lower density, never more pixels. No branch, so no jump between 260, 232 and 160.
      */
-    fun of(panel: SpacePanel, broad: Boolean = false, lockedPortrait: Boolean = false, videoSmallestDp: Float? = null, textPercent: Int = AppTextSize.DEFAULT): PanelDisplaySpec {
+    fun of(panel: SpacePanel, broad: Boolean = false, lockedPortrait: Boolean = false, videoSmallestDp: Float? = null, textPercent: Int = AppTextSize.DEFAULT, readable: Boolean = false): PanelDisplaySpec {
         val (wp, hp) = panelPx(panel)
         // 0.5.24: an app with its own density setting ([AppDensityStore], Fit video) is laid out at that smallest width,
         // a phone's, whatever its dp were and with Wide view on or off ([VideoFit]).
@@ -102,7 +102,9 @@ object PanelDisplaySize {
             else -> MIN_SMALLEST_DP
         }
         // 1.2.3 (issue 57): the app's own text size ([AppTextSize]) on top of the rule. Fit video's phone width above wins.
-        return PanelDisplaySpec(wp, hp, AppTextSize.density(densityFor(wp, hp, aw * ah * k * k, minSmallest), textPercent, wp, hp, minSmallest))
+        val text = AppTextSize.density(densityFor(wp, hp, aw * ah * k * k, minSmallest), textPercent, wp, hp, minSmallest)
+        // Readability: 4/3 the density on top of that, within the same floors ([Readability]).
+        return PanelDisplaySpec(wp, hp, Readability.density(text, readable, wp, hp, minSmallest))
     }
 
     /** 0.5.23: the lowest and highest density the rule gives (Android's ldpi and xxxhdpi). */
