@@ -177,6 +177,15 @@ object GlassesAutoOpen {
     /** True the first time for [key] since the glasses were last unplugged: the caller opens them. */
     fun claim(key: String): Boolean = opened.add(key)
 
+    /**
+     * 1.6.3 (Mike: the Space came up on the phone after Recent apps): the Space opened on [glassesId] closed itself on
+     * the phone's screen. If those glasses are still plugged in, the next check opens it on them again.
+     */
+    fun slipped(glassesId: Int) {
+        opened.removeAll { it.startsWith("$glassesId/") }
+        schedule()
+    }
+
     /** The glasses went away: the next plug-in opens them again, and starts hands again (0.5.0). */
     fun reset() {
         opened.clear()

@@ -153,7 +153,11 @@ class SpaceActivity : Activity() {
         view = newGlView(this)
         setContentView(view)
         hideBars()
-        openedOn = display?.displayId ?: Display.INVALID_DISPLAY
+        // 1.6.3 (Mike's Play fold test: Recent apps brought the Space's task to the phone, and Android re-created it there
+        // because the glasses' colour mode differs; the new one took the phone for where it was opened and stayed): a
+        // re-created Space keeps the display it was opened on, so closeIfMovedToPhone below still sees the move.
+        openedOn = savedInstanceState?.getInt(KEY_OPENED_ON, Display.INVALID_DISPLAY)?.takeIf { it != Display.INVALID_DISPLAY }
+            ?: display?.displayId ?: Display.INVALID_DISPLAY
         // 0.5.9: started by the plain display session: its checks report to the session.
         sessionToken = PlainDisplaySession.claim(openedOn)
         getSystemService(DisplayManager::class.java)?.registerDisplayListener(displays, Handler(Looper.getMainLooper()))
@@ -167,6 +171,12 @@ class SpaceActivity : Activity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT) { backInSpace("callback") }
         }
+        closeIfMovedToPhone()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(KEY_OPENED_ON, openedOn)
     }
 
     private fun newGlView(context: android.content.Context): GLSurfaceView = GLSurfaceView(context).apply {
@@ -437,6 +447,8 @@ class SpaceActivity : Activity() {
         val now = display?.displayId ?: return false
         if (isFinishing || !SpaceUnplug.closeOnMove(openedOn, now)) return false
         closeForUnplug("moved from display $openedOn to the phone's screen")
+        // 1.6.3: the glasses may still be there (Recent apps moved it, not an unplug): open the Space on them again.
+        com.hayeco.flipspaces.GlassesAutoOpen.slipped(openedOn)
         return true
     }
 
@@ -1299,6 +1311,9 @@ class SpaceActivity : Activity() {
     private var freeformLogged = false
 
     companion object {
+        /** 1.6.3: the display the Space was opened on, kept across a re-creation (onSaveInstanceState). */
+        private const val KEY_OPENED_ON = "opened_on"
+
         private const val MODE_TAG = "FlipSpaces/Mode"
 
         /** 0.5.24: when DeX's chrome is read again after the hold. */
