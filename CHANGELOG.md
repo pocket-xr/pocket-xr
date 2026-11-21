@@ -5,8 +5,8 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
 ## 1.6.2 (unreleased)
 
 - **Hand aim calibration removed.** Pointing at dots and pinching to calibrate your hands is gone, from the Hands
-  screen and from the Space, which no longer offers it the first time it sees your hands. It did nothing useful. A
-  calibration you saved with an older version is no longer used.
+  screen and from the Space, which no longer offers it the first time it sees your hands. The launcher gives that
+  tile's place back to your apps. A calibration you saved with an older version is no longer used.
 
 ## 1.6.1: Immersive and swipe fixes
 
