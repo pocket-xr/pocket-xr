@@ -814,7 +814,7 @@ object HeadTracker {
     private val vitureReconnect = VitureReconnect()
 
     /** The open VITURE link, for the axis switches; null with none open. */
-    @Volatile private var vitureLink: VitureImuLink? = null
+    @Volatile private var vitureLink: VitureLink? = null
 
     /**
      * 1.6.5: which HID interface of the VITURE glasses the reader opens next (an index into
@@ -1006,13 +1006,16 @@ object HeadTracker {
             }
             VitureReconnect.Step.OPEN -> Unit
         }
-        val link = try {
-            VitureImuLink.open(context, device, axes, READ_TIMEOUT_MS, vitureInterfaceFor(device))
+        // 1.6.7: first generation glasses (the Luma, the Pro) speak another protocol, on two interfaces at once.
+        val gen1 = com.hayeco.flipspaces.core.spatial.VitureGen1Protocol.isGen1(device.productId)
+        val link: VitureLink = try {
+            if (gen1) VitureGen1Link.open(context, device, axes, READ_TIMEOUT_MS)
+            else VitureImuLink.open(context, device, axes, READ_TIMEOUT_MS, vitureInterfaceFor(device))
         } catch (e: Exception) {
             if (Thread.currentThread().isInterrupted) return false
             val error = "${e.javaClass.simpleName}: ${e.message}"
             // 1.6.5: an interface that would not open or start counts as silent, so the next try is the next one.
-            if (VitureImuLink.manager(context).hasPermission(device)) vitureInterfaceAfter(device, 0)
+            if (!gen1 && VitureImuLink.manager(context).hasPermission(device)) vitureInterfaceAfter(device, 0)
             val delay = backoff.nextDelayMs()
             report(HeadTrackingStatus.UsbFailed(name, error))
             _attempts.value = listOf("$name over USB HID (experimental VITURE reader): $error")
@@ -1038,7 +1041,7 @@ object HeadTracker {
             _route.value = null
         }
         Log.i(TAG, "head tracking stream over ${link.label} ended after ${(SystemClock.elapsedRealtime() - opened) / 1000.0} s: ${_status.value.summary}; ${link.clockLine}; ${link.counts}")
-        vitureInterfaceAfter(device, link.counts.bytes)
+        if (!gen1) vitureInterfaceAfter(device, link.counts.bytes)
         if (Thread.currentThread().isInterrupted) return false
         if (streamed) backoff.reset()
         val delay = backoff.nextDelayMs()

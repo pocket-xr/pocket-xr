@@ -23,6 +23,17 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
+ * 1.6.7: what the head tracker reads VITURE glasses through: [VitureImuLink] (the later protocol, the Beast) or
+ * [VitureGen1Link] (the first generation, the Luma).
+ */
+interface VitureLink : ImuReportSource, Closeable {
+    val label: String
+    val startLine: String
+    var axes: VitureAxes
+    val clockLine: String
+}
+
+/**
  * 1.2.8 (Discussion #24, experimental, off by default): VITURE glasses' motion sensor over Android's USB host API
  * ([VitureImuProtocol]): the HID interface with an interrupt IN endpoint claimed from the kernel, the documented raw stream
  * command written to it, and its 64 byte reports read. Needs the user's USB permission for the glasses.
@@ -40,23 +51,23 @@ class VitureImuLink private constructor(
     private val input: UsbEndpoint,
     axes: VitureAxes,
     readTimeoutMs: Int,
-) : ImuReportSource, Closeable {
+) : VitureLink {
     private val framer = VitureImuFramer(axes)
     private val buf = ByteArray(maxOf(VitureImuProtocol.PACKET_BYTES, input.maxPacketSize))
     private val timeoutMs = readTimeoutMs
     private val closed = AtomicBoolean(false)
 
-    val label: String = "USB HID interface ${intf.id} of the ${glassesName(device)} (experimental VITURE reader)"
+    override val label: String = "USB HID interface ${intf.id} of the ${glassesName(device)} (experimental VITURE reader)"
 
     /** The Android device name the link is on (a new one each plug-in). */
     val deviceName: String = device.deviceName
 
     /** How the start command went, for the log. */
-    var startLine: String = ""
+    override var startLine: String = ""
         private set
 
     /** The axis switches, applied from the next sample on: no reopen. */
-    var axes: VitureAxes
+    override var axes: VitureAxes
         get() = framer.axes
         set(value) {
             framer.axes = value
@@ -65,7 +76,7 @@ class VitureImuLink private constructor(
     override val counts: FramerCounts get() = framer.counts
     override val noReportsHint: String = HeadTrackingStatus.VITURE_HINT
 
-    val clockLine: String get() = framer.clockLine
+    override val clockLine: String get() = framer.clockLine
 
     override fun read(out: ArrayList<ImuReport>): Int {
         out.clear()
