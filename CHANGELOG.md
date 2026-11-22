@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.7: VITURE Luma, second try
+
+- **First generation VITURE glasses (the Luma, Luma Pro and Pro):** VITURE's own SDK page lists the Luma as first
+  generation, and those glasses speak an older protocol than the Beast's, which is all the experimental VITURE reader
+  sent until now. So a Luma XR (35CA:1131) never answered on either interface. They now get their own reader. It sends
+  the start (command 0x15) to the glasses' control interface (1) and reads their head angles from the other (0). Two
+  public write-ups build the start slightly differently, so when nothing comes in 3 seconds it sends the other one.
+  These glasses send a finished head direction, not raw motion, so Pocket XR works out the turn and the tilt from it.
+  Untested on any VITURE glasses: the project has none. Thanks to Crr66 for the logs.
+
 ## 1.6.6: hand tracking on Google Play
 
 - **Google Play version: hand tracking starts again.** Since the Play version was first shrunk for upload, starting
