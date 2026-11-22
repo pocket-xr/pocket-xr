@@ -197,7 +197,10 @@ class SpaceActivity : Activity() {
         // compose it at a lower one (renderFrameRate 30 in Mike's 3840x1080 log) and drop every other frame.
         holder.addCallback(object : android.view.SurfaceHolder.Callback {
             override fun surfaceCreated(h: android.view.SurfaceHolder) = voteFrameRate(h.surface, "surface created")
-            override fun surfaceChanged(h: android.view.SurfaceHolder, format: Int, width: Int, height: Int) = voteFrameRate(h.surface, "surface ${width}x$height")
+            override fun surfaceChanged(h: android.view.SurfaceHolder, format: Int, width: Int, height: Int) {
+                voteFrameRate(h.surface, "surface ${width}x$height")
+                windowSurfaceChanged(width, height)
+            }
             override fun surfaceDestroyed(h: android.view.SurfaceHolder) = Unit
         })
         // A Bluetooth or USB mouse moves the Space's own pointer, captured while this window has focus (MouseRoute).
@@ -205,6 +208,34 @@ class SpaceActivity : Activity() {
     }
 
     private var lastVote: String? = null
+
+    /** 1.6.8: the window's Space surface, and since when it has been short by a caption ([SpaceSurfacePlan.captionInWindow]). */
+    private var surfaceW = 0
+    private var surfaceH = 0
+    private var shortSince = 0L
+
+    private fun windowSurfaceChanged(width: Int, height: Int) {
+        if (presentation != null) return
+        surfaceW = width
+        surfaceH = height
+        val d = display ?: return
+        if (!SpaceSurfacePlan.captionInWindow(width, height, d.mode.physicalWidth, d.mode.physicalHeight)) {
+            shortSince = 0L
+            return
+        }
+        val at = SystemClock.uptimeMillis()
+        shortSince = at
+        // Short surfaces come and go while DeX settles a window (40 rows on other phones, full height a moment
+        // later); one still short CAPTION_SETTLE_MS later is a caption that stays.
+        main.postDelayed({
+            if (shortSince == at && presentation == null && !isFinishing && !isDestroyed && holdSettled && openedOn !in presentationTried) {
+                surfaceLogged = false
+                checkSurface("a caption in the Space's own window: its surface ${width}x$height of ${d.mode.physicalWidth}x${d.mode.physicalHeight}")
+            }
+        }, CAPTION_SETTLE_MS)
+    }
+
+    private fun captionStays(): Boolean = shortSince != 0L && SystemClock.uptimeMillis() - shortSince >= CAPTION_SETTLE_MS
 
     /** 0.5.12: the vsync source for the late draw, and the glasses' period and presentation deadline it falls back on. */
     private var vsync: VsyncSource? = null
@@ -271,7 +302,7 @@ class SpaceActivity : Activity() {
             }
         }
         // 0.5.23: SurfaceFlinger's "composed" and the hold's answer win over the stale freeform flag.
-        val plan = SpaceSurfacePlan.choose(openedOn, freeform, holdSettled, forcePresentation, fallbacks.windowOnly(openedOn), takes, holdMovedIt, composed = fullScreenSeen, triedHere = openedOn in presentationTried)
+        val plan = SpaceSurfacePlan.choose(openedOn, freeform, holdSettled, forcePresentation, fallbacks.windowOnly(openedOn), takes, holdMovedIt, composed = fullScreenSeen, triedHere = openedOn in presentationTried, captionInWindow = captionStays())
         if (plan == SpaceSurface.WINDOW && freeform && holdSettled && openedOffPhone && !surfaceLogged && (fullScreenSeen || holdMovedIt || openedOn in presentationTried)) {
             surfaceLogged = true
             val because = when {
@@ -1379,6 +1410,9 @@ class SpaceActivity : Activity() {
 
         /** How long after the hold answers the window's mode is read (the shell's transition runs first). */
         private const val SURFACE_SETTLE_MS = 800L
+
+        /** 1.6.8: how long the Space's surface stays short before that is taken as a caption in its window. */
+        private const val CAPTION_SETTLE_MS = 1_500L
 
         /** With no panel service, how long before the window is judged as it is. */
         private const val HOLD_SETTLE_MS = 4_000L

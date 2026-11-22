@@ -2,6 +2,17 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.8: no DeX title bar on Android 13
+
+- **The white DeX title bar over the Space (Galaxy S20, Android 13):** on One UI 5 DeX draws a window's title bar
+  (minimise, maximise, close) inside the app's own window, not as a layer of its own. Pocket XR's check for DeX's bars
+  looks for that layer, found none and kept the Space in its window, title bar and all. Now a Space whose picture
+  stays a title bar's height short of the glasses' display for 1.5 seconds moves into a Presentation, which has no
+  title bar. Phones where the picture is short only for a moment while DeX settles are left as before. Found in
+  Crr66's log; not yet tried on an S20. A Netflix or other app window opened in DeX keeps its own title bar, as any
+  DeX window does.
+- **VITURE Luma XR:** head tracking with 1.6.7's first generation reader works on Crr66's Luma, with no axis switches.
+
 ## 1.6.7: VITURE Luma, second try
 
 - **First generation VITURE glasses (the Luma, Luma Pro and Pro):** VITURE's own SDK page lists the Luma as first

@@ -64,6 +64,7 @@ This list only says what someone has actually seen working. Thanks to everyone w
 | XREAL One Pro | @thejoeba (Retroid Pocket Nova, Galaxy S24+), @Tayohka (Galaxy Z Flip 7) | Yes | Follow mode, Stabilizer off. thejoeba: "this has become my primary xr app". |
 | XREAL 1S | @WhiteNoise (XREAL Beam Pro) | Yes | Works once the glasses are set up as in [Setup](#set-up-your-glasses). |
 | VITURE Beast | @Tayohka (Galaxy Z Flip 7) | Yes, on by default since 1.2.12 | 3D works once it's on in the glasses' menu. 32:9 ultrawide works as one wide screen. |
+| VITURE Luma XR | @Crr66 (Galaxy S20) | Yes, since 1.6.7 with Experimental VITURE head tracking on | No axis switches needed. On the S20 the DeX title bar stayed over the Space until 1.6.8 (not yet retested). |
 | XREAL Air 2 | @ctdf (OnePlus 15) | Yes, since 1.1.12 | Windows work. A level horizon fix (1.2.3) is waiting on a retest. Pocket XR can't switch the Air to 3D by itself yet ([#54](https://github.com/pocket-xr/pocket-xr/issues/54)). |
 
 **Early or experimental support**
