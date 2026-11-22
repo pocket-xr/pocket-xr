@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * 1.6.7 (Discussion #24, Crr66's VITURE Luma XR): first generation VITURE glasses ([VitureGen1Protocol]) over Android's
  * USB host API. Both HID interfaces are claimed: the start goes to the MCU's (interface 1) and the motion is read from
  * the other (interface 0). The two write-ups build the start differently, so when no motion has come [RESEND_MS] after
- * a start, the other way is sent, and so on in turn. Untested on any VITURE glasses.
+ * a start, the other way is sent, and so on in turn. Works on Crr66's Luma XR (1.6.7); untested on other VITURE glasses.
  */
 class VitureGen1Link private constructor(
     private val manager: UsbManager,

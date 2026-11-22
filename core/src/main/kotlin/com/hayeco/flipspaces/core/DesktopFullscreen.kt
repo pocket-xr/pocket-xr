@@ -206,6 +206,20 @@ enum class SpaceSurface {
  */
 object SpaceSurfacePlan {
     /**
+     * 1.6.8: whether the Space's own surface is shorter than its display by about a caption's height, the
+     * sign of a caption drawn inside the window (One UI 5 on Android 13 and older). The DeX taskbar or a
+     * rounding of a pixel or two do not count: only 24 to 120 rows missing at the full width.
+     */
+    fun captionInWindow(surfaceW: Int, surfaceH: Int, displayW: Int, displayH: Int): Boolean {
+        if (surfaceW <= 0 || surfaceH <= 0 || displayW <= 0 || displayH <= 0) return false
+        val missing = displayH - surfaceH
+        return surfaceW >= displayW && missing in CAPTION_MIN_ROWS..CAPTION_MAX_ROWS
+    }
+
+    private const val CAPTION_MIN_ROWS = 24
+    private const val CAPTION_MAX_ROWS = 120
+
+    /**
      * 0.5.7: [windowOnly] when a full screen task was not seen on this display, so the Space stays
      * in the DeX window that is; [takesPresentation] false for a display that is not a public
      * presentation display, where Android refuses the Presentation (Mike's 0.5.6 display 54).
@@ -220,6 +234,7 @@ object SpaceSurfacePlan {
         holdMovedIt: Boolean = false,
         composed: Boolean = false,
         triedHere: Boolean = false,
+        captionInWindow: Boolean = false,
     ): SpaceSurface = when {
         displayId == DesktopFullscreen.DEFAULT_DISPLAY -> SpaceSurface.WINDOW
         forced -> SpaceSurface.PRESENTATION
@@ -229,6 +244,11 @@ object SpaceSurfacePlan {
         // stays stale): proof the hold worked wins over that flag. No Presentation once SurfaceFlinger said
         // composed ([composed]), once the hold answered that it moved the Space ([holdMovedIt]), or a second time on
         // the same display ([triedHere]).
+        // 1.6.8 (Crr66, Galaxy S20, Android 13): One UI 5 draws the DeX caption inside the app's own window
+        // (its DecorView, "hasWindowDecorCaption=true"), so SurfaceFlinger finds no DeX layer and says
+        // composed, while the white title bar stays over the Space (its surface 1920x1028 of 1920x1080).
+        // A caption seen in the window ([captionInWindow]) wins over composed and the hold's answer.
+        captionInWindow && freeform && holdSettled && !triedHere -> SpaceSurface.PRESENTATION
         composed || holdMovedIt || triedHere -> SpaceSurface.WINDOW
         freeform && holdSettled -> SpaceSurface.PRESENTATION
         else -> SpaceSurface.WINDOW

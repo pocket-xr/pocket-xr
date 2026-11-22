@@ -12,7 +12,7 @@ import kotlin.math.sin
  * Written from two public write-ups, both made by watching the glasses: bfvogel/viture-webxr-extension's
  * VITURE_PROTOCOL.md (confirmed there on a VITURE Pro, 35CA:101D) and mgschwan/viture_virtual_display's
  * viture_connection.c (MIT, a VITURE Pro XR). No code from either is used, and no VITURE SDK code or library. Untested
- * on a Luma: the project has no VITURE glasses.
+ * on the Pro and Luma Pro; Crr66's Luma XR tracks with it (1.6.7, no axis switches). The project has no VITURE glasses.
  *
  * Two HID interfaces, both 64 byte reports: interface 1 (the MCU) takes commands, interface 0 sends the motion.
  *
