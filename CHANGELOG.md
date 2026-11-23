@@ -9,6 +9,10 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   underneath that layer: the sound played, the picture stayed black and the window couldn't be closed. Now the Space
   steps back into its own window before such a window opens, so it comes in front as it did before. Until the glasses
   are plugged in again, the DeX title bar shows over the Space once more. Found by Crr66; not yet tried on an S20.
+- **Netflix, Disney+, Prime Video, Max and Hulu start in Wide view:** on a screen narrower than 600 dp these apps
+  show their phone layout, locked upright, so in a Pocket XR window (480 dp by default) Netflix sat in a narrow
+  upright column until Wide view was pressed. Wide view (600 dp or more, where they show their tablet layout) now
+  starts on for them. Turning it off for one of them is remembered. Found by Crr66; not yet tried with these apps.
 
 ## 1.6.12: taps on the glasses
 
