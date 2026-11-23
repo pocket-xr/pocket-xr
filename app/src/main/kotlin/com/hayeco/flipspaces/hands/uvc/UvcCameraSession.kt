@@ -84,7 +84,10 @@ class UvcCameraSession(private val usb: UsbManager, private val device: UsbDevic
     ) {
         val c = connection ?: throw IOException("Camera not open")
         val ep = streaming.bulkEndpoint
-            ?: throw IOException("The camera streams over isochronous transfers, which Android's Java USB API cannot read")
+        if (ep == null) {
+            streamIso(c, streaming, choice, allocate, onFrame, onStats)
+            return
+        }
         claim(c, camera.controlInterface)
         val vs = claim(c, streaming.interfaceNumber)
 
@@ -207,6 +210,104 @@ class UvcCameraSession(private val usb: UsbManager, private val device: UsbDevic
         }
     }
 
+    /**
+     * 1.6.9: a camera with no bulk endpoint streams isochronously (the XREAL Air 2 Ultra's tracking cameras). The
+     * probe and commit run on alternate setting 0 as for bulk; then the alternate setting whose endpoint carries the
+     * agreed payload size is chosen, and the transfers are read through usbdevfs ([UsbIso]). Each isochronous packet
+     * is one UVC payload, header first. Untested on the Ultra: the project has none.
+     */
+    private fun streamIso(
+        c: UsbDeviceConnection,
+        streaming: UvcStreamingInterface,
+        choice: UvcChoice,
+        allocate: (Int) -> ByteArray,
+        onFrame: (frame: UvcVideoFrame, capturedAtMs: Long) -> Unit,
+        onStats: (Stats) -> Unit,
+    ) {
+        if (!UsbIso.loaded) throw IOException("The camera streams over isochronous transfers and Pocket XR's reader for them did not load")
+        claim(c, camera.controlInterface)
+        val vs = claim(c, streaming.interfaceNumber)
+        c.setInterface(vs)
+        val length = UvcStreamControl.lengthFor(camera.uvcVersion)
+        val want = UvcStreamControl(hint = 1, formatIndex = choice.format.index, frameIndex = choice.frame.index, frameIntervalUnits = choice.intervalUnits)
+        val result = negotiate(c, streaming.interfaceNumber, want, length)
+        agreed = result
+        Log.i(TAG, "Committed $result")
+        val alt = streaming.isoAltFor(result.maxPayloadTransferSize.toInt())
+            ?: throw IOException("The camera has no bulk endpoint and no isochronous alternate setting")
+        val iep = alt.endpoint!!
+        val altIface = (0 until device.interfaceCount).map { device.getInterface(it) }
+            .firstOrNull { it.id == streaming.interfaceNumber && it.alternateSetting == alt.alternate }
+            ?: throw IOException("Android does not list alternate setting ${alt.alternate} of interface ${streaming.interfaceNumber}")
+        if (!c.setInterface(altIface)) throw IOException("The camera refused alternate setting ${alt.alternate}")
+        isoAlt0 = vs
+        val packet = iep.payloadPerInterval
+        Log.i(TAG, "Isochronous on alternate setting ${alt.alternate}, endpoint 0x%02X, $packet B a microframe (payloads up to ${result.maxPayloadTransferSize} B)".format(iep.address))
+        val handle = UsbIso.start(c.fileDescriptor, iep.address, packet, ISO_PACKETS, ISO_URBS)
+        if (handle in -4095L..0L) throw IOException("Android would not start isochronous reads (errno ${-handle})")
+
+        val assembler = UvcFrameAssembler(expectedBytes = expectedBytes(choice), allocate = allocate)
+        val buffer = java.nio.ByteBuffer.allocateDirect(packet * ISO_PACKETS)
+        val heap = ByteArray(packet * ISO_PACKETS)
+        val lengths = IntArray(ISO_PACKETS + 2)
+        running = true
+        var lastFrameAt = SystemClock.uptimeMillis()
+        var lastStatsAt = lastFrameAt
+        var bytes = 0L
+        var reads = 0L
+        var waits = 0L
+        var errors = 0L
+        var errorRun = 0
+        try {
+            while (running) {
+                val n = UsbIso.reap(handle, buffer, lengths, WAIT_MS.toInt())
+                val now = SystemClock.uptimeMillis()
+                when {
+                    n > 0 -> {
+                        errorRun = 0
+                        reads++
+                        bytes += n
+                        errors += lengths[1]
+                        buffer.position(0)
+                        buffer.get(heap, 0, n)
+                        var at = 0
+                        for (i in 0 until lengths[0]) {
+                            val len = lengths[2 + i]
+                            val frames = assembler.onPayload(heap, at, len)
+                            for (f in frames) {
+                                lastFrameAt = now
+                                onFrame(f, now)
+                            }
+                            at += len
+                        }
+                    }
+                    n == 0 -> waits++
+                    running -> {
+                        errors++
+                        if (++errorRun >= MAX_ERROR_RUN) throw UsbLinkLostException("Isochronous reads failed $errorRun times in a row (errno ${-n}); the glasses may have left USB")
+                        SystemClock.sleep(ERROR_PAUSE_MS)
+                    }
+                }
+                if (now - lastStatsAt >= 1000) {
+                    onStats(Stats(assembler.framesDone, assembler.framesDropped, assembler.badHeaders, bytes, reads, waits, errors))
+                    lastStatsAt = now
+                }
+                val limit = if (assembler.framesDone > 0) STALL_MS else FIRST_FRAME_MS
+                if (running && now - lastFrameAt > limit) {
+                    val counts = "$reads reads, $bytes bytes, $waits empty waits, $errors errors, ${assembler.framesDropped} broken frames, ${assembler.badHeaders} bad headers"
+                    if (assembler.framesDone > 0) throw UsbLinkLostException("The camera stopped sending video after ${assembler.framesDone} frames ($counts)")
+                    throw IOException("The camera accepted ${choice.label} but sent no complete frame in ${FIRST_FRAME_MS / 1000} s over isochronous reads ($counts)")
+                }
+            }
+        } finally {
+            running = false
+            UsbIso.stop(handle)
+        }
+    }
+
+    /** 1.6.9: alternate setting 0 of an isochronous stream, set back on close so the camera stops sending. */
+    private var isoAlt0: UsbInterface? = null
+
     fun stop() {
         running = false
     }
@@ -216,6 +317,8 @@ class UvcCameraSession(private val usb: UsbManager, private val device: UsbDevic
         val c = connection ?: return
         // Stopping a bulk stream: CLEAR_FEATURE(ENDPOINT_HALT) on the video endpoint (UVC 1.5, 2.4.3.2.2).
         endpoint?.let { c.controlTransfer(0x02, 0x01, 0x00, it.address, null, 0, 200) }
+        // An isochronous stream stops when its interface goes back to alternate setting 0.
+        isoAlt0?.let { runCatching { c.setInterface(it) } }
         claimed.forEach { runCatching { c.releaseInterface(it) } }
         claimed.clear()
         c.close()
@@ -271,6 +374,10 @@ class UvcCameraSession(private val usb: UsbManager, private val device: UsbDevic
         private const val REAP_MS = 50L
         private const val MAX_ERROR_RUN = 20
         private const val ERROR_PAUSE_MS = 5L
+
+        /** 1.6.9: isochronous transfers: 32 microframes each (4 ms at high speed), 8 queued. */
+        private const val ISO_PACKETS = 32
+        private const val ISO_URBS = 8
 
         /** No first frame for this long: the camera never streamed. */
         private const val FIRST_FRAME_MS = 6000L

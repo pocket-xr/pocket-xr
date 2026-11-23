@@ -5,6 +5,10 @@ project(flipspaces_frametimes C CXX)
 add_library(flipspaces_frametimes SHARED frame_timestamps.cpp)
 target_link_libraries(flipspaces_frametimes EGL log)
 
+# 1.6.9: isochronous USB reads for UVC cameras that stream that way (the XREAL Air 2 Ultra's tracking cameras).
+add_library(pocketxr_usbiso SHARED usb_iso.c)
+target_link_libraries(pocketxr_usbiso log)
+
 # PC VR in the Space: the bridge to ALVR's client library (MIT licence), built from ALVR's source with cargo-ndk and
 # kept in jniLibs with the C++ runtime it links (docs/PCVR-PLAN.md).
 # Built for arm64 only, so other ABIs (the x86_64 emulator) leave the bridge out.
