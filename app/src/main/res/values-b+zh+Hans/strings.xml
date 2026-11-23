@@ -1293,4 +1293,6 @@
     <string name="tour_done_again">本导览一直在“菜单”的“帮助及更多”中。</string>
     <string name="tour_done_picture_ready">图片：环绕在你周围的窗口，还有一个对勾。</string>
     <string name="tour_done_picture_open">图片：环绕在你周围的窗口。</string>
+    <string name="head_taps">轻点眼镜</string>
+    <string name="head_taps_help">轻点镜框两次重新居中，三次打开或关闭启动器。尚未在眼镜上测试。</string>
 </resources>

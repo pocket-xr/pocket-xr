@@ -527,6 +527,24 @@ object HeadTracker {
      * accepted one are dropped and logged, whichever way they came (the Space's command, the phone,
      * the glasses' key), so nothing relevels twice.
      */
+    /** 1.6.12: taps on the glasses ([GlassesTaps]), read on the head reader's thread; set from [SpaceStore.glassesTaps]. */
+    @Volatile var glassesTaps = false
+    private val taps = com.hayeco.flipspaces.core.spatial.GlassesTaps()
+
+    fun setGlassesTaps(context: Context, on: Boolean) {
+        SpaceStore(context).glassesTaps = on
+        glassesTaps = on
+        Log.i(TAG, "taps on the glasses ${if (on) "on: two recentre, three open or close the launcher" else "off"}")
+    }
+
+    private fun tapped(n: Int) {
+        Log.i(TAG, "taps on the glasses: $n")
+        when (n) {
+            2 -> SpaceSession.send(SpaceCommand.Recentre)
+            3 -> SpaceSession.send(SpaceCommand.ToggleLauncher)
+        }
+    }
+
     fun recentre(why: String = "the Space") {
         val ok = synchronized(recentreGate) { recentreGate.accept(SystemClock.uptimeMillis()) }
         if (ok) {
@@ -679,6 +697,7 @@ object HeadTracker {
             // 1.2.8 (Discussion #24, a VITURE Beast: no head tracking, and the status blamed a missing USB network): VITURE
             // glasses have no USB network. With the experimental reader on, their HID is read; otherwise the status says
             // plainly that they are not supported yet, and nothing is opened on them.
+            glassesTaps = SpaceStore(context).glassesTaps
             val viture = VitureImuLink.find(context)
             val vitureOn = SpaceStore(context).vitureHeadTracking
             synchronized(vitureReconnect) { vitureReconnect.setEnabled(vitureOn) }
@@ -1379,10 +1398,15 @@ object HeadTracker {
                 // 0.5.55: into the kept lists, walked by index (no iterator), and the poses only tested with
                 // [HeadView.isUsable] (usable made a normalized Quat that was thrown away, twice a sample).
                 fused.clear()
+                val tapsOn = glassesTaps
                 for (ri in 0 until reports.size) {
                     val r = reports[ri]
                     if (r.type != ImuReportType.IMU) continue
                     fusion.update(r)?.let { fused += it }
+                    if (tapsOn) {
+                        val n = taps.feed(r.timestampNs / 1e9, r.gyro, r.accel)
+                        if (n != 0) tapped(n)
+                    }
                 }
                 val imu = fused.size
                 fusedSamples += imu

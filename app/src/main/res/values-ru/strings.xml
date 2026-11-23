@@ -1323,4 +1323,6 @@
     <string name="tour_done_again">Этот обзор всегда есть в Меню, в разделе «Помощь и другое».</string>
     <string name="tour_done_picture_ready">Картинка: ваши окна вокруг вас и галочка.</string>
     <string name="tour_done_picture_open">Картинка: ваши окна вокруг вас.</string>
+    <string name="head_taps">Касания очков</string>
+    <string name="head_taps_help">Коснитесь оправы дважды, чтобы центрировать, трижды — чтобы открыть или закрыть лаунчер. Ещё не проверено с очками.</string>
 </resources>

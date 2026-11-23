@@ -1669,4 +1669,6 @@
     <string name="tour_done_again">This tour is always in the Menu, under Help and more.</string>
     <string name="tour_done_picture_ready">Picture: your windows around you, and a tick.</string>
     <string name="tour_done_picture_open">Picture: your windows around you.</string>
+    <string name="head_taps">Taps on the glasses</string>
+    <string name="head_taps_help">Tap the glasses\' frame twice to recentre, three times to open or close the launcher. Not yet tried with glasses.</string>
 </resources>

@@ -1313,4 +1313,6 @@
     <string name="tour_done_again">Este recorrido siempre está en el Menú, en Ayuda y más.</string>
     <string name="tour_done_picture_ready">Imagen: tus ventanas a tu alrededor y una marca de verificación.</string>
     <string name="tour_done_picture_open">Imagen: tus ventanas a tu alrededor.</string>
+    <string name="head_taps">Toques en las gafas</string>
+    <string name="head_taps_help">Toca la montura dos veces para recentrar y tres veces para abrir o cerrar el lanzador. Aún no probado con gafas.</string>
 </resources>

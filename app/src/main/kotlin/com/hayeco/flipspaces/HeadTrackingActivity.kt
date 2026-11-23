@@ -162,6 +162,11 @@ class HeadTrackingActivity : ComponentActivity() {
                         Log.i("FlipSpaces/Head", "per-row pose ${if (on) "on" else "off"} ${if (sbs) "in side by side" else "in 2D"} (set on the head tracking screen)")
                         settingsVersion++
                     },
+                    taps = store.glassesTaps.also { settingsVersion },
+                    onTaps = { on ->
+                        HeadTracker.setGlassesTaps(this, on)
+                        settingsVersion++
+                    },
                     lateWarpSbs = store.lateWarpSbs.also { settingsVersion },
                     onLateWarp = { on ->
                         store.lateWarpSbs = on
