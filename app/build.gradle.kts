@@ -19,8 +19,8 @@ android {
         resValue("string", "app_label", if (findProperty("pocketxr.dev") == "true") "Pocket XR Test" else "Pocket XR")
         minSdk = 30
         targetSdk = 36
-        versionCode = 198
-        versionName = "1.6.12"
+        versionCode = 199
+        versionName = "1.6.13"
         // The Flip 7 is arm64; MediaPipe's native code for other ABIs only adds size.
         ndk { abiFilters += "arm64-v8a" }
         // 1.5.2: Google Play requires every native library to load on 16 KB memory pages. NDK r27 still links with 4 KB

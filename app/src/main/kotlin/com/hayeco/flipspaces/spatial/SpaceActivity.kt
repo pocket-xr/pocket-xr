@@ -372,6 +372,26 @@ class SpaceActivity : Activity() {
         reportDisplaySize()
     }
 
+    /**
+     * 1.6.13 (Crr66, Galaxy S20, Android 13, 1.6.12: Netflix's DeX window played sound but showed black, and could not
+     * be closed): a Presentation covers its whole display, so a DeX window Pocket XR opens for a protected app (Netflix)
+     * opens underneath it. Before such a window opens, the Space goes back into its own window, where DeX windows come
+     * in front as they did before 1.6.8. The display stays marked as tried, so the Space does not go back into a
+     * Presentation until the glasses are plugged in again (the DeX title bar shows over the Space meanwhile). UI thread.
+     */
+    fun leavePresentation(why: String) {
+        val p = presentation ?: return
+        // Off the Presentation first, so its GL thread has ended before the window's starts.
+        p.showSpace(View(this).apply { setBackgroundColor(Color.BLACK) })
+        val fresh = newGlView(this)
+        setContentView(fresh)
+        view = fresh
+        runCatching { p.dismiss() }
+        presentation = null
+        Log.i(MODE_TAG, "the Space left its Presentation on display $openedOn ($why): back in its own window, so DeX windows can come in front")
+        reportDisplaySize()
+    }
+
     /** The window an OpenXR game's sub-window attaches to: wherever the Space is drawn now. */
     fun gameHostWindow(): android.view.Window? = presentation?.window ?: window
 

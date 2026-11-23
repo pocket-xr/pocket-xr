@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.13: protected apps in DeX on Android 13
+
+- **Netflix and other protected apps on Android 13 (Galaxy S20):** since 1.6.8 removed the white DeX title bar by
+  drawing the Space on its own layer, the DeX window Pocket XR opens for an app that protects its picture opened
+  underneath that layer: the sound played, the picture stayed black and the window couldn't be closed. Now the Space
+  steps back into its own window before such a window opens, so it comes in front as it did before. Until the glasses
+  are plugged in again, the DeX title bar shows over the Space once more. Found by Crr66; not yet tried on an S20.
+
 ## 1.6.12: taps on the glasses
 
 - **Taps on the glasses:** tap the glasses' frame twice to recentre, three times to open or close the launcher. Pocket
