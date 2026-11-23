@@ -202,15 +202,24 @@ object WideView {
  */
 class WideViewStore(text: String? = null) {
     private val on = LinkedHashSet<String>()
+
+    /** 1.6.13: streaming apps ([STARTS_ON]) the user turned Wide view off for; they stay off. */
+    private val turnedOff = LinkedHashSet<String>()
     var tipShown = false
         private set
     private val lastToggleMs = HashMap<String, Long>()
 
     init {
-        text?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.forEach { if (it == TIP_LINE) tipShown = true else on += it }
+        text?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.forEach {
+            when {
+                it == TIP_LINE -> tipShown = true
+                it.startsWith(OFF_PREFIX) -> turnedOff += it.removePrefix(OFF_PREFIX)
+                else -> on += it
+            }
+        }
     }
 
-    fun isOn(packageName: String): Boolean = packageName in on
+    fun isOn(packageName: String): Boolean = packageName in on || (packageName in STARTS_ON && packageName !in turnedOff)
 
     /**
      * A press of the button for [packageName] at [nowMs]: the new state, or null when it changed nothing
@@ -224,9 +233,11 @@ class WideViewStore(text: String? = null) {
         lastToggleMs[packageName] = nowMs
         return if (isOn(packageName)) {
             on -= packageName
+            if (packageName in STARTS_ON) turnedOff += packageName
             Toggle(false, changed = true, tip = false, refused = null)
         } else {
             on += packageName
+            turnedOff -= packageName
             val tip = !tipShown
             tipShown = true
             Toggle(true, changed = true, tip = tip, refused = null)
@@ -238,9 +249,25 @@ class WideViewStore(text: String? = null) {
     fun encode(): String = buildString {
         if (tipShown) append(TIP_LINE).append('\n')
         on.forEach { append(it).append('\n') }
+        turnedOff.forEach { append(OFF_PREFIX).append(it).append('\n') }
     }
 
     companion object {
         private const val TIP_LINE = "tip"
+        private const val OFF_PREFIX = "off:"
+
+        /**
+         * 1.6.13 (Crr66: Netflix opened in a narrow upright column in a wide window, and only filled it after the Wide
+         * button): streaming apps that show their phone layout, locked upright, on a screen narrower than 600 dp (a
+         * Pocket XR window is 480 dp by default) and their tablet layout, which fills a wide screen, from 600 dp. Wide
+         * view (600 dp or more) starts on for them; turning it off is remembered.
+         */
+        val STARTS_ON: Set<String> = setOf(
+            "com.netflix.mediaclient",
+            "com.disney.disneyplus",
+            "com.amazon.avod.thirdpartyclient",
+            "com.wbd.stream",
+            "com.hulu.plus",
+        )
     }
 }
