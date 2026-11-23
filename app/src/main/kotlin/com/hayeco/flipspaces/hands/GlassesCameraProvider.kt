@@ -421,6 +421,9 @@ object GlassesCameraProvider {
             worker = Thread({ detect(box, frameDecoder, runner, cameraId, context) }, "FlipSpacesDetect").also { it.start() }
             var first = true
             var brokenSeen = 0L
+            var ultraFrames = 0L
+            var ultraLoggedAt = 0L
+            val ultraIds = HashMap<Int, Long>()
             s.stream(
                 streaming,
                 choice,
@@ -428,9 +431,25 @@ object GlassesCameraProvider {
                 onFrame = onFrame@{ frame, at ->
                     // 1.6.9: the Ultra's two cameras take turns; only camera 0's frames go on, so the newest-frame
                     // mailbox never swaps one of them for the other camera's.
-                    if (ultra && XrealUltraCamera.cameraOf(frame.data, frame.size) != XrealUltraCamera.CAMERA_0) {
-                        pool.recycle(frame.data)
-                        return@onFrame
+                    if (ultra) {
+                        val id = XrealUltraCamera.cameraOf(frame.data, frame.size)
+                        // 1.6.10: the first frames' telemetry rows go to the log, and a count of frames by camera
+                        // every 10 s, so an Ultra owner's log shows what the camera sends.
+                        ultraFrames++
+                        ultraIds[id] = (ultraIds[id] ?: 0L) + 1
+                        if (ultraFrames <= 4) {
+                            val order = if (XrealUltraCamera.pairSwapped(frame.data, frame.size)) ", bytes pair-swapped" else ""
+                            Log.i(TAG, "Ultra frame $ultraFrames: ${frame.size} bytes, camera id 0x" + Integer.toHexString(id and 0xFF) + order +
+                                "; telemetry row: " + XrealUltraCamera.telemetryHex(frame.data, frame.size))
+                        }
+                        if (at - ultraLoggedAt >= 10_000) {
+                            ultraLoggedAt = at
+                            Log.i(TAG, "Ultra frames so far: $ultraFrames, by camera id " + ultraIds.entries.joinToString { "0x" + Integer.toHexString(it.key and 0xFF) + " " + it.value })
+                        }
+                        if (id != XrealUltraCamera.CAMERA_0) {
+                            pool.recycle(frame.data)
+                            return@onFrame
+                        }
                     }
                     tracking.captured(at)
                     if (first) {

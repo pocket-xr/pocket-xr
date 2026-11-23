@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.10: XREAL Air 2 Ultra camera, second try
+
+- **Air 2 Ultra hand tracking:** with 1.6.9, Sammy Santiago's Ultra streamed whole frames from its grey cameras (over
+  ordinary bulk transfers on his phone), but hand tracking never saw any of them: none read as the first camera at
+  the place the notes give. The notes were measured on a Mac, which hands the camera's YUY2 frames over with each pair
+  of bytes swapped, so on a phone the camera's number and the picture are likely one byte over. Pocket XR now reads
+  frames in either order. The logs also show the first frames' telemetry and a count of frames by camera, so if this
+  is not it, the next log says what the camera sends. Untested on an Ultra. Head tracking on the Ultra works (Sammy's
+  log shows 1000 samples a second).
+
 ## 1.6.9: hand tracking on the XREAL Air 2 Ultra (experimental)
 
 - **XREAL Air 2 Ultra hand tracking:** the Ultra's two grey tracking cameras show up as an ordinary USB camera, but
