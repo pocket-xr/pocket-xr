@@ -6,6 +6,8 @@ This policy covers two Android apps published by Haye & Co (Mike Haye): **Pocket
 **Pocket XR add-on** (`com.hayeco.flipspaces.addon`). It says what they access on your phone and what, if anything,
 leaves it.
 
+Pocket XR for iPhone and iPad has its own policy, [PRIVACY-IOS.md](PRIVACY-IOS.md).
+
 ## The short version
 
 Pocket XR and the add-on collect no personal data. There are no accounts, no ads, no analytics of Haye & Co's own and no
