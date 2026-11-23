@@ -151,17 +151,39 @@ private class CodecDecoder(mime: String, private val width: Int, private val hei
  */
 private class UltraDecoder : FrameDecoder {
     private val grey = ByteArray(XrealUltraCamera.PICTURE_BYTES)
+    private val other = ByteArray(XrealUltraCamera.PICTURE_BYTES)
     private val pixels = IntArray(XrealUltraCamera.PICTURE_BYTES)
     private val bitmap = Bitmap.createBitmap(XrealUltraCamera.OUT_WIDTH, XrealUltraCamera.OUT_HEIGHT, Bitmap.Config.ARGB_8888)
 
+    /** 1.6.11: when the telemetry doesn't give the byte order, the first frames vote by [XrealUltraCamera.smoothness]. */
+    private var swapVotes = 0
+    private var plainVotes = 0
+    private var swapped: Boolean? = null
+
     override fun decode(frame: UvcVideoFrame): Bitmap? {
         if (XrealUltraCamera.cameraOf(frame.data, frame.size) != XrealUltraCamera.CAMERA_0) return null
-        if (!XrealUltraCamera.descramble(frame.data, frame.size, grey, camera0 = true, swapped = XrealUltraCamera.pairSwapped(frame.data, frame.size))) return null
+        val order = XrealUltraCamera.pairSwapped(frame.data, frame.size) ?: swapped ?: vote(frame) ?: return null
+        if (!XrealUltraCamera.descramble(frame.data, frame.size, grey, camera0 = true, swapped = order)) return null
         for (i in grey.indices) {
             val v = grey[i].toInt() and 0xFF
             pixels[i] = (0xFF shl 24) or (v shl 16) or (v shl 8) or v
         }
         bitmap.setPixels(pixels, 0, XrealUltraCamera.OUT_WIDTH, 0, 0, XrealUltraCamera.OUT_WIDTH, XrealUltraCamera.OUT_HEIGHT)
         return bitmap
+    }
+
+    /** One frame's vote; the order once 5 frames agree more one way than the other (or after 9), else null. */
+    private fun vote(frame: UvcVideoFrame): Boolean? {
+        XrealUltraCamera.descramble(frame.data, frame.size, grey, camera0 = true, swapped = true)
+        XrealUltraCamera.descramble(frame.data, frame.size, other, camera0 = true, swapped = false)
+        val s = XrealUltraCamera.smoothness(grey)
+        val p = XrealUltraCamera.smoothness(other)
+        if (s < p) swapVotes++ else plainVotes++
+        com.hayeco.flipspaces.Log.i("FlipSpacesHands", "Ultra byte order vote: pair-swapped $s, as sent $p (lower is smoother)")
+        if (swapVotes >= 5 || plainVotes >= 5 || swapVotes + plainVotes >= 9) {
+            swapped = swapVotes >= plainVotes
+            com.hayeco.flipspaces.Log.i("FlipSpacesHands", "Ultra byte order: ${if (swapped == true) "pair-swapped" else "as sent"} ($swapVotes to $plainVotes)")
+        }
+        return swapped
     }
 }

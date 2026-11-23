@@ -437,8 +437,15 @@ object GlassesCameraProvider {
                         // every 10 s, so an Ultra owner's log shows what the camera sends.
                         ultraFrames++
                         ultraIds[id] = (ultraIds[id] ?: 0L) + 1
+                        // 1.6.11: the first two frames are kept as hex text for the logs (UltraFrameDump), so the
+                        // layout can be worked out from what the camera really sends.
+                        if (ultraFrames <= 2) com.hayeco.flipspaces.hands.uvc.UltraFrameDump.save(context, ultraFrames.toInt(), frame.data, frame.size)
                         if (ultraFrames <= 4) {
-                            val order = if (XrealUltraCamera.pairSwapped(frame.data, frame.size)) ", bytes pair-swapped" else ""
+                            val order = when (XrealUltraCamera.pairSwapped(frame.data, frame.size)) {
+                                true -> ", bytes pair-swapped"
+                                false -> ""
+                                null -> ", byte order not in the telemetry"
+                            }
                             Log.i(TAG, "Ultra frame $ultraFrames: ${frame.size} bytes, camera id 0x" + Integer.toHexString(id and 0xFF) + order +
                                 "; telemetry row: " + XrealUltraCamera.telemetryHex(frame.data, frame.size))
                         }
