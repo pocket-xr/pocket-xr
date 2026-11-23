@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.12: taps on the glasses
+
+- **Taps on the glasses:** tap the glasses' frame twice to recentre, three times to open or close the launcher. Pocket
+  XR reads the taps from the glasses' own motion sensor, for every glasses model it tracks, and leaves out jolts from
+  fast head turns and from walking. Turn it on with **Taps on the glasses** on the head tracking screen. The same as
+  Pocket XR for Steam Deck 0.7.5 (asked for there by Pierre Zammit). Not yet tried with real taps on glasses.
+
 ## 1.6.11: XREAL Air 2 Ultra camera, third try
 
 - **Air 2 Ultra hand tracking:** Sammy Santiago's 1.6.10 log showed what his Ultra's camera really sends: about 60

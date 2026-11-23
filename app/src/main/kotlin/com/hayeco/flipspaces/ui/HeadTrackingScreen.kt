@@ -106,6 +106,9 @@ fun HeadTrackingScreen(
     onSendLogs: () -> Unit = {},
     /** 1.2.8: glasses that aren't XREAL's ([OtherGlassesCard]); null hides the card. */
     other: OtherGlassesCard? = null,
+    /** 1.6.12: taps on the glasses: two recentre, three open or close the launcher. */
+    taps: Boolean = false,
+    onTaps: (Boolean) -> Unit = {},
 ) {
     Scaffold { padding ->
         LazyColumn(
@@ -137,6 +140,8 @@ fun HeadTrackingScreen(
                             OutlinedButton(onClick = onRecentre, enabled = ok) { Text(stringResource(R.string.head_recentre)) }
                             OutlinedButton(onClick = onRetry) { Text(stringResource(R.string.head_try_again)) }
                         }
+                        FilterChip(selected = taps, onClick = { onTaps(!taps) }, label = { Text(stringResource(R.string.head_taps)) })
+                        Text(stringResource(R.string.head_taps_help), style = MaterialTheme.typography.bodySmall)
                         // 1.1.10 (a tester could copy only the start of one line): everything on this screen, in full.
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(onClick = onCopyAll) { Text(stringResource(R.string.head_copy_all)) }

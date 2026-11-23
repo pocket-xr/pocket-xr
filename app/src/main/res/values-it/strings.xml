@@ -1313,4 +1313,6 @@
     <string name="tour_done_again">Questo tour è sempre nel Menu, in Aiuto e altro.</string>
     <string name="tour_done_picture_ready">Immagine: le tue finestre intorno a te e un segno di spunta.</string>
     <string name="tour_done_picture_open">Immagine: le tue finestre intorno a te.</string>
+    <string name="head_taps">Tocchi sugli occhiali</string>
+    <string name="head_taps_help">Tocca la montatura due volte per ricentrare, tre volte per aprire o chiudere il launcher. Non ancora provato con occhiali.</string>
 </resources>

@@ -1303,4 +1303,6 @@
     <string name="tour_done_again">Diese Tour findest du jederzeit im Menü unter „Hilfe und mehr“.</string>
     <string name="tour_done_picture_ready">Bild: deine Fenster um dich herum und ein Häkchen.</string>
     <string name="tour_done_picture_open">Bild: deine Fenster um dich herum.</string>
+    <string name="head_taps">Tippen auf die Brille</string>
+    <string name="head_taps_help">Zweimal auf den Brillenrahmen tippen zentriert neu, dreimal öffnet oder schließt den Launcher. Noch nicht mit Brillen getestet.</string>
 </resources>

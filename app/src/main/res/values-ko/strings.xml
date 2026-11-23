@@ -1293,4 +1293,6 @@
     <string name="tour_done_again">이 둘러보기는 언제든 메뉴의 도움말 및 기타에 있어요.</string>
     <string name="tour_done_picture_ready">그림: 내 주위의 창들과 체크 표시.</string>
     <string name="tour_done_picture_open">그림: 내 주위의 창들.</string>
+    <string name="head_taps">안경 탭</string>
+    <string name="head_taps_help">안경테를 두 번 탭하면 중앙으로, 세 번 탭하면 런처를 열거나 닫습니다. 아직 안경으로 테스트하지 않았습니다.</string>
 </resources>

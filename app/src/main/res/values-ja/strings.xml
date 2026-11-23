@@ -1293,4 +1293,6 @@
     <string name="tour_done_again">このツアーは、いつでもメニューの「ヘルプなど」にあります。</string>
     <string name="tour_done_picture_ready">図: あなたのまわりのウィンドウと、チェックマーク。</string>
     <string name="tour_done_picture_open">図: あなたのまわりのウィンドウ。</string>
+    <string name="head_taps">グラスをタップ</string>
+    <string name="head_taps_help">フレームを2回タップで正面に戻し、3回でランチャーを開閉します。まだグラスで試していません。</string>
 </resources>

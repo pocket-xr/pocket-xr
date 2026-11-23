@@ -1313,4 +1313,6 @@
     <string name="tour_done_again">Este tour fica sempre no Menu, em Ajuda e mais.</string>
     <string name="tour_done_picture_ready">Imagem: suas janelas ao seu redor e uma marca de confirmação.</string>
     <string name="tour_done_picture_open">Imagem: suas janelas ao seu redor.</string>
+    <string name="head_taps">Toques nos óculos</string>
+    <string name="head_taps_help">Toque na armação duas vezes para recentralizar e três vezes para abrir ou fechar o inicializador. Ainda não testado com óculos.</string>
 </resources>
