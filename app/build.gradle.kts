@@ -197,9 +197,9 @@ dependencies {
     implementation("androidx.fragment:fragment:1.9.1")
     // PC screens: what Moonlight's stream code uses, at moonlight-android's versions: OkHttp for the host's HTTP API and
     // Bouncy Castle for the client certificate that pairing makes.
-    implementation("com.squareup.okhttp3:okhttp:5.5.0")
-    implementation("org.bouncycastle:bcprov-jdk18on:1.85.2")
-    implementation("org.bouncycastle:bcpkix-jdk18on:1.85")
+    implementation("com.squareup.okhttp3:okhttp:5.5.1")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.87")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.87")
 
     testImplementation(libs.junit)
     // 1.1.14: Send logs to Mike and the Head tracking switch, tested on Robolectric (app/src/test).
