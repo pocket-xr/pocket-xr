@@ -3869,6 +3869,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val display = spaceDisplayId
         Log.i(PANEL_TAG, "panel ${p.panel.id} ${app.label}: open as a DeX window on display $display (protected content)")
         activity.runOnUiThread {
+            // 1.6.13: a DeX window would open under a Space drawn in a Presentation (Crr66's Netflix on Android 13).
+            (activity as? SpaceActivity)?.leavePresentation("a DeX window for ${app.label}")
             AppLauncher.openDexWindow(activity, app, display)?.let { problem = str(R.string.space_problem_dex, app.label, it.message.toString()) }
         }
         removePanel(p.panel.id)
