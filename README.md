@@ -78,7 +78,8 @@ This list only says what someone has actually seen working. Thanks to everyone w
 | Other VITURE glasses | Not tried yet. Experimental VITURE head tracking is on the head tracking screen, off by default ([Discussion #24](https://github.com/pocket-xr/pocket-xr/discussions/24)). |
 | Other glasses | Help wanted. Windows are drawn with plain fallbacks; head tracking works only if they send it the way a known model does. |
 
-Hand tracking works on the XREAL Aura only for now. **Aura firmware 16.1.04 turns the camera off for phones** (the
+Hand tracking works on the XREAL Aura. Since 1.6.9 the XREAL Air 2 Ultra can try it too, through its grey tracking
+cameras; that is experimental and untested, as the project has no Ultra. **Aura firmware 16.1.04 turns the camera off for phones** (the
 puck still uses it), so on that firmware hand tracking can't see your hands, and no setting from the phone turns it
 back on. Everything else works. If you use hand tracking, hold off on updating your Aura until XREAL brings the camera
 back; Pocket XR will use it again by itself. Details and settings for each model:
@@ -123,7 +124,7 @@ Other phones with video out should work. Own glasses or a phone not marked as co
   long press, the wheel scrolls the window under the pointer, and dragging a window's edge or handle moves or resizes
   it (unless Lock screens is on). A hardware keyboard types into the window you last clicked.
 - **Hand tracking**, on glasses with a camera: point, pinch and drag, with each hand separately. It works on the
-  XREAL Aura today. The One and One Pro can get it through the XREAL Eye camera add-on, which is next (help wanted).
+  XREAL Aura today, and is experimental on the XREAL Air 2 Ultra (untested). The One and One Pro can get it through the XREAL Eye camera add-on, which is next (help wanted).
 - **Two ways to arrange your windows.** The Space is yours to arrange: put windows all around you, at the depth
   you like, and save layouts. **Steady mode** is for reading and working: the windows line up in a row in front of you
   and the picture stays completely still (XREAL Aura and One series).

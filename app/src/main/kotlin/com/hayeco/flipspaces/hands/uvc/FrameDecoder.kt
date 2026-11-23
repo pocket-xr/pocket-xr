@@ -10,6 +10,7 @@ import com.hayeco.flipspaces.core.uvc.MjpegTableInserter
 import com.hayeco.flipspaces.core.uvc.UvcChoice
 import com.hayeco.flipspaces.core.uvc.UvcFormatKind
 import com.hayeco.flipspaces.core.uvc.UvcVideoFrame
+import com.hayeco.flipspaces.core.uvc.XrealUltraCamera
 import com.hayeco.flipspaces.core.uvc.YuvConverter
 import java.io.Closeable
 
@@ -30,10 +31,11 @@ interface FrameDecoder : Closeable {
     override fun close() = Unit
 
     companion object {
-        fun forChoice(choice: UvcChoice): FrameDecoder {
+        fun forChoice(choice: UvcChoice, xrealUltra: Boolean = false): FrameDecoder {
             val w = choice.frame.width
             val h = choice.frame.height
             return when {
+                xrealUltra -> UltraDecoder()
                 choice.format.kind == UvcFormatKind.MJPEG -> MjpegDecoder(w, h)
                 choice.format.fourcc == "YUY2" -> YuvDecoder(w, h, nv12 = false)
                 choice.format.fourcc == "NV12" -> YuvDecoder(w, h, nv12 = true)
@@ -139,5 +141,27 @@ private class CodecDecoder(mime: String, private val width: Int, private val hei
     override fun close() {
         runCatching { codec.stop() }
         codec.release()
+    }
+}
+
+/**
+ * 1.6.9: the XREAL Air 2 Ultra's grey tracking cameras ([XrealUltraCamera]): only camera 0's frames are used (the
+ * other camera's come in between and are skipped), unscrambled into a 480x640 grey picture and drawn as ARGB for
+ * MediaPipe. Untested on the Ultra: the project has none.
+ */
+private class UltraDecoder : FrameDecoder {
+    private val grey = ByteArray(XrealUltraCamera.PICTURE_BYTES)
+    private val pixels = IntArray(XrealUltraCamera.PICTURE_BYTES)
+    private val bitmap = Bitmap.createBitmap(XrealUltraCamera.OUT_WIDTH, XrealUltraCamera.OUT_HEIGHT, Bitmap.Config.ARGB_8888)
+
+    override fun decode(frame: UvcVideoFrame): Bitmap? {
+        if (XrealUltraCamera.cameraOf(frame.data, frame.size) != XrealUltraCamera.CAMERA_0) return null
+        if (!XrealUltraCamera.descramble(frame.data, frame.size, grey, camera0 = true)) return null
+        for (i in grey.indices) {
+            val v = grey[i].toInt() and 0xFF
+            pixels[i] = (0xFF shl 24) or (v shl 16) or (v shl 8) or v
+        }
+        bitmap.setPixels(pixels, 0, XrealUltraCamera.OUT_WIDTH, 0, 0, XrealUltraCamera.OUT_WIDTH, XrealUltraCamera.OUT_HEIGHT)
+        return bitmap
     }
 }

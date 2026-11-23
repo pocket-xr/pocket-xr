@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.9: hand tracking on the XREAL Air 2 Ultra (experimental)
+
+- **XREAL Air 2 Ultra hand tracking:** the Ultra's two grey tracking cameras show up as an ordinary USB camera, but
+  they send their pictures in a way Android's own USB tools can't read (isochronous transfers), as one doubled grey
+  picture labelled as colour, with each camera's picture cut into blocks and shuffled. Pocket XR now reads that kind
+  of stream itself, takes one camera's pictures, puts the blocks back in order and runs hand tracking on them. How the
+  pictures are laid out comes from sean9061's MIT licensed notes on the Ultra (docs/LICENSES.md). Untested: the
+  project has no Ultra, so whether the hands line up with the pointer, and how well the grey picture tracks, is for
+  an Ultra owner to show. Asked for by Sammy Santiago.
+
 ## 1.6.8: no DeX title bar on Android 13
 
 - **The white DeX title bar over the Space (Galaxy S20, Android 13):** on One UI 5 DeX draws a window's title bar

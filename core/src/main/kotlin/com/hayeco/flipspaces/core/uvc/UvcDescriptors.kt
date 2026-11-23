@@ -42,8 +42,19 @@ data class UvcFormat(
     val label: String get() = "$fourcc (${kind.label})"
 }
 
-data class UvcEndpoint(val address: Int, val bulk: Boolean, val maxPacketSize: Int) {
+data class UvcEndpoint(
+    val address: Int,
+    val bulk: Boolean,
+    val maxPacketSize: Int,
+    /** 1.6.9: an isochronous endpoint (the XREAL Air 2 Ultra's cameras stream this way). */
+    val iso: Boolean = false,
+    /** 1.6.9: the endpoint's wMaxPacketSize as sent, with the extra transactions per microframe in bits 11 and 12. */
+    val rawMaxPacketSize: Int = maxPacketSize,
+) {
     val isIn: Boolean get() = address and 0x80 != 0
+
+    /** Bytes an isochronous endpoint carries each (micro)frame: the packet size times 1 to 3 transactions. */
+    val payloadPerInterval: Int get() = (rawMaxPacketSize and 0x7FF) * (1 + ((rawMaxPacketSize shr 11) and 0x03))
 }
 
 /** One alternate setting of the streaming interface and its endpoint, if any. */
@@ -59,6 +70,16 @@ data class UvcStreamingInterface(
     /** Bulk streaming uses alternate setting 0; isochronous needs a non-zero one. */
     val bulkEndpoint: UvcEndpoint?
         get() = altSettings.mapNotNull { it.endpoint }.firstOrNull { it.address == endpointAddress && it.bulk }
+
+    /**
+     * 1.6.9: the isochronous alternate setting for payloads of up to [payloadBytes]: the smallest that carries them,
+     * else the largest there is; null when the interface has no isochronous one.
+     */
+    fun isoAltFor(payloadBytes: Int): UvcAltSetting? {
+        val iso = altSettings.filter { it.alternate != 0 && it.endpoint?.iso == true && it.endpoint.isIn }
+        return iso.filter { it.endpoint!!.payloadPerInterval >= payloadBytes }.minByOrNull { it.endpoint!!.payloadPerInterval }
+            ?: iso.maxByOrNull { it.endpoint!!.payloadPerInterval }
+    }
 }
 
 data class UvcCamera(
@@ -146,7 +167,7 @@ object UvcDescriptorParser {
                 }
                 DT_ENDPOINT -> if (len >= 7) {
                     current?.let { s ->
-                        val ep = UvcEndpoint(u8(d, 2), u8(d, 3) and 0x03 == 0x02, u16(d, 4) and 0x7FF)
+                        val ep = UvcEndpoint(u8(d, 2), u8(d, 3) and 0x03 == 0x02, u16(d, 4) and 0x7FF, iso = u8(d, 3) and 0x03 == 0x01, rawMaxPacketSize = u16(d, 4))
                         val idx = s.alts.indexOfLast { it.alternate == currentAlt }
                         if (idx >= 0 && s.alts[idx].endpoint == null) s.alts[idx] = UvcAltSetting(currentAlt, ep)
                     }

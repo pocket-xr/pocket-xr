@@ -89,6 +89,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## XREAL Air 2 Ultra cameras (1.6.9)
+
+- The Ultra's camera frame layout, which camera a frame is from and the block order table in
+  `core/.../uvc/XrealUltraCamera.kt` come from sean9061/xreal-air2ultra-camera (`docs/PROTOCOL.md` and
+  `python/xreal_descramble.py`): MIT License, Copyright (c) 2026 sean9061. That project credits
+  mazeasdamien/myXreal with first finding the table.
+- The isochronous reads in `app/src/main/cpp/usb_iso.c` follow the approach of rfs2671/Xreal's `app/src/main/cpp/iso.c`
+  (GPL-3.0, like Pocket XR), using Linux's documented usbdevfs interface.
+
 ## Framework behaviour
 
 Virtual display flags, permissions and the shell's privileges come from the Android framework

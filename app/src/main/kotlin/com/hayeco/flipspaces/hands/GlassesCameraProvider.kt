@@ -37,6 +37,7 @@ import com.hayeco.flipspaces.core.hands.LinkState
 import com.hayeco.flipspaces.core.hands.ProviderStatus
 import com.hayeco.flipspaces.core.hands.TrackingStats
 import com.hayeco.flipspaces.core.uvc.UvcFormatChooser
+import com.hayeco.flipspaces.core.uvc.XrealUltraCamera
 import com.hayeco.flipspaces.core.uvc.UvcVideoFrame
 import com.hayeco.flipspaces.hands.uvc.FrameDecoder
 import com.hayeco.flipspaces.hands.uvc.UsbLinkLostException
@@ -218,6 +219,10 @@ object GlassesCameraProvider {
         }
     }
 
+    /** 1.6.9: the Air 2 Ultra's grey pair has its own frame layout ([XrealUltraCamera]); other cameras as before. */
+    private fun chooseFormat(device: UsbDevice, formats: List<com.hayeco.flipspaces.core.uvc.UvcFormat>) =
+        if (XrealUltraCamera.isUltra(device.vendorId, device.productId)) XrealUltraCamera.choose(formats) else UvcFormatChooser.choose(formats)
+
     /** Opens the camera only to read its descriptors, then closes it. Blocking. */
     fun readFormats(context: Context): String {
         val device = GlassesUsbAccess.find(context) ?: return context.getString(R.string.hands_no_usb_camera).also { _report.value = it }
@@ -226,7 +231,7 @@ object GlassesCameraProvider {
             UvcCameraSession(GlassesUsbAccess.manager(context), device).use { s ->
                 val camera = s.open()
                 val formats = camera.streaming.flatMap { it.formats }
-                val choice = UvcFormatChooser.choose(formats)
+                val choice = chooseFormat(device, formats)
                 "$header\n\n${camera.describe()}\n\n" + context.getString(R.string.hands_would_use, choice?.label ?: context.getString(R.string.hands_no_format))
             }
         } catch (e: Exception) {
@@ -402,10 +407,11 @@ object GlassesCameraProvider {
             _report.value = "${GlassesUsbAccess.label(device)}\n\n${camera.describe()}"
             val streaming = camera.streaming.firstOrNull { it.formats.isNotEmpty() }
                 ?: throw IOException("The camera lists no video formats")
-            val choice = UvcFormatChooser.choose(streaming.formats)
+            val choice = chooseFormat(device, streaming.formats)
                 ?: throw IOException("None of the camera's formats can be decoded: ${streaming.formats.joinToString { it.label }}")
-            Log.i(TAG, "Streaming ${choice.label}")
-            val frameDecoder = FrameDecoder.forChoice(choice).also { decoder = it }
+            val ultra = XrealUltraCamera.isUltra(device.vendorId, device.productId)
+            Log.i(TAG, "Streaming ${choice.label}" + if (ultra) " (XREAL Air 2 Ultra: camera 0 of the grey pair, unscrambled)" else "")
+            val frameDecoder = FrameDecoder.forChoice(choice, xrealUltra = ultra).also { decoder = it }
             val box = LatestFrameMailbox<Captured> { stale ->
                 stale.recycle()
                 tracking.dropped()
@@ -419,7 +425,13 @@ object GlassesCameraProvider {
                 streaming,
                 choice,
                 allocate = pool::obtain,
-                onFrame = { frame, at ->
+                onFrame = onFrame@{ frame, at ->
+                    // 1.6.9: the Ultra's two cameras take turns; only camera 0's frames go on, so the newest-frame
+                    // mailbox never swaps one of them for the other camera's.
+                    if (ultra && XrealUltraCamera.cameraOf(frame.data, frame.size) != XrealUltraCamera.CAMERA_0) {
+                        pool.recycle(frame.data)
+                        return@onFrame
+                    }
                     tracking.captured(at)
                     if (first) {
                         first = false
