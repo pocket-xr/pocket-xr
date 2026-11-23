@@ -44,6 +44,25 @@ class XrealUltraCameraTest {
         assertEquals(-1, XrealUltraCamera.cameraOf(raw0, 1000))
     }
 
+    @Test fun pairSwappedFramesReadTheSame() {
+        for (camera0 in listOf(true, false)) {
+            val pic = picture(camera0)
+            val raw = XrealUltraCamera.swapPairs(XrealUltraCamera.scramble(pic, 77, camera0))
+            assertTrue(XrealUltraCamera.pairSwapped(raw, raw.size))
+            assertEquals(if (camera0) XrealUltraCamera.CAMERA_0 else XrealUltraCamera.CAMERA_1, XrealUltraCamera.cameraOf(raw, raw.size))
+            val out = ByteArray(XrealUltraCamera.PICTURE_BYTES)
+            assertTrue(XrealUltraCamera.descramble(raw, raw.size, out))
+            assertArrayEquals("camera0=$camera0", pic, out)
+        }
+        val plain = XrealUltraCamera.scramble(picture(true), 3, true)
+        assertEquals(false, XrealUltraCamera.pairSwapped(plain, plain.size))
+    }
+
+    @Test fun anUnknownIdIsReportedAsFound() {
+        val raw = XrealUltraCamera.scramble(picture(true), 3, true, cameraId = 0x42)
+        assertEquals(0x42, XrealUltraCamera.cameraOf(raw, raw.size))
+    }
+
     @Test fun choosesThe640x241Frame() {
         val frames = listOf(UvcFrame(1, 640, 241, 166666L, listOf(166666L)))
         val f = UvcFormat(1, UvcFormatKind.UNCOMPRESSED, "UYVY", 16, frames)

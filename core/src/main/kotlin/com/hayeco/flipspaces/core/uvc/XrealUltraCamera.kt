@@ -55,8 +55,34 @@ object XrealUltraCamera {
 
     private val position = IntArray(BLOCKS).also { p -> REORDER.forEachIndexed { i, b -> p[b] = i } }
 
-    /** Which camera a frame is from ([CAMERA_0], [CAMERA_1]), or -1 when the frame is too short to say. */
-    fun cameraOf(frame: ByteArray, size: Int): Int = if (size > ID_AT) frame[ID_AT].toInt() and 0xFF else -1
+    /**
+     * Which camera a frame is from ([CAMERA_0], [CAMERA_1]), or the byte found when it is neither, or -1 when the frame
+     * is too short. 1.6.10: the camera calls its format YUY2, but the notes were measured on a Mac, which handed the
+     * frames over as UYVY: the same bytes with each pair swapped. Sammy Santiago's Ultra sent whole frames in 1.6.9
+     * that never read as camera 0 at the notes' place, so the id is looked for in both orders.
+     */
+    fun cameraOf(frame: ByteArray, size: Int): Int {
+        if (size <= ID_AT + 1) return -1
+        val direct = frame[ID_AT].toInt() and 0xFF
+        if (direct == CAMERA_0 || direct == CAMERA_1) return direct
+        val swapped = frame[ID_AT xor 1].toInt() and 0xFF
+        return if (swapped == CAMERA_0 || swapped == CAMERA_1) swapped else direct
+    }
+
+    /** 1.6.10: whether a frame's bytes come pair-swapped from the notes' order (see [cameraOf]). */
+    fun pairSwapped(frame: ByteArray, size: Int): Boolean {
+        if (size <= ID_AT + 1) return false
+        val direct = frame[ID_AT].toInt() and 0xFF
+        if (direct == CAMERA_0 || direct == CAMERA_1) return false
+        val swapped = frame[ID_AT xor 1].toInt() and 0xFF
+        return swapped == CAMERA_0 || swapped == CAMERA_1
+    }
+
+    /** 1.6.10: the telemetry row's first [n] bytes in hex, for the logs. */
+    fun telemetryHex(frame: ByteArray, size: Int, n: Int = 64): String {
+        if (size < PICTURE_BYTES + n) return "frame of $size bytes"
+        return (0 until n).joinToString(" ") { "%02x".format(frame[PICTURE_BYTES + it].toInt() and 0xFF) }
+    }
 
     /** The format to ask for: the one with a 640x241 frame (the doubled grey picture), else null. */
     fun choose(formats: List<UvcFormat>, maxFps: Double = 60.0): UvcChoice? {
@@ -112,14 +138,22 @@ object XrealUltraCamera {
      * Unscrambles a frame's picture into [out] ([OUT_WIDTH] x [OUT_HEIGHT] bytes, row by row). Returns false when the
      * frame is too short.
      */
-    fun descramble(raw: ByteArray, size: Int, out: ByteArray, camera0: Boolean = cameraOf(raw, size) != CAMERA_1): Boolean {
+    fun descramble(
+        raw: ByteArray,
+        size: Int,
+        out: ByteArray,
+        camera0: Boolean = cameraOf(raw, size) != CAMERA_1,
+        swapped: Boolean = pairSwapped(raw, size),
+    ): Boolean {
         if (size < PICTURE_BYTES || out.size < PICTURE_BYTES) return false
+        // Blocks start on even bytes, so a pair swap stays inside each block and a block's first 128 bytes add up the same.
         val align = position[syncBlock(raw)]
         val map = if (camera0) lut0 else lut1
+        val flip = if (swapped) 1 else 0
         for (t in 0 until BLOCKS) {
             val from = REORDER[(align + t) % BLOCKS] * BLOCK
             val logical = t * BLOCK
-            for (i in 0 until BLOCK) out[map[logical + i]] = raw[from + i]
+            for (i in 0 until BLOCK) out[map[logical + i]] = raw[from + (i xor flip)]
         }
         return true
     }
@@ -136,4 +170,7 @@ object XrealUltraCamera {
         raw[ID_AT] = cameraId.toByte()
         return raw
     }
+
+    /** For tests: [raw] with every byte pair swapped, as a camera sending the other order would. */
+    fun swapPairs(raw: ByteArray): ByteArray = ByteArray(raw.size) { raw[it xor 1] }
 }

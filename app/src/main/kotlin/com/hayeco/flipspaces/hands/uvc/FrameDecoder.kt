@@ -156,7 +156,7 @@ private class UltraDecoder : FrameDecoder {
 
     override fun decode(frame: UvcVideoFrame): Bitmap? {
         if (XrealUltraCamera.cameraOf(frame.data, frame.size) != XrealUltraCamera.CAMERA_0) return null
-        if (!XrealUltraCamera.descramble(frame.data, frame.size, grey, camera0 = true)) return null
+        if (!XrealUltraCamera.descramble(frame.data, frame.size, grey, camera0 = true, swapped = XrealUltraCamera.pairSwapped(frame.data, frame.size))) return null
         for (i in grey.indices) {
             val v = grey[i].toInt() and 0xFF
             pixels[i] = (0xFF shl 24) or (v shl 16) or (v shl 8) or v
