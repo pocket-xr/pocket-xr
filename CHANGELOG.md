@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.11: XREAL Air 2 Ultra camera, third try
+
+- **Air 2 Ultra hand tracking:** Sammy Santiago's 1.6.10 log showed what his Ultra's camera really sends: about 60
+  frames a second, but with a different layout from the notes the reader was built on. The camera's number comes
+  as 0 or 1 one byte later than the notes say, not 0x20 or 0x21, so every frame was set aside. Pocket XR now reads
+  that layout, and works out the picture's byte order from the first frames: the right order gives a smooth picture,
+  the wrong one zigzags. If it still doesn't track, Send logs now includes the camera's first two frames as text (a
+  grey, scrambled picture of what the glasses saw, only with an Ultra and only after hand tracking ran), so the
+  layout can be worked out exactly. Untested on an Ultra.
+
 ## 1.6.10: XREAL Air 2 Ultra camera, second try
 
 - **Air 2 Ultra hand tracking:** with 1.6.9, Sammy Santiago's Ultra streamed whole frames from its grey cameras (over

@@ -66,16 +66,50 @@ object XrealUltraCamera {
         val direct = frame[ID_AT].toInt() and 0xFF
         if (direct == CAMERA_0 || direct == CAMERA_1) return direct
         val swapped = frame[ID_AT xor 1].toInt() and 0xFF
-        return if (swapped == CAMERA_0 || swapped == CAMERA_1) swapped else direct
+        if (swapped == CAMERA_0 || swapped == CAMERA_1) return swapped
+        // 1.6.11: Sammy's Ultra (1.6.10 log) sends the camera as 0 or 1 at the next byte, with its frame counter at
+        // byte 18 (the notes: 19) and the picture size (640, 480, 640, little endian) at bytes 51 to 56.
+        if (newTelemetry(frame, size) && (swapped == 0 || swapped == 1)) return CAMERA_0 + swapped
+        return direct
     }
 
-    /** 1.6.10: whether a frame's bytes come pair-swapped from the notes' order (see [cameraOf]). */
-    fun pairSwapped(frame: ByteArray, size: Int): Boolean {
+    /** 1.6.11: the telemetry layout Sammy's Ultra sends: 640, 480 and 640 as 16-bit little endian from byte 51. */
+    fun newTelemetry(frame: ByteArray, size: Int): Boolean {
+        if (size < PICTURE_BYTES + SIZE_AT + SIZE_MARK.size) return false
+        return SIZE_MARK.indices.all { (frame[PICTURE_BYTES + SIZE_AT + it].toInt() and 0xFF) == SIZE_MARK[it] }
+    }
+
+    private const val SIZE_AT = 51
+    private val SIZE_MARK = intArrayOf(0x80, 0x02, 0xE0, 0x01, 0x80, 0x02)
+
+    /**
+     * 1.6.10: whether a frame's bytes come pair-swapped from the notes' order (see [cameraOf]); null when the telemetry
+     * doesn't say (1.6.11: Sammy's layout), and the picture has to show it ([smoothness]).
+     */
+    fun pairSwapped(frame: ByteArray, size: Int): Boolean? {
         if (size <= ID_AT + 1) return false
         val direct = frame[ID_AT].toInt() and 0xFF
         if (direct == CAMERA_0 || direct == CAMERA_1) return false
         val swapped = frame[ID_AT xor 1].toInt() and 0xFF
-        return swapped == CAMERA_0 || swapped == CAMERA_1
+        if (swapped == CAMERA_0 || swapped == CAMERA_1) return true
+        return null
+    }
+
+    /**
+     * 1.6.11: how much neighbouring pixels differ down the picture's columns (a sample of them). The camera's readout
+     * lines are the picture's columns, so a picture read in the wrong byte order zigzags from one pixel to the next
+     * down each column and scores far higher than the right one.
+     */
+    fun smoothness(picture: ByteArray): Long {
+        var sum = 0L
+        var x = 0
+        while (x < OUT_WIDTH) {
+            for (y in 0 until OUT_HEIGHT - 1) {
+                sum += kotlin.math.abs((picture[y * OUT_WIDTH + x].toInt() and 0xFF) - (picture[(y + 1) * OUT_WIDTH + x].toInt() and 0xFF))
+            }
+            x += 8
+        }
+        return sum
     }
 
     /** 1.6.10: the telemetry row's first [n] bytes in hex, for the logs. */
@@ -143,7 +177,7 @@ object XrealUltraCamera {
         size: Int,
         out: ByteArray,
         camera0: Boolean = cameraOf(raw, size) != CAMERA_1,
-        swapped: Boolean = pairSwapped(raw, size),
+        swapped: Boolean = pairSwapped(raw, size) ?: false,
     ): Boolean {
         if (size < PICTURE_BYTES || out.size < PICTURE_BYTES) return false
         // Blocks start on even bytes, so a pair swap stays inside each block and a block's first 128 bytes add up the same.

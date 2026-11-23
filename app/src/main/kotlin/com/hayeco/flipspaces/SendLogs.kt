@@ -93,6 +93,10 @@ object SendLogs {
         val extras = buildList {
             runCatching { GlassesReportFile.build(context).text() }.onSuccess { add("glasses-report.txt" to it) }
                 .onFailure { add("glasses-report.txt" to "not made: ${it.javaClass.simpleName}: ${it.message}") }
+            // 1.6.11: the XREAL Air 2 Ultra's first two raw camera frames, when hand tracking ran with one lately.
+            com.hayeco.flipspaces.hands.uvc.UltraFrameDump.recent(context, MOTION_MAX_AGE_MS).forEach { f ->
+                runCatching { f.readText() }.onSuccess { add("ultra-camera/${f.name}" to it) }
+            }
             HidMotionRecorder.newest(context)?.takeIf { System.currentTimeMillis() - it.lastModified() < MOTION_MAX_AGE_MS }?.let { f ->
                 runCatching { f.readText() }.onSuccess { add("motion/${f.name}" to it) }
             }
