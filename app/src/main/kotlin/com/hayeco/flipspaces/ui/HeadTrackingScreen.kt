@@ -109,6 +109,9 @@ fun HeadTrackingScreen(
     /** 1.6.12: taps on the glasses: two recentre, three open or close the launcher. */
     taps: Boolean = false,
     onTaps: (Boolean) -> Unit = {},
+    /** 1.6.17: Tap sensitivity, percent. */
+    tapSensitivity: Int = 100,
+    onTapSensitivity: (Int) -> Unit = {},
 ) {
     Scaffold { padding ->
         LazyColumn(
@@ -142,6 +145,16 @@ fun HeadTrackingScreen(
                         }
                         FilterChip(selected = taps, onClick = { onTaps(!taps) }, label = { Text(stringResource(R.string.head_taps)) })
                         Text(stringResource(R.string.head_taps_help), style = MaterialTheme.typography.bodySmall)
+                        if (taps) {
+                            Text(stringResource(R.string.head_tap_sensitivity, tapSensitivity), style = MaterialTheme.typography.bodyMedium)
+                            Slider(
+                                value = tapSensitivity.toFloat(),
+                                onValueChange = { onTapSensitivity((it / 25f).toInt() * 25) },
+                                valueRange = 25f..300f,
+                                steps = 10,
+                            )
+                            Text(stringResource(R.string.head_tap_sensitivity_help), style = MaterialTheme.typography.bodySmall)
+                        }
                         // 1.1.10 (a tester could copy only the start of one line): everything on this screen, in full.
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(onClick = onCopyAll) { Text(stringResource(R.string.head_copy_all)) }

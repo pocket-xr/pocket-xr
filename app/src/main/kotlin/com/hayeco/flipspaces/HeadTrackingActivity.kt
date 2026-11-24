@@ -163,6 +163,13 @@ class HeadTrackingActivity : ComponentActivity() {
                         settingsVersion++
                     },
                     taps = store.glassesTaps.also { settingsVersion },
+                    tapSensitivity = store.tapSensitivity.also { settingsVersion },
+                    onTapSensitivity = { p ->
+                        if (p != store.tapSensitivity) {
+                            HeadTracker.setTapSensitivity(this, p)
+                            settingsVersion++
+                        }
+                    },
                     onTaps = { on ->
                         HeadTracker.setGlassesTaps(this, on)
                         settingsVersion++

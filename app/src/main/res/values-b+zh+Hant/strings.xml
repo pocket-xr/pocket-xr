@@ -1296,4 +1296,6 @@
     <string name="head_taps">輕點眼鏡</string>
     <string name="head_taps_help">輕點鏡框兩次重新置中，三次開啟或關閉啟動器。尚未在眼鏡上測試。</string>
     <string name="protected_full_screen">%1$s 會在眼鏡中全螢幕播放，因為它保護其影片。關閉它即可回到你的視窗。</string>
+    <string name="head_tap_sensitivity">輕點靈敏度 %1$d %%</string>
+    <string name="head_tap_sensitivity_help">越高越能辨識輕點，越低只辨識用力的輕點。靈敏度高時，按眼鏡按鈕也可能被當作輕點。保持頭部不動，每秒輕點約兩次。</string>
 </resources>

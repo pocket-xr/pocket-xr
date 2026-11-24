@@ -1306,4 +1306,6 @@
     <string name="head_taps">Tippen auf die Brille</string>
     <string name="head_taps_help">Zweimal auf den Brillenrahmen tippen zentriert neu, dreimal öffnet oder schließt den Launcher. Noch nicht mit Brillen getestet.</string>
     <string name="protected_full_screen">%1$s läuft im Vollbild in deiner Brille, weil es sein Video schützt. Schließe es, um zu deinen Fenstern zurückzukehren.</string>
+    <string name="head_tap_sensitivity">Tippempfindlichkeit %1$d %%</string>
+    <string name="head_tap_sensitivity_help">Höher zählt sanftere Tipper, niedriger nur feste. Bei hoher Empfindlichkeit können Tastendrücke an der Brille als Tippen zählen. Tippe etwa zweimal pro Sekunde mit ruhigem Kopf.</string>
 </resources>

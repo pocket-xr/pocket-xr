@@ -529,7 +529,15 @@ object HeadTracker {
      */
     /** 1.6.12: taps on the glasses ([GlassesTaps]), read on the head reader's thread; set from [SpaceStore.glassesTaps]. */
     @Volatile var glassesTaps = false
-    private val taps = com.hayeco.flipspaces.core.spatial.GlassesTaps()
+    // 1.6.17: every jolt logged, with why it did or didn't count.
+    private val taps = com.hayeco.flipspaces.core.spatial.GlassesTaps { Log.i(TAG, it) }
+
+    /** 1.6.17: Tap sensitivity, percent (25 to 300); 100 is the Deck's tuned values. */
+    fun setTapSensitivity(context: Context, percent: Int) {
+        SpaceStore(context).tapSensitivity = percent
+        taps.sensitivity = percent
+        Log.i(TAG, "tap sensitivity ${taps.sensitivity} %")
+    }
 
     fun setGlassesTaps(context: Context, on: Boolean) {
         SpaceStore(context).glassesTaps = on
@@ -698,6 +706,7 @@ object HeadTracker {
             // glasses have no USB network. With the experimental reader on, their HID is read; otherwise the status says
             // plainly that they are not supported yet, and nothing is opened on them.
             glassesTaps = SpaceStore(context).glassesTaps
+            taps.sensitivity = SpaceStore(context).tapSensitivity
             val viture = VitureImuLink.find(context)
             val vitureOn = SpaceStore(context).vitureHeadTracking
             synchronized(vitureReconnect) { vitureReconnect.setEnabled(vitureOn) }
