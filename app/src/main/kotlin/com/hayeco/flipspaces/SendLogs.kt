@@ -122,8 +122,17 @@ object SendLogs {
         try {
             context.startActivity(toEmail)
         } catch (e: ActivityNotFoundException) {
+            // 1.6.19 (Crr66: "I get a popup with a zip that I can share. But what mail address? So I canceled it"): with
+            // no email app the share sheet shows no address, so it is in its title, copied, and said in a note.
+            val sendTo = context.getString(R.string.home_logs_send_to, LogBundle.EMAIL)
+            runCatching {
+                val clip = context.getSystemService(android.content.ClipboardManager::class.java)
+                clip?.setPrimaryClip(ClipData.newPlainText("email", LogBundle.EMAIL))
+            }
+            Toast.makeText(context, sendTo, Toast.LENGTH_LONG).show()
+            Log.i(TAG, "no email app took the logs: the share sheet opens, titled with Mike's address (copied)")
             try {
-                context.startActivity(Intent.createChooser(send, LogBundle.BUTTON))
+                context.startActivity(Intent.createChooser(send, sendTo))
             } catch (e2: ActivityNotFoundException) {
                 Toast.makeText(context, context.getString(R.string.home_logs_no_email_app, file.name), Toast.LENGTH_LONG).show()
             }

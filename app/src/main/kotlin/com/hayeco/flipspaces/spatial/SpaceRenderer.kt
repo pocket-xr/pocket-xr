@@ -3882,7 +3882,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 return@runOnUiThread
             }
             activity.handPointerToDexWindow(app.packageName, app.label, pauseSpace = true)
-            if (store.firstProtectedNote(app.packageName)) {
+            // 1.6.19 (Crr66: Netflix full screen showed but could not be clicked, with no cursor; the add-on was not
+            // installed): only the add-on's pointer reaches a full screen app, so without it each time says so.
+            if (!com.hayeco.flipspaces.pointer.PointerHub.connected.value) {
+                Log.i(PANEL_TAG, "${app.label} full screen: the pointer add-on is not on, so it cannot be clicked from Pocket XR")
+                android.widget.Toast.makeText(activity.applicationContext, activity.getString(R.string.protected_full_screen_no_addon, app.label), android.widget.Toast.LENGTH_LONG).show()
+            } else if (store.firstProtectedNote(app.packageName)) {
                 android.widget.Toast.makeText(activity.applicationContext, activity.getString(R.string.protected_full_screen, app.label), android.widget.Toast.LENGTH_LONG).show()
             }
         }

@@ -1308,4 +1308,6 @@
     <string name="protected_full_screen">%1$s läuft im Vollbild in deiner Brille, weil es sein Video schützt. Schließe es, um zu deinen Fenstern zurückzukehren.</string>
     <string name="head_tap_sensitivity">Tippempfindlichkeit %1$d %%</string>
     <string name="head_tap_sensitivity_help">Höher zählt sanftere Tipper, niedriger nur feste. Bei hoher Empfindlichkeit können Tastendrücke an der Brille als Tippen zählen. Tippe etwa zweimal pro Sekunde mit ruhigem Kopf.</string>
+    <string name="home_logs_send_to">Sende es an %1$s (die Adresse ist kopiert)</string>
+    <string name="protected_full_screen_no_addon">%1$s läuft im Vollbild. Um darin zu klicken, installiere das Pocket XR Add-on und schalte seinen Zeiger ein, oder nutze das DeX-Touchpad auf deinem Handy.</string>
 </resources>

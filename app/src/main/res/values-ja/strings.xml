@@ -1298,4 +1298,6 @@
     <string name="protected_full_screen">%1$s は動画を保護しているため、グラスに全画面で表示されます。閉じるとウィンドウに戻ります。</string>
     <string name="head_tap_sensitivity">タップ感度 %1$d %%</string>
     <string name="head_tap_sensitivity_help">高いほど軽いタップも数え、低いほど強いタップだけを数えます。感度が高いとグラスのボタンを押してもタップになることがあります。頭を動かさず1秒に2回ほどタップしてください。</string>
+    <string name="home_logs_send_to">%1$s に送ってください（アドレスはコピー済み）</string>
+    <string name="protected_full_screen_no_addon">%1$s は全画面で表示されます。操作するには Pocket XR アドオンを入れてポインターをオンにするか、スマホで DeX のタッチパッドを使ってください。</string>
 </resources>

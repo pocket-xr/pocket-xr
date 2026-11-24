@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.19: Send logs says where to send them; full screen apps say they need the add-on
+
+- **Send logs with no email app:** Android's share sheet opened with the zip but no address, so the logs could not
+  reach Mike. Its title now says to send it to connect@mikehaye.com, the address is copied, and a note says so.
+- **Netflix and other protected apps full screen without the add-on:** they could not be clicked and showed no
+  pointer, as only the Pocket XR add-on's pointer reaches a full screen app. Each time one opens without it, a note
+  now says to install the add-on and turn on its pointer, or to use DeX's touchpad on the phone.
+
+Thanks to Crr66; not yet tried on a phone.
+
 ## 1.6.18: Pocket XR offered for first generation VITURE glasses
 
 - **Plugging in a VITURE Pro, Luma or Luma Pro:** Android's "which app" prompt now offers Pocket XR for these glasses,

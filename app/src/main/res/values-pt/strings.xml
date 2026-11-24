@@ -1318,4 +1318,6 @@
     <string name="protected_full_screen">%1$s reproduz em ecrã inteiro nos óculos porque protege o vídeo. Fecha-o para voltar às tuas janelas.</string>
     <string name="head_tap_sensitivity">Sensibilidade dos toques %1$d %%</string>
     <string name="head_tap_sensitivity_help">Mais alto conta toques mais suaves, mais baixo só os firmes. Com sensibilidade alta, premir os botões dos óculos pode contar como toque. Toca cerca de duas vezes por segundo com a cabeça parada.</string>
+    <string name="home_logs_send_to">Envia para %1$s (o endereço está copiado)</string>
+    <string name="protected_full_screen_no_addon">%1$s reproduz em ecrã inteiro. Para clicar, instala o suplemento Pocket XR e liga o ponteiro, ou usa o touchpad do DeX no telemóvel.</string>
 </resources>
