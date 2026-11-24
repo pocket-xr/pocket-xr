@@ -39,8 +39,9 @@ object PointerHub {
     val problem: StateFlow<String?> = _problem.asStateFlow()
 
     fun submit(signal: PointerSignal, source: HandProviderKind) {
-        // While the Space is on the glasses, the pointer is its 3D ray, not the DeX cursor.
-        if (SpaceSession.active) {
+        // While the Space is on the glasses, the pointer is its 3D ray, not the DeX cursor (1.6.15: unless a DeX window
+        // for a protected app is open over it, which only the DeX cursor can click).
+        if (SpaceSession.routesToSpace) {
             SpaceSession.submit(signal)
             return
         }

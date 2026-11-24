@@ -392,6 +392,55 @@ class SpaceActivity : Activity() {
         reportDisplaySize()
     }
 
+    /**
+     * 1.6.15 (Crr66: Netflix's DeX window over the Space could not be clicked): while the Space is up its pointer only
+     * reaches its own windows, so a DeX window opened over it for a protected app gets the pointer instead, through the
+     * add-on's cursor, until that app has no task left on this display (looked at every [DEX_WINDOW_CHECK_MS]). Without
+     * the add-on there is no cursor to hand it to, and the Space keeps the pointer. UI thread.
+     */
+    fun handPointerToDexWindow(packageName: String, label: String) {
+        if (!com.hayeco.flipspaces.pointer.PointerHub.connected.value) {
+            Log.i(MODE_TAG, "the DeX window for $label keeps the Space's pointer: the pointer add-on is not on, so there is no cursor to hand it to")
+            return
+        }
+        SpaceSession.dexWindowOver = packageName
+        Log.i(MODE_TAG, "the DeX window for $label over the Space on display $openedOn has the pointer until it closes")
+        main.removeCallbacks(dexWindowCheck)
+        dexWindowSeen = false
+        main.postDelayed(dexWindowCheck, DEX_WINDOW_CHECK_MS)
+    }
+
+    private var dexWindowSeen = false
+
+    private val dexWindowCheck = object : Runnable {
+        override fun run() {
+            val pkg = SpaceSession.dexWindowOver ?: return
+            PanelHost.rootTasks(openedOn) { tasks ->
+                main.post {
+                    if (SpaceSession.dexWindowOver != pkg) return@post
+                    val open = tasks?.any { it.packageName == pkg }
+                    if (open == true) dexWindowSeen = true
+                    // Gone after it was seen, or never seen within the first checks: the Space takes the pointer back.
+                    if (open == false && (dexWindowSeen || ++dexWindowMisses >= 3)) {
+                        dexPointerBack("its window on display $openedOn closed")
+                    } else {
+                        main.postDelayed(this, DEX_WINDOW_CHECK_MS)
+                    }
+                }
+            }
+        }
+    }
+
+    private var dexWindowMisses = 0
+
+    private fun dexPointerBack(why: String) {
+        main.removeCallbacks(dexWindowCheck)
+        dexWindowMisses = 0
+        val pkg = SpaceSession.dexWindowOver ?: return
+        SpaceSession.dexWindowOver = null
+        Log.i(MODE_TAG, "the Space has the pointer back from the DeX window for $pkg ($why)")
+    }
+
     /** The window an OpenXR game's sub-window attaches to: wherever the Space is drawn now. */
     fun gameHostWindow(): android.view.Window? = presentation?.window ?: window
 
@@ -517,6 +566,7 @@ class SpaceActivity : Activity() {
         window.setWindowAnimations(0)
         window.attributes = window.attributes.apply { alpha = 0f }
         // Android stops the Space only after it is gone; the trackpad's line follows at once.
+        dexPointerBack("the Space closed")
         SpaceSession.active = false
         finish()
         if (Build.VERSION.SDK_INT >= 34) {
@@ -672,6 +722,7 @@ class SpaceActivity : Activity() {
         // Nothing of the Space covers the glasses while it is not in front.
         presentation?.let { runCatching { it.hide() } }
         runCatching { getSystemService(PowerManager::class.java)?.removeThermalStatusListener(thermal) }
+        dexPointerBack("the Space stopped")
         SpaceSession.active = false
         SpaceSession.aim = null
         // 0.5.21: Pocket XR in the background: scene mode 0 back to the glasses if it was changed.
@@ -1430,6 +1481,9 @@ class SpaceActivity : Activity() {
 
         /** How long after the hold answers the window's mode is read (the shell's transition runs first). */
         private const val SURFACE_SETTLE_MS = 800L
+
+        /** 1.6.15: how often a DeX window holding the pointer is looked for. */
+        private const val DEX_WINDOW_CHECK_MS = 2_000L
 
         /** 1.6.8: how long the Space's surface stays short before that is taken as a caption in its window. */
         private const val CAPTION_SETTLE_MS = 1_500L

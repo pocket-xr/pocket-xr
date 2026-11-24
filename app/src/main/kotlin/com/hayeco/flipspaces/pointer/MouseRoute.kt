@@ -50,7 +50,7 @@ object MouseRoute {
 
     /** Takes [event] into the Space's pointer when it is a mouse's and the Space is up; true when taken. */
     fun onMotion(event: MotionEvent): Boolean {
-        if (!SpaceSession.active || !isMouse(event)) return false
+        if (!SpaceSession.routesToSpace || !isMouse(event)) return false
         val captured = event.isFromSource(InputDevice.SOURCE_MOUSE_RELATIVE)
         // Captured, x and y are the motion; otherwise Android's relative axes carry it beside the arrow's place.
         val dx = if (captured) event.x else event.getAxisValue(MotionEvent.AXIS_RELATIVE_X)
@@ -87,7 +87,7 @@ object MouseRoute {
     }
 
     private fun submit(signal: PointerSignal) {
-        if (SpaceSession.active) SpaceSession.submit(signal)
+        if (SpaceSession.routesToSpace) SpaceSession.submit(signal)
     }
 
     /** A mouse has reached the Space since it last went away ([leads]). */
@@ -139,7 +139,7 @@ object MouseRoute {
 
     /** Captures the pointer for [view] when the Space is up, a mouse is connected and [view]'s window has focus. */
     fun capture(view: View) {
-        if (!SpaceSession.active || !view.hasWindowFocus() || view.hasPointerCapture() || !mouseConnected()) return
+        if (!SpaceSession.routesToSpace || !view.hasWindowFocus() || view.hasPointerCapture() || !mouseConnected()) return
         view.requestFocus()
         view.requestPointerCapture()
         Log.i(TAG, "pointer captured for the Space on display ${view.display?.displayId}: Android's own arrow is hidden while the mouse moves Pocket XR's pointer")

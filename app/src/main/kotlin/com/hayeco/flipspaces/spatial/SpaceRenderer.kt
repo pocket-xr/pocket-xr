@@ -3871,7 +3871,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         activity.runOnUiThread {
             // 1.6.13: a DeX window would open under a Space drawn in a Presentation (Crr66's Netflix on Android 13).
             (activity as? SpaceActivity)?.leavePresentation("a DeX window for ${app.label}")
-            AppLauncher.openDexWindow(activity, app, display)?.let { problem = str(R.string.space_problem_dex, app.label, it.message.toString()) }
+            val failed = AppLauncher.openDexWindow(activity, app, display)
+            failed?.let { problem = str(R.string.space_problem_dex, app.label, it.message.toString()) }
+            // 1.6.15: the window can only be clicked with the DeX cursor; it has the pointer until it closes.
+            if (failed == null) (activity as? SpaceActivity)?.handPointerToDexWindow(app.packageName, app.label)
         }
         removePanel(p.panel.id)
     }

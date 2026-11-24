@@ -113,11 +113,23 @@ class PointerSession(private val context: Context) {
         }
     }
 
+    /**
+     * 1.6.15: a DeX window over the Space was handed the pointer, or handed it back: the add-on's cursor shows while it
+     * has it, and hides again after.
+     */
+    private val dexListener: (String?) -> Unit = { pkg ->
+        main.post {
+            AddonLink.call(Unit) { it.spaceUp(SpaceSession.routesToSpace) }
+            Log.i(TAG, if (pkg != null) "Cursor window shown: the DeX window for $pkg over the Space has the pointer" else "Cursor window hidden again: the Space has the pointer back")
+        }
+    }
+
     /** The add-on's pointer service came on. Main thread. */
     fun start() {
         context.getSystemService(DisplayManager::class.java).registerDisplayListener(displayListener, main)
         SpaceSession.activeListeners += spaceListener
-        AddonLink.call(Unit) { it.spaceUp(SpaceSession.active) }
+        SpaceSession.dexListeners += dexListener
+        AddonLink.call(Unit) { it.spaceUp(SpaceSession.routesToSpace) }
         refreshDisplay()
         Thread { catalog = AppCatalog.prepare(installedApps.load(), context.packageName) }.start()
     }
@@ -125,6 +137,7 @@ class PointerSession(private val context: Context) {
     /** It went off: nothing reaches the glasses any more. Main thread. */
     fun stop() {
         SpaceSession.activeListeners -= spaceListener
+        SpaceSession.dexListeners -= dexListener
         runCatching { context.getSystemService(DisplayManager::class.java).unregisterDisplayListener(displayListener) }
         main.removeCallbacksAndMessages(null)
         glasses = null
