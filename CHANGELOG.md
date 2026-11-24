@@ -2,6 +2,12 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.18: Pocket XR offered for first generation VITURE glasses
+
+- **Plugging in a VITURE Pro, Luma or Luma Pro:** Android's "which app" prompt now offers Pocket XR for these glasses,
+  as it already did for XREAL glasses and the VITURE Beast. Before, it listed other apps (a camera app, for one tester)
+  but not Pocket XR. Thanks to Crr66; not yet tried with those glasses.
+
 ## 1.6.17: softer taps and a tap sensitivity slider
 
 - **Taps on the glasses:** 1.6.12's first version needed firm taps. Taps now count by how suddenly they start, as in
