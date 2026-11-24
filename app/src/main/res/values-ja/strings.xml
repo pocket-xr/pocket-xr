@@ -1295,4 +1295,5 @@
     <string name="tour_done_picture_open">図: あなたのまわりのウィンドウ。</string>
     <string name="head_taps">グラスをタップ</string>
     <string name="head_taps_help">フレームを2回タップで正面に戻し、3回でランチャーを開閉します。まだグラスで試していません。</string>
+    <string name="protected_full_screen">%1$s は動画を保護しているため、グラスに全画面で表示されます。閉じるとウィンドウに戻ります。</string>
 </resources>

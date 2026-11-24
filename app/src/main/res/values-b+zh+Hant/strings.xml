@@ -1295,4 +1295,5 @@
     <string name="tour_done_picture_open">圖片：環繞在你周圍的視窗。</string>
     <string name="head_taps">輕點眼鏡</string>
     <string name="head_taps_help">輕點鏡框兩次重新置中，三次開啟或關閉啟動器。尚未在眼鏡上測試。</string>
+    <string name="protected_full_screen">%1$s 會在眼鏡中全螢幕播放，因為它保護其影片。關閉它即可回到你的視窗。</string>
 </resources>

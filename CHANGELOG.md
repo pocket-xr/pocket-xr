@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.16: protected apps play full screen
+
+- **Netflix and other apps that protect their video play full screen in the glasses:** Android never lets another app
+  capture protected video, so in a Pocket XR window these apps played black, and the offer to reopen them in a DeX
+  window started them again and lost your place. Now Netflix, Disney+, Prime Video, Max and Hulu open straight away
+  full screen on the glasses' own display, as does any other app once Pocket XR has seen it protect its screen. The
+  Space steps aside meanwhile: it stops drawing and the app has the pointer. Close the app and your windows come back
+  as they were. The first time, the phone says why. Video in these apps can't follow head tracking, as Android keeps
+  it out of the Space. Thanks to Crr66; not yet tried on glasses.
+
 ## 1.6.15: DeX windows over the Space can be used
 
 - **Netflix and other protected apps in DeX:** Pocket XR opens an app that protects its picture (Netflix) in a DeX

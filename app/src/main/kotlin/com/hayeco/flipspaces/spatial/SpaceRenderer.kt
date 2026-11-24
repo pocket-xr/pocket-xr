@@ -3862,11 +3862,44 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         loggedThermal = status
     }
 
+    /** 1.6.16: apps that protect their video ([com.hayeco.flipspaces.core.spatial.ProtectedApps]). */
+    private val protectedApps = com.hayeco.flipspaces.core.spatial.ProtectedApps(store.protectedApps)
+
+    /**
+     * 1.6.16 (Crr66): [app] full screen on the glasses' own display, the only place protected video shows. The Space
+     * steps aside: it leaves its Presentation, stops drawing, and hands the pointer to the app until it closes
+     * ([SpaceActivity.handPointerToDexWindow]). A note on the phone the first time says why. UI work on the UI thread.
+     */
+    private fun openProtectedFullScreen(app: AppEntry, why: String) {
+        val activity = context as? SpaceActivity ?: return
+        val display = spaceDisplayId
+        Log.i(PANEL_TAG, "${app.label}: full screen on display $display, as it protects its video ($why)")
+        activity.runOnUiThread {
+            activity.leavePresentation("${app.label} full screen")
+            val failed = AppLauncher.openAppFullscreen(activity, app, display)
+            if (failed != null) {
+                problem = str(R.string.space_problem_dex, app.label, failed.message.toString())
+                return@runOnUiThread
+            }
+            activity.handPointerToDexWindow(app.packageName, app.label, pauseSpace = true)
+            if (store.firstProtectedNote(app.packageName)) {
+                android.widget.Toast.makeText(activity.applicationContext, activity.getString(R.string.protected_full_screen, app.label), android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     /** Opens a protected panel's app as a DeX window on the glasses and drops the panel. */
     private fun openInDex(p: PanelGl) {
         val activity = context as? android.app.Activity ?: return
         val app = AppEntry(p.panel.label, p.panel.packageName, p.panel.activityName)
         val display = spaceDisplayId
+        // 1.6.16: remembered, so next time it opens full screen at once; and full screen now as well.
+        if (protectedApps.remember(app.packageName)) store.protectedApps = protectedApps.encode()
+        if (activity is SpaceActivity) {
+            removePanel(p.panel.id)
+            openProtectedFullScreen(app, "its window turned black (protected content)")
+            return
+        }
         Log.i(PANEL_TAG, "panel ${p.panel.id} ${app.label}: open as a DeX window on display $display (protected content)")
         activity.runOnUiThread {
             // 1.6.13: a DeX window would open under a Space drawn in a Presentation (Crr66's Netflix on Android 13).
@@ -4218,6 +4251,12 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * around the heading (the phone list and the glasses dock, as before 0.4.0).
      */
     private fun addApp(app: AppEntry, inFrontOfGaze: Boolean, at: Pair<Float, Float>? = null) {
+        // 1.6.16: an app that protects its video opens full screen on the glasses, not in a window it would turn black.
+        if (protectedApps.isProtected(app.packageName) && com.hayeco.flipspaces.pcscreen.PcScreenSlots.slotOf(app.activityName) < 0) {
+            launcher.clearSearch()
+            openProtectedFullScreen(app, "opened from the launcher")
+            return
+        }
         // 0.5.25 (Mike: the Android XR launcher): from the launcher, where the launcher was ([at]), fading in.
         if (at != null) windowOpenMs[-1] = SystemClock.uptimeMillis()
         // 0.5.21: an app that already has a window gets that one back, in

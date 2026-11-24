@@ -402,6 +402,19 @@ class SpaceStore(context: Context) {
         get() = prefs.getString(KEY_WIDE_VIEW, null)
         set(value) = prefs.edit().putString(KEY_WIDE_VIEW, value).apply()
 
+    /** 1.6.16: true the first time for [packageName], so the "plays full screen" note shows once per app. */
+    fun firstProtectedNote(packageName: String): Boolean {
+        val now = prefs.getStringSet(KEY_PROTECTED_NOTED, emptySet()).orEmpty()
+        if (packageName in now) return false
+        prefs.edit().putStringSet(KEY_PROTECTED_NOTED, now + packageName).apply()
+        return true
+    }
+
+    /** 1.6.16: apps seen protecting their screen ([com.hayeco.flipspaces.core.spatial.ProtectedApps]), one a line. */
+    var protectedApps: String?
+        get() = prefs.getString(KEY_PROTECTED_APPS, null)
+        set(value) = prefs.edit().putString(KEY_PROTECTED_APPS, value).apply()
+
     /**
      * 0.5.22: the packages whose own OVERRIDE_ANY_ORIENTATION_TO_USER state Pocket XR must still put back,
      * as [com.hayeco.flipspaces.core.spatial.WideViewOverride] text, so a crash or reboot leaves nothing behind.
@@ -813,6 +826,8 @@ class SpaceStore(context: Context) {
         private const val KEY_LATE_DRAW = "late_draw"
         private const val KEY_GLASSES_WARP = "glasses_warp_beta"
         private const val KEY_WIDE_VIEW = "broad_view_apps"
+        private const val KEY_PROTECTED_APPS = "protected_apps_1616"
+        private const val KEY_PROTECTED_NOTED = "protected_noted_1616"
         private const val KEY_WIDE_VIEW_OVERRIDE = "broad_view_override_pending"
         private const val KEY_APP_DENSITY = "app_density"
         private const val KEY_APP_TEXT_SIZE = "app_text_size_123"
