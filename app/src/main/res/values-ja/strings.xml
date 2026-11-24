@@ -1296,4 +1296,6 @@
     <string name="head_taps">グラスをタップ</string>
     <string name="head_taps_help">フレームを2回タップで正面に戻し、3回でランチャーを開閉します。まだグラスで試していません。</string>
     <string name="protected_full_screen">%1$s は動画を保護しているため、グラスに全画面で表示されます。閉じるとウィンドウに戻ります。</string>
+    <string name="head_tap_sensitivity">タップ感度 %1$d %%</string>
+    <string name="head_tap_sensitivity_help">高いほど軽いタップも数え、低いほど強いタップだけを数えます。感度が高いとグラスのボタンを押してもタップになることがあります。頭を動かさず1秒に2回ほどタップしてください。</string>
 </resources>

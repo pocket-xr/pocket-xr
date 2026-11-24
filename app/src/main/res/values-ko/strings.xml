@@ -1296,4 +1296,6 @@
     <string name="head_taps">안경 탭</string>
     <string name="head_taps_help">안경테를 두 번 탭하면 중앙으로, 세 번 탭하면 런처를 열거나 닫습니다. 아직 안경으로 테스트하지 않았습니다.</string>
     <string name="protected_full_screen">%1$s 앱은 동영상을 보호하므로 안경에 전체 화면으로 재생됩니다. 닫으면 창으로 돌아갑니다.</string>
+    <string name="head_tap_sensitivity">탭 감도 %1$d %%</string>
+    <string name="head_tap_sensitivity_help">높을수록 약한 탭도, 낮을수록 강한 탭만 인식합니다. 감도가 높으면 안경 버튼을 눌러도 탭으로 인식될 수 있습니다. 머리를 움직이지 말고 1초에 두 번 정도 탭하세요.</string>
 </resources>

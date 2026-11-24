@@ -1316,4 +1316,6 @@
     <string name="head_taps">Toques nos óculos</string>
     <string name="head_taps_help">Toque na armação duas vezes para recentrar e três vezes para abrir ou fechar o iniciador. Ainda não testado com óculos.</string>
     <string name="protected_full_screen">%1$s reproduz em ecrã inteiro nos óculos porque protege o vídeo. Fecha-o para voltar às tuas janelas.</string>
+    <string name="head_tap_sensitivity">Sensibilidade dos toques %1$d %%</string>
+    <string name="head_tap_sensitivity_help">Mais alto conta toques mais suaves, mais baixo só os firmes. Com sensibilidade alta, premir os botões dos óculos pode contar como toque. Toca cerca de duas vezes por segundo com a cabeça parada.</string>
 </resources>

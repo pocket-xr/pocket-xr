@@ -1316,4 +1316,6 @@
     <string name="head_taps">Tapes sur les lunettes</string>
     <string name="head_taps_help">Tapez deux fois sur la monture pour recentrer, trois fois pour ouvrir ou fermer le lanceur. Pas encore essayé avec des lunettes.</string>
     <string name="protected_full_screen">%1$s s\'affiche en plein écran dans tes lunettes car il protège sa vidéo. Ferme-le pour revenir à tes fenêtres.</string>
+    <string name="head_tap_sensitivity">Sensibilité des tapes %1$d %%</string>
+    <string name="head_tap_sensitivity_help">Plus haut compte des tapes plus douces, plus bas seulement les fermes. À haute sensibilité, appuyer sur les boutons des lunettes peut compter comme une tape. Tape environ deux fois par seconde, la tête immobile.</string>
 </resources>

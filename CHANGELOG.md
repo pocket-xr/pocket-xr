@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.17: softer taps and a tap sensitivity slider
+
+- **Taps on the glasses:** 1.6.12's first version needed firm taps. Taps now count by how suddenly they start, as in
+  Pocket XR for Steam Deck 0.7.11, which Pierre Zammit tuned with recordings from his glasses: soft taps on the frame
+  count, about two a second with the head still, while head movement, walking and pushes don't. A **Tap sensitivity**
+  slider (25 to 300 %) sits under the switch on the head tracking screen; at high sensitivity pressing the glasses'
+  buttons can count too. Every jolt is in the log with why it did or didn't count. Not yet tried on glasses with
+  Android.
+
 ## 1.6.16: protected apps play full screen
 
 - **Netflix and other apps that protect their video play full screen in the glasses:** Android never lets another app

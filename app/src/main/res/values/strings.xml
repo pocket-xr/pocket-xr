@@ -1672,4 +1672,6 @@
     <string name="head_taps">Taps on the glasses</string>
     <string name="head_taps_help">Tap the glasses\' frame twice to recentre, three times to open or close the launcher. Not yet tried with glasses.</string>
     <string name="protected_full_screen">%1$s plays full screen in your glasses because it protects its video. Close it to get back to your windows.</string>
+    <string name="head_tap_sensitivity">Tap sensitivity %1$d %%</string>
+    <string name="head_tap_sensitivity_help">Higher counts softer taps; lower only firm ones. At high sensitivity, pressing the glasses\' buttons can count as a tap. Tap about twice a second with your head still.</string>
 </resources>
