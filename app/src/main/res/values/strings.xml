@@ -1674,4 +1674,6 @@
     <string name="protected_full_screen">%1$s plays full screen in your glasses because it protects its video. Close it to get back to your windows.</string>
     <string name="head_tap_sensitivity">Tap sensitivity %1$d %%</string>
     <string name="head_tap_sensitivity_help">Higher counts softer taps; lower only firm ones. At high sensitivity, pressing the glasses\' buttons can count as a tap. Tap about twice a second with your head still.</string>
+    <string name="home_logs_send_to">Send it to %1$s (the address is copied)</string>
+    <string name="protected_full_screen_no_addon">%1$s plays full screen. To click in it, install the Pocket XR add-on and turn on its pointer, or use DeX\'s touchpad on your phone.</string>
 </resources>

@@ -1298,4 +1298,6 @@
     <string name="protected_full_screen">%1$s 會在眼鏡中全螢幕播放，因為它保護其影片。關閉它即可回到你的視窗。</string>
     <string name="head_tap_sensitivity">輕點靈敏度 %1$d %%</string>
     <string name="head_tap_sensitivity_help">越高越能辨識輕點，越低只辨識用力的輕點。靈敏度高時，按眼鏡按鈕也可能被當作輕點。保持頭部不動，每秒輕點約兩次。</string>
+    <string name="home_logs_send_to">請傳送到 %1$s（地址已複製）</string>
+    <string name="protected_full_screen_no_addon">%1$s 會全螢幕播放。要點按其中內容，請安裝 Pocket XR 附加元件並開啟其指標，或在手機上使用 DeX 觸控板。</string>
 </resources>

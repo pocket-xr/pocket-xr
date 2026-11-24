@@ -1318,4 +1318,6 @@
     <string name="protected_full_screen">%1$s s\'affiche en plein écran dans tes lunettes car il protège sa vidéo. Ferme-le pour revenir à tes fenêtres.</string>
     <string name="head_tap_sensitivity">Sensibilité des tapes %1$d %%</string>
     <string name="head_tap_sensitivity_help">Plus haut compte des tapes plus douces, plus bas seulement les fermes. À haute sensibilité, appuyer sur les boutons des lunettes peut compter comme une tape. Tape environ deux fois par seconde, la tête immobile.</string>
+    <string name="home_logs_send_to">Envoie-le à %1$s (l\'adresse est copiée)</string>
+    <string name="protected_full_screen_no_addon">%1$s s\'affiche en plein écran. Pour cliquer dedans, installe le module Pocket XR et active son pointeur, ou utilise le pavé tactile DeX sur ton téléphone.</string>
 </resources>

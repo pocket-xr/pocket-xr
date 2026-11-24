@@ -1318,4 +1318,6 @@
     <string name="protected_full_screen">%1$s va a schermo intero negli occhiali perché protegge il suo video. Chiudilo per tornare alle tue finestre.</string>
     <string name="head_tap_sensitivity">Sensibilità tocchi %1$d %%</string>
     <string name="head_tap_sensitivity_help">Più alta conta tocchi più leggeri, più bassa solo quelli decisi. Ad alta sensibilità, premere i tasti degli occhiali può contare come tocco. Tocca circa due volte al secondo con la testa ferma.</string>
+    <string name="home_logs_send_to">Invialo a %1$s (l\'indirizzo è copiato)</string>
+    <string name="protected_full_screen_no_addon">%1$s va a schermo intero. Per cliccarci, installa il componente aggiuntivo di Pocket XR e attiva il suo puntatore, oppure usa il touchpad DeX sul telefono.</string>
 </resources>

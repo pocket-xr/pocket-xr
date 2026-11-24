@@ -1318,4 +1318,6 @@
     <string name="protected_full_screen">%1$s se reproduce a pantalla completa en tus gafas porque protege su vídeo. Ciérralo para volver a tus ventanas.</string>
     <string name="head_tap_sensitivity">Sensibilidad de toque %1$d %%</string>
     <string name="head_tap_sensitivity_help">Más alto cuenta toques más suaves; más bajo solo los firmes. Con sensibilidad alta, pulsar los botones de las gafas puede contar como toque. Toca unas dos veces por segundo con la cabeza quieta.</string>
+    <string name="home_logs_send_to">Envíalo a %1$s (la dirección está copiada)</string>
+    <string name="protected_full_screen_no_addon">%1$s se reproduce a pantalla completa. Para hacer clic, instala el complemento de Pocket XR y activa su puntero, o usa el panel táctil de DeX en tu teléfono.</string>
 </resources>
