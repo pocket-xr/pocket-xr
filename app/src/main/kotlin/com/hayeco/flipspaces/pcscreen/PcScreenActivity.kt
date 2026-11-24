@@ -509,6 +509,12 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
         box.addView(kit.setting(getString(R.string.pc_screen_codec), kit.segmented(listOf(auto, "H.264", "AV1"), PcScreenStore.CODECS.indexOf(store.codec)) {
             store.codec = PcScreenStore.CODECS[it]; fillPicture(box)
         }))
+        box.addView(kit.setting(getString(R.string.pc_screen_size), kit.segmented(
+            listOf(getString(R.string.pc_screen_size_window), "1920×1080", "1920×1200", "2560×1600"), PcScreenShape.SIZES.indexOf(store.screenSize),
+        ) {
+            store.screenSize = PcScreenShape.SIZES[it]; fillPicture(box)
+        }))
+        box.addView(kit.text(getString(R.string.pc_screen_size_help), com.hayeco.flipspaces.core.Look.TYPE_CAPTION, com.hayeco.flipspaces.core.Look.INK_2), fullWidth(4f))
         box.addView(kit.setting(getString(R.string.pc_screen_smoothness), kit.segmented(listOf(auto, "60 Hz", "120 Hz"), PcScreenQuality.FPS.indexOf(store.fps)) {
             store.fps = PcScreenQuality.FPS[it]; fillPicture(box)
         }))
@@ -778,8 +784,9 @@ open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Ca
                 }
                 val vd = (xml(info, "VirtualDisplayCapable") == "true" && xml(info, "VirtualDisplayDriverReady") != "false") ||
                     helperSays?.second == true
-                val (w, h) = if (vd) PcScreenShape.forWindow(windowW, windowH) else (STREAM_W to STREAM_H)
-                shapedToWindow = vd
+                // 1.6.14: Screen size, the window's shape or a fixed size, where the computer makes the screen.
+                val (w, h) = if (vd) PcScreenShape.forChoice(store.screenSize, windowW, windowH) else (STREAM_W to STREAM_H)
+                shapedToWindow = vd && store.screenSize == "window"
                 streamW = w
                 streamH = h
                 main.post { root.requestLayout() }

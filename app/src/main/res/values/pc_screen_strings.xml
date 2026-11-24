@@ -100,4 +100,7 @@
     <string name="pc_screen_stats">Stats on the screen</string>
     <string name="pc_screen_off">Off</string>
     <string name="pc_screen_on">On</string>
+    <string name="pc_screen_size">Screen size</string>
+    <string name="pc_screen_size_window">Window</string>
+    <string name="pc_screen_size_help">The size your computer makes this screen at. Window follows the window\'s shape. Needs Pocket XR on the computer, or Apollo; changes apply when the screen next connects.</string>
 </resources>

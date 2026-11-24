@@ -99,4 +99,7 @@
     <string name="pc_screen_stats">Statistiques à l\'écran</string>
     <string name="pc_screen_off">Non</string>
     <string name="pc_screen_on">Oui</string>
+    <string name="pc_screen_size">Taille de l\'écran</string>
+    <string name="pc_screen_size_window">Fenêtre</string>
+    <string name="pc_screen_size_help">La taille à laquelle ton ordinateur crée cet écran. Fenêtre suit la forme de la fenêtre. Il faut Pocket XR sur l\'ordinateur, ou Apollo ; les changements s\'appliquent à la prochaine connexion.</string>
 </resources>

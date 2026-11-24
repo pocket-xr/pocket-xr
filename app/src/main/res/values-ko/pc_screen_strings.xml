@@ -99,4 +99,7 @@
     <string name="pc_screen_stats">화면에 통계 표시</string>
     <string name="pc_screen_off">끔</string>
     <string name="pc_screen_on">켬</string>
+    <string name="pc_screen_size">화면 크기</string>
+    <string name="pc_screen_size_window">창</string>
+    <string name="pc_screen_size_help">컴퓨터가 이 화면을 만드는 크기입니다. 창은 창의 모양을 따릅니다. 컴퓨터의 Pocket XR 또는 Apollo가 필요하며, 변경은 다음 연결부터 적용됩니다.</string>
 </resources>
