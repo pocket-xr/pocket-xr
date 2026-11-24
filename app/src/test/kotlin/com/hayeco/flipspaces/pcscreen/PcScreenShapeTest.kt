@@ -33,4 +33,16 @@ class PcScreenShapeTest {
         assertFalse(PcScreenShape.reshapeNeeded(1786, 976, 1784, 976))
         assertTrue(PcScreenShape.reshapeNeeded(1200, 1600, 1784, 976))
     }
+
+    @Test
+    fun screenSizeChoices() {
+        // 1.6.14: Window follows the window; the fixed sizes are what the computer makes, whatever the window
+        assertEquals(PcScreenShape.forWindow(1784, 976), PcScreenShape.forChoice("window", 1784, 976))
+        assertEquals(1920 to 1200, PcScreenShape.forChoice("1920x1200", 1784, 976))
+        assertEquals(1920 to 1080, PcScreenShape.forChoice("1920x1080", 1000, 1000))
+        assertEquals(2560 to 1600, PcScreenShape.forChoice("2560x1600", 1784, 976))
+        // an unknown saved value falls back to the window's shape
+        assertEquals(PcScreenShape.forWindow(1784, 976), PcScreenShape.forChoice("bogus", 1784, 976))
+        assertEquals("window", PcScreenShape.SIZES.first())
+    }
 }

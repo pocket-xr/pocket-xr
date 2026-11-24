@@ -99,4 +99,7 @@
     <string name="pc_screen_stats">Estatísticas na tela</string>
     <string name="pc_screen_off">Não</string>
     <string name="pc_screen_on">Sim</string>
+    <string name="pc_screen_size">Tamanho da tela</string>
+    <string name="pc_screen_size_window">Janela</string>
+    <string name="pc_screen_size_help">O tamanho com que o computador cria esta tela. Janela segue o formato da janela. Precisa do Pocket XR no computador, ou do Apollo; as mudanças valem na próxima conexão.</string>
 </resources>

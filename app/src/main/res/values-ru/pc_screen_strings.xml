@@ -99,4 +99,7 @@
     <string name="pc_screen_stats">Статистика на экране</string>
     <string name="pc_screen_off">Выкл</string>
     <string name="pc_screen_on">Вкл</string>
+    <string name="pc_screen_size">Размер экрана</string>
+    <string name="pc_screen_size_window">Окно</string>
+    <string name="pc_screen_size_help">Размер, с которым компьютер создаёт этот экран. «Окно» повторяет форму окна. Нужен Pocket XR на компьютере или Apollo; изменения применяются при следующем подключении.</string>
 </resources>

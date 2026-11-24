@@ -45,6 +45,15 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
         get() = prefs.getString(KEY_FPS, "auto")?.takeIf { it in PcScreenQuality.FPS } ?: "auto"
         set(value) = prefs.edit().putString(KEY_FPS, value).apply()
 
+    /**
+     * 1.6.14: the size the computer makes this PC screen at ([PcScreenShape.SIZES]): the window's own shape, or a fixed
+     * size such as 1920 x 1200. Only where the computer makes a screen of its own (Pocket XR's PC side or Apollo);
+     * otherwise the stream stays 1920 x 1080.
+     */
+    var screenSize: String
+        get() = prefs.getString(KEY_SCREEN_SIZE, "window")?.takeIf { it in PcScreenShape.SIZES } ?: "window"
+        set(value) = prefs.edit().putString(KEY_SCREEN_SIZE, value).apply()
+
     /** Where the PC's sound plays: [SOUNDS] (the glasses, the PC's own speakers, or not at all for this screen). */
     var sound: String
         get() = prefs.getString(KEY_SOUND, "glasses")?.takeIf { it in SOUNDS } ?: "glasses"
@@ -130,6 +139,7 @@ class PcScreenStore(context: Context, val slot: Int = 0) {
         private const val KEY_CERT = "server_cert"
         private const val KEY_MAC = "mac"
         private const val KEY_FPS = "fps"
+        private const val KEY_SCREEN_SIZE = "screen_size"
         private const val KEY_PC_NAME = "pc_name"
         private const val KEY_QUALITY = "quality"
     }

@@ -24,6 +24,20 @@ object PcScreenShape {
         return sw to sh
     }
 
+    /**
+     * 1.6.14 (a Reddit user asked for three 1920 x 1200 screens): the Screen size choice. "window" is the window's own
+     * shape, as before; the others are fixed sizes the computer makes its screen at, shown in the window at their own
+     * shape (with bars when the window is another shape).
+     */
+    val SIZES = listOf("window", "1920x1080", "1920x1200", "2560x1600")
+
+    /** The stream's size for Screen size [choice] and a window of [w] x [h]. */
+    fun forChoice(choice: String, w: Int, h: Int): Pair<Int, Int> {
+        if (choice == "window" || choice !in SIZES) return forWindow(w, h)
+        val (cw, ch) = choice.split('x').map { it.toInt() }
+        return cw to ch
+    }
+
     /** Whether a window of [w] x [h] is far enough from the stream's shape to start the stream again at its own. */
     fun reshapeNeeded(w: Int, h: Int, streamW: Int, streamH: Int): Boolean {
         if (w <= 0 || h <= 0 || streamW <= 0 || streamH <= 0) return false

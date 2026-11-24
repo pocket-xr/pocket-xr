@@ -99,4 +99,7 @@
     <string name="pc_screen_stats">画面に統計を表示</string>
     <string name="pc_screen_off">オフ</string>
     <string name="pc_screen_on">オン</string>
+    <string name="pc_screen_size">画面サイズ</string>
+    <string name="pc_screen_size_window">ウィンドウ</string>
+    <string name="pc_screen_size_help">コンピューターがこの画面を作るサイズです。ウィンドウはウィンドウの形に合わせます。コンピューターの Pocket XR か Apollo が必要です。変更は次の接続から反映されます。</string>
 </resources>

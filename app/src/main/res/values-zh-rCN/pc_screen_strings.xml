@@ -99,4 +99,7 @@
     <string name="pc_screen_stats">在屏幕上显示统计</string>
     <string name="pc_screen_off">关</string>
     <string name="pc_screen_on">开</string>
+    <string name="pc_screen_size">屏幕尺寸</string>
+    <string name="pc_screen_size_window">窗口</string>
+    <string name="pc_screen_size_help">电脑创建此屏幕的尺寸。窗口跟随窗口的形状。需要电脑上的 Pocket XR 或 Apollo；更改在下次连接时生效。</string>
 </resources>

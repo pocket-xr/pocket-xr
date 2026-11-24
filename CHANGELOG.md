@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.14: PC screen size
+
+- **Screen size for each PC screen:** a new setting under each PC screen's Picture settings: Window (the window's own
+  shape, as before), 1920 x 1080, 1920 x 1200 or 2560 x 1600. It sets the size the computer makes that screen at, so
+  three 1920 x 1200 screens are now possible. It works where the computer makes a screen of its own (Pocket XR on
+  Windows, Mac or Linux, or Apollo); otherwise the stream stays 1920 x 1080. A fixed size shows at its own shape in
+  the window, with bars if the window is another shape. Asked for on Reddit. Not yet tried at 1920 x 1200 or 2560 x 1600.
+
 ## 1.6.13: protected apps in DeX on Android 13
 
 - **Netflix and other protected apps on Android 13 (Galaxy S20):** since 1.6.8 removed the white DeX title bar by
