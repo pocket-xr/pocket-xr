@@ -1305,4 +1305,5 @@
     <string name="tour_done_picture_open">Bild: deine Fenster um dich herum.</string>
     <string name="head_taps">Tippen auf die Brille</string>
     <string name="head_taps_help">Zweimal auf den Brillenrahmen tippen zentriert neu, dreimal öffnet oder schließt den Launcher. Noch nicht mit Brillen getestet.</string>
+    <string name="protected_full_screen">%1$s läuft im Vollbild in deiner Brille, weil es sein Video schützt. Schließe es, um zu deinen Fenstern zurückzukehren.</string>
 </resources>

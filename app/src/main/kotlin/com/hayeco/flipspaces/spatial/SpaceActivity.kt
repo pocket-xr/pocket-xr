@@ -398,19 +398,27 @@ class SpaceActivity : Activity() {
      * add-on's cursor, until that app has no task left on this display (looked at every [DEX_WINDOW_CHECK_MS]). Without
      * the add-on there is no cursor to hand it to, and the Space keeps the pointer. UI thread.
      */
-    fun handPointerToDexWindow(packageName: String, label: String) {
+    fun handPointerToDexWindow(packageName: String, label: String, pauseSpace: Boolean = false) {
         if (!com.hayeco.flipspaces.pointer.PointerHub.connected.value) {
             Log.i(MODE_TAG, "the DeX window for $label keeps the Space's pointer: the pointer add-on is not on, so there is no cursor to hand it to")
             return
         }
         SpaceSession.dexWindowOver = packageName
-        Log.i(MODE_TAG, "the DeX window for $label over the Space on display $openedOn has the pointer until it closes")
+        // 1.6.16: a full screen app covers the Space; it stops drawing meanwhile and goes on once the app closes.
+        if (pauseSpace) {
+            spacePausedFor = packageName
+            view.renderMode = android.opengl.GLSurfaceView.RENDERMODE_WHEN_DIRTY
+        }
+        Log.i(MODE_TAG, "the DeX window for $label over the Space on display $openedOn has the pointer until it closes" + if (pauseSpace) "; the Space stops drawing meanwhile" else "")
         main.removeCallbacks(dexWindowCheck)
         dexWindowSeen = false
         main.postDelayed(dexWindowCheck, DEX_WINDOW_CHECK_MS)
     }
 
     private var dexWindowSeen = false
+
+    /** 1.6.16: the full screen app the Space stopped drawing for, null while it draws. */
+    private var spacePausedFor: String? = null
 
     private val dexWindowCheck = object : Runnable {
         override fun run() {
@@ -436,9 +444,13 @@ class SpaceActivity : Activity() {
     private fun dexPointerBack(why: String) {
         main.removeCallbacks(dexWindowCheck)
         dexWindowMisses = 0
+        if (spacePausedFor != null) {
+            spacePausedFor = null
+            view.renderMode = android.opengl.GLSurfaceView.RENDERMODE_CONTINUOUSLY
+        }
         val pkg = SpaceSession.dexWindowOver ?: return
         SpaceSession.dexWindowOver = null
-        Log.i(MODE_TAG, "the Space has the pointer back from the DeX window for $pkg ($why)")
+        Log.i(MODE_TAG, "the Space has the pointer back from the DeX window for $pkg ($why), and draws again")
     }
 
     /** The window an OpenXR game's sub-window attaches to: wherever the Space is drawn now. */

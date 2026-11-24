@@ -47,6 +47,17 @@ object AppLauncher {
         openFullscreen(context, Intent(context, GlassesHomeActivity::class.java), displayId)
 
     /**
+     * 1.6.16: opens [app] full screen on the glasses' own display [displayId], for an app that protects its video
+     * ([com.hayeco.flipspaces.core.spatial.ProtectedApps]): the only place its picture shows.
+     */
+    fun openAppFullscreen(context: Context, app: AppEntry, displayId: Int): LaunchFailure? {
+        val intent = Intent(Intent.ACTION_MAIN)
+            .addCategory(Intent.CATEGORY_LAUNCHER)
+            .setComponent(ComponentName(app.packageName, app.activityName))
+        return openFullscreen(context, intent, displayId)
+    }
+
+    /**
      * Opens [app] as a centred DeX window on [displayId], 70% of the display. For an app that
      * shows black on a panel because it protects its screen (0.4.1): DeX windows on the
      * glasses' own display are composited like any window, so secure content shows there.

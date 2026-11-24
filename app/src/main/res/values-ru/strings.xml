@@ -1325,4 +1325,5 @@
     <string name="tour_done_picture_open">Картинка: ваши окна вокруг вас.</string>
     <string name="head_taps">Касания очков</string>
     <string name="head_taps_help">Коснитесь оправы дважды, чтобы центрировать, трижды — чтобы открыть или закрыть лаунчер. Ещё не проверено с очками.</string>
+    <string name="protected_full_screen">%1$s открывается на весь экран в очках, потому что защищает своё видео. Закройте его, чтобы вернуться к окнам.</string>
 </resources>

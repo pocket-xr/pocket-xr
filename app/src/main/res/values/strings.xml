@@ -1671,4 +1671,5 @@
     <string name="tour_done_picture_open">Picture: your windows around you.</string>
     <string name="head_taps">Taps on the glasses</string>
     <string name="head_taps_help">Tap the glasses\' frame twice to recentre, three times to open or close the launcher. Not yet tried with glasses.</string>
+    <string name="protected_full_screen">%1$s plays full screen in your glasses because it protects its video. Close it to get back to your windows.</string>
 </resources>

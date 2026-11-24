@@ -1315,4 +1315,5 @@
     <string name="tour_done_picture_open">Imagen: tus ventanas a tu alrededor.</string>
     <string name="head_taps">Toques en las gafas</string>
     <string name="head_taps_help">Toca la montura dos veces para recentrar y tres veces para abrir o cerrar el lanzador. Aún no probado con gafas.</string>
+    <string name="protected_full_screen">%1$s se reproduce a pantalla completa en tus gafas porque protege su vídeo. Ciérralo para volver a tus ventanas.</string>
 </resources>

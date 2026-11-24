@@ -1295,4 +1295,5 @@
     <string name="tour_done_picture_open">그림: 내 주위의 창들.</string>
     <string name="head_taps">안경 탭</string>
     <string name="head_taps_help">안경테를 두 번 탭하면 중앙으로, 세 번 탭하면 런처를 열거나 닫습니다. 아직 안경으로 테스트하지 않았습니다.</string>
+    <string name="protected_full_screen">%1$s 앱은 동영상을 보호하므로 안경에 전체 화면으로 재생됩니다. 닫으면 창으로 돌아갑니다.</string>
 </resources>

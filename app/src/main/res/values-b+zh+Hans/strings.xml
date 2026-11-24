@@ -1295,4 +1295,5 @@
     <string name="tour_done_picture_open">图片：环绕在你周围的窗口。</string>
     <string name="head_taps">轻点眼镜</string>
     <string name="head_taps_help">轻点镜框两次重新居中，三次打开或关闭启动器。尚未在眼镜上测试。</string>
+    <string name="protected_full_screen">%1$s 会在眼镜中全屏播放，因为它保护其视频。关闭它即可回到你的窗口。</string>
 </resources>

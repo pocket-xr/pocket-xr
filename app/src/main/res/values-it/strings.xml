@@ -1315,4 +1315,5 @@
     <string name="tour_done_picture_open">Immagine: le tue finestre intorno a te.</string>
     <string name="head_taps">Tocchi sugli occhiali</string>
     <string name="head_taps_help">Tocca la montatura due volte per ricentrare, tre volte per aprire o chiudere il launcher. Non ancora provato con occhiali.</string>
+    <string name="protected_full_screen">%1$s va a schermo intero negli occhiali perché protegge il suo video. Chiudilo per tornare alle tue finestre.</string>
 </resources>

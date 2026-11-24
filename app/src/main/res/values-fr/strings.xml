@@ -1315,4 +1315,5 @@
     <string name="tour_done_picture_open">Image : vos fenêtres autour de vous.</string>
     <string name="head_taps">Tapes sur les lunettes</string>
     <string name="head_taps_help">Tapez deux fois sur la monture pour recentrer, trois fois pour ouvrir ou fermer le lanceur. Pas encore essayé avec des lunettes.</string>
+    <string name="protected_full_screen">%1$s s\'affiche en plein écran dans tes lunettes car il protège sa vidéo. Ferme-le pour revenir à tes fenêtres.</string>
 </resources>
