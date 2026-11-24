@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.15: DeX windows over the Space can be used
+
+- **Netflix and other protected apps in DeX:** Pocket XR opens an app that protects its picture (Netflix) in a DeX
+  window over the Space, the only place its video shows. But while the Space was up, its pointer only reached its own
+  windows, so that DeX window couldn't be clicked or closed. Now the DeX window gets the pointer (Pocket XR's cursor
+  on the glasses) while it is open, and the Space takes it back once the window closes. Needs the Pocket XR add-on,
+  which draws that cursor. Found by Crr66; not yet tried on glasses.
+
 ## 1.6.14: PC screen size
 
 - **Screen size for each PC screen:** a new setting under each PC screen's Picture settings: Window (the window's own
