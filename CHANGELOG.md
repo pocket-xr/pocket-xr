@@ -2,6 +2,13 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.26: buy me a beer on Google Play too
+
+- **A tip through Google Play.** The "Buy me a beer" pill at the top of the trackpad's Menu was hidden in the Google
+  Play version, as Play doesn't allow a link to tip outside its own payments. It is back there now as a one-time tip
+  through Google Play's own payment sheet, with its price where "Ko-fi" was. A tip unlocks nothing and can be given
+  again. Pocket XR from GitHub still opens Ko-fi and has no billing in it at all.
+
 ## 1.6.25: RayNeo GT the right way round
 
 - **RayNeo GT: looking up and down no longer turns the picture.** 1.6.23 started its head tracking, but looking up
