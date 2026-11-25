@@ -2,7 +2,7 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## 1.6.20: up to six PC screens and twelve windows
+## 1.6.20: up to six PC screens and twelve windows; tracking lying back
 
 - **Up to six PC screens at once**, up from three: the launcher's PC screen button opens the next one each time. Each
   is still its own window, its own stream and its own host on the computer, so it needs a computer that offers that
@@ -12,6 +12,12 @@ Each release lists what changed for people using Pocket XR. Versions follow [sem
   PC screens included.
 
 From a Reddit user with a Galaxy S26 Ultra. Not yet tried with more than three PC screens or six windows.
+
+- **Lying on your back:** if the Space started while you were already lying back, the glasses were far from upright and
+  Pocket XR took that for glasses whose motion sensor is mounted a quarter turn off, so it read every head turn about
+  the wrong axis: looking at the ceiling, turning your head left or right moved the windows with it. For glasses whose
+  layout is known (the XREAL Aura and One), that check now never changes it, and a layout it changed before is not used.
+  Found on Mike's Aura; the log shows the cause, the fix is checked by tests, not yet tried lying down.
 
 ## 1.6.19: Send logs says where to send them; full screen apps say they need the add-on
 

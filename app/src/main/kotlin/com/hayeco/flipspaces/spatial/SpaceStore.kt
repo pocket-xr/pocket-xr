@@ -117,7 +117,11 @@ class SpaceStore(context: Context) {
     // 0.5.91 (Mike's One: "everything is upside down"): per model, its default until one is picked; the Aura keeps its key.
     // 1.2.10 (Discussion #24): VITURE glasses' default by the USB product plugged in, so the Beast starts the right way up.
     var axisMap: AxisMap
-        get() = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: defaultAxes()
+        get() {
+            // 1.6.20: a layout the gravity check picked for a tested model is not used: its own is known ([GravityAxes]).
+            if (model.tested && prefs.contains(perModel(KEY_AXES_GRAVITY))) return defaultAxes()
+            return prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: defaultAxes()
+        }
         set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).remove(perModel(KEY_AXES_GRAVITY)).apply()
 
     /**
@@ -136,6 +140,7 @@ class SpaceStore(context: Context) {
     fun axesFrom(): String {
         val gravity = prefs.getString(perModel(KEY_AXES_GRAVITY), null)
         return when {
+            gravity != null && model.tested -> "the ${model.label}'s default, known; an older gravity check's pick is not used: $gravity"
             gravity != null -> "set by the gravity check: $gravity"
             prefs.contains(perModel(KEY_AXES)) -> "picked on the head tracking screen; the ${model.label}'s default is ${defaultAxes().label}"
             else -> "the ${model.label}'s default"
