@@ -99,7 +99,7 @@ object GlassesVendors {
     fun name(vendorId: Int): String? = when (vendorId) {
         XREAL -> "XREAL"
         VITURE -> "VITURE"
-        RAYNEO -> "RayNeo"
+        RAYNEO, RayNeoProtocol.VENDOR_GT -> "RayNeo"
         else -> null
     }
 

@@ -89,6 +89,15 @@ object GravityAxes {
     /** [b] (head axes of [from]) in the head axes of [to]: a gyro bias kept across a layout change. */
     fun carry(b: Vec3, from: AxisMap, to: AxisMap): Vec3 = to.apply(from.unapply(b))
 
+    /**
+     * 1.6.23 (Mike's Aura, 25 Nov 2026: the windows crept left at 0.38 deg/s): a bias saved while an older gravity check's
+     * [pick] was in use is in that layout's axes. 1.6.20 stopped using such a pick for a tested model, its [own] layout
+     * being known, but left the saved biases in the pick's axes, so the next session started from a bias with x and y the
+     * wrong way round. This is the bias carried back to [own]; unchanged when there was no pick or it was [own].
+     */
+    fun carryBack(saved: Vec3?, pick: AxisMap?, own: AxisMap): Vec3? =
+        if (saved == null || pick == null || pick == own) saved else carry(saved, pick, own)
+
     /** One line for the Glasses report: the layout, where it came from, and the last rest's gravity. */
     fun reportLine(axes: AxisMap, from: String, rest: Vec3?, lastCheck: String?): String = buildString {
         append(axes.label).append(" (").append(from).append(')')

@@ -137,6 +137,28 @@ class SpaceStore(context: Context) {
         prefs.edit().putString(perModel(KEY_AXES), axes.name).putString(perModel(KEY_AXES_GRAVITY), line).apply()
     }
 
+    /**
+     * 1.6.23: a tested model's older gravity check pick (no longer used since 1.6.20) is dropped, and the biases saved in
+     * its axes are carried back to the model's own ([com.hayeco.flipspaces.core.spatial.GravityAxes.carryBack]). Null when
+     * there was nothing to do, else a line for the log.
+     */
+    fun dropOldGravityPick(): String? {
+        if (!model.tested || !prefs.contains(perModel(KEY_AXES_GRAVITY))) return null
+        val pick = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } }
+        val own = defaultAxes()
+        fun back(v: com.hayeco.flipspaces.core.spatial.Vec3?) = com.hayeco.flipspaces.core.spatial.GravityAxes.carryBack(v, pick, own)
+        val static = staticGyroBias
+        val worn = wornGyroBias
+        val old = gyroBias
+        staticGyroBias = back(static)
+        wornGyroBias = back(worn)
+        gyroBias = back(old)
+        prefs.edit().remove(perModel(KEY_AXES)).remove(perModel(KEY_AXES_GRAVITY)).apply()
+        fun show(v: com.hayeco.flipspaces.core.spatial.Vec3?) = v?.let { "%.5f, %.5f, %.5f".format(java.util.Locale.ROOT, it.x, it.y, it.z) } ?: "none"
+        return "head axes: the ${model.label}'s older gravity check pick (${pick?.label ?: "unknown"}) dropped; saved static bias ${show(static)} " +
+            "carried back to its own layout (${own.label}) as ${show(staticGyroBias)}, worn ${show(worn)} as ${show(wornGyroBias)}"
+    }
+
     /** 1.2.13: the model's own default layout, what the gravity check prefers when it fits. */
     val modelAxes: AxisMap get() = defaultAxes()
 
