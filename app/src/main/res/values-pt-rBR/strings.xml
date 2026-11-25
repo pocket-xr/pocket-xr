@@ -427,6 +427,7 @@
     <string name="head_level">Nível</string>
     <string name="head_level_calibrated">Calibrado: o sensor dos óculos lê roll %1$.2f e pitch %2$.2f graus quando a imagem está nivelada.</string>
     <string name="head_level_not_calibrated">Não calibrado: o sensor é considerado nivelado com a imagem.</string>
+    <string name="head_level_default">Não calibrado: é usada a inclinação habitual dos %1$s (pitch %2$.1f graus, medida em outro par). Calibrar o nível ajusta exatamente aos seus.</string>
     <string name="head_level_howto">Uma vez por par de óculos: com o Espaço nos óculos, toque em Verificar nível. Uma linha verde aparece no meio da visão. Olhe para uma borda nivelada na altura dos olhos (o horizonte, uma prateleira distante ou o batente de uma janela), incline a cabeça até a linha ficar sobre ela, fique parado e toque em Salvar nível. O sensor pode ler até 50 graus de pitch (o dos Aura fica uns 14,5 graus inclinado, o de um One Pro mais, o de um One Pro+ uns 40) e 10 de roll.</string>
     <string name="head_stop_level">Parar nível</string>
     <string name="head_check_level">Verificar nível</string>

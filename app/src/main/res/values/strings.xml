@@ -522,6 +522,7 @@
     <string name="head_level">Level</string>
     <string name="head_level_calibrated">Calibrated: the glasses\' sensor reads roll %1$.2f, pitch %2$.2f degrees when the picture is level.</string>
     <string name="head_level_not_calibrated">Not calibrated: the sensor is taken as level with the picture.</string>
+    <string name="head_level_default">Not calibrated: the %1$s\'s usual tilt is used (pitch %2$.1f degrees, measured on another pair). Saving a level fits it to yours exactly.</string>
     <string name="head_level_howto">Once per pair of glasses: with the Space on the glasses, tap Check level. A green line appears across the middle of the view. Look at a level edge at eye height (the horizon, a far shelf or window frame), tilt your head until the line lies on it, hold still, then tap Save level. The sensor may read up to 50 degrees of pitch (the Aura\'s sits about 14.5 degrees tilted, a One Pro more, a One Pro+ about 40) and 10 of roll.</string>
     <string name="head_stop_level">Stop level</string>
     <string name="head_check_level">Check level</string>

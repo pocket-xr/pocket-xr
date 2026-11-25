@@ -427,6 +427,7 @@
     <string name="head_level">Livello</string>
     <string name="head_level_calibrated">Calibrato: il sensore degli occhiali legge roll %1$.2f, pitch %2$.2f gradi quando l\'immagine è in piano.</string>
     <string name="head_level_not_calibrated">Non calibrato: il sensore è considerato in piano con l\'immagine.</string>
+    <string name="head_level_default">Non calibrato: si usa l\'inclinazione tipica degli %1$s (pitch %2$.1f gradi, misurata su un altro paio). Calibrare il livello la adatta esattamente ai tuoi.</string>
     <string name="head_level_howto">Una volta per ogni paio di occhiali: con lo Spazio sugli occhiali, tocca Verifica livello. Appare una linea verde al centro della vista. Guarda un bordo orizzontale all\'altezza degli occhi (l\'orizzonte, una mensola lontana o il telaio di una finestra), inclina la testa finché la linea si posa su di esso, resta fermo, poi tocca Salva livello. Il sensore può leggere fino a 50 gradi di pitch (quello degli Aura è inclinato di circa 14,5 gradi, quello di un One Pro di più, quello di un One Pro+ di circa 40) e 10 di roll.</string>
     <string name="head_stop_level">Ferma livello</string>
     <string name="head_check_level">Verifica livello</string>

@@ -427,6 +427,7 @@
     <string name="head_level">Niveau</string>
     <string name="head_level_calibrated">Calibré : le capteur des lunettes indique un roulis de %1$.2f et un tangage de %2$.2f degrés quand l\'image est de niveau.</string>
     <string name="head_level_not_calibrated">Non calibré : le capteur est considéré de niveau avec l\'image.</string>
+    <string name="head_level_default">Non calibré : l\'inclinaison habituelle des %1$s est utilisée (tangage %2$.1f degrés, mesuré sur une autre paire). Calibrer le niveau l\'ajuste exactement aux vôtres.</string>
     <string name="head_level_howto">Une fois par paire de lunettes : avec l\'Espace sur les lunettes, touchez Vérifier le niveau. Une ligne verte traverse le milieu de la vue. Regardez un bord horizontal à hauteur des yeux (l\'horizon, une étagère ou un cadre de fenêtre éloigné), inclinez la tête jusqu\'à ce que la ligne s\'y aligne, restez immobile, puis touchez Enregistrer le niveau. Le capteur peut indiquer jusqu\'à 50 degrés de tangage (celui des Aura est incliné d\'environ 14,5 degrés, celui des One Pro davantage, celui des One Pro+ d\'environ 40) et 10 de roulis.</string>
     <string name="head_stop_level">Arrêter le niveau</string>
     <string name="head_check_level">Vérifier le niveau</string>

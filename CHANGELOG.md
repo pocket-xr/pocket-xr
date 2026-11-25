@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.24: XREAL One Pro and One Pro+ level from the start
+
+- **Windows no longer tilt as you turn on a One Pro or One Pro+.** These glasses' motion sensor sits steeply tilted in
+  the frame, and until a level calibration was saved Pocket XR took it as level with the picture. So turning the head
+  was read partly as tilting it, and the windows rolled (a Reddit user's One Pro, and gegonut's One Pro+ in Discussion
+  #81). Pocket XR now starts these models from their usual tilt: the One Pro from thejoeba's saved level (pitch -30.44
+  degrees, issue 30), the One Pro+ from the middle of its tester's readings (about -40). The Level card on the head
+  tracking screen says which is used, and saving a level still fits it to your own pair exactly. Not yet tried on
+  either model with the default.
+
 ## 1.6.23: windows that slowly drifted sideways; the RayNeo GT
 
 - **Windows creeping sideways on XREAL glasses:** before 1.6.20, the check that reads the glasses' axes from gravity

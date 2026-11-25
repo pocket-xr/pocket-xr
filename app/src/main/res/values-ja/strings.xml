@@ -413,6 +413,7 @@
     <string name="head_level">水平</string>
     <string name="head_level_calibrated">キャリブレーション済み: 映像が水平のとき、グラスのセンサーはロール %1$.2f 度、ピッチ %2$.2f 度を示します。</string>
     <string name="head_level_not_calibrated">未キャリブレーション: センサーは映像と水平とみなされます。</string>
+    <string name="head_level_default">未キャリブレーション: %1$s の標準的な傾き (ピッチ %2$.1f 度、別の個体で測定) を使用しています。水平を保存すると、お使いのグラスに正確に合わせられます。</string>
     <string name="head_level_howto">グラスごとに 1 回: グラスにスペースを表示した状態で「水平をチェック」をタップします。視界の中央を横切る緑の線が表示されます。目の高さにある水平な縁（地平線、遠くの棚や窓枠）を見て、線が重なるまで頭を傾け、静止して「水平を保存」をタップします。センサーはピッチ最大 50 度（Aura は約 14.5 度傾いて、One Pro はそれ以上、One Pro+ は約 40 度）、ロール最大 10 度まで読み取れます。</string>
     <string name="head_stop_level">水平チェックを停止</string>
     <string name="head_check_level">水平をチェック</string>

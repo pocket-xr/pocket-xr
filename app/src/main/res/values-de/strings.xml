@@ -420,6 +420,7 @@
     <string name="head_level">Ausrichtung</string>
     <string name="head_level_calibrated">Kalibriert: der Brillensensor misst Roll %1$.2f, Pitch %2$.2f Grad, wenn das Bild waagerecht ist.</string>
     <string name="head_level_not_calibrated">Nicht kalibriert: der Sensor gilt als waagerecht zum Bild.</string>
+    <string name="head_level_default">Nicht kalibriert: Die übliche Neigung der %1$s wird verwendet (Pitch %2$.1f Grad, an einem anderen Exemplar gemessen). Eine eigene Kalibrierung passt sie genau an deine an.</string>
     <string name="head_level_howto">Einmal pro Brille: mit dem Space auf der Brille tippe auf „Ausrichtung prüfen“. Eine grüne Linie erscheint quer durch die Mitte der Ansicht. Schau auf eine waagerechte Kante auf Augenhöhe (den Horizont, ein fernes Regal oder einen Fensterrahmen), neige den Kopf, bis die Linie darauf liegt, halt still und tippe dann auf „Ausrichtung speichern“. Der Sensor kann bis zu 50 Grad Pitch messen (die Aura sitzt etwa 14,5 Grad geneigt, eine One Pro mehr, eine One Pro+ etwa 40) und 10 Grad Roll.</string>
     <string name="head_stop_level">Ausrichtung stoppen</string>
     <string name="head_check_level">Ausrichtung prüfen</string>

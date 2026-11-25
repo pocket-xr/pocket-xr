@@ -427,6 +427,7 @@
     <string name="head_level">Nivel</string>
     <string name="head_level_calibrated">Calibrado: el sensor de las gafas marca roll %1$.2f y pitch %2$.2f grados cuando la imagen está nivelada.</string>
     <string name="head_level_not_calibrated">Sin calibrar: se considera que el sensor está nivelado con la imagen.</string>
+    <string name="head_level_default">Sin calibrar: se usa la inclinación habitual de las %1$s (pitch %2$.1f grados, medida en otras gafas). Calibrar el nivel la ajusta exactamente a las tuyas.</string>
     <string name="head_level_howto">Una vez por cada par de gafas: con el Espacio en las gafas, toca Comprobar nivel. Aparece una línea verde en el centro de la vista. Mira un borde horizontal a la altura de los ojos (el horizonte, un estante lejano o el marco de una ventana), inclina la cabeza hasta que la línea quede sobre él, quédate quieto y toca Guardar nivel. El sensor puede marcar hasta 50 grados de pitch (el de las Aura está inclinado unos 14,5 grados, el de unas One Pro más, el de unas One Pro+ unos 40) y 10 de roll.</string>
     <string name="head_stop_level">Detener nivel</string>
     <string name="head_check_level">Comprobar nivel</string>

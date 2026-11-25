@@ -413,6 +413,7 @@
     <string name="head_level">水平</string>
     <string name="head_level_calibrated">已校准：画面水平时，眼镜传感器读数为翻滚 %1$.2f 度、俯仰 %2$.2f 度。</string>
     <string name="head_level_not_calibrated">未校准：默认传感器与画面同样水平。</string>
+    <string name="head_level_default">未校准：使用 %1$s 的常见倾角（俯仰 %2$.1f 度，在另一副眼镜上测得）。保存水平可精确匹配你的眼镜。</string>
     <string name="head_level_howto">每副眼镜做一次：在眼镜上打开空间，点“检查水平”。视图中间会出现一条绿线。看向与眼睛同高的一条水平边缘（地平线、远处的架子或窗框），倾斜头部直到绿线与它重合，保持不动，然后点“保存水平”。传感器的俯仰读数最多可达 50 度（Aura 约倾斜 14.5 度，One Pro 更多，One Pro+ 约 40 度），翻滚最多 10 度。</string>
     <string name="head_stop_level">停止水平检查</string>
     <string name="head_check_level">检查水平</string>
