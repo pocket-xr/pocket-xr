@@ -1300,4 +1300,7 @@
     <string name="head_tap_sensitivity_help">越高越能识别轻点，越低只识别用力的轻点。灵敏度高时，按眼镜按钮也可能被当作轻点。保持头部不动，每秒轻点约两次。</string>
     <string name="home_logs_send_to">请发送到 %1$s（地址已复制）</string>
     <string name="protected_full_screen_no_addon">%1$s 会全屏播放。要点按其中内容，请安装 Pocket XR 附加组件并打开其指针，或在手机上使用 DeX 触控板。</string>
+    <string name="home_max_windows">Space 中的窗口数：%1$d</string>
+    <string name="home_max_windows_detail">同时可打开的窗口数，包括电脑屏幕。窗口越多越耗手机性能，每个电脑屏幕都是手机要解码的视频。</string>
+    <string name="space_problem_panel_limit">最多 %1$d 个窗口；请先关闭一个，或在手机设置中调高“Space 中的窗口数”。</string>
 </resources>

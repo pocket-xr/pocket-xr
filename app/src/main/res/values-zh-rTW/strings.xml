@@ -1300,4 +1300,7 @@
     <string name="head_tap_sensitivity_help">越高越能辨識輕點，越低只辨識用力的輕點。靈敏度高時，按眼鏡按鈕也可能被當作輕點。保持頭部不動，每秒輕點約兩次。</string>
     <string name="home_logs_send_to">請傳送到 %1$s（地址已複製）</string>
     <string name="protected_full_screen_no_addon">%1$s 會全螢幕播放。要點按其中內容，請安裝 Pocket XR 附加元件並開啟其指標，或在手機上使用 DeX 觸控板。</string>
+    <string name="home_max_windows">Space 中的視窗數：%1$d</string>
+    <string name="home_max_windows_detail">同時可開啟的視窗數，包括電腦螢幕。視窗越多越耗手機效能，每個電腦螢幕都是手機要解碼的影片。</string>
+    <string name="space_problem_panel_limit">最多 %1$d 個視窗；請先關閉一個，或在手機設定中調高「Space 中的視窗數」。</string>
 </resources>

@@ -117,7 +117,11 @@ class SpaceStore(context: Context) {
     // 0.5.91 (Mike's One: "everything is upside down"): per model, its default until one is picked; the Aura keeps its key.
     // 1.2.10 (Discussion #24): VITURE glasses' default by the USB product plugged in, so the Beast starts the right way up.
     var axisMap: AxisMap
-        get() = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: defaultAxes()
+        get() {
+            // 1.6.20: a layout the gravity check picked for a tested model is not used: its own is known ([GravityAxes]).
+            if (model.tested && prefs.contains(perModel(KEY_AXES_GRAVITY))) return defaultAxes()
+            return prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: defaultAxes()
+        }
         set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).remove(perModel(KEY_AXES_GRAVITY)).apply()
 
     /**
@@ -136,6 +140,7 @@ class SpaceStore(context: Context) {
     fun axesFrom(): String {
         val gravity = prefs.getString(perModel(KEY_AXES_GRAVITY), null)
         return when {
+            gravity != null && model.tested -> "the ${model.label}'s default, known; an older gravity check's pick is not used: $gravity"
             gravity != null -> "set by the gravity check: $gravity"
             prefs.contains(perModel(KEY_AXES)) -> "picked on the head tracking screen; the ${model.label}'s default is ${defaultAxes().label}"
             else -> "the ${model.label}'s default"
@@ -713,6 +718,12 @@ class SpaceStore(context: Context) {
         get() = prefs.getInt(KEY_TAP_SENSITIVITY, 100)
         set(value) = prefs.edit().putInt(KEY_TAP_SENSITIVITY, value).apply()
 
+    /** 1.6.20: Windows in the Space, how many the Space holds ([com.hayeco.flipspaces.core.spatial.PanelLimits]). */
+    var maxWindows: Int
+        get() = prefs.getInt(KEY_MAX_WINDOWS, com.hayeco.flipspaces.core.spatial.PanelLimits.MAX_PANELS)
+            .coerceIn(com.hayeco.flipspaces.core.spatial.PanelLimits.MAX_PANELS, com.hayeco.flipspaces.core.spatial.PanelLimits.MOST_PANELS)
+        set(value) = prefs.edit().putInt(KEY_MAX_WINDOWS, value).apply()
+
     /** 1.6.12: taps on the glasses ([com.hayeco.flipspaces.core.spatial.GlassesTaps]); off until tried with glasses. */
     var glassesTaps: Boolean
         get() = prefs.getBoolean(KEY_GLASSES_TAPS, false)
@@ -817,6 +828,7 @@ class SpaceStore(context: Context) {
         private const val KEY_LATE_WARP_SBS = "late_warp_sbs_0525"
         private const val KEY_GLASSES_TAPS = "glasses_taps_1612"
         private const val KEY_TAP_SENSITIVITY = "tap_sensitivity_1617"
+        private const val KEY_MAX_WINDOWS = "max_windows_1620"
         private const val KEY_EDGE_FADE = "edge_fade_0561"
         private const val KEY_GYRO_BIAS_STATIC = "head_gyro_bias_static_0515"
         private const val KEY_GYRO_BIAS_WORN = "head_gyro_bias_worn_0515"

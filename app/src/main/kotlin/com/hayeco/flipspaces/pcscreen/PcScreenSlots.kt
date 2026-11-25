@@ -2,26 +2,33 @@ package com.hayeco.flipspaces.pcscreen
 
 /**
  * PC screens: several at once. Moonlight's core keeps one stream per process (its globals), so each PC screen is its
- * own activity in its own process (`:pcscreen`, `:pcscreen2`, `:pcscreen3`), with its own surface service and its own
+ * own activity in its own process (`:pcscreen`, `:pcscreen2` to `:pcscreen6`), with its own surface service and its own
  * saved PC. A host streams one session at a time, so each screen needs a host of its own: a second Apollo instance on
  * another port, or another PC.
  */
 object PcScreenSlots {
-    const val COUNT = 3
+    /** 1.6.20 (a Reddit user with an S26 Ultra asked for more than three): six, each declared in the manifest. */
+    const val COUNT = 6
 
     private val activities = listOf(
         PcScreenActivity::class.java.name,
         PcScreen2Activity::class.java.name,
         PcScreen3Activity::class.java.name,
+        PcScreen4Activity::class.java.name,
+        PcScreen5Activity::class.java.name,
+        PcScreen6Activity::class.java.name,
     )
 
     private val services = listOf(
         PcScreenSurfaceService::class.java,
         PcScreenSurfaceService2::class.java,
         PcScreenSurfaceService3::class.java,
+        PcScreenSurfaceService4::class.java,
+        PcScreenSurfaceService5::class.java,
+        PcScreenSurfaceService6::class.java,
     )
 
-    /** The slot (0, 1 or 2) of a PC screen activity's class name, or -1 for any other. */
+    /** The slot (0 to [COUNT] - 1) of a PC screen activity's class name, or -1 for any other. */
     fun slotOf(activityName: String): Int = activities.indexOf(activityName)
 
     fun activity(slot: Int): String = activities[slot]

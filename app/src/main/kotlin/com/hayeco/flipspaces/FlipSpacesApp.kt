@@ -30,6 +30,8 @@ class FlipSpacesApp : Application() {
         // PC screens: a PC screen's own process (":pcscreen") only streams. The watchers, services and log file below
         // belong to the main process, and a second copy would open the Space or write the log twice.
         if (android.app.Application.getProcessName().substringAfter(':', "").startsWith("pcscreen")) return
+        // 1.6.20: Windows in the Space, before any layout is read.
+        com.hayeco.flipspaces.core.spatial.PanelLimits.maxPanels = com.hayeco.flipspaces.spatial.SpaceStore(this).maxWindows
         // 1.1.10: the open screens, so Exit Pocket XR can finish each one.
         AppExit.track(this)
         // 0.5.28: the app's own rotating log file, before anything logs.

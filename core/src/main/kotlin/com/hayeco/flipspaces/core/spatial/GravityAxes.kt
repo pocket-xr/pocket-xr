@@ -16,6 +16,13 @@ import kotlin.math.acos
  * layout is picked: the model's own default if it fits, else the one the smallest turn from the layout in use (a pitch
  * error is mended about the side axis, so right stays right). Glasses lying still on a table are left alone at the start
  * ([check]'s `tableStill`): they may lie any way up.
+ *
+ * 1.6.20 (Mike's Aura, 24 Nov 2026: lying on his back, looking at the ceiling, the windows followed his head left and
+ * right): the Space started with him already lying back, the glasses 78 degrees from upright, and the start check took
+ * that for a quarter turn layout ("axes now x right, y back, z down"), so a turn of the head was read about the wrong
+ * axis. A head lying back looks exactly like glasses mounted a quarter turn off. So for glasses whose layout is known
+ * ([check]'s `knownLayout`: a tested model's own default), gravity never moves away from it; it only brings a layout
+ * back to it.
  */
 object GravityAxes {
     /** Gravity within about 25 degrees of a layout's up fits it ([AxisMap.suggest] uses the same). */
@@ -53,7 +60,7 @@ object GravityAxes {
     /**
      * The layout [rest] says, given [inUse] and the model's default [preferred]; null in [Verdict.axes] keeps [inUse].
      */
-    fun check(rest: Rest, inUse: AxisMap, preferred: AxisMap): Verdict {
+    fun check(rest: Rest, inUse: AxisMap, preferred: AxisMap, knownLayout: Boolean = false): Verdict {
         val raw = rest.raw
         val n = raw.length
         val vector = String.format(Locale.ROOT, "%.2f, %.2f, %.2f m/s2", raw.x, raw.y, raw.z)
@@ -68,6 +75,9 @@ object GravityAxes {
         val fits = AxisMap.entries.filter { it.apply(raw).y / n >= FIT_COS }
         if (fits.isEmpty()) {
             return Verdict(null, String.format(Locale.ROOT, "%s, %.0f deg from up on %s, and on no layout's axis: kept", head, off, inUse.label))
+        }
+        if (knownLayout && preferred !in fits) {
+            return Verdict(null, String.format(Locale.ROOT, "%s, %.0f deg from up on %s; these glasses' layout is known to be %s, so kept (a head lying back or looking up, not a turned layout)", head, off, inUse.label, preferred.label))
         }
         if (rest.tableStill) {
             return Verdict(null, String.format(Locale.ROOT, "%s, %.0f deg from up on %s; the glasses lie still (not worn?), so kept; %s would fit", head, off, inUse.label, fits.joinToString(" or ") { it.label }))

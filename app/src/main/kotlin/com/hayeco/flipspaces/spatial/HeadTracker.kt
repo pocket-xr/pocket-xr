@@ -1124,7 +1124,8 @@ object HeadTracker {
         val rest = fusion.takeRestGravity() ?: return
         val c = appContext ?: return
         val store = SpaceStore(c)
-        val verdict = com.hayeco.flipspaces.core.spatial.GravityAxes.check(rest, settings.axes, store.modelAxes)
+        // 1.6.20: a tested model's own layout is known, so a head lying back never turns it ([GravityAxes]).
+        val verdict = com.hayeco.flipspaces.core.spatial.GravityAxes.check(rest, settings.axes, store.modelAxes, store.model.tested)
         lastRestGravity = rest.raw
         lastAxesCheck = verdict.line
         Log.i(TAG, verdict.line)

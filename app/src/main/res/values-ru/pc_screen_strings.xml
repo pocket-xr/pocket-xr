@@ -102,4 +102,7 @@
     <string name="pc_screen_size">Размер экрана</string>
     <string name="pc_screen_size_window">Окно</string>
     <string name="pc_screen_size_help">Размер, с которым компьютер создаёт этот экран. «Окно» повторяет форму окна. Нужен Pocket XR на компьютере или Apollo; изменения применяются при следующем подключении.</string>
+    <string name="pc_screen_tile_4">Экран PC 4</string>
+    <string name="pc_screen_tile_5">Экран PC 5</string>
+    <string name="pc_screen_tile_6">Экран PC 6</string>
 </resources>

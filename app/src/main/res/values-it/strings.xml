@@ -1320,4 +1320,7 @@
     <string name="head_tap_sensitivity_help">Più alta conta tocchi più leggeri, più bassa solo quelli decisi. Ad alta sensibilità, premere i tasti degli occhiali può contare come tocco. Tocca circa due volte al secondo con la testa ferma.</string>
     <string name="home_logs_send_to">Invialo a %1$s (l\'indirizzo è copiato)</string>
     <string name="protected_full_screen_no_addon">%1$s va a schermo intero. Per cliccarci, installa il componente aggiuntivo di Pocket XR e attiva il suo puntatore, oppure usa il touchpad DeX sul telefono.</string>
+    <string name="home_max_windows">Finestre nello Space: %1$d</string>
+    <string name="home_max_windows_detail">Quante finestre possono essere aperte insieme, schermi PC compresi. Più finestre richiedono più potenza al telefono, e ogni schermo PC è un video che il telefono decodifica.</string>
+    <string name="space_problem_panel_limit">Il limite è %1$d finestre; chiudine una prima, oppure aumenta Finestre nello Space nelle impostazioni del telefono.</string>
 </resources>

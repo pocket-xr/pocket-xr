@@ -1310,4 +1310,7 @@
     <string name="head_tap_sensitivity_help">Höher zählt sanftere Tipper, niedriger nur feste. Bei hoher Empfindlichkeit können Tastendrücke an der Brille als Tippen zählen. Tippe etwa zweimal pro Sekunde mit ruhigem Kopf.</string>
     <string name="home_logs_send_to">Sende es an %1$s (die Adresse ist kopiert)</string>
     <string name="protected_full_screen_no_addon">%1$s läuft im Vollbild. Um darin zu klicken, installiere das Pocket XR Add-on und schalte seinen Zeiger ein, oder nutze das DeX-Touchpad auf deinem Handy.</string>
+    <string name="home_max_windows">Fenster im Space: %1$d</string>
+    <string name="home_max_windows_detail">Wie viele Fenster gleichzeitig offen sein können, PC-Bildschirme eingeschlossen. Mehr Fenster brauchen mehr Leistung deines Handys, und jeder PC-Bildschirm ist ein Video, das dein Handy dekodiert.</string>
+    <string name="space_problem_panel_limit">Maximal %1$d Fenster; schließ zuerst eins oder erhöhe „Fenster im Space“ in den Einstellungen auf dem Handy.</string>
 </resources>

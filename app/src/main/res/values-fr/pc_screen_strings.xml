@@ -102,4 +102,7 @@
     <string name="pc_screen_size">Taille de l\'écran</string>
     <string name="pc_screen_size_window">Fenêtre</string>
     <string name="pc_screen_size_help">La taille à laquelle ton ordinateur crée cet écran. Fenêtre suit la forme de la fenêtre. Il faut Pocket XR sur l\'ordinateur, ou Apollo ; les changements s\'appliquent à la prochaine connexion.</string>
+    <string name="pc_screen_tile_4">Écran PC 4</string>
+    <string name="pc_screen_tile_5">Écran PC 5</string>
+    <string name="pc_screen_tile_6">Écran PC 6</string>
 </resources>

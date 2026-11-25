@@ -102,4 +102,7 @@
     <string name="pc_screen_size">画面サイズ</string>
     <string name="pc_screen_size_window">ウィンドウ</string>
     <string name="pc_screen_size_help">コンピューターがこの画面を作るサイズです。ウィンドウはウィンドウの形に合わせます。コンピューターの Pocket XR か Apollo が必要です。変更は次の接続から反映されます。</string>
+    <string name="pc_screen_tile_4">PC 画面 4</string>
+    <string name="pc_screen_tile_5">PC 画面 5</string>
+    <string name="pc_screen_tile_6">PC 画面 6</string>
 </resources>

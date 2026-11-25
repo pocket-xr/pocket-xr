@@ -225,7 +225,7 @@ object LayoutsImport {
                     continue
                 }
                 // An app has one task, so one window ([SpaceLayout.showing]); and the Space holds MAX_PANELS.
-                if (panels.any { it.packageName == app.packageName } || panels.size >= PanelLimits.MAX_PANELS) continue
+                if (panels.any { it.packageName == app.packageName } || panels.size >= PanelLimits.maxPanels) continue
                 panels += panelOf(panels.size + 1, w, app)
             }
             if (panels.isEmpty()) continue

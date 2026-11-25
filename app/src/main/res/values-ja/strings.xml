@@ -1300,4 +1300,7 @@
     <string name="head_tap_sensitivity_help">高いほど軽いタップも数え、低いほど強いタップだけを数えます。感度が高いとグラスのボタンを押してもタップになることがあります。頭を動かさず1秒に2回ほどタップしてください。</string>
     <string name="home_logs_send_to">%1$s に送ってください（アドレスはコピー済み）</string>
     <string name="protected_full_screen_no_addon">%1$s は全画面で表示されます。操作するには Pocket XR アドオンを入れてポインターをオンにするか、スマホで DeX のタッチパッドを使ってください。</string>
+    <string name="home_max_windows">Space のウィンドウ数: %1$d</string>
+    <string name="home_max_windows_detail">同時に開けるウィンドウの数です（PC 画面を含む）。ウィンドウが多いほどスマホの処理能力が必要で、PC 画面はそれぞれスマホがデコードする動画です。</string>
+    <string name="space_problem_panel_limit">ウィンドウは %1$d 個までです。先に 1 つ閉じるか、スマホの設定で「Space のウィンドウ数」を増やしてください。</string>
 </resources>

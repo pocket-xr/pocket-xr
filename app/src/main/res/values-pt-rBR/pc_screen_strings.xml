@@ -102,4 +102,7 @@
     <string name="pc_screen_size">Tamanho da tela</string>
     <string name="pc_screen_size_window">Janela</string>
     <string name="pc_screen_size_help">O tamanho com que o computador cria esta tela. Janela segue o formato da janela. Precisa do Pocket XR no computador, ou do Apollo; as mudanças valem na próxima conexão.</string>
+    <string name="pc_screen_tile_4">Tela do PC 4</string>
+    <string name="pc_screen_tile_5">Tela do PC 5</string>
+    <string name="pc_screen_tile_6">Tela do PC 6</string>
 </resources>
