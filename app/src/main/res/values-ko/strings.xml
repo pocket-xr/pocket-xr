@@ -413,6 +413,7 @@
     <string name="head_level">수평</string>
     <string name="head_level_calibrated">보정됨: 화면이 수평일 때 글래스 센서 값은 롤 %1$.2f도, 피치 %2$.2f도예요.</string>
     <string name="head_level_not_calibrated">보정 안 됨: 센서가 화면과 수평이라고 가정해요.</string>
+    <string name="head_level_default">보정 안 됨: %1$s의 일반적인 기울기(피치 %2$.1f도, 다른 기기에서 측정)를 사용해요. 수평을 저장하면 내 안경에 정확히 맞춰져요.</string>
     <string name="head_level_howto">글래스마다 한 번만 하면 돼요: 글래스에 스페이스를 띄운 상태에서 수평 확인을 탭하세요. 시야 가운데를 가로지르는 초록색 선이 나타나요. 눈높이에 있는 수평한 모서리(지평선, 멀리 있는 선반이나 창틀)를 보면서 선이 그 위에 놓일 때까지 머리를 기울인 다음, 가만히 있다가 수평 저장을 탭하세요. 센서는 피치 최대 50도(Aura는 약 14.5도 기울어져 있고, One Pro는 더, One Pro+는 약 40도), 롤 최대 10도까지 읽을 수 있어요.</string>
     <string name="head_stop_level">수평 확인 중지</string>
     <string name="head_check_level">수평 확인</string>

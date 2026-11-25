@@ -413,6 +413,7 @@
     <string name="head_level">水平</string>
     <string name="head_level_calibrated">已校正：畫面水平時，眼鏡感應器讀數為 roll %1$.2f 度、pitch %2$.2f 度。</string>
     <string name="head_level_not_calibrated">未校正：將感應器視為與畫面同樣水平。</string>
+    <string name="head_level_default">未校正：使用 %1$s 的常見傾角（俯仰 %2$.1f 度，在另一副眼鏡上測得）。儲存水平可精確符合你的眼鏡。</string>
     <string name="head_level_howto">每副眼鏡只需做一次：在眼鏡上開啟空間後，輕觸「檢查水平」。畫面中央會出現一條綠線。看向與視線同高的水平邊緣 (地平線、遠處的架子或窗框)，歪頭調整，直到綠線與邊緣重合，保持不動，然後輕觸「儲存水平」。感應器的 pitch 讀數最多可達 50 度 (Aura 的感應器大約傾斜 14.5 度，One Pro 更多，One Pro+ 約 40 度)，roll 最多 10 度。</string>
     <string name="head_stop_level">停止水平檢查</string>
     <string name="head_check_level">檢查水平</string>

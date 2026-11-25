@@ -144,6 +144,7 @@ class HeadTrackingActivity : ComponentActivity() {
                     levelCheck = levelCheck,
                     levelResult = levelResult.also { settingsVersion },
                     levelCalibrated = store.levelCalibrated.also { settingsVersion; levelResult },
+                    levelDefaultModel = store.model.takeIf { it.defaultMountPitchDeg != 0f }?.label,
                     mountRollDeg = store.mountRollDeg.also { settingsVersion; levelResult },
                     mountPitchDeg = store.mountPitchDeg.also { settingsVersion; levelResult },
                     onLevelCheck = {

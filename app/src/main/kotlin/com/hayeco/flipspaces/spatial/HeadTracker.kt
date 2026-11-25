@@ -681,7 +681,7 @@ object HeadTracker {
             old?.let(fusion::offerOldBias)
             Log.i(TAG, "head fusion: no static gyro bias saved yet" + (old?.let { b -> " (0.5.14's saved bias %.5f, %.5f, %.5f rad/s is offered: taken once this session's worn x and z come within %.4f rad/s of it)".format(java.util.Locale.ROOT, b.x, b.y, b.z, settings.oldBiasConfirm) } ?: "") + "; learning it while worn, or on a table")
         }
-        Log.i(TAG, com.hayeco.flipspaces.core.spatial.LevelCalibration.line(settings.mountRollDeg, settings.mountPitchDeg, store.levelCalibrated))
+        Log.i(TAG, com.hayeco.flipspaces.core.spatial.LevelCalibration.line(settings.mountRollDeg, settings.mountPitchDeg, store.levelCalibrated, store.model))
         // Once per start: the glasses were found as eth interfaces and handled one way or another.
         var ethernetTried = false
         // 0.5.6: 3 s after a failed round, doubling up to 60 s; back to 3 s on plug-in or a network change.

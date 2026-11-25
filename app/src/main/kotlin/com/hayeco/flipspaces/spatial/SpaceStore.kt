@@ -325,8 +325,9 @@ class SpaceStore(context: Context) {
         get() = prefs.getFloat(perModel(KEY_MOUNT_ROLL), 0f)
         set(value) = prefs.edit().putFloat(perModel(KEY_MOUNT_ROLL), value).apply()
 
+    // 1.6.24: until a level is saved, the model's usual tilt (GlassesModel.defaultMountPitchDeg)
     var mountPitchDeg: Float
-        get() = prefs.getFloat(perModel(KEY_MOUNT_PITCH), 0f)
+        get() = prefs.getFloat(perModel(KEY_MOUNT_PITCH), model.defaultMountPitchDeg)
         set(value) = prefs.edit().putFloat(perModel(KEY_MOUNT_PITCH), value).apply()
 
     val levelCalibrated: Boolean get() = prefs.contains(perModel(KEY_MOUNT_ROLL))

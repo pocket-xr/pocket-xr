@@ -67,8 +67,13 @@ object LevelCalibration {
         return Quat.axisAngle(axis, atan2(s, Vec3.UP dot up)).normalized()
     }
 
-    fun line(rollDeg: Float, pitchDeg: Float, calibrated: Boolean): String = if (!calibrated) {
-        "level calibration: none saved; the IMU is taken as mounted level with the display"
+    fun line(rollDeg: Float, pitchDeg: Float, calibrated: Boolean, model: GlassesModel? = null): String = if (!calibrated) {
+        // 1.6.24: the model's usual tilt ([GlassesModel.defaultMountPitchDeg]) until a level is saved
+        if (model != null && model.defaultMountPitchDeg != 0f) {
+            String.format(java.util.Locale.ROOT, "level calibration: none saved; the %s's usual mount, pitch %.2f deg (measured on another pair), is applied", model.label, model.defaultMountPitchDeg)
+        } else {
+            "level calibration: none saved; the IMU is taken as mounted level with the display"
+        }
     } else {
         String.format(java.util.Locale.ROOT, "level calibration: the IMU reads roll %.2f pitch %.2f deg while the display is level; applied as the mount", rollDeg, pitchDeg)
     }

@@ -109,6 +109,22 @@ enum class GlassesModel(
     val factoryMountChecked: Boolean get() = this == AURA
 
     /**
+     * 1.6.24 (a Reddit user's One Pro, 25 Nov 2026: turning the head "makes the screen start to tilt very harshly"; and
+     * Discussion #81's One Pro+: "as I rotate my head in one direction, it's as if I'm also tilting my head"): the pitch
+     * of the level calibration's mount ([LevelCalibration]) used until one is saved, degrees. Without it these models'
+     * sensor, which sits steeply tilted in the frame, was taken as level with the picture, so a turn of the head was read
+     * partly as a roll. The One Pro's is a tester's saved level calibration (thejoeba, issue 30: roll -2.21, pitch -30.44,
+     * kept from 7 to 10 Nov 2026; the roll is the head's, so it is left out). The One Pro+'s is the middle of its tester's
+     * steady recentres, 29 to 49 degrees up (Discussion #81), with the One Pro's sign; no level was saved on one yet.
+     */
+    val defaultMountPitchDeg: Float
+        get() = when (this) {
+            ONE_PRO -> -30.44f
+            ONE_PRO_PLUS -> -40f
+            else -> 0f
+        }
+
+    /**
      * 1.2.8: an XREAL model, whose 3840 x 1080 mode is always their side by side 3D (or an Ultrawide their control link
      * says). Other glasses' wide mode may be one 32:9 canvas ([WideCanvas]).
      */

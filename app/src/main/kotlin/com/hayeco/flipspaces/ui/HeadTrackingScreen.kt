@@ -88,6 +88,8 @@ fun HeadTrackingScreen(
     levelCheck: Boolean = false,
     levelResult: String? = null,
     levelCalibrated: Boolean = false,
+    // 1.6.24: the glasses' model name, when a usual tilt is used until a level is saved
+    levelDefaultModel: String? = null,
     mountRollDeg: Float = 0f,
     mountPitchDeg: Float = 0f,
     onLevelCheck: (Boolean) -> Unit = {},
@@ -281,6 +283,7 @@ fun HeadTrackingScreen(
                         Text(stringResource(R.string.head_level), style = MaterialTheme.typography.titleMedium)
                         Text(
                             if (levelCalibrated) stringResource(R.string.head_level_calibrated, mountRollDeg, mountPitchDeg)
+                            else if (levelDefaultModel != null) stringResource(R.string.head_level_default, levelDefaultModel, mountPitchDeg)
                             else stringResource(R.string.head_level_not_calibrated),
                             style = MaterialTheme.typography.bodyMedium,
                         )
