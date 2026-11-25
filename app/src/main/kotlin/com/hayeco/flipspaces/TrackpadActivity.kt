@@ -149,6 +149,8 @@ class TrackpadActivity : Activity(), PadHost {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // 1.6.26: the tip's price for the Menu's pill, and any tip paid since (Play build only; TipJar)
+        if (BuildConfig.PLAY_BUILD) TipJar.warm(this)
         // 1.1.10: after Exit Pocket XR, nothing opens the trackpad by itself; the user opening it brings Pocket XR back.
         if (AppExit.exited && intent?.getBooleanExtra(EXTRA_AUTO, false) == true) {
             finish()

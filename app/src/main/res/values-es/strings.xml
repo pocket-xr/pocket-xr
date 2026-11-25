@@ -885,6 +885,11 @@
     <string name="core_testers_already_joined">Ya me uní</string>
     <string name="core_support_label">Invítame a una cerveza</string>
     <string name="core_support_description">Invítame a una cerveza en Ko-fi. Abre ko-fi.com en el navegador.</string>
+    <string name="core_support_description_play">Invítame a una cerveza: una propina única a través de Google Play.</string>
+    <string name="tip_thanks">¡Salud! Gracias por la cerveza.</string>
+    <string name="tip_pending">Tu propina está esperando el pago. ¡Gracias!</string>
+    <string name="tip_failed">Google Play no pudo cobrar la propina ahora. Inténtalo de nuevo más tarde.</string>
+    <string name="tip_no_play">Google Play no está listo para propinas en este teléfono ahora mismo.</string>
     <string name="core_update_banner">Actualización disponible: %1$s</string>
     <string name="core_update_notification_title">Pocket XR %1$s está listo</string>
     <string name="core_update_notification_text">Toca para ver la actualización.</string>

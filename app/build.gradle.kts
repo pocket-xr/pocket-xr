@@ -19,8 +19,8 @@ android {
         resValue("string", "app_label", if (findProperty("pocketxr.dev") == "true") "Pocket XR Test" else "Pocket XR")
         minSdk = 30
         targetSdk = 36
-        versionCode = 211
-        versionName = "1.6.25"
+        versionCode = 212
+        versionName = "1.6.26"
         // The Flip 7 is arm64; MediaPipe's native code for other ABIs only adds size.
         ndk { abiFilters += "arm64-v8a" }
         // 1.5.2: Google Play requires every native library to load on 16 KB memory pages. NDK r27 still links with 4 KB
@@ -144,6 +144,9 @@ android {
             if (!play) aidl.directories.add("../addon/src/main/aidl")
             // PC screens: Moonlight's Java streaming code (GPLv3), kept apart from Pocket XR's own (src/moonlight/README.md).
             java.directories.add("src/moonlight/java")
+            // 1.6.26: the tip (TipJar). Google Play's build tips through Play Billing (src/playtip); the others open Ko-fi
+            // and carry no billing library (src/webtip).
+            kotlin.directories.add(if (play) "src/playtip/kotlin" else "src/webtip/kotlin")
             // 1.1.14: the Samsung NPU parts (src/npu: the hand models, our LiteRT build and the Samsung dispatch) are not
             // in the public repository. For a GitHub release, tools/fetch-npu.sh copies them in from the private one
             // (docs/RELEASE.md). Play builds never take them; there, and when src/npu is absent, LiteRT is the AAR's and
@@ -170,6 +173,8 @@ dependencies {
     // 1.6.3 (Google Play): the add-on's pointer service, notification listener, link and setup screen, built from the
     // add-on's own files (addon-play/build.gradle.kts; the module exists only in the Play build, settings.gradle.kts).
     if ((findProperty("pocketxr.play") as String?) == "true") implementation(project(":addon-play"))
+    // 1.6.26: the tip through Google Play (src/playtip/TipJar.kt), in the Play build only. It adds the BILLING permission.
+    if ((findProperty("pocketxr.play") as String?) == "true") implementation(libs.billing.ktx)
 
     // OpenXR: the Java side of Monado, built from the pocket-xr branch of our Monado fork (docs/OPENXR.md).
     implementation(files("libs/monado/monado-ipc.aar", "libs/monado/monado-auxiliary.aar"))

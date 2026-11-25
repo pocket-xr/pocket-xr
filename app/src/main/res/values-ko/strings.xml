@@ -865,6 +865,11 @@
     <string name="core_testers_already_joined">이미 참여했어요</string>
     <string name="core_support_label">맥주 한 잔 사 주기</string>
     <string name="core_support_description">Ko-fi에서 맥주 한 잔 사 주세요. 브라우저에서 ko-fi.com이 열려요.</string>
+    <string name="core_support_description_play">맥주 한 잔 사 주기: Google Play를 통한 1회 팁이에요.</string>
+    <string name="tip_thanks">건배! 맥주 고마워요.</string>
+    <string name="tip_pending">팁이 결제를 기다리고 있어요. 고마워요!</string>
+    <string name="tip_failed">지금은 Google Play에서 팁을 받을 수 없었어요. 나중에 다시 시도해 주세요.</string>
+    <string name="tip_no_play">지금 이 휴대전화에서는 Google Play 팁을 쓸 수 없어요.</string>
     <string name="core_update_banner">업데이트 가능: %1$s</string>
     <string name="core_update_notification_title">Pocket XR %1$s 버전이 나왔어요</string>
     <string name="core_update_notification_text">탭하여 업데이트 보기</string>

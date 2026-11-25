@@ -9,12 +9,26 @@ package com.hayeco.flipspaces.core
 object Support {
     const val KO_FI_URL = "https://ko-fi.com/mikehaye"
 
+    /**
+     * 1.6.26 (Mike: a one-time "tip" in-app product): the Play build's pill buys this one-time product through Play
+     * Billing instead (app/src/playtip TipJar), consumed after each tip so it can be bought again.
+     */
+    const val TIP_PRODUCT = "tip_beer"
+
     /** The row's line, and the quiet name of where it goes at its end. */
     val LABEL: String get() = UiText.get("core_support_label", "Buy me a beer")
     const val WHERE = "Ko-fi"
 
     /** What TalkBack reads for the row. */
     val DESCRIPTION: String get() = UiText.get("core_support_description", "Buy me a beer on Ko-fi. Opens ko-fi.com in the browser.")
+
+    /** 1.6.26: what TalkBack reads for the Play build's row, the tip through Google Play. */
+    val DESCRIPTION_PLAY: String get() = UiText.get("core_support_description_play", "Buy me a beer: a one-time tip through Google Play.")
+
+    fun description(playBuild: Boolean): String = if (playBuild) DESCRIPTION_PLAY else DESCRIPTION
+
+    /** 1.6.26: the quiet word at the row's end: "Ko-fi", or in the Play build the tip's price once Play has said it. */
+    fun where(playBuild: Boolean, price: String?): String = if (playBuild) price.orEmpty() else WHERE
 
     /**
      * 1.2.6 (Mike: the pill in the Pocket XR blue at a reduced opacity, not its own colour): the accent ([Look.ACCENT], the
@@ -28,13 +42,14 @@ object Support {
     const val TEXT = Look.INK
     const val WHERE_TEXT = Look.ACCENT
 
-    /** Whether the row shows: in every build but the Google Play one. */
-    fun shows(playBuild: Boolean): Boolean = !playBuild
+    /** Whether the row shows: 1.6.26, in every build (the Play build's tips through Play, [TIP_PRODUCT]). */
+    @Suppress("UNUSED_PARAMETER")
+    fun shows(playBuild: Boolean): Boolean = true
 
     /** The Menu's first rows, top down. */
     enum class MenuTop { KO_FI, UPDATE }
 
-    /** The Ko-fi row first, then the update row when there is a newer version ([update]); nothing more in the Play build. */
+    /** The tip row first, then the update row when there is a newer version ([update]). */
     fun menuTop(playBuild: Boolean, update: String?): List<MenuTop> =
         listOfNotNull(MenuTop.KO_FI.takeIf { shows(playBuild) }, MenuTop.UPDATE.takeIf { update != null })
 }
