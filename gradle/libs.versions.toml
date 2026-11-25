@@ -9,6 +9,8 @@ junit = "4.13.2"
 robolectric = "4.16.1"
 androidxTestCore = "1.7.0"
 shizuku = "13.1.5"
+# 1.6.26: Play Billing, in the Play build only (the tip; app/src/playtip), at Surface Keyboard's version
+billing = "9.1.0"
 mediapipe = "1.1.1"
 graphicsCore = "1.0.4"
 
@@ -25,6 +27,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
+billing-ktx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing" }
 shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "shizuku" }
 mediapipe-tasks-vision = { group = "com.google.mediapipe", name = "tasks-vision", version.ref = "mediapipe" }
 androidx-graphics-core = { group = "androidx.graphics", name = "graphics-core", version.ref = "graphicsCore" }

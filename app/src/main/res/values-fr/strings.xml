@@ -885,6 +885,11 @@
     <string name="core_testers_already_joined">J\'ai déjà rejoint</string>
     <string name="core_support_label">Offrez-moi une bière</string>
     <string name="core_support_description">Offrez-moi une bière sur Ko-fi. Ouvre ko-fi.com dans le navigateur.</string>
+    <string name="core_support_description_play">Offre-moi une bière : un pourboire unique via Google Play.</string>
+    <string name="tip_thanks">Santé ! Merci pour la bière.</string>
+    <string name="tip_pending">Ton pourboire attend le paiement. Merci !</string>
+    <string name="tip_failed">Google Play n\'a pas pu prendre le pourboire pour le moment. Réessaie plus tard.</string>
+    <string name="tip_no_play">Google Play n\'est pas prêt pour les pourboires sur ce téléphone pour le moment.</string>
     <string name="core_update_banner">Mise à jour disponible : %1$s</string>
     <string name="core_update_notification_title">Pocket XR %1$s est prêt</string>
     <string name="core_update_notification_text">Touchez pour voir la mise à jour.</string>

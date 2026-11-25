@@ -7,10 +7,11 @@ import org.junit.Test
 
 /** 1.0.1, 1.1.15: the "Buy me a beer" row at the top of the trackpad's Menu ([Support]). */
 class SupportTest {
+    /** 1.6.26: the Play build shows it too, as a tip through Google Play (Support.TIP_PRODUCT). */
     @Test
-    fun theRowShowsInTheGitHubBuildOnly() {
+    fun theRowShowsInEveryBuild() {
         assertTrue("GitHub build", Support.shows(playBuild = false))
-        assertFalse("Google Play build", Support.shows(playBuild = true))
+        assertTrue("Google Play build", Support.shows(playBuild = true))
     }
 
     @Test
@@ -19,10 +20,17 @@ class SupportTest {
         assertEquals(listOf(Support.MenuTop.KO_FI, Support.MenuTop.UPDATE), Support.menuTop(playBuild = false, update = "1.1.16"))
     }
 
+    /** 1.6.26: the Play build's row is the tip through Play: its price where Ko-fi's name is, nothing until Play says it. */
     @Test
-    fun thePlayBuildHasNoKoFiRow() {
-        assertEquals(emptyList<Support.MenuTop>(), Support.menuTop(playBuild = true, update = null))
-        assertEquals(listOf(Support.MenuTop.UPDATE), Support.menuTop(playBuild = true, update = "1.1.16"))
+    fun thePlayBuildTipsThroughPlay() {
+        assertEquals(listOf(Support.MenuTop.KO_FI), Support.menuTop(playBuild = true, update = null))
+        assertEquals("tip_beer", Support.TIP_PRODUCT)
+        assertEquals("Ko-fi", Support.where(playBuild = false, price = "$2.99"))
+        assertEquals("$2.99", Support.where(playBuild = true, price = "$2.99"))
+        assertEquals("", Support.where(playBuild = true, price = null))
+        assertTrue(Support.description(playBuild = true).contains("Google Play"))
+        assertFalse(Support.description(playBuild = true).contains("Ko-fi"))
+        assertTrue(Support.description(playBuild = false).contains("Ko-fi"))
     }
 
     @Test

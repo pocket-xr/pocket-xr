@@ -3034,9 +3034,10 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         addView(context.icon(R.drawable.ic_beer, 18f).apply { setColorFilter(com.hayeco.flipspaces.core.Support.WHERE_TEXT) })
         addView(context.padText(com.hayeco.flipspaces.core.Support.LABEL, 14f, com.hayeco.flipspaces.core.Support.TEXT).apply { setSingleLine(true) },
             LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = context.dp(10f) })
-        addView(context.padText(com.hayeco.flipspaces.core.Support.WHERE, 12f, com.hayeco.flipspaces.core.Support.WHERE_TEXT, bold = true))
+        // 1.6.26: in the Play build the tip's price, once Play has said it (TipJar)
+        addView(context.padText(com.hayeco.flipspaces.core.Support.where(BuildConfig.PLAY_BUILD, TipJar.price), 12f, com.hayeco.flipspaces.core.Support.WHERE_TEXT, bold = true))
         // TalkBack reads one button, not its parts.
-        contentDescription = com.hayeco.flipspaces.core.Support.DESCRIPTION
+        contentDescription = com.hayeco.flipspaces.core.Support.description(BuildConfig.PLAY_BUILD)
         for (i in 0 until childCount) getChildAt(i).importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         accessibilityDelegate = object : View.AccessibilityDelegate() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: android.view.accessibility.AccessibilityNodeInfo) {
@@ -3049,7 +3050,9 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         setOnClickListener {
             tick(this)
             closeDrawer()
-            SupportLink.open(context)
+            // 1.6.26: the Play build tips through Play's own purchase sheet; the others open Ko-fi
+            val activity = context as? android.app.Activity
+            if (!(BuildConfig.PLAY_BUILD && activity != null && TipJar.tip(activity))) SupportLink.open(context)
         }
     }
 

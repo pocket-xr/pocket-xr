@@ -1091,6 +1091,11 @@
     <string name="core_testers_already_joined">I already joined</string>
     <string name="core_support_label">Buy me a beer</string>
     <string name="core_support_description">Buy me a beer on Ko-fi. Opens ko-fi.com in the browser.</string>
+    <string name="core_support_description_play">Buy me a beer: a one-time tip through Google Play.</string>
+    <string name="tip_thanks">Cheers! Thank you for the beer.</string>
+    <string name="tip_pending">Your tip is waiting on the payment. Thank you!</string>
+    <string name="tip_failed">Google Play couldn\'t take the tip just now. Please try again later.</string>
+    <string name="tip_no_play">Google Play isn\'t ready for tips on this phone just now.</string>
     <!-- %1$s: the version, e.g. 1.4.2 -->
     <string name="core_update_banner">Update available: %1$s</string>
     <!-- %1$s: the version, e.g. 1.4.2 -->

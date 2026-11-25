@@ -875,6 +875,11 @@
     <string name="core_testers_already_joined">Bin schon dabei</string>
     <string name="core_support_label">Spendier mir ein Bier</string>
     <string name="core_support_description">Spendier mir ein Bier auf Ko-fi. Öffnet ko-fi.com im Browser.</string>
+    <string name="core_support_description_play">Spendier mir ein Bier: ein einmaliges Trinkgeld über Google Play.</string>
+    <string name="tip_thanks">Prost! Danke für das Bier.</string>
+    <string name="tip_pending">Dein Trinkgeld wartet noch auf die Zahlung. Danke!</string>
+    <string name="tip_failed">Google Play konnte das Trinkgeld gerade nicht annehmen. Bitte versuch es später noch einmal.</string>
+    <string name="tip_no_play">Google Play ist auf diesem Handy gerade nicht für Trinkgeld bereit.</string>
     <string name="core_update_banner">Update verfügbar: %1$s</string>
     <string name="core_update_notification_title">Pocket XR %1$s ist bereit</string>
     <string name="core_update_notification_text">Tippe, um das Update zu sehen.</string>

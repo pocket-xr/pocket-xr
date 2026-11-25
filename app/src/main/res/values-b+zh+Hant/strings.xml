@@ -865,6 +865,11 @@
     <string name="core_testers_already_joined">我已經加入了</string>
     <string name="core_support_label">請我喝杯啤酒</string>
     <string name="core_support_description">在 Ko-fi 上請我喝杯啤酒。會在瀏覽器中開啟 ko-fi.com。</string>
+    <string name="core_support_description_play">請我喝杯啤酒：透過 Google Play 的一次性打賞。</string>
+    <string name="tip_thanks">乾杯！謝謝你的啤酒。</string>
+    <string name="tip_pending">你的打賞正在等待付款。謝謝！</string>
+    <string name="tip_failed">Google Play 暫時無法收取打賞，請稍後再試。</string>
+    <string name="tip_no_play">這支手機上的 Google Play 暫時無法打賞。</string>
     <string name="core_update_banner">有可用的更新：%1$s</string>
     <string name="core_update_notification_title">Pocket XR %1$s 已推出</string>
     <string name="core_update_notification_text">輕觸即可查看更新。</string>

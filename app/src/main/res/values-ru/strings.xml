@@ -895,6 +895,11 @@
     <string name="core_testers_already_joined">Я уже участвую</string>
     <string name="core_support_label">Угостить пивом</string>
     <string name="core_support_description">Угостить меня пивом на Ko-fi. Открывает ko-fi.com в браузере.</string>
+    <string name="core_support_description_play">Угостить пивом: разовые чаевые через Google Play.</string>
+    <string name="tip_thanks">Ваше здоровье! Спасибо за пиво.</string>
+    <string name="tip_pending">Чаевые ждут оплаты. Спасибо!</string>
+    <string name="tip_failed">Google Play сейчас не смог принять чаевые. Попробуйте позже.</string>
+    <string name="tip_no_play">Google Play сейчас не готов принимать чаевые на этом телефоне.</string>
     <string name="core_update_banner">Доступно обновление: %1$s</string>
     <string name="core_update_notification_title">Pocket XR %1$s готов</string>
     <string name="core_update_notification_text">Нажмите, чтобы посмотреть обновление.</string>
