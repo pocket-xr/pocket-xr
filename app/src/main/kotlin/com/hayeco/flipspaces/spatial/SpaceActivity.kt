@@ -454,6 +454,10 @@ class SpaceActivity : Activity() {
         protectedOver = packageName
         protectedSeen = false
         protectedMisses = 0
+        // 1.6.22: the mouse is let go of, so DeX's own arrow moves and clicks in the app (no add-on needed).
+        SpaceSession.protectedOver = packageName
+        com.hayeco.flipspaces.pointer.MouseRoute.release(view)
+        Log.i(MODE_TAG, "$label full screen: the mouse is not captured by the Space meanwhile, so DeX's own arrow can click in it")
         PanelHost.lowerSpace(openedOn, "$label full screen")
         main.removeCallbacks(protectedCheck)
         main.postDelayed(protectedCheck, DEX_WINDOW_CHECK_MS)
@@ -469,6 +473,8 @@ class SpaceActivity : Activity() {
                     if (open == true) protectedSeen = true
                     if (open == false && (protectedSeen || ++protectedMisses >= 3)) {
                         protectedOver = null
+                        SpaceSession.protectedOver = null
+                        com.hayeco.flipspaces.pointer.MouseRoute.capture(view)
                         Log.i(MODE_TAG, "$pkg has no task left on display $openedOn: the Space is held in front again")
                         PanelHost.holdSpace(openedOn, true, "$pkg closed") { reply ->
                             main.post { if (!isFinishing) Log.i(MODE_TAG, "the Space back in front after $pkg: $reply") }
@@ -1340,6 +1346,7 @@ class SpaceActivity : Activity() {
     override fun onDestroy() {
         main.removeCallbacks(protectedCheck)
         protectedOver = null
+        SpaceSession.protectedOver = null
         if (com.hayeco.flipspaces.pcvr.AlvrBridge.available) pcVrStatus.stop()
         com.hayeco.flipspaces.pcvr.PcVrSession.close("the Space closed", now = true)
         PanelHost.onReady -= coverOnReady

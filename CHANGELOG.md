@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.22: a mouse clicks in Netflix full screen
+
+- **Netflix and other protected apps full screen, with a mouse:** the Space kept the mouse captured for its own pointer,
+  so over the app there was no arrow to click with unless the Pocket XR add-on's pointer was on. While such an app is
+  full screen, the Space now lets go of the mouse: DeX's own arrow shows and clicks in the app, add-on or not. The
+  Space takes the mouse back once the app closes. The phone's trackpad still needs the add-on's pointer there. Thanks to
+  Crr66; not yet tried.
+
 ## 1.6.21: RayNeo glasses' head tracking; protected apps in front on newer phones
 
 - **RayNeo glasses (experimental):** the RayNeo Air 4 Pro and Air 3S Pro (USB 1BBB:AF50) showed as "Unknown glasses"
