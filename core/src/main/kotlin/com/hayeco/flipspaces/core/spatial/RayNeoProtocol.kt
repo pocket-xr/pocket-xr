@@ -19,6 +19,13 @@ object RayNeoProtocol {
     const val VENDOR = 0x1BBB
     const val AIR_4_PRO = 0xAF50
 
+    /**
+     * 1.6.23 (a new user's Send logs: "rayneo GT max glasses", USB 3941:AF50 on an XREAL Beam Pro, the display again
+     * "SmartGlasses" EDID 980): the RayNeo GT's vendor id, as the RayNeo SDK by verncat lists it (include/rayneo_api.h,
+     * RAYNEO_GT_VID), with the same product id, start command and motion report.
+     */
+    const val VENDOR_GT = 0x3941
+
     const val PACKET_BYTES = 64
     const val OUT_MAGIC = 0x66
     const val IN_MAGIC = 0x99
@@ -29,9 +36,13 @@ object RayNeoProtocol {
     private const val G = 9.80665f
     private const val DEG = (Math.PI / 180.0).toFloat()
 
-    fun isRayNeo(vendorId: Int): Boolean = vendorId == VENDOR
+    fun isRayNeo(vendorId: Int): Boolean = vendorId == VENDOR || vendorId == VENDOR_GT
 
-    fun modelName(productId: Int): String = if (productId == AIR_4_PRO) "RayNeo Air 4 Pro or Air 3S Pro" else "RayNeo glasses"
+    fun modelName(vendorId: Int, productId: Int): String = when {
+        vendorId == VENDOR_GT -> "RayNeo GT"
+        productId == AIR_4_PRO -> "RayNeo Air 4 Pro or Air 3S Pro"
+        else -> "RayNeo glasses"
+    }
 
     fun command(cmd: Int, value: Int = 0): ByteArray = ByteArray(PACKET_BYTES).also {
         it[0] = OUT_MAGIC.toByte()

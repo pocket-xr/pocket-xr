@@ -59,8 +59,7 @@ class RayNeoLink private constructor(
         val sent = write(RayNeoProtocol.imuOn())
         starts++
         lastStartMs = SystemClock.elapsedRealtime()
-        startLine = "start (66 01 00) to interface ${intf.id}: ${if (sent) "written" else "not written"}" +
-            if (output == null) " (by a control transfer: no interrupt OUT endpoint)" else ""
+        startLine = "start (66 01 00) to interface ${intf.id}: ${if (sent) "written" else "not written"}" + how
         android.util.Log.i(TAG, "head tracking: $startLine")
     }
 
@@ -85,9 +84,19 @@ class RayNeoLink private constructor(
         return maxOf(n, 0)
     }
 
+    private var how = ""
+
+    /**
+     * Over the interrupt OUT endpoint; 1.6.23: when that write fails (the RayNeo SDK notes the GT's OUT endpoint
+     * refusing writes on Linux), or there is none, as a HID output report by a control transfer.
+     */
     private fun write(packet: ByteArray): Boolean {
-        val n = if (output != null) connection.bulkTransfer(output, packet, packet.size, COMMAND_TIMEOUT_MS)
-        else connection.controlTransfer(0x21, 0x09, 0x0200, intf.id, packet, packet.size, COMMAND_TIMEOUT_MS)
+        if (output != null && connection.bulkTransfer(output, packet, packet.size, COMMAND_TIMEOUT_MS) == packet.size) {
+            how = ""
+            return true
+        }
+        val n = connection.controlTransfer(0x21, 0x09, 0x0200, intf.id, packet, packet.size, COMMAND_TIMEOUT_MS)
+        how = if (output == null) " (by a control transfer: no interrupt OUT endpoint)" else " (by a control transfer: the interrupt OUT write failed)"
         return n == packet.size
     }
 
@@ -111,7 +120,7 @@ class RayNeoLink private constructor(
         }.getOrNull()
 
         fun glassesName(device: UsbDevice): String =
-            "%s (USB %04X:%04X)".format(java.util.Locale.ROOT, RayNeoProtocol.modelName(device.productId), device.vendorId, device.productId)
+            "%s (USB %04X:%04X)".format(java.util.Locale.ROOT, RayNeoProtocol.modelName(device.vendorId, device.productId), device.vendorId, device.productId)
 
         private fun endpoint(intf: UsbInterface, dir: Int): UsbEndpoint? = (0 until intf.endpointCount).map { intf.getEndpoint(it) }
             .firstOrNull { it.direction == dir && it.type == UsbConstants.USB_ENDPOINT_XFER_INT }

@@ -2,6 +2,17 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.23: windows that slowly drifted sideways; the RayNeo GT
+
+- **Windows creeping sideways on XREAL glasses:** before 1.6.20, the check that reads the glasses' axes from gravity
+  could turn a tested model's axes (the glasses upside down on a table, or a head lying back), and the gyro's saved bias
+  was turned with them. 1.6.20 went back to the model's own axes but kept the saved bias in the turned ones, so each
+  session started from a bias the wrong way round and the windows crept to one side (0.4 degrees a second on Mike's
+  Aura) until the glasses next lay still. The saved bias is now turned back once, and the old pick dropped.
+- **RayNeo GT (experimental):** these glasses use USB 3941:AF50, the same product as the RayNeo Air 4 Pro under another
+  vendor id, and showed as "Unknown glasses" with no head tracking. Pocket XR now reads them with its RayNeo reader, and
+  sends the start a second way when the glasses refuse it on their output endpoint. Not yet tried on a RayNeo GT.
+
 ## 1.6.22: a mouse clicks in Netflix full screen
 
 - **Netflix and other protected apps full screen, with a mouse:** the Space kept the mouse captured for its own pointer,
