@@ -1,17 +1,17 @@
 [versions]
-agp = "9.5.0"
+agp = "9.5.3"
 kotlin = "2.4.21"
-composeBom = "2026.09.00"
+composeBom = "2026.11.01"
 coreKtx = "1.19.1"
 activityCompose = "1.12.4"
 lifecycle = "2.10.0"
 junit = "4.13.2"
-robolectric = "4.16.1"
+robolectric = "4.18.1"
 androidxTestCore = "1.7.0"
 shizuku = "13.1.5"
 # 1.6.26: Play Billing, in the Play build only (the tip; app/src/playtip), at Surface Keyboard's version
 billing = "9.1.0"
-mediapipe = "1.1.1"
+mediapipe = "1.2.3"
 graphicsCore = "1.0.4"
 
 [libraries]

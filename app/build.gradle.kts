@@ -194,7 +194,7 @@ dependencies {
     // LiteRT v2.3.2 build in jniLibs, which exports what the Samsung dispatch needs. 0.5.96: the NPU models and that
     // build are not in the public repository; without them hand tracking runs MediaPipe on the GPU or CPU. 1.1.14: GitHub
     // releases fetch them into src/npu (sourceSets below, docs/RELEASE.md).
-    implementation("com.google.ai.edge.litert:litert:2.3.2")
+    implementation("com.google.ai.edge.litert:litert:2.4.0")
     // 0.5.3: EGL images of the panel ImageReaders' HardwareBuffers (eglCreateImageFromHardwareBuffer).
     implementation(libs.androidx.graphics.core)
     // 0.5.49: the release build's lint (InvalidFragmentVersionForActivityResult): a library brings an old Fragment, under
@@ -202,9 +202,9 @@ dependencies {
     implementation("androidx.fragment:fragment:1.9.1")
     // PC screens: what Moonlight's stream code uses, at moonlight-android's versions: OkHttp for the host's HTTP API and
     // Bouncy Castle for the client certificate that pairing makes.
-    implementation("com.squareup.okhttp3:okhttp:5.5.0")
-    implementation("org.bouncycastle:bcprov-jdk18on:1.85.2")
-    implementation("org.bouncycastle:bcpkix-jdk18on:1.85")
+    implementation("com.squareup.okhttp3:okhttp:5.5.1")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.87")
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.87")
 
     testImplementation(libs.junit)
     // 1.1.14: Send logs to Mike and the Head tracking switch, tested on Robolectric (app/src/test).
