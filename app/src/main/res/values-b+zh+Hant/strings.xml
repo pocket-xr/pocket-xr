@@ -42,7 +42,7 @@
     <string name="space_cc_save_windows">+ 儲存這些視窗</string>
     <string name="space_cc_save_current">+ 儲存目前配置</string>
     <string name="space_launcher_no_apps">找不到應用程式</string>
-    <string name="space_launcher_depth">立體</string>
+    <string name="space_launcher_depth">3D</string>
     <string name="space_launcher_search_apps">搜尋應用程式</string>
     <string name="space_home_apps">應用程式</string>
     <string name="space_home_close">關閉</string>

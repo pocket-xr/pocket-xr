@@ -55,7 +55,7 @@
     <!-- App launcher on the glasses -->
     <string name="space_launcher_no_apps">No apps found</string>
     <!-- Launcher button's top word, over On or Off: the 3D view -->
-    <string name="space_launcher_depth">Depth</string>
+    <string name="space_launcher_depth">3D</string>
     <string name="space_launcher_search_apps">Search apps</string>
     <!-- The round home button on the glasses: opens or closes the launcher -->
     <string name="space_home_apps">Apps</string>

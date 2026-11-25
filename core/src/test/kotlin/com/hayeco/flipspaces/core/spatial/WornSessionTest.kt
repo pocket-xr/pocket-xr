@@ -395,7 +395,8 @@ class WornSessionTest {
         // A level head whose fusion was left 4 degrees off in roll and 3 in pitch (as the start gate
         // left Mike's): a recentre levels it from the averaged gravity.
         // No pull and no start gate: nothing else levels it.
-        val f = HeadFusion(FusionSettings(kp = 0f, kpMoving = 0f, kpStatic = 0f, settleKp = 0f, kpWornFast = 0f, startGate = false))
+        // 1.6.28 follows every tilt on a recentre (RecentreTilt1213Test); this keeps the 15 degree horizon snap it was written for.
+        val f = HeadFusion(FusionSettings(kp = 0f, kpMoving = 0f, kpStatic = 0f, settleKp = 0f, kpWornFast = 0f, startGate = false, recentreTiltMinDeg = 15f))
         val tilt = (Quat.axisAngle(Vec3(0f, 0f, -1f), 4f * DEG) * Quat.axisAngle(Vec3.RIGHT, 3f * DEG)).normalized()
         val g = tilt.conjugate().rotate(Vec3(0f, 9.81f, 0f))
         // Starts level from a level sample, then reads the tilted gravity (the head tilted while the gyro slept).

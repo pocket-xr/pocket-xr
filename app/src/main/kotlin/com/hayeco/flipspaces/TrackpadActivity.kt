@@ -1559,7 +1559,7 @@ class TrackpadActivity : Activity(), PadHost {
                     repeatAction = null
                 }
             }
-            // 0.5.19: a tap (its release, so a slide along the key is not one) holds or drops the window to curve.
+            // 0.5.19: on its release, so a slide along the key is not a tap. 1.6.28: the tap steps the window flat, half, full.
             CoverButton.CURVE -> if (!down) {
                 submit(PadSignal.Window(WindowAction.CURVE))
                 offerUnwrap()

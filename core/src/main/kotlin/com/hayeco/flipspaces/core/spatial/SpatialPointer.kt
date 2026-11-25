@@ -1370,7 +1370,21 @@ class SpatialPointer(var frustum: ViewFrustum, settings: PointerSettings = Point
         // 1.1.15: Lock screens: the window buttons pick nothing up and step nothing.
         if (windowsLocked) return lockedNotice(out, "${s.action.name.lowercase()} window button")
         when (s.action) {
-            WindowAction.MOVE, WindowAction.RESIZE, WindowAction.CURVE -> {
+            // 1.6.28: a tap on Curve steps the held window, or the one under the cursor, at once ([CurveControl.tapStep]);
+            // it no longer holds the window for the trackpad to curve.
+            WindowAction.CURVE -> {
+                val l = latest(layout, out)
+                val p = (held?.panelId ?: windowTarget(head, l)?.id)?.let { l.panel(it) } ?: run {
+                    out += SpaceAction.Note("cover curve button: no window to curve")
+                    return
+                }
+                wrapTold = false
+                val from = l.wrap?.curve ?: p.curve
+                val to = CurveControl.tapStep(from)
+                curveBy(p, from, to - from, l, commit = held == null, out, "Curve button tap")
+                setGuide(curveGuide(l, to))
+            }
+            WindowAction.MOVE, WindowAction.RESIZE -> {
                 val adjust = s.action == WindowAction.RESIZE
                 // 0.5.19: Curve holds the window to curve it with a sideways swipe.
                 val curve = s.action == WindowAction.CURVE

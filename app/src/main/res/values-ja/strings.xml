@@ -42,7 +42,7 @@
     <string name="space_cc_save_windows">+ このウィンドウを保存</string>
     <string name="space_cc_save_current">+ 現在の状態を保存</string>
     <string name="space_launcher_no_apps">アプリが見つかりません</string>
-    <string name="space_launcher_depth">立体</string>
+    <string name="space_launcher_depth">3D</string>
     <string name="space_launcher_search_apps">アプリを検索</string>
     <string name="space_home_apps">アプリ</string>
     <string name="space_home_close">閉じる</string>

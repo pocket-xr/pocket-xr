@@ -2,6 +2,21 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.28: recentre where you look, a simpler Curve key, 3D, no slim DeX bar
+
+- **Recentre puts the windows where you look.** A recentre with the head less than 15 degrees up or down put the
+  windows on the horizon instead, so after a small nod they landed above or below the view. Now they always land
+  straight in front of you. Turn off Recenter follows head tilt to keep them on the horizon.
+- **Curve acts on a tap.** Under the trackpad, Further and Closer act each time they're tapped, but Curve picked the
+  window up and waited for the trackpad. Now each tap curves the window you point at a step: flat, half, full, then
+  flat again. Sliding along the key still curves it by any amount.
+- **"3D" instead of "Depth"** on the launcher button that turns on side-by-side 3D, in every language.
+- **No slim white bar over the Space (Galaxy S20, Android 13):** DeX's title bar can be made slimmer, and a slim one
+  (12 pixels) was too thin for Pocket XR's check, so the Space stayed in its window under it. The check now catches
+  a bar from 8 pixels.
+
+Found by Crr66. Not yet tried on an S20.
+
 ## 1.6.27: Netflix full screen with no title bar, Back closes it, no debug panel
 
 - **No white title bar on Netflix full screen (Galaxy S20, Android 13):** Pocket XR opened Netflix and other apps that

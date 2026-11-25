@@ -43,7 +43,7 @@
     <string name="space_cc_save_windows">+ Diese Fenster speichern</string>
     <string name="space_cc_save_current">+ Aktuelle speichern</string>
     <string name="space_launcher_no_apps">Keine Apps gefunden</string>
-    <string name="space_launcher_depth">Tiefe</string>
+    <string name="space_launcher_depth">3D</string>
     <string name="space_launcher_search_apps">Apps suchen</string>
     <string name="space_home_apps">Apps</string>
     <string name="space_home_close">Schließen</string>

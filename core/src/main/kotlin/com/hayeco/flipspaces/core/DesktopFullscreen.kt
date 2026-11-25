@@ -209,6 +209,9 @@ object SpaceSurfacePlan {
      * 1.6.8: whether the Space's own surface is shorter than its display by about a caption's height, the
      * sign of a caption drawn inside the window (One UI 5 on Android 13 and older). The DeX taskbar or a
      * rounding of a pixel or two do not count: only 24 to 120 rows missing at the full width.
+     * 1.6.28 (Crr66: "a small white bar in the space", surface 1920x1068): DeX's title bar can be made slimmer (its
+     * three dots), and that one was 12 rows, so from 8 rows now. A rounding of a pixel or two still does not count, and
+     * the activity still waits for the shortfall to stay.
      */
     fun captionInWindow(surfaceW: Int, surfaceH: Int, displayW: Int, displayH: Int): Boolean {
         if (surfaceW <= 0 || surfaceH <= 0 || displayW <= 0 || displayH <= 0) return false
@@ -216,7 +219,7 @@ object SpaceSurfacePlan {
         return surfaceW >= displayW && missing in CAPTION_MIN_ROWS..CAPTION_MAX_ROWS
     }
 
-    private const val CAPTION_MIN_ROWS = 24
+    private const val CAPTION_MIN_ROWS = 8
     private const val CAPTION_MAX_ROWS = 120
 
     /**

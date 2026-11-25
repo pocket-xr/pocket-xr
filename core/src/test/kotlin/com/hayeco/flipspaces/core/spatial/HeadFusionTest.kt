@@ -95,7 +95,8 @@ class HeadFusionTest {
 
     @Test
     fun recentreZeroesYawOnly() {
-        val f = HeadFusion()
+        // 1.6.28 follows every tilt on a recentre (RecentreTilt1213Test); this keeps the 15 degree horizon snap it was written for.
+        val f = HeadFusion(FusionSettings(recentreTiltMinDeg = 15f))
         val start = Quat.fromYawPitch(40f, 10f)
         simulate(f, 0.5f, Vec3.ZERO, start)
         f.recentre()
