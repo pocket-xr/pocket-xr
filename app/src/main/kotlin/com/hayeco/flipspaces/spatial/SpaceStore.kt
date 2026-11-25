@@ -511,11 +511,6 @@ class SpaceStore(context: Context) {
             .apply()
     }
 
-    /** 0.5.30: the Space's debug info panel below the view (Developer on the Menu); off by default. */
-    var debugInfo: Boolean
-        get() = prefs.getBoolean(KEY_DEBUG_INFO, false)
-        set(value) = prefs.edit().putBoolean(KEY_DEBUG_INFO, value).apply()
-
     /** 0.5.32: the still head's lock ([com.hayeco.flipspaces.core.spatial.RestLock]); on by default, off on the Developer card for an A/B. */
     var stillLock: Boolean
         get() = prefs.getBoolean(KEY_STILL_LOCK, true)
@@ -823,7 +818,6 @@ class SpaceStore(context: Context) {
         private const val KEY_ROW_POSE_SBS = "row_pose_sbs_0525"
         private const val KEY_DISTANCE_3D = "glasses_distance_3d_0529"
         private const val KEY_DISTANCE_FIX = "distance_fix_0529"
-        private const val KEY_DEBUG_INFO = "debug_info_0530"
         private const val KEY_HEAD_CURSOR = "head_cursor_0532"
         private const val KEY_STILL_LOCK = "still_lock_0532"
         private const val KEY_DRAW_SMOOTHING = "draw_smoothing_0564"

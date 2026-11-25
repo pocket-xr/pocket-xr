@@ -100,14 +100,6 @@
     <string name="space_problem_service_restarted">パネルサービスが再起動しました。パネルを開き直しています。</string>
     <string name="space_problem_protects">%1$s は画面を保護しています。バナーをピンチすると DeX ウィンドウで開けます。</string>
     <string name="space_problem_looks_protected">%1$s はパネル上で保護されているようです。バナーをピンチすると DeX ウィンドウで開けます。</string>
-    <string name="space_info_mode">Pocket XR: %1$s</string>
-    <string name="space_info_starting">起動中</string>
-    <string name="space_info_head_tracking">ヘッドトラッキング: %1$s</string>
-    <string name="space_info_panels">パネル: %1$d/6。%2$s。</string>
-    <string name="space_info_trackpad">トラックパッド: スワイプでカーソル移動、タップでクリック、2 本指タップで右クリック、2 本指スワイプでスクロール、ピンチでズーム。タイトルバーをタップするとウィンドウを持ち上げます: スワイプで移動、2 本指で同じように上へ動かすと奥へ、下へ動かすと手前へ、ピンチでサイズ変更、タップかホームで置きます。タイトルバーの「リセット」と「閉じる」。3 本指で上: 最近使ったアプリ、下: コントロールパネル。ホーム: ランチャー、ホーム長押し: カーソルをリセンター。</string>
-    <string name="space_info_black_panel">黒いままのパネル（FLAG_SECURE や Netflix などの DRM）では、アプリを DeX ウィンドウで開くよう案内します。</string>
-    <string name="space_info_in_view">表示中: %1$d/%2$d。温度: %3$s、パネルは最大 %4$d fps（フォーカス中 %5$d）。</string>
-    <string name="space_info_last_problem">最後の問題: %1$s</string>
     <string name="panel_service_stopped">パネルサービスが停止しました（%1$s）。再接続しています。</string>
     <string name="panel_shizuku_would_not_start">Shizuku がパネルサービスを起動できませんでした: %1$s</string>
     <string name="panel_service_not_connected">パネルサービスが接続されていません</string>
@@ -228,7 +220,6 @@
     <string name="pad_reset_message">カーソル、スクロール、ストリップの速度、ストリップの位置、横向きの方向、カーソルの頭への追従、画面をオンのまま、トラッキングモード、ウィンドウのスナップ、新しいインスタンス、新しいウィンドウのカーブが Pocket XR の初期設定に戻ります。トラックパッドの種類、ウィンドウ、プリセットはそのままです。</string>
     <string name="pad_reset">リセット</string>
     <string name="pad_developer_settings">開発者向け設定</string>
-    <string name="pad_dev_debug_info">デバッグ情報パネル</string>
     <string name="pad_dev_still_lock">静止ロック</string>
     <string name="pad_dev_draw_smoothing">描画スムージング</string>
     <string name="pad_dev_auto_glasses_view">グラスの 3D / 2D を切り替え</string>
@@ -326,8 +317,6 @@
     <string name="pad_edge_check_on">エッジチェック オン: 片目ずつ、両側の目盛りを数えてください。</string>
     <string name="pad_edge_check_off">エッジチェック オフ。</string>
     <string name="pad_edge_check_eyes">エッジチェック: %1$s。</string>
-    <string name="pad_debug_info_on">デバッグ情報パネル: オン。</string>
-    <string name="pad_debug_info_off">デバッグ情報パネル: オフ。</string>
     <string name="pad_head_cursor_auto">ヘッドカーソルは使っていないときに隠れます。</string>
     <string name="pad_head_cursor_always">ヘッドカーソルを常に表示します。</string>
     <string name="pad_head_cursor_off">ヘッドカーソル: オフ。</string>

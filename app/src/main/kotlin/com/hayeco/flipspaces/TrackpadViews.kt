@@ -884,9 +884,6 @@ interface PadHost {
     fun distanceFixOn(): Boolean
     fun distanceFixChosen(on: Boolean)
 
-    /** 0.5.30: the Space's debug info panel (the grey block of text below the view), off by default, on the hidden Developer card. */
-    fun debugInfoOn(): Boolean
-    fun debugInfoChosen(on: Boolean)
 
     /** 0.5.32: the head cursor's mode ([com.hayeco.flipspaces.core.spatial.HeadCursorMode]), auto hide by default. */
     fun headCursorMode(): com.hayeco.flipspaces.core.spatial.HeadCursorMode
@@ -2692,7 +2689,6 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
                 buildDrawer()
             }
         }
-        switch(c.getString(R.string.pad_dev_debug_info), host.debugInfoOn()) { host.debugInfoChosen(it) }
         // 0.5.32: the still head's lock, on by default; off for an A/B against 0.5.31's tremor.
         switch(c.getString(R.string.pad_dev_still_lock), host.stillLockOn()) { host.stillLockChosen(it) }
         // 0.5.64: the drawn orientation's One Euro filter, on by default; off for an A/B.

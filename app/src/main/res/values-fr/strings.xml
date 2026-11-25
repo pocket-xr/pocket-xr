@@ -104,14 +104,6 @@
     <string name="space_problem_service_restarted">Le service des panneaux a redémarré ; réouverture des panneaux.</string>
     <string name="space_problem_protects">%1$s protège son écran ; pincez sa bannière pour l\'ouvrir en fenêtre DeX.</string>
     <string name="space_problem_looks_protected">%1$s semble protégé sur son panneau ; pincez sa bannière pour l\'ouvrir en fenêtre DeX.</string>
-    <string name="space_info_mode">Pocket XR : %1$s</string>
-    <string name="space_info_starting">démarrage</string>
-    <string name="space_info_head_tracking">Suivi de la tête : %1$s</string>
-    <string name="space_info_panels">Panneaux : %1$d sur 6. %2$s.</string>
-    <string name="space_info_trackpad">Pavé tactile : glissez pour déplacer le curseur, touchez pour cliquer, touche à deux doigts : clic droit, glissement à deux doigts : défilement, pincement : zoom. Touchez une barre de titre pour saisir une fenêtre : glisser la déplace, deux doigts dans le même sens l\'éloignent (vers le haut) ou la rapprochent, pincer la redimensionne, toucher ou Accueil la lâche. Barre de titre : Réinitialiser et Fermer. Trois doigts vers le haut : apps récentes, vers le bas : panneau de contrôle. Accueil : le lanceur ; maintenir Accueil : recentrer le curseur.</string>
-    <string name="space_info_black_panel">Un panneau qui reste noir (FLAG_SECURE ou DRM, comme Netflix) propose d\'ouvrir son app en fenêtre DeX.</string>
-    <string name="space_info_in_view">Visibles : %1$d sur %2$d. Thermique : %3$s, panneaux jusqu\'à %4$d i/s (actif %5$d).</string>
-    <string name="space_info_last_problem">Dernier problème : %1$s</string>
     <string name="panel_service_stopped">Le service des panneaux s\'est arrêté (%1$s). Reconnexion.</string>
     <string name="panel_shizuku_would_not_start">Shizuku n\'a pas pu démarrer le service des panneaux : %1$s</string>
     <string name="panel_service_not_connected">Le service des panneaux n\'est pas connecté</string>
@@ -242,7 +234,6 @@
     <string name="pad_reset_message">Les vitesses du curseur, du défilement et de la bande, le côté de la bande, le sens horizontal, le curseur qui suit la tête, l\'écran toujours allumé, le mode de suivi, l\'aimantation des fenêtres, les nouvelles instances et la courbure des nouvelles fenêtres reviennent aux valeurs par défaut de Pocket XR. Le type de pavé tactile, vos fenêtres et vos préréglages sont conservés.</string>
     <string name="pad_reset">Réinitialiser</string>
     <string name="pad_developer_settings">Paramètres développeur</string>
-    <string name="pad_dev_debug_info">Panneau d\'infos de débogage</string>
     <string name="pad_dev_still_lock">Verrouillage à l\'arrêt</string>
     <string name="pad_dev_draw_smoothing">Lissage de l\'affichage</string>
     <string name="pad_dev_auto_glasses_view">Basculer la 3D / 2D des lunettes</string>
@@ -340,8 +331,6 @@
     <string name="pad_edge_check_on">Vérification des bords activée : un œil à la fois, comptez les graduations de chaque côté.</string>
     <string name="pad_edge_check_off">Vérification des bords désactivée.</string>
     <string name="pad_edge_check_eyes">Vérification des bords : %1$s.</string>
-    <string name="pad_debug_info_on">Panneau d\'infos de débogage activé.</string>
-    <string name="pad_debug_info_off">Panneau d\'infos de débogage désactivé.</string>
     <string name="pad_head_cursor_auto">Le curseur de tête se masque quand vous ne l\'utilisez pas.</string>
     <string name="pad_head_cursor_always">Curseur de tête toujours affiché.</string>
     <string name="pad_head_cursor_off">Curseur de tête désactivé.</string>

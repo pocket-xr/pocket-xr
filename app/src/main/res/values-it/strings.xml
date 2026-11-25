@@ -104,14 +104,6 @@
     <string name="space_problem_service_restarted">Il servizio pannelli si è riavviato; riapertura dei pannelli.</string>
     <string name="space_problem_protects">%1$s protegge il suo schermo; pizzica il suo banner per aprirla come finestra DeX.</string>
     <string name="space_problem_looks_protected">%1$s sembra protetta sul suo pannello; pizzica il suo banner per aprirla come finestra DeX.</string>
-    <string name="space_info_mode">Pocket XR: %1$s</string>
-    <string name="space_info_starting">avvio</string>
-    <string name="space_info_head_tracking">Tracciamento della testa: %1$s</string>
-    <string name="space_info_panels">Pannelli: %1$d di 6. %2$s.</string>
-    <string name="space_info_trackpad">Trackpad: scorri per muovere il cursore, tocca per fare clic, tocco con due dita: clic destro, scorrimento con due dita: scorri, pizzica: zoom. Tocca una barra del titolo per prendere una finestra: scorrere la sposta, due dita nello stesso modo la allontanano (su) o la avvicinano, pizzicare la ridimensiona, un tocco o Home la rilascia. Barra del titolo: Reimposta e Chiudi. Tre dita in su: app recenti, in giù: Pannello di controllo. Home: il launcher; tieni premuto Home: ricentra il cursore.</string>
-    <string name="space_info_black_panel">Un pannello che resta nero (FLAG_SECURE o DRM, come Netflix) propone di aprire la sua app come finestra DeX.</string>
-    <string name="space_info_in_view">In vista: %1$d di %2$d. Temperatura: %3$s, pannelli fino a %4$d fps (in primo piano %5$d).</string>
-    <string name="space_info_last_problem">Ultimo problema: %1$s</string>
     <string name="panel_service_stopped">Il servizio pannelli si è fermato (%1$s). Riconnessione.</string>
     <string name="panel_shizuku_would_not_start">Shizuku non è riuscito ad avviare il servizio pannelli: %1$s</string>
     <string name="panel_service_not_connected">Il servizio pannelli non è connesso</string>
@@ -242,7 +234,6 @@
     <string name="pad_reset_message">Velocità di cursore, scorrimento e barra, il lato della barra, la direzione orizzontale, cursore segue la testa, schermo sempre acceso, la modalità di tracciamento, aggancia finestre, nuove istanze e la curvatura delle nuove finestre tornano ai valori predefiniti di Pocket XR. Il tipo di trackpad, le finestre e i preset restano.</string>
     <string name="pad_reset">Reimposta</string>
     <string name="pad_developer_settings">Impostazioni sviluppatore</string>
-    <string name="pad_dev_debug_info">Pannello info di debug</string>
     <string name="pad_dev_still_lock">Blocco da fermo</string>
     <string name="pad_dev_draw_smoothing">Smussatura del disegno</string>
     <string name="pad_dev_auto_glasses_view">Cambia 3D / 2D degli occhiali</string>
@@ -340,8 +331,6 @@
     <string name="pad_edge_check_on">Verifica bordi attiva: un occhio alla volta, conta le tacche su ogni lato.</string>
     <string name="pad_edge_check_off">Verifica bordi disattivata.</string>
     <string name="pad_edge_check_eyes">Verifica bordi: %1$s.</string>
-    <string name="pad_debug_info_on">Pannello info di debug attivo.</string>
-    <string name="pad_debug_info_off">Pannello info di debug disattivato.</string>
     <string name="pad_head_cursor_auto">Il cursore della testa si nasconde quando non lo usi.</string>
     <string name="pad_head_cursor_always">Cursore della testa sempre visibile.</string>
     <string name="pad_head_cursor_off">Cursore della testa disattivato.</string>

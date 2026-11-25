@@ -100,14 +100,6 @@
     <string name="space_problem_service_restarted">面板服务已重启，正在重新打开面板。</string>
     <string name="space_problem_protects">%1$s 会保护其屏幕内容；捏合它的横幅即可以 DeX 窗口打开。</string>
     <string name="space_problem_looks_protected">%1$s 在其面板上似乎受保护；捏合它的横幅即可以 DeX 窗口打开。</string>
-    <string name="space_info_mode">Pocket XR：%1$s</string>
-    <string name="space_info_starting">正在启动</string>
-    <string name="space_info_head_tracking">头部追踪：%1$s</string>
-    <string name="space_info_panels">面板：%1$d / 6。%2$s。</string>
-    <string name="space_info_trackpad">触控板：滑动移动光标，点按即点击，双指点按：右键，双指滑动：滚动，双指捏合：缩放。点按标题栏可拿起窗口：滑动移动窗口，双指同向滑动可推远（向上）或拉近，捏合调整大小，点按或按“主页”放下。标题栏上有“重置”和“关闭”。三指上滑：最近使用的应用，下滑：控制面板。“主页”：启动器；按住“主页”：光标重新居中。</string>
-    <string name="space_info_black_panel">一直黑屏的面板（FLAG_SECURE 或 DRM，例如 Netflix）会提供以 DeX 窗口打开其应用的选项。</string>
-    <string name="space_info_in_view">视野内：%1$d / %2$d。温度：%3$s，面板最高 %4$d fps（聚焦 %5$d）。</string>
-    <string name="space_info_last_problem">最近的问题：%1$s</string>
     <string name="panel_service_stopped">面板服务已停止（%1$s），正在重新连接。</string>
     <string name="panel_shizuku_would_not_start">Shizuku 无法启动面板服务：%1$s</string>
     <string name="panel_service_not_connected">面板服务未连接</string>
@@ -228,7 +220,6 @@
     <string name="pad_reset_message">光标、滚动和滚动条速度，滚动条位置，横向方向，光标跟随头部，屏幕常亮，追踪模式，窗口吸附，新实例以及新窗口的弧度都会恢复为 Pocket XR 的默认值。触控板类型、你的窗口和预设会保留。</string>
     <string name="pad_reset">重置</string>
     <string name="pad_developer_settings">开发者设置</string>
-    <string name="pad_dev_debug_info">调试信息面板</string>
     <string name="pad_dev_still_lock">静止锁定</string>
     <string name="pad_dev_draw_smoothing">绘制平滑</string>
     <string name="pad_dev_auto_glasses_view">切换眼镜的 3D / 2D</string>
@@ -326,8 +317,6 @@
     <string name="pad_edge_check_on">边缘检查已开启：一次看一只眼睛，数一数每一侧的刻度。</string>
     <string name="pad_edge_check_off">边缘检查已关闭。</string>
     <string name="pad_edge_check_eyes">边缘检查：%1$s。</string>
-    <string name="pad_debug_info_on">调试信息面板已开启。</string>
-    <string name="pad_debug_info_off">调试信息面板已关闭。</string>
     <string name="pad_head_cursor_auto">头部光标在你不用时会隐藏。</string>
     <string name="pad_head_cursor_always">头部光标始终显示。</string>
     <string name="pad_head_cursor_off">头部光标已关闭。</string>

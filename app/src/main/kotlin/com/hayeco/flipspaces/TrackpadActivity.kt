@@ -1662,13 +1662,6 @@ class TrackpadActivity : Activity(), PadHost {
         Log.i(TAG, "glasses 3D distance %.1f m from the trackpad's Menu (${if (cover) "cover" else "main"} screen)".format(java.util.Locale.ROOT, m))
     }
 
-    override fun debugInfoOn(): Boolean = com.hayeco.flipspaces.spatial.SpaceStore(this).debugInfo
-
-    override fun debugInfoChosen(on: Boolean) {
-        com.hayeco.flipspaces.spatial.SpaceStore(this).debugInfo = on
-        Log.i(TAG, "debug info panel: ${if (on) "on" else "off"} (the trackpad's Menu, Developer, ${if (cover) "cover" else "main"} screen)")
-        screen.showToast(getString(if (on) R.string.pad_debug_info_on else R.string.pad_debug_info_off))
-    }
 
     override fun headCursorMode(): com.hayeco.flipspaces.core.spatial.HeadCursorMode =
         com.hayeco.flipspaces.core.spatial.HeadCursorMode.of(com.hayeco.flipspaces.spatial.SpaceStore(this).headCursor)

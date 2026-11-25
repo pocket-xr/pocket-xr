@@ -2,6 +2,20 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.27: Netflix full screen with no title bar, Back closes it, no debug panel
+
+- **No white title bar on Netflix full screen (Galaxy S20, Android 13):** Pocket XR opened Netflix and other apps that
+  protect their video as large as the glasses' display, but still as a DeX window, and DeX puts a title bar on any
+  window that isn't showing a video full screen. On Netflix's home page that bar couldn't be moved, resized or closed.
+  The window is now made a true full screen one as soon as it opens, which has no title bar. The log says whether
+  Android took it. Found by Crr66; not yet tried on an S20.
+- **Back closes it:** the trackpad's Back now goes to an app open full screen over the Space, as the phone's Back
+  does. At the app's first page it closes it, and the Space comes back. Before, Back went to the Space's windows
+  behind it, so there was no way to close the app from the glasses.
+- **The debug info panel is gone:** a developer readout (a block of text about head tracking, windows and the
+  trackpad) that the Developer settings at the end of the trackpad's Menu could switch on. Crr66 took it for
+  instructions that came and went; it isn't needed any more, so it can't be switched on by accident now.
+
 ## 1.6.26: buy me a beer on Google Play too
 
 - **A tip through Google Play.** The "Buy me a beer" pill at the top of the trackpad's Menu was hidden in the Google

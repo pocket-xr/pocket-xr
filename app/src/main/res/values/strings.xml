@@ -134,16 +134,8 @@
 
     <!-- The Space's debug info panel (Developer) -->
     <!-- %1$s: the display mode -->
-    <string name="space_info_mode">Pocket XR: %1$s</string>
-    <string name="space_info_starting">starting</string>
-    <string name="space_info_head_tracking">Head tracking: %1$s</string>
     <!-- %1$d: panels open, %2$s: Shizuku's state -->
-    <string name="space_info_panels">Panels: %1$d of 6. %2$s.</string>
-    <string name="space_info_trackpad">Trackpad: swipe to move the cursor, tap to click, two finger tap: right click, two finger swipe: scroll, pinch: zoom. Tap a title bar to pick a window up: swipe moves it, two fingers the same way push it away (up) or pull it closer, pinch resizes, tap or Home drops it. Title bar Reset and Close. Three fingers up: recent apps, down: Control panel. Home: the launcher; hold Home: recentre the cursor.</string>
-    <string name="space_info_black_panel">A panel that stays black (FLAG_SECURE or DRM, such as Netflix) offers to open its app as a DeX window.</string>
     <!-- %1$d: panels in view, %2$d: panels open, %3$s: thermal state, %4$d and %5$d: frames per second -->
-    <string name="space_info_in_view">In view: %1$d of %2$d. Thermal: %3$s, panels up to %4$d fps (focused %5$d).</string>
-    <string name="space_info_last_problem">Last problem: %1$s</string>
 
     <!-- values\strings_b.xml -->
     <!-- %1$s is the internal reason, in English (e.g. "Shizuku stopped"). -->
@@ -302,7 +294,6 @@
     <string name="pad_reset">Reset</string>
     <string name="pad_developer_settings">Developer settings</string>
     <!-- The Developer card's switches -->
-    <string name="pad_dev_debug_info">Debug info panel</string>
     <string name="pad_dev_still_lock">Still lock</string>
     <string name="pad_dev_draw_smoothing">Draw smoothing</string>
     <string name="pad_dev_auto_glasses_view">Switch the glasses\' 3D / 2D</string>
@@ -424,8 +415,6 @@
     <string name="pad_edge_check_off">Edge check off.</string>
     <!-- %1$s is which eye or eyes the edge check shows -->
     <string name="pad_edge_check_eyes">Edge check: %1$s.</string>
-    <string name="pad_debug_info_on">Debug info panel on.</string>
-    <string name="pad_debug_info_off">Debug info panel off.</string>
     <string name="pad_head_cursor_auto">Head cursor hides when you\'re not using it.</string>
     <string name="pad_head_cursor_always">Head cursor always shown.</string>
     <string name="pad_head_cursor_off">Head cursor off.</string>
