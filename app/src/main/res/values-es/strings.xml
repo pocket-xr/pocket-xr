@@ -104,14 +104,6 @@
     <string name="space_problem_service_restarted">El servicio de paneles se reinició; reabriendo los paneles.</string>
     <string name="space_problem_protects">%1$s protege su pantalla; pellizca su banner para abrirla como ventana de DeX.</string>
     <string name="space_problem_looks_protected">%1$s parece protegida en su panel; pellizca su banner para abrirla como ventana de DeX.</string>
-    <string name="space_info_mode">Pocket XR: %1$s</string>
-    <string name="space_info_starting">iniciando</string>
-    <string name="space_info_head_tracking">Seguimiento de cabeza: %1$s</string>
-    <string name="space_info_panels">Paneles: %1$d de 6. %2$s.</string>
-    <string name="space_info_trackpad">Panel táctil: desliza para mover el cursor, toca para hacer clic, toque con dos dedos: clic derecho, deslizar con dos dedos: desplazar, pellizcar: zoom. Toca una barra de título para tomar una ventana: deslizar la mueve, dos dedos igual la alejan (arriba) o la acercan, pellizcar cambia el tamaño, tocar o Inicio la suelta. Barra de título: Restablecer y Cerrar. Tres dedos arriba: apps recientes, abajo: panel de control. Inicio: el lanzador; mantener Inicio: recentrar el cursor.</string>
-    <string name="space_info_black_panel">Un panel que se queda en negro (FLAG_SECURE o DRM, como Netflix) ofrece abrir su app como ventana de DeX.</string>
-    <string name="space_info_in_view">A la vista: %1$d de %2$d. Temperatura: %3$s, paneles hasta %4$d fps (con foco %5$d).</string>
-    <string name="space_info_last_problem">Último problema: %1$s</string>
     <string name="panel_service_stopped">El servicio de paneles se detuvo (%1$s). Reconectando.</string>
     <string name="panel_shizuku_would_not_start">Shizuku no pudo iniciar el servicio de paneles: %1$s</string>
     <string name="panel_service_not_connected">El servicio de paneles no está conectado</string>
@@ -242,7 +234,6 @@
     <string name="pad_reset_message">Las velocidades del cursor, del desplazamiento y de la barra, el lado de la barra, la dirección en horizontal, cursor sigue la cabeza, mantener la pantalla encendida, el modo de seguimiento, acoplar ventanas, las nuevas instancias y la curva de las ventanas nuevas vuelven a los valores de Pocket XR. El tipo de panel táctil, tus ventanas y tus grupos se mantienen.</string>
     <string name="pad_reset">Restablecer</string>
     <string name="pad_developer_settings">Ajustes de desarrollador</string>
-    <string name="pad_dev_debug_info">Panel de información de depuración</string>
     <string name="pad_dev_still_lock">Bloqueo en reposo</string>
     <string name="pad_dev_draw_smoothing">Suavizado de dibujo</string>
     <string name="pad_dev_auto_glasses_view">Cambiar el 3D / 2D de las gafas</string>
@@ -340,8 +331,6 @@
     <string name="pad_edge_check_on">Comprobación de bordes activada: un ojo cada vez, cuenta las marcas de cada lado.</string>
     <string name="pad_edge_check_off">Comprobación de bordes desactivada.</string>
     <string name="pad_edge_check_eyes">Comprobación de bordes: %1$s.</string>
-    <string name="pad_debug_info_on">Panel de información de depuración activado.</string>
-    <string name="pad_debug_info_off">Panel de información de depuración desactivado.</string>
     <string name="pad_head_cursor_auto">El cursor de cabeza se oculta cuando no lo usas.</string>
     <string name="pad_head_cursor_always">Cursor de cabeza siempre visible.</string>
     <string name="pad_head_cursor_off">Cursor de cabeza desactivado.</string>

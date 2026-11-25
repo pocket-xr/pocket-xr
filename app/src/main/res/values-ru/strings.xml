@@ -106,14 +106,6 @@
     <string name="space_problem_service_restarted">Служба панелей перезапустилась; открываем панели снова.</string>
     <string name="space_problem_protects">%1$s защищает свой экран; сведите пальцы на его баннере, чтобы открыть как окно DeX.</string>
     <string name="space_problem_looks_protected">%1$s, похоже, защищено на своей панели; сведите пальцы на его баннере, чтобы открыть как окно DeX.</string>
-    <string name="space_info_mode">Pocket XR: %1$s</string>
-    <string name="space_info_starting">запуск</string>
-    <string name="space_info_head_tracking">Отслеживание головы: %1$s</string>
-    <string name="space_info_panels">Панели: %1$d из 6. %2$s.</string>
-    <string name="space_info_trackpad">Трекпад: проведите, чтобы двигать курсор, нажмите для клика, нажатие двумя пальцами: правый клик, проведение двумя пальцами: прокрутка, сведение пальцев: масштаб. Нажмите на строку заголовка, чтобы взять окно: проведение двигает его, двумя пальцами так же: отодвинуть (вверх) или приблизить, сведение пальцев меняет размер, нажатие или «Домой» отпускает. В строке заголовка: «Сбросить» и «Закрыть». Три пальца вверх: недавние приложения, вниз: панель управления. «Домой»: лаунчер; удерживайте «Домой»: центрировать курсор.</string>
-    <string name="space_info_black_panel">Панель, которая остаётся чёрной (FLAG_SECURE или DRM, например Netflix), предлагает открыть своё приложение как окно DeX.</string>
-    <string name="space_info_in_view">В поле зрения: %1$d из %2$d. Нагрев: %3$s, панели до %4$d fps (в фокусе %5$d).</string>
-    <string name="space_info_last_problem">Последняя проблема: %1$s</string>
     <string name="panel_service_stopped">Служба панелей остановилась (%1$s). Переподключаемся.</string>
     <string name="panel_shizuku_would_not_start">Shizuku не запустил службу панелей: %1$s</string>
     <string name="panel_service_not_connected">Служба панелей не подключена</string>
@@ -249,7 +241,6 @@
     <string name="pad_reset_message">Скорости курсора, прокрутки и полосы, сторона полосы, горизонтальное направление, курсор за головой, экран не гаснет, режим отслеживания, привязка окон, новые экземпляры и изгиб новых окон вернутся к значениям Pocket XR по умолчанию. Тип трекпада, ваши окна и наборы останутся.</string>
     <string name="pad_reset">Сбросить</string>
     <string name="pad_developer_settings">Настройки для разработчиков</string>
-    <string name="pad_dev_debug_info">Панель отладочной информации</string>
     <string name="pad_dev_still_lock">Фиксация в покое</string>
     <string name="pad_dev_draw_smoothing">Сглаживание отрисовки</string>
     <string name="pad_dev_auto_glasses_view">Переключать 3D / 2D очков</string>
@@ -347,8 +338,6 @@
     <string name="pad_edge_check_on">Проверка краёв включена: по одному глазу, посчитайте деления с каждой стороны.</string>
     <string name="pad_edge_check_off">Проверка краёв выключена.</string>
     <string name="pad_edge_check_eyes">Проверка краёв: %1$s.</string>
-    <string name="pad_debug_info_on">Панель отладочной информации включена.</string>
-    <string name="pad_debug_info_off">Панель отладочной информации выключена.</string>
     <string name="pad_head_cursor_auto">Курсор головы скрывается, когда вы им не пользуетесь.</string>
     <string name="pad_head_cursor_always">Курсор головы показан всегда.</string>
     <string name="pad_head_cursor_off">Курсор головы выключен.</string>

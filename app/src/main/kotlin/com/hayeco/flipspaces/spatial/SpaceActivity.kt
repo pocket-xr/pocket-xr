@@ -470,6 +470,8 @@ class SpaceActivity : Activity() {
                 main.post {
                     if (protectedOver != pkg || isFinishing) return@post
                     val open = tasks?.any { it.packageName == pkg }
+                    // 1.6.27: once seen, its DeX window made full screen, so DeX draws no title bar on it
+                    if (open == true && !protectedSeen) PanelHost.fullScreenApp(openedOn, pkg, "full screen over the Space")
                     if (open == true) protectedSeen = true
                     if (open == false && (protectedSeen || ++protectedMisses >= 3)) {
                         protectedOver = null

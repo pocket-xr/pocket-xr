@@ -484,8 +484,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private var modeCheckedMs = 0L
     private var publishedMs = 0L
     private var problem: String? = null
-    private var info: LabelTexture? = null
-    private val infoPanel = SpacePanel(0, "Pocket XR", "", "", yawDeg = 0f, pitchDeg = -30f, distanceM = 1.6f, widthDeg = 34f, heightDeg = 15f)
 
     /** Display ids still open, readable from any thread for teardown. */
     private val openDisplays = ConcurrentHashMap.newKeySet<Int>()
@@ -785,7 +783,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             onRelease = { releaseForStall() },
             onRecover = { _, _ -> recoverFromStall() },
         )
-        info = LabelTexture(1024, 448)
         edgeHintLabel = LabelTexture(1024, 96)
         homeTexture = LabelTexture(192, 192)
         capReopened()
@@ -1589,7 +1586,6 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             // them in the room too, so both eyes see it on top.
             val rays = pointerRays()
             for (layer in com.hayeco.flipspaces.core.spatial.SpaceLayer.ORDER) when (layer) {
-                com.hayeco.flipspaces.core.spatial.SpaceLayer.INFO -> drawInfo(viewProj, nowMs)
                 // Back to front, in the order hit tests use: nearer panels, then the most recently
                 // raised or focused, cover the others.
                 com.hayeco.flipspaces.core.spatial.SpaceLayer.WINDOWS -> layout.drawOrder().forEach { drawPanel(it, viewProj, nowMs) }
@@ -3001,6 +2997,18 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * empty, so the panel asks (Back anyway, Close panel) instead, until Mike once says Back anyway.
      */
     private fun back(named: Int?) {
+        // 1.6.27 (Crr66: "I didn't find a way to close that window. In normal Netflix app I use the back button from the
+        // phone"): while a protected app is full screen over the Space, Back goes to it, as the phone's Back would; at its
+        // first page it closes the app, and the Space comes back in front ([SpaceActivity.protectedFullScreen]).
+        SpaceSession.protectedOver?.let { pkg ->
+            val display = spaceDisplayId
+            Log.i(PANEL_TAG, "Back to $pkg, full screen on display $display")
+            val down = SystemClock.uptimeMillis()
+            listOf(KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP).forEach { action ->
+                PanelHost.key(display, action, KeyRouting.KEYCODE_BACK, 0, 0, down) { problem = str(R.string.space_problem_back, pkg, it) }
+            }
+            return
+        }
         val id = KeyRouting.backTarget(named, focusedPanelId, layout.panels.map { it.id }) ?: return
         val p = panels[id] ?: return
         val display = p.displayId ?: return
@@ -5357,35 +5365,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
     }
 
-    private fun drawInfo(viewProj: Mat4, nowMs: Long) {
-        val tex = info ?: return
-        // 0.5.30 (Mike: remove the grey debug block at the bottom of the view): off unless Developer on the Menu turns it on.
-        if (nowMs - infoCheckedMs > 500) {
-            infoCheckedMs = nowMs
-            infoShown = store.debugInfo
-        }
-        if (!infoShown) return
-        if (nowMs - (infoUpdatedMs) > 500) {
-            infoUpdatedMs = nowMs
-            tex.set(infoLines(), Look.GLASS, Look.INK_2, 26f)
-        }
-        drawLabel(tex.id, viewProj * infoPanel.model(), 0.95f)
-    }
-
-    private var infoUpdatedMs = 0L
-    private var infoCheckedMs = Long.MIN_VALUE / 2
-    private var infoShown = false
-
-    private fun infoLines(): List<String> = buildList {
-        add(str(R.string.space_info_mode, mode?.mode?.label ?: str(R.string.space_info_starting)))
-        add(str(R.string.space_info_head_tracking, HeadTracker.status.value.summary))
-        add(str(R.string.space_info_panels, layout.panels.size, shizuku.label))
-        add(str(R.string.space_info_trackpad))
-        add(str(R.string.space_info_black_panel))
-        add(str(R.string.space_info_in_view, inView, layout.panels.size, ThermalGuard.label(thermalStatus), ThermalGuard.panelFps(thermalStatus, false), ThermalGuard.panelFps(thermalStatus, true)))
-        perf.last?.let { add("Perf: ${it.line()}") }
-        problem?.let { add(str(R.string.space_info_last_problem, it)) }
-    }
+    // 1.6.27 (Crr66 took it for instructions that came and went): the debug info panel is gone.
 
     /**
      * The head gaze cursor while no hand aims (the trackpad's), else one cursor per hand

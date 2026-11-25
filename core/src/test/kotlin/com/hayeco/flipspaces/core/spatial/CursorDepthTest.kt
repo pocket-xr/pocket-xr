@@ -27,7 +27,7 @@ class CursorDepthTest {
         val order = SpaceLayer.ORDER
         val cursor = order.indexOf(SpaceLayer.CURSOR)
         assertEquals("the cursor is drawn last", order.size - 1, cursor)
-        for (panel in listOf(SpaceLayer.WINDOWS, SpaceLayer.CONTROL_PANEL, SpaceLayer.LAUNCHER, SpaceLayer.HOME, SpaceLayer.INFO, SpaceLayer.EDGE_HINT)) {
+        for (panel in listOf(SpaceLayer.WINDOWS, SpaceLayer.CONTROL_PANEL, SpaceLayer.LAUNCHER, SpaceLayer.HOME, SpaceLayer.EDGE_HINT)) {
             assertTrue("$panel before the cursor", order.indexOf(panel) < cursor)
         }
         // The launcher over the windows, as before.

@@ -721,6 +721,35 @@ class PanelHostService : IPanelHost.Stub() {
         "failed: ${describe(e)}".also { error = it; logW(it) }
     }
 
+    /**
+     * 1.6.27 (Crr66's Galaxy S20, Android 13: Netflix full screen kept DeX's white title bar on its home page, which could
+     * not be moved, resized or closed): an app started on the glasses as large as the display is still a freeform DeX
+     * window, and DeX draws a title bar on any window that is not immersive (Netflix is only while a video plays). Its
+     * root task made full screen with a WindowContainerTransaction, as the Space's own is ([clearFreeform]), has none.
+     */
+    override fun fullScreenApp(displayId: Int, packageName: String): String = try {
+        val task = rootTasks(displayId).firstOrNull { r ->
+            listOf("topActivity", "baseActivity").any { (field(r, it) as? android.content.ComponentName)?.packageName == packageName }
+        }
+        if (task == null) {
+            "no task of $packageName on display $displayId (z order ${zOrder(displayId)})"
+        } else {
+            val token = field(task, "token") ?: throw IllegalStateException("its task has no token")
+            val before = modeName(windowingMode(task))
+            val wct = Class.forName("android.window.WindowContainerTransaction").getConstructor().newInstance()
+            method(wct, "setWindowingMode") { it.parameterTypes.size == 2 && it.parameterTypes[1] == Int::class.javaPrimitiveType }
+                .invoke(wct, token, WINDOWING_MODE_FULLSCREEN)
+            method(wct, "setBounds") { it.parameterTypes.size == 2 && it.parameterTypes[1] == android.graphics.Rect::class.java }
+                .invoke(wct, token, android.graphics.Rect())
+            method(windowOrganizer, "applyTransaction") { it.parameterTypes.size == 1 }.invoke(windowOrganizer, wct)
+            Thread.sleep(150)
+            val after = rootTasks(displayId).firstOrNull { field(it, "taskId") == field(task, "taskId") }?.let { modeName(windowingMode(it)) } ?: "gone"
+            "$packageName's task ${field(task, "taskId")} on display $displayId made full screen: it was $before, now $after".also { logI(it) }
+        }
+    } catch (e: Throwable) {
+        "failed: ${describe(e)}".also { error = it; logW(it) }
+    }
+
     override fun holdSpace(displayId: Int, hold: Boolean, spaceClass: String): String = try {
         if (hold) hold(displayId, spaceClass) else release(displayId, spaceClass)
     } catch (e: Throwable) {

@@ -97,7 +97,6 @@ object CursorDepth {
  * controls and cards, the control panel, the launcher and its home tile, and the checks.
  */
 enum class SpaceLayer {
-    INFO,
     WINDOWS,
     CONTROL_PANEL,
     LAUNCHER,

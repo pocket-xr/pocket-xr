@@ -198,4 +198,10 @@ interface IPanelHost {
      * there (a protected app full screen) shows over it. holdSpace(displayId, true, ...) brings it to the front again.
      */
     String lowerSpace(int displayId) = 43;
+
+    /**
+     * 1.6.27: [packageName]'s root task on [displayId] made full screen (no freeform mode or bounds of its own), so DeX
+     * draws no title bar on it: a protected app full screen over the Space.
+     */
+    String fullScreenApp(int displayId, String packageName) = 44;
 }

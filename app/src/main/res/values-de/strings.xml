@@ -102,14 +102,6 @@
     <string name="space_problem_service_restarted">Der Panel-Dienst wurde neu gestartet; die Panels werden neu geöffnet.</string>
     <string name="space_problem_protects">%1$s schützt seinen Bildschirm; mach auf dem Banner einen Pinch, um es als DeX-Fenster zu öffnen.</string>
     <string name="space_problem_looks_protected">%1$s wirkt auf seinem Panel geschützt; mach auf dem Banner einen Pinch, um es als DeX-Fenster zu öffnen.</string>
-    <string name="space_info_mode">Pocket XR: %1$s</string>
-    <string name="space_info_starting">startet</string>
-    <string name="space_info_head_tracking">Kopf-Tracking: %1$s</string>
-    <string name="space_info_panels">Panels: %1$d von 6. %2$s.</string>
-    <string name="space_info_trackpad">Trackpad: wischen bewegt den Cursor, tippen klickt, mit zwei Fingern tippen: Rechtsklick, mit zwei Fingern wischen: scrollen, zusammenziehen: zoomen. Tippe auf eine Titelleiste, um ein Fenster aufzunehmen: wischen bewegt es, zwei Finger in dieselbe Richtung schieben es weg (hoch) oder holen es näher, zusammenziehen ändert die Größe, tippen oder Home legt es ab. Titelleiste: Zurücksetzen und Schließen. Drei Finger hoch: letzte Apps, runter: Kontrollzentrum. Home: der Launcher; Home halten: Cursor zentrieren.</string>
-    <string name="space_info_black_panel">Ein Panel, das schwarz bleibt (FLAG_SECURE oder DRM, z. B. Netflix), bietet an, seine App als DeX-Fenster zu öffnen.</string>
-    <string name="space_info_in_view">Im Blick: %1$d von %2$d. Temperatur: %3$s, Panels bis %4$d fps (im Fokus %5$d).</string>
-    <string name="space_info_last_problem">Letztes Problem: %1$s</string>
     <string name="panel_service_stopped">Der Panel-Dienst wurde beendet (%1$s). Verbinde neu.</string>
     <string name="panel_shizuku_would_not_start">Shizuku konnte den Panel-Dienst nicht starten: %1$s</string>
     <string name="panel_service_not_connected">Der Panel-Dienst ist nicht verbunden</string>
@@ -235,7 +227,6 @@
     <string name="pad_reset_message">Cursor-, Scroll- und Leistentempo, die Seite der Leiste, die seitliche Richtung, Cursor folgt Kopf, Bildschirm anlassen, der Tracking-Modus, Fenster einrasten, neue Instanzen und die Krümmung neuer Fenster werden auf Pocket XR-Standard zurückgesetzt. Trackpad-Typ, deine Fenster und Presets bleiben.</string>
     <string name="pad_reset">Zurücksetzen</string>
     <string name="pad_developer_settings">Entwickleroptionen</string>
-    <string name="pad_dev_debug_info">Debug-Infopanel</string>
     <string name="pad_dev_still_lock">Ruhesperre</string>
     <string name="pad_dev_draw_smoothing">Zeichenglättung</string>
     <string name="pad_dev_auto_glasses_view">3D / 2D der Brille umschalten</string>
@@ -333,8 +324,6 @@
     <string name="pad_edge_check_on">Randprüfung an: ein Auge nach dem anderen, zähl die Striche an jeder Seite.</string>
     <string name="pad_edge_check_off">Randprüfung aus.</string>
     <string name="pad_edge_check_eyes">Randprüfung: %1$s.</string>
-    <string name="pad_debug_info_on">Debug-Infopanel an.</string>
-    <string name="pad_debug_info_off">Debug-Infopanel aus.</string>
     <string name="pad_head_cursor_auto">Kopf-Cursor verschwindet, wenn du ihn nicht nutzt.</string>
     <string name="pad_head_cursor_always">Kopf-Cursor immer sichtbar.</string>
     <string name="pad_head_cursor_off">Kopf-Cursor aus.</string>
