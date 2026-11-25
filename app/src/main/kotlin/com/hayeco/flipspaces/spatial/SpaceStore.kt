@@ -143,9 +143,11 @@ class SpaceStore(context: Context) {
      * there was nothing to do, else a line for the log.
      */
     fun dropOldGravityPick(): String? {
-        if (!model.tested || !prefs.contains(perModel(KEY_AXES_GRAVITY))) return null
+        if (!prefs.contains(perModel(KEY_AXES_GRAVITY))) return null
         val pick = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } }
         val own = defaultAxes()
+        // 1.6.25: an untested model's pick too, when it only agrees with the model's own layout on which way is up
+        if (!model.tested && (pick == null || pick == own || !com.hayeco.flipspaces.core.spatial.GravityAxes.sameUp(pick, own))) return null
         fun back(v: com.hayeco.flipspaces.core.spatial.Vec3?) = com.hayeco.flipspaces.core.spatial.GravityAxes.carryBack(v, pick, own)
         val static = staticGyroBias
         val worn = wornGyroBias

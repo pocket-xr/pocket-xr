@@ -98,6 +98,13 @@ object GravityAxes {
     fun carryBack(saved: Vec3?, pick: AxisMap?, own: AxisMap): Vec3? =
         if (saved == null || pick == null || pick == own) saved else carry(saved, pick, own)
 
+    /**
+     * 1.6.25: whether two layouts put up on the same sensor axis. Gravity tells a check only which way is up, so a pick
+     * that agrees with the model's own layout on that says nothing about front and right, where the model's own is known
+     * better (a RayNeo GT's pick took its front for right, so a nod read as a roll).
+     */
+    fun sameUp(a: AxisMap, b: AxisMap): Boolean = (a.unapply(Vec3.UP) dot b.unapply(Vec3.UP)) > 0.99f
+
     /** One line for the Glasses report: the layout, where it came from, and the last rest's gravity. */
     fun reportLine(axes: AxisMap, from: String, rest: Vec3?, lastCheck: String?): String = buildString {
         append(axes.label).append(" (").append(from).append(')')

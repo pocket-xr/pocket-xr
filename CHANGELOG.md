@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.25: RayNeo GT the right way round
+
+- **RayNeo GT: looking up and down no longer turns the picture.** 1.6.23 started its head tracking, but looking up
+  turned the whole picture 90 degrees one way and looking down the other. Its sensor's up is its z axis, which Pocket XR
+  found from gravity, but gravity can't tell front from right, and Pocket XR took the front for the right, so a nod was
+  read as a roll. Its log shows the front is the sensor's x (it leans when the head looks down at the phone), so RayNeo
+  glasses now start from x front, y left, z up. A layout the gravity check saved that only agrees on which way is up
+  is dropped once, so the right one is used without a reset. Not yet tried on RayNeo glasses.
+
 ## 1.6.24: XREAL One Pro and One Pro+ level from the start
 
 - **Windows no longer tilt as you turn on a One Pro or One Pro+.** These glasses' motion sensor sits steeply tilted in

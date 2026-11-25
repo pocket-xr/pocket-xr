@@ -83,7 +83,11 @@ enum class GlassesModel(
     VITURE("VITURE glasses", "viture", tested = false, camera = false, diagonalFovDeg = null),
     // 1.6.21: RayNeo's glasses (TCL), by their USB vendor id 1BBB or their display's name; their motion comes from
     // [RayNeoProtocol] in the sensor's own axes, which the gravity check turns while they are untested.
-    RAYNEO("RayNeo glasses", "rayneo", tested = false, camera = false, diagonalFovDeg = null),
+    // 1.6.25 (a RayNeo GT's Send logs on an XREAL Beam Pro: "moving the head up rotates the whole display 90 degrees
+    // clockwise"): its sensor's up is z (-0.01, -0.85, 9.73 m/s2 with the head level) and its x leans with the head
+    // looking down at the phone (3.6 to 5.0 m/s2 on x), so x is front and y, the third, left. The gravity check could only
+    // tell it z was up, and took x for right, so a nod was read as a roll.
+    RAYNEO("RayNeo glasses", "rayneo", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XFRONT_YLEFT_ZUP),
     UNKNOWN("Unknown glasses", "unknown", tested = false, camera = false, diagonalFovDeg = null);
 
     /**
