@@ -1320,4 +1320,7 @@
     <string name="head_tap_sensitivity_help">Mais alto conta toques mais suaves, mais baixo só os firmes. Com sensibilidade alta, premir os botões dos óculos pode contar como toque. Toca cerca de duas vezes por segundo com a cabeça parada.</string>
     <string name="home_logs_send_to">Envia para %1$s (o endereço está copiado)</string>
     <string name="protected_full_screen_no_addon">%1$s reproduz em ecrã inteiro. Para clicar, instala o suplemento Pocket XR e liga o ponteiro, ou usa o touchpad do DeX no telemóvel.</string>
+    <string name="home_max_windows">Janelas no Space: %1$d</string>
+    <string name="home_max_windows_detail">Quantas janelas podem estar abertas ao mesmo tempo, ecrãs do PC incluídos. Mais janelas precisam de mais potência do telemóvel, e cada ecrã do PC é um vídeo que o telemóvel descodifica.</string>
+    <string name="space_problem_panel_limit">O limite é de %1$d janelas; fecha uma primeiro ou aumenta Janelas no Space nas definições do telemóvel.</string>
 </resources>

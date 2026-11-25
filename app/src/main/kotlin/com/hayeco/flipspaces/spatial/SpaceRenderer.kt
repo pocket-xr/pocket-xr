@@ -4221,6 +4221,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     windowGlowPercent = store.windowGlowPercent
                     windowGlowColor = store.windowGlowColor
                     readabilityChanged(store.readability)
+                    // 1.6.20: Windows in the Space (the phone's settings).
+                    com.hayeco.flipspaces.core.spatial.PanelLimits.maxPanels = store.maxWindows
                     // Steady mode's Screen gap: the windows on the canvas are arranged again at once with it.
                     val gap = store.steadyScreenGap
                     if (gap != steadyGap) {
@@ -4236,7 +4238,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     /**
      * The launcher's PC screen button: the first PC screen not open yet ([com.hayeco.flipspaces.pcscreen.PcScreenSlots]),
-     * each its own window, process and PC; with all three open, the first comes to the front.
+     * each its own window, process and PC; with all open, the first comes to the front.
      */
     private fun openPcScreen() {
         val slots = com.hayeco.flipspaces.pcscreen.PcScreenSlots
@@ -4246,7 +4248,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         )
         val open = layout.panels.map { it.activityName }.toSet()
         val free = (0 until slots.COUNT).firstOrNull { slots.activity(it) !in open }
-        Log.i(tag, "launcher: PC screen button: ${if (free != null) "opens PC screen ${free + 1}" else "all three open, PC screen 1 to the front"}")
+        Log.i(tag, "launcher: PC screen button: ${if (free != null) "opens PC screen ${free + 1}" else "all open, PC screen 1 to the front"}")
         addApp(entry(free ?: 0), inFrontOfGaze = true)
         launcher.close()
     }
@@ -4294,7 +4296,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         }
         if (added == null) {
             windowOpenMs.remove(-1)
-            problem = str(R.string.space_problem_six_panels)
+            problem = context.getString(R.string.space_problem_panel_limit, com.hayeco.flipspaces.core.spatial.PanelLimits.maxPanels)
             return
         }
         setLayout(added.first, commit = true)

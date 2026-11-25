@@ -123,6 +123,8 @@ fun PhoneScreen(
     // Steady mode's Screen gap (a user on Windows asked for it), for the glasses that get Steady mode.
     val steadyGlasses = com.hayeco.flipspaces.core.spatial.SteadyMode.offeredOn(glassesModel)
     var steadyGap by remember { mutableStateOf(com.hayeco.flipspaces.spatial.SpaceStore(context).steadyScreenGap) }
+    // 1.6.20: how many windows the Space holds.
+    var maxWindows by remember { mutableStateOf(com.hayeco.flipspaces.spatial.SpaceStore(context).maxWindows) }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
@@ -243,6 +245,23 @@ fun PhoneScreen(
                         }
                         RowDivider()
                     }
+                    // 1.6.20 (a Reddit user with an S26 Ultra asked for more than three PC screens): 6 to 12 windows.
+                    SliderRow(
+                        stringResource(R.string.home_max_windows, maxWindows),
+                        stringResource(R.string.home_max_windows_detail),
+                        maxWindows.toFloat(),
+                        com.hayeco.flipspaces.core.spatial.PanelLimits.MAX_PANELS.toFloat()..com.hayeco.flipspaces.core.spatial.PanelLimits.MOST_PANELS.toFloat(),
+                        com.hayeco.flipspaces.core.spatial.PanelLimits.MOST_PANELS - com.hayeco.flipspaces.core.spatial.PanelLimits.MAX_PANELS - 1,
+                    ) {
+                        val n = kotlin.math.round(it).toInt()
+                        if (n != maxWindows) {
+                            maxWindows = n
+                            com.hayeco.flipspaces.spatial.SpaceStore(context).maxWindows = n
+                            com.hayeco.flipspaces.core.spatial.PanelLimits.maxPanels = n
+                            com.hayeco.flipspaces.spatial.SpaceSession.send(com.hayeco.flipspaces.spatial.SpaceCommand.SettingsChanged)
+                        }
+                    }
+                    RowDivider()
                     // 1.1.16 (issue 12): the settings these glasses need and the head turn check, at any time.
                     NavRow(stringResource(R.string.home_glasses_setup_check), stringResource(R.string.home_glasses_setup_check_detail), onGlassesCheck)
                     RowDivider()

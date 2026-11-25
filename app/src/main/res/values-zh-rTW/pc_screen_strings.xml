@@ -102,4 +102,7 @@
     <string name="pc_screen_size">螢幕尺寸</string>
     <string name="pc_screen_size_window">視窗</string>
     <string name="pc_screen_size_help">電腦建立此螢幕的尺寸。視窗跟隨視窗的形狀。需要電腦上的 Pocket XR 或 Apollo；變更在下次連線時生效。</string>
+    <string name="pc_screen_tile_4">電腦螢幕 4</string>
+    <string name="pc_screen_tile_5">電腦螢幕 5</string>
+    <string name="pc_screen_tile_6">電腦螢幕 6</string>
 </resources>

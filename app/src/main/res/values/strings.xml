@@ -1676,4 +1676,7 @@
     <string name="head_tap_sensitivity_help">Higher counts softer taps; lower only firm ones. At high sensitivity, pressing the glasses\' buttons can count as a tap. Tap about twice a second with your head still.</string>
     <string name="home_logs_send_to">Send it to %1$s (the address is copied)</string>
     <string name="protected_full_screen_no_addon">%1$s plays full screen. To click in it, install the Pocket XR add-on and turn on its pointer, or use DeX\'s touchpad on your phone.</string>
+    <string name="home_max_windows">Windows in the Space: %1$d</string>
+    <string name="home_max_windows_detail">How many windows can be open at once, PC screens included. More windows need more of your phone\'s power, and each PC screen is a video your phone decodes.</string>
+    <string name="space_problem_panel_limit">%1$d windows is the limit; close one first, or raise Windows in the Space in the phone\'s settings.</string>
 </resources>

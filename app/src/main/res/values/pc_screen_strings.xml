@@ -103,4 +103,7 @@
     <string name="pc_screen_size">Screen size</string>
     <string name="pc_screen_size_window">Window</string>
     <string name="pc_screen_size_help">The size your computer makes this screen at. Window follows the window\'s shape. Needs Pocket XR on the computer, or Apollo; changes apply when the screen next connects.</string>
+    <string name="pc_screen_tile_4">PC screen 4</string>
+    <string name="pc_screen_tile_5">PC screen 5</string>
+    <string name="pc_screen_tile_6">PC screen 6</string>
 </resources>

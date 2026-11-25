@@ -713,6 +713,12 @@ class SpaceStore(context: Context) {
         get() = prefs.getInt(KEY_TAP_SENSITIVITY, 100)
         set(value) = prefs.edit().putInt(KEY_TAP_SENSITIVITY, value).apply()
 
+    /** 1.6.20: Windows in the Space, how many the Space holds ([com.hayeco.flipspaces.core.spatial.PanelLimits]). */
+    var maxWindows: Int
+        get() = prefs.getInt(KEY_MAX_WINDOWS, com.hayeco.flipspaces.core.spatial.PanelLimits.MAX_PANELS)
+            .coerceIn(com.hayeco.flipspaces.core.spatial.PanelLimits.MAX_PANELS, com.hayeco.flipspaces.core.spatial.PanelLimits.MOST_PANELS)
+        set(value) = prefs.edit().putInt(KEY_MAX_WINDOWS, value).apply()
+
     /** 1.6.12: taps on the glasses ([com.hayeco.flipspaces.core.spatial.GlassesTaps]); off until tried with glasses. */
     var glassesTaps: Boolean
         get() = prefs.getBoolean(KEY_GLASSES_TAPS, false)
@@ -817,6 +823,7 @@ class SpaceStore(context: Context) {
         private const val KEY_LATE_WARP_SBS = "late_warp_sbs_0525"
         private const val KEY_GLASSES_TAPS = "glasses_taps_1612"
         private const val KEY_TAP_SENSITIVITY = "tap_sensitivity_1617"
+        private const val KEY_MAX_WINDOWS = "max_windows_1620"
         private const val KEY_EDGE_FADE = "edge_fade_0561"
         private const val KEY_GYRO_BIAS_STATIC = "head_gyro_bias_static_0515"
         private const val KEY_GYRO_BIAS_WORN = "head_gyro_bias_worn_0515"

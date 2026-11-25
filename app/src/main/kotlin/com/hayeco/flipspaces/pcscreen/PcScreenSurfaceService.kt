@@ -33,9 +33,12 @@ open class PcScreenSurfaceService : Service() {
     }
 }
 
-/** The second and third PC screens' services, each in its own process ([PcScreenSlots]). */
+/** The second to sixth PC screens' services, each in its own process ([PcScreenSlots]). */
 class PcScreenSurfaceService2 : PcScreenSurfaceService()
 class PcScreenSurfaceService3 : PcScreenSurfaceService()
+class PcScreenSurfaceService4 : PcScreenSurfaceService()
+class PcScreenSurfaceService5 : PcScreenSurfaceService()
+class PcScreenSurfaceService6 : PcScreenSurfaceService()
 
 /** The Space's surface for the stream in this process, and who to tell when it changes. Main thread. */
 object PcScreenSurfaces {

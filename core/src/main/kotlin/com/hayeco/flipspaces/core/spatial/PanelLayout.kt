@@ -95,7 +95,15 @@ data class SpacePanel(
 }
 
 object PanelLimits {
+    /** The windows a Space holds unless Windows in the Space says more (1.6.20); six since the first version. */
     const val MAX_PANELS = 6
+
+    /** 1.6.20: the most Windows in the Space offers (six PC screens and six apps). */
+    const val MOST_PANELS = 12
+
+    /** 1.6.20: the windows a Space holds now ([MAX_PANELS] to [MOST_PANELS]), from Windows in the Space. */
+    @Volatile var maxPanels: Int = MAX_PANELS
+        set(value) { field = value.coerceIn(MAX_PANELS, MOST_PANELS) }
     const val DEFAULT_DISTANCE = 1.4f
 
     /**
@@ -347,7 +355,7 @@ data class SpaceLayout(
     /** 0.5.19: the whole Space wrapped round Mike as one cylinder ([SpaceWrap]), or null. */
     val wrap: SpaceWrap? = null,
 ) {
-    val full: Boolean get() = panels.size >= PanelLimits.MAX_PANELS
+    val full: Boolean get() = panels.size >= PanelLimits.maxPanels
 
     fun panel(id: Int): SpacePanel? = panels.firstOrNull { it.id == id }
 
@@ -511,7 +519,7 @@ object LayoutCodec {
                     displayAreaDeg2 = if (fields >= 13) f[12].toFloatOrNull()?.takeIf { it.isFinite() && it in 1f..(PanelLimits.MAX_WIDTH_DEG * PanelLimits.MAX_HEIGHT_DEG) } ?: 0f else 0f,
                 ).takeIf { it.yawDeg.isFinite() && it.pitchDeg.isFinite() }?.withAppSize()
             }.getOrNull()
-        }.distinctBy { it.id }.take(PanelLimits.MAX_PANELS)
+        }.distinctBy { it.id }.take(PanelLimits.MOST_PANELS)
         val wrap = if (header != HEADER_V1) lines.firstOrNull { it.startsWith(WRAP + "\t") }?.let(::wrapOf) else null
         return SpaceLayout(panels, wrap)
     }

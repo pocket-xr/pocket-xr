@@ -2,6 +2,17 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.20: up to six PC screens and twelve windows
+
+- **Up to six PC screens at once**, up from three: the launcher's PC screen button opens the next one each time. Each
+  is still its own window, its own stream and its own host on the computer, so it needs a computer that offers that
+  many (Pocket XR for Windows, Mac and Linux: Screens in their settings, now up to six) and a phone that can decode
+  that many videos at once.
+- **Windows in the Space**, a slider in the phone's settings: how many windows the Space holds, 6 (as before) to 12,
+  PC screens included.
+
+From a Reddit user with a Galaxy S26 Ultra. Not yet tried with more than three PC screens or six windows.
+
 ## 1.6.19: Send logs says where to send them; full screen apps say they need the add-on
 
 - **Send logs with no email app:** Android's share sheet opened with the zip but no address, so the logs could not

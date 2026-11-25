@@ -286,6 +286,54 @@
             android:name=".pcscreen.PcScreenSurfaceService3"
             android:exported="false"
             android:process=":pcscreen3" />
+        <!-- PC screen 4: its own process, as Moonlight's core keeps one stream per process (pcscreen.PcScreenSlots). -->
+        <activity
+            android:name=".pcscreen.PcScreen4Activity"
+            android:exported="true"
+            android:label="@string/pc_screen_tile_4"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:process=":pcscreen4"
+            android:taskAffinity="com.hayeco.flipspaces.pcscreen4"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService4"
+            android:exported="false"
+            android:process=":pcscreen4" />
+        <!-- PC screen 5: its own process, as Moonlight's core keeps one stream per process (pcscreen.PcScreenSlots). -->
+        <activity
+            android:name=".pcscreen.PcScreen5Activity"
+            android:exported="true"
+            android:label="@string/pc_screen_tile_5"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:process=":pcscreen5"
+            android:taskAffinity="com.hayeco.flipspaces.pcscreen5"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService5"
+            android:exported="false"
+            android:process=":pcscreen5" />
+        <!-- PC screen 6: its own process, as Moonlight's core keeps one stream per process (pcscreen.PcScreenSlots). -->
+        <activity
+            android:name=".pcscreen.PcScreen6Activity"
+            android:exported="true"
+            android:label="@string/pc_screen_tile_6"
+            android:icon="@drawable/ic_pcvr_tile"
+            android:process=":pcscreen6"
+            android:taskAffinity="com.hayeco.flipspaces.pcscreen6"
+            android:launchMode="singleTask"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|density|uiMode"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <service
+            android:name=".pcscreen.PcScreenSurfaceService6"
+            android:exported="false"
+            android:process=":pcscreen6" />
         <!-- The launcher's PC VR tile: a name and icon only. The Space opens PC VR over itself (pcvr.PcVrSession). -->
         <activity-alias
             android:name=".pcvr.PcVrTile"

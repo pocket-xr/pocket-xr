@@ -48,7 +48,7 @@ import com.limelight.nvstream.jni.MoonBridge
  * composite.
  */
 open class PcScreenActivity : Activity(), NvConnectionListener, SurfaceHolder.Callback {
-    /** Which PC screen this is ([PcScreenSlots]): 0 here, 1 and 2 in [PcScreen2Activity] and [PcScreen3Activity]. */
+    /** Which PC screen this is ([PcScreenSlots]): 0 here, 1 to 5 in [PcScreen2Activity] to [PcScreen6Activity]. */
     protected open val slot: Int get() = 0
     private val TAG by lazy { if (slot == 0) BASE_TAG else "$BASE_TAG${slot + 1}" }
     private val main = Handler(Looper.getMainLooper())
@@ -1349,4 +1349,17 @@ class PcScreen2Activity : PcScreenActivity() {
 /** The third PC screen, in its own process (`:pcscreen3`). */
 class PcScreen3Activity : PcScreenActivity() {
     override val slot: Int get() = 2
+}
+
+/** 1.6.20: the fourth to sixth PC screens, each in its own process (`:pcscreen4` to `:pcscreen6`). */
+class PcScreen4Activity : PcScreenActivity() {
+    override val slot: Int get() = 3
+}
+
+class PcScreen5Activity : PcScreenActivity() {
+    override val slot: Int get() = 4
+}
+
+class PcScreen6Activity : PcScreenActivity() {
+    override val slot: Int get() = 5
 }

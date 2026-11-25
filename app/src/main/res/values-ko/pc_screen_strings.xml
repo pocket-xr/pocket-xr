@@ -102,4 +102,7 @@
     <string name="pc_screen_size">화면 크기</string>
     <string name="pc_screen_size_window">창</string>
     <string name="pc_screen_size_help">컴퓨터가 이 화면을 만드는 크기입니다. 창은 창의 모양을 따릅니다. 컴퓨터의 Pocket XR 또는 Apollo가 필요하며, 변경은 다음 연결부터 적용됩니다.</string>
+    <string name="pc_screen_tile_4">PC 화면 4</string>
+    <string name="pc_screen_tile_5">PC 화면 5</string>
+    <string name="pc_screen_tile_6">PC 화면 6</string>
 </resources>
