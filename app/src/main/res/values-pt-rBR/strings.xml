@@ -44,7 +44,7 @@
     <string name="space_cc_save_windows">+ Salvar estas janelas</string>
     <string name="space_cc_save_current">+ Salvar atuais</string>
     <string name="space_launcher_no_apps">Nenhum app encontrado</string>
-    <string name="space_launcher_depth">Profundidade</string>
+    <string name="space_launcher_depth">3D</string>
     <string name="space_launcher_search_apps">Pesquisar apps</string>
     <string name="space_home_apps">Apps</string>
     <string name="space_home_close">Fechar</string>

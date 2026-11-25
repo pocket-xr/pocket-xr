@@ -45,7 +45,7 @@
     <string name="space_cc_save_windows">+ Сохранить эти окна</string>
     <string name="space_cc_save_current">+ Сохранить текущие</string>
     <string name="space_launcher_no_apps">Приложения не найдены</string>
-    <string name="space_launcher_depth">Глубина</string>
+    <string name="space_launcher_depth">3D</string>
     <string name="space_launcher_search_apps">Поиск приложений</string>
     <string name="space_home_apps">Приложения</string>
     <string name="space_home_close">Закрыть</string>

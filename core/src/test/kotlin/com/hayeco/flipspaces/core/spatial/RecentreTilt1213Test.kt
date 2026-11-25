@@ -117,21 +117,21 @@ class RecentreTilt1213Test {
         assertEquals(0f, front.pitchDeg, 0.5f)
     }
 
+    /** 1.6.28 (Crr66; Mike: always where the head looks): a small nod is recentred to, not to the horizon (1.2.13 was). */
     @Test
-    fun aRecentre5DegreesUpStaysOnTheHorizon() {
+    fun aRecentre5DegreesUpPutsTheWindowsWhereTheHeadLooks() {
         val f = fusion()
         val t = feed(f, headAt(5f))
         feed(f, headAt(5f), 1f, t)
         val line = f.recentre()
         println("  5 up: $line")
-        assertTrue(line, line.contains("the horizon") && line.contains("within 15 deg of level"))
-        assertEquals(0f, f.recentrePitchDeg, 0f)
-        assertEquals(-5f, frontInView(f.pose().orientation).pitchDeg, 0.5f)
-        // And 14 degrees down, still within the threshold.
+        assertEquals(5f, f.recentrePitchDeg, 0.5f)
+        assertEquals(0f, frontInView(f.pose().orientation).pitchDeg, 0.5f)
+        // And 14 degrees down
         val down = fusion()
         feed(down, headAt(-14f))
         down.recentre()
-        assertEquals(14f, frontInView(down.pose().orientation).pitchDeg, 0.5f)
+        assertEquals(0f, frontInView(down.pose().orientation).pitchDeg, 0.5f)
     }
 
     @Test
@@ -145,10 +145,11 @@ class RecentreTilt1213Test {
         assertEquals(0f, f.recentrePitchDeg, 0f)
         assertEquals(-39.2f, frontInView(f.pose().orientation).pitchDeg, 1.5f)
         assertEquals(0f, f.recentrePitch(40f), 0f)
-        // On, the threshold is 15 degrees either way.
+        // On, every tilt is followed (1.6.28; 1.2.13 left 15 degrees either way on the horizon).
         val on = fusion()
-        assertEquals(0f, on.recentrePitch(15f), 0f)
-        assertEquals(16f, on.recentrePitch(16f), 0f)
+        assertEquals(15f, on.recentrePitch(15f), 0f)
+        assertEquals(5f, on.recentrePitch(5f), 0f)
+        assertEquals(0f, on.recentrePitch(0f), 0f)
         assertEquals(-40f, on.recentrePitch(-40f), 0f)
         assertEquals(0f, on.recentrePitch(Float.NaN), 0f)
     }

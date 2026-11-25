@@ -42,7 +42,7 @@
     <string name="space_cc_save_windows">+ 이 창들 저장</string>
     <string name="space_cc_save_current">+ 현재 상태 저장</string>
     <string name="space_launcher_no_apps">앱을 찾을 수 없어요</string>
-    <string name="space_launcher_depth">입체</string>
+    <string name="space_launcher_depth">3D</string>
     <string name="space_launcher_search_apps">앱 검색</string>
     <string name="space_home_apps">앱</string>
     <string name="space_home_close">닫기</string>

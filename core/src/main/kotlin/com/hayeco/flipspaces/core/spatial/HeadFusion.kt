@@ -310,9 +310,11 @@ data class FusionSettings(
      * degrees below the view): a recentre takes the head's pitch as straight ahead too, when it is more than
      * [recentreTiltMinDeg] from level, so the windows land where the head looks, lying back or looking down. Within it,
      * the horizon stays straight ahead, as before. Never roll: the windows stay level to that view.
+     * 1.6.28 (Crr66: perfect looking left or right, "but strange when I look up/down and then center"): a small nod
+     * recentred onto the horizon, so the windows landed above or below the view. Mike: always where the head looks, so 0.
      */
     val recentreFollowsTilt: Boolean = true,
-    val recentreTiltMinDeg: Float = 15f,
+    val recentreTiltMinDeg: Float = 0f,
     /**
      * 0.5.15: the [settleS] fast level after the start gate counts only samples in the full tier
      * with the head quiet, for at most [settleMaxS]; while the head moves it pulls at [kpMoving].

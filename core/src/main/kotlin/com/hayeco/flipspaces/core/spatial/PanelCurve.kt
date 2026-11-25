@@ -360,6 +360,16 @@ object CurveControl {
     /** The curve shown for a raw (unsnapped) value. */
     fun snapped(raw: Float): Float = if (raw < SNAP) 0f else raw.coerceIn(0f, PanelCurve.MAX)
 
+    /**
+     * 1.6.28 (Crr66: "some buttons are touch (screen near/far) while others are sticky (curvature) and then operated
+     * by trackpad. Personally I like less complexity"): a tap on Curve steps the window at once, as Closer and Further
+     * do: flat, half, full, then flat again. A slide along the key still curves it by any amount.
+     */
+    val TAP_STEPS: List<Float> get() = listOf(0f, 0.5f * PanelCurve.MAX, PanelCurve.MAX)
+
+    /** The curve a tap on Curve makes of [curve]: the next of [TAP_STEPS] above it, and flat after full. */
+    fun tapStep(curve: Float): Float = TAP_STEPS.firstOrNull { it > curve + SNAP / 2 } ?: 0f
+
     data class Change(val raw: Float, val curve: Float, val haptic: PadHaptic?)
 
     /** [raw] moved by [delta]; the buzz for the step or the snap it crossed, if any. */

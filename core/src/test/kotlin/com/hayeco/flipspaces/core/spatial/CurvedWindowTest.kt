@@ -308,32 +308,23 @@ class CurvedWindowTest {
         out.filterIsInstance<SpaceAction.Haptic>().forEach { haptics += it.haptic }
     }
 
+    /** 1.6.28 (Crr66: "I like less complexity"): a tap on Curve steps the window under the cursor at once, nothing held. */
     @Test
-    fun theCurveButtonHoldsTheWindowAndASidewaysSwipeCurvesIt() {
+    fun aTapOnCurveStepsTheWindowFlatHalfFullAndFlatAgain() {
         val p = SpatialPointer(frustum)
         p.frame(Quat.IDENTITY, layout, 16)
-        p.send(PadSignal.Window(WindowAction.CURVE))
-        assertEquals(1, p.heldPanelId)
-        assertTrue(p.holdCurves)
-        assertEquals("FLAT", p.holdGuide())
-        // Right curves it: 0.8 pad units is 0.4 of the range, four steps felt.
-        repeat(8) { p.send(PadSignal.Move(0.1f, 0f, 0f, 0f)) }
-        assertEquals(0.4f * PanelCurve.MAX, layout.panel(1)!!.curve, 1e-4f)
-        assertEquals(4, haptics.count { it == PadHaptic.CURVE_STEP })
-        assertEquals("CURVE 40 %", p.holdGuide())
-        // An up and down swipe does not curve it.
-        p.send(PadSignal.Move(0f, 0.3f, 0f, 0f))
-        assertEquals(0.4f * PanelCurve.MAX, layout.panel(1)!!.curve, 1e-4f)
-        // Curve again drops it, saved with its curve; the other window is untouched.
-        p.send(PadSignal.Window(WindowAction.CURVE))
-        assertNull(p.heldPanelId)
-        assertEquals(0.4f * PanelCurve.MAX, committed!!.panel(1)!!.curve, 1e-4f)
+        val steps = (1..4).map {
+            p.send(PadSignal.Window(WindowAction.CURVE))
+            assertNull("nothing is held", p.heldPanelId)
+            committed!!.panel(1)!!.curve
+        }
+        assertEquals(listOf(0.5f * PanelCurve.MAX, PanelCurve.MAX, 0f, 0.5f * PanelCurve.MAX), steps)
+        // The other window is untouched.
         assertEquals(0f, committed!!.panel(2)!!.curve, 0f)
-        // Picked up again it starts from its own curve and snaps flat with the flat buzz.
-        p.send(PadSignal.Window(WindowAction.CURVE))
-        repeat(10) { p.send(PadSignal.Move(-0.1f, 0f, 0f, 0f)) }
-        assertEquals(0f, layout.panel(1)!!.curve, 0f)
-        assertTrue(PadHaptic.CURVE_FLAT in haptics)
+        // From a curve between the steps, the next step up.
+        assertEquals(0.5f * PanelCurve.MAX, CurveControl.tapStep(0.3f * PanelCurve.MAX), 0f)
+        assertEquals(PanelCurve.MAX, CurveControl.tapStep(0.6f * PanelCurve.MAX), 0f)
+        assertEquals(0f, CurveControl.tapStep(0.99f * PanelCurve.MAX), 0f)
     }
 
     @Test

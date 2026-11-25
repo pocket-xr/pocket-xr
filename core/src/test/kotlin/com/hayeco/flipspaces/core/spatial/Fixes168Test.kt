@@ -20,7 +20,9 @@ class Fixes168Test {
 
     @Test fun aFullOrOddSurfaceIsNoCaption() {
         assertFalse(SpaceSurfacePlan.captionInWindow(1920, 1080, 1920, 1080))
-        assertFalse(SpaceSurfacePlan.captionInWindow(1920, 1059, 1920, 1080)) // 21 rows: too few
+        assertFalse(SpaceSurfacePlan.captionInWindow(1920, 1076, 1920, 1080)) // 4 rows: too few (1.6.28: was 21)
+        // 1.6.28: Crr66's slimmed DeX title bar, 12 rows (surface 1920x1068)
+        assertTrue(SpaceSurfacePlan.captionInWindow(1920, 1068, 1920, 1080))
         assertFalse(SpaceSurfacePlan.captionInWindow(960, 1028, 1920, 1080)) // a narrower window
         assertFalse(SpaceSurfacePlan.captionInWindow(1920, 700, 1920, 1080)) // far more than a caption
         assertFalse(SpaceSurfacePlan.captionInWindow(0, 0, 1920, 1080))
