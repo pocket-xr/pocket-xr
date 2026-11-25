@@ -707,6 +707,14 @@ object HeadTracker {
             // plainly that they are not supported yet, and nothing is opened on them.
             glassesTaps = SpaceStore(context).glassesTaps
             taps.sensitivity = SpaceStore(context).tapSensitivity
+            // 1.6.21: RayNeo glasses (USB 1BBB:AF50, the Air 4 Pro and Air 3S Pro) read the same way as VITURE's, with
+            // their own reader ([RayNeoLink]); there is no switch for them, it is their only head tracking.
+            val rayneo = RayNeoLink.find(context)
+            if (rayneo != null) {
+                synchronized(vitureReconnect) { vitureReconnect.setEnabled(true) }
+                if (!streamViture(rayneo, context, fusion, backoff, com.hayeco.flipspaces.core.spatial.VitureAxes())) return
+                continue
+            }
             val viture = VitureImuLink.find(context)
             val vitureOn = SpaceStore(context).vitureHeadTracking
             synchronized(vitureReconnect) { vitureReconnect.setEnabled(vitureOn) }
@@ -1003,7 +1011,9 @@ object HeadTracker {
      * family. A round that gets no motion at all says plainly that these glasses are not supported yet.
      */
     private fun streamViture(device: android.hardware.usb.UsbDevice, context: Context, fusion: HeadFusion, backoff: HeadRetryBackoff, axes: com.hayeco.flipspaces.core.spatial.VitureAxes): Boolean {
-        val name = VitureImuLink.glassesName(device)
+        // 1.6.21: RayNeo glasses come through here too, with their own reader.
+        val rayneo = com.hayeco.flipspaces.core.spatial.RayNeoProtocol.isRayNeo(device.vendorId)
+        val name = if (rayneo) RayNeoLink.glassesName(device) else VitureImuLink.glassesName(device)
         val print = GlassesNetwork.scan(context).fingerprint
         // 1.2.10 (Discussion #24, second report): USB access checked before every open, and asked for again after a
         // plug-in, the switch turned on or access lost ([VitureReconnect]); 1.2.8 asked once per device name for good.
@@ -1035,26 +1045,27 @@ object HeadTracker {
             VitureReconnect.Step.OPEN -> Unit
         }
         // 1.6.7: first generation glasses (the Luma, the Pro) speak another protocol, on two interfaces at once.
-        val gen1 = com.hayeco.flipspaces.core.spatial.VitureGen1Protocol.isGen1(device.productId)
+        val gen1 = !rayneo && com.hayeco.flipspaces.core.spatial.VitureGen1Protocol.isGen1(device.productId)
         val link: VitureLink = try {
-            if (gen1) VitureGen1Link.open(context, device, axes, READ_TIMEOUT_MS)
+            if (rayneo) RayNeoLink.open(context, device, axes, READ_TIMEOUT_MS)
+            else if (gen1) VitureGen1Link.open(context, device, axes, READ_TIMEOUT_MS)
             else VitureImuLink.open(context, device, axes, READ_TIMEOUT_MS, vitureInterfaceFor(device))
         } catch (e: Exception) {
             if (Thread.currentThread().isInterrupted) return false
             val error = "${e.javaClass.simpleName}: ${e.message}"
             // 1.6.5: an interface that would not open or start counts as silent, so the next try is the next one.
-            if (!gen1 && VitureImuLink.manager(context).hasPermission(device)) vitureInterfaceAfter(device, 0)
+            if (!gen1 && !rayneo && VitureImuLink.manager(context).hasPermission(device)) vitureInterfaceAfter(device, 0)
             val delay = backoff.nextDelayMs()
             report(HeadTrackingStatus.UsbFailed(name, error))
-            _attempts.value = listOf("$name over USB HID (experimental VITURE reader): $error")
+            _attempts.value = listOf("$name over USB HID (experimental ${if (rayneo) "RayNeo" else "VITURE"} reader): $error")
             Log.w(TAG, "head tracking: $name over USB HID failed: $error; next try in ${delay / 1000} s")
             return waitFor(delay, print, context)
         }
         synchronized(vitureReconnect) {
             vitureReconnect.opened(device.deviceName)
             vitureLink = link
-            // Switches changed while it opened are taken now.
-            link.axes = SpaceStore(context).vitureAxes
+            // Switches changed while it opened are taken now (VITURE's; RayNeo glasses have none).
+            if (!rayneo) link.axes = SpaceStore(context).vitureAxes
         }
         _attempts.value = listOf("${link.label}: opened, the raw stream start sent")
         _route.value = link.label
@@ -1069,7 +1080,7 @@ object HeadTracker {
             _route.value = null
         }
         Log.i(TAG, "head tracking stream over ${link.label} ended after ${(SystemClock.elapsedRealtime() - opened) / 1000.0} s: ${_status.value.summary}; ${link.clockLine}; ${link.counts}")
-        if (!gen1) vitureInterfaceAfter(device, link.counts.bytes)
+        if (!gen1 && !rayneo) vitureInterfaceAfter(device, link.counts.bytes)
         if (Thread.currentThread().isInterrupted) return false
         if (streamed) backoff.reset()
         val delay = backoff.nextDelayMs()
@@ -1077,6 +1088,9 @@ object HeadTracker {
             val stopped = FlipSpacesApp.text(R.string.head_stream_stopped)
             _answer.value = stopped
             report(HeadTrackingStatus.RetryLater(stopped, (delay / 1000).toInt()))
+        } else if (rayneo) {
+            _answer.value = link.noReportsHint
+            report(HeadTrackingStatus.RetryLater(link.noReportsHint, (delay / 1000).toInt()))
         } else {
             _answer.value = HeadTrackingStatus.VITURE_HINT
             report(HeadTrackingStatus.VitureNotYet(device.productId, experimentalOn = true))

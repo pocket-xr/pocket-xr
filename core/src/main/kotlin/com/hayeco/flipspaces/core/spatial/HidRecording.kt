@@ -94,10 +94,12 @@ object HidRecording {
 object GlassesVendors {
     const val XREAL = 0x3318
     const val VITURE = VitureImuProtocol.VENDOR
+    const val RAYNEO = RayNeoProtocol.VENDOR
 
     fun name(vendorId: Int): String? = when (vendorId) {
         XREAL -> "XREAL"
         VITURE -> "VITURE"
+        RAYNEO -> "RayNeo"
         else -> null
     }
 

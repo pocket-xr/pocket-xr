@@ -192,4 +192,10 @@ interface IPanelHost {
      * [action] carries the pointer index for pointer down and up.
      */
     String injectTouches(int displayId, int action, in int[] ids, in float[] xs, in float[] ys, long downTime) = 33;
+
+    /**
+     * 1.6.21: the Space's full screen root task on [displayId] sent to the bottom of the display, so an app started
+     * there (a protected app full screen) shows over it. holdSpace(displayId, true, ...) brings it to the front again.
+     */
+    String lowerSpace(int displayId) = 43;
 }

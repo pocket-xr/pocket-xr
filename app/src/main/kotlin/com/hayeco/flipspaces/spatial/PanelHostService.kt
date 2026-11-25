@@ -699,6 +699,28 @@ class PanelHostService : IPanelHost.Stub() {
      * when its organizer goes) and moves the Space's task into it with a
      * WindowContainerTransaction; without [hold] it deletes that root task again.
      */
+    /**
+     * 1.6.21 (a Galaxy Z Fold 6 on Android 17: Netflix opened full screen but never showed, the Space was never
+     * stopped): an app started on the glasses goes into the display's own task area, under the root task the Space is
+     * held in. That root task goes to the bottom, so the app shows; [holdSpace] brings it back to the front.
+     */
+    override fun lowerSpace(displayId: Int): String = try {
+        val token = holders[displayId]
+        if (token == null) {
+            "no held Space on display $displayId: nothing to send down (z order ${zOrder(displayId)})"
+        } else {
+            val before = zOrder(displayId)
+            val wct = Class.forName("android.window.WindowContainerTransaction").getConstructor().newInstance()
+            method(wct, "reorder") { it.parameterTypes.size == 2 && it.parameterTypes[1] == Boolean::class.javaPrimitiveType }
+                .invoke(wct, token, false)
+            method(windowOrganizer, "applyTransaction") { it.parameterTypes.size == 1 }.invoke(windowOrganizer, wct)
+            Thread.sleep(50)
+            "the Space's root task sent to the bottom of display $displayId: z order was $before, now ${zOrder(displayId)}".also { logI(it) }
+        }
+    } catch (e: Throwable) {
+        "failed: ${describe(e)}".also { error = it; logW(it) }
+    }
+
     override fun holdSpace(displayId: Int, hold: Boolean, spaceClass: String): String = try {
         if (hold) hold(displayId, spaceClass) else release(displayId, spaceClass)
     } catch (e: Throwable) {

@@ -25,7 +25,7 @@ class SpaceStore(context: Context) {
      * EDID), so the optics, the screen sizes and hand tracking follow the glasses, not the Aura.
      */
     val model: com.hayeco.flipspaces.core.spatial.GlassesModel
-        get() = com.hayeco.flipspaces.core.spatial.GlassesModel.detect(glasses, xrealUsbProduct(), vitureOnUsb)
+        get() = com.hayeco.flipspaces.core.spatial.GlassesModel.detect(glasses, xrealUsbProduct(), vitureOnUsb, rayneoOnUsb)
 
     private val usb = context.applicationContext.getSystemService(android.hardware.usb.UsbManager::class.java)
     private var usbProduct: Int? = null
@@ -33,6 +33,9 @@ class SpaceStore(context: Context) {
 
     /** 1.5.3: VITURE glasses on USB at the last read ([xrealUsbProduct]), so [model] is not "Unknown glasses" before a Space. */
     private var vitureOnUsb = false
+
+    /** 1.6.21: RayNeo glasses on USB at the last read, likewise. */
+    private var rayneoOnUsb = false
 
     /**
      * 1.1.0: the product id of the XREAL glasses on USB, for [model] when the display's name does not say which they
@@ -45,6 +48,7 @@ class SpaceStore(context: Context) {
         val devices = runCatching { usb?.deviceList?.values?.toList() }.getOrNull().orEmpty()
         usbProduct = devices.firstOrNull { com.hayeco.flipspaces.core.hands.GlassesUsb.isXreal(it.vendorId) }?.productId
         vitureOnUsb = devices.any { com.hayeco.flipspaces.core.spatial.VitureImuProtocol.isViture(it.vendorId) }
+        rayneoOnUsb = devices.any { com.hayeco.flipspaces.core.spatial.RayNeoProtocol.isRayNeo(it.vendorId) }
         return usbProduct
     }
 
