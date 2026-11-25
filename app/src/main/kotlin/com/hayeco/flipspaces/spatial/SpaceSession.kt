@@ -283,8 +283,20 @@ object SpaceSession {
     /** Told each time [dexWindowOver] changes. */
     val dexListeners = java.util.concurrent.CopyOnWriteArrayList<(String?) -> Unit>()
 
-    /** Whether pointer signals go to the Space: it is up and no DeX window has been handed the pointer. */
-    val routesToSpace: Boolean get() = active && dexWindowOver == null
+    /**
+     * 1.6.22 (Crr66, 1.6.21: "Netflix still has no cursor"; his log: a mouse, captured by the Space, and the add-on's
+     * pointer not turned on): a protected app full screen over the Space, while it is open. The Space then takes no
+     * pointer: a mouse is not captured, so DeX's own arrow moves and clicks in the app, with or without the add-on.
+     */
+    @Volatile var protectedOver: String? = null
+        internal set(value) {
+            val changed = field != value
+            field = value
+            if (changed) dexListeners.forEach { it(dexWindowOver) }
+        }
+
+    /** Whether pointer signals go to the Space: it is up, no DeX window has been handed the pointer, no protected app is over it. */
+    val routesToSpace: Boolean get() = active && dexWindowOver == null && protectedOver == null
 
     /** 0.5.3: the Space's watchdog saw its frames stop; GPU hand tracking pauses until they run again. */
     @Volatile var stalled: Boolean = false
