@@ -3881,6 +3881,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                 problem = str(R.string.space_problem_dex, app.label, failed.message.toString())
                 return@runOnUiThread
             }
+            // 1.6.21: the Space's held task goes under the app until it closes ([SpaceActivity.protectedFullScreen]).
+            activity.protectedFullScreen(app.packageName, app.label)
             activity.handPointerToDexWindow(app.packageName, app.label, pauseSpace = true)
             // 1.6.19 (Crr66: Netflix full screen showed but could not be clicked, with no cursor; the add-on was not
             // installed): only the add-on's pointer reaches a full screen app, so without it each time says so.

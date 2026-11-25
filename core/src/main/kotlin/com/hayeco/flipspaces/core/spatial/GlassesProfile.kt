@@ -81,6 +81,9 @@ enum class GlassesModel(
     // own settings (axes, screen size) are kept apart from other glasses'. The experimental reader turns its reports into
     // head axes itself ([VitureAxes]), so the default axes.
     VITURE("VITURE glasses", "viture", tested = false, camera = false, diagonalFovDeg = null),
+    // 1.6.21: RayNeo's glasses (TCL), by their USB vendor id 1BBB or their display's name; their motion comes from
+    // [RayNeoProtocol] in the sensor's own axes, which the gravity check turns while they are untested.
+    RAYNEO("RayNeo glasses", "rayneo", tested = false, camera = false, diagonalFovDeg = null),
     UNKNOWN("Unknown glasses", "unknown", tested = false, camera = false, diagonalFovDeg = null);
 
     /**
@@ -109,7 +112,7 @@ enum class GlassesModel(
      * 1.2.8: an XREAL model, whose 3840 x 1080 mode is always their side by side 3D (or an Ultrawide their control link
      * says). Other glasses' wide mode may be one 32:9 canvas ([WideCanvas]).
      */
-    val isXreal: Boolean get() = this != VITURE && this != UNKNOWN
+    val isXreal: Boolean get() = this != VITURE && this != RAYNEO && this != UNKNOWN
 
     /** Whether [tanPerPx1to1] comes from this model's own figure. */
     val fovKnown: Boolean get() = this == AURA || diagonalFovDeg != null
@@ -164,7 +167,7 @@ enum class GlassesModel(
          * glasses on USB, names them when nothing else does. Before a Space has opened on them there is no saved display
          * name, and only XREAL's vendor id was looked at on USB, so the zip and the head axes said "Unknown glasses".
          */
-        fun detect(id: GlassesId?, usbProduct: Int? = null, vitureOnUsb: Boolean = false): GlassesModel {
+        fun detect(id: GlassesId?, usbProduct: Int? = null, vitureOnUsb: Boolean = false, rayneoOnUsb: Boolean = false): GlassesModel {
             val name = id?.name?.trim().orEmpty()
             val lower = name.lowercase()
             return when {
@@ -175,12 +178,14 @@ enum class GlassesModel(
                 lower.contains("one pro") || lower.contains("1 pro") -> ONE_PRO
                 lower.contains("1s") || lower.contains("one s") -> ONE_S
                 lower.contains("viture") -> VITURE
+                lower.contains("rayneo") -> RAYNEO
                 usbProduct == USB_AURA -> AURA
                 usbProduct == USB_ONE -> ONE
                 usbProduct == USB_ONE_PRO_PLUS -> ONE_PRO_PLUS
                 usbProduct?.let(AirImuProtocol::modelName) != null || lower.contains("xreal air") || lower.contains("nreal air") -> AIR
                 lower.contains("xreal") || lower.contains("nreal") || usbProduct != null -> OTHER_XREAL
                 vitureOnUsb -> VITURE
+                rayneoOnUsb -> RAYNEO
                 else -> UNKNOWN
             }
         }

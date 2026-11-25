@@ -441,6 +441,46 @@ class SpaceActivity : Activity() {
 
     private var dexWindowMisses = 0
 
+    /**
+     * 1.6.21: the protected app opened full screen over the Space ([SpaceRenderer.openProtectedFullScreen]), and whether
+     * its task was seen. The Space's held task was sent down for it; once the app has no task left on the glasses, the
+     * Space is held in front again. Watched apart from the pointer hand-over, which a stop of the Space ends.
+     */
+    private var protectedOver: String? = null
+    private var protectedSeen = false
+    private var protectedMisses = 0
+
+    fun protectedFullScreen(packageName: String, label: String) {
+        protectedOver = packageName
+        protectedSeen = false
+        protectedMisses = 0
+        PanelHost.lowerSpace(openedOn, "$label full screen")
+        main.removeCallbacks(protectedCheck)
+        main.postDelayed(protectedCheck, DEX_WINDOW_CHECK_MS)
+    }
+
+    private val protectedCheck = object : Runnable {
+        override fun run() {
+            val pkg = protectedOver ?: return
+            PanelHost.rootTasks(openedOn) { tasks ->
+                main.post {
+                    if (protectedOver != pkg || isFinishing) return@post
+                    val open = tasks?.any { it.packageName == pkg }
+                    if (open == true) protectedSeen = true
+                    if (open == false && (protectedSeen || ++protectedMisses >= 3)) {
+                        protectedOver = null
+                        Log.i(MODE_TAG, "$pkg has no task left on display $openedOn: the Space is held in front again")
+                        PanelHost.holdSpace(openedOn, true, "$pkg closed") { reply ->
+                            main.post { if (!isFinishing) Log.i(MODE_TAG, "the Space back in front after $pkg: $reply") }
+                        }
+                    } else {
+                        main.postDelayed(this, DEX_WINDOW_CHECK_MS)
+                    }
+                }
+            }
+        }
+    }
+
     private fun dexPointerBack(why: String) {
         main.removeCallbacks(dexWindowCheck)
         dexWindowMisses = 0
@@ -1298,6 +1338,8 @@ class SpaceActivity : Activity() {
     }
 
     override fun onDestroy() {
+        main.removeCallbacks(protectedCheck)
+        protectedOver = null
         if (com.hayeco.flipspaces.pcvr.AlvrBridge.available) pcVrStatus.stop()
         com.hayeco.flipspaces.pcvr.PcVrSession.close("the Space closed", now = true)
         PanelHost.onReady -= coverOnReady

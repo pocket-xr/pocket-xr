@@ -676,6 +676,18 @@ object PanelHost {
         }
     }
 
+    /** 1.6.21: the Space's held root task on [displayId] to the bottom ([IPanelHost.lowerSpace]); logged with the reply. */
+    fun lowerSpace(displayId: Int, why: String) {
+        calls.execute {
+            val h = host ?: run {
+                Log.w(TAG, "send the Space down on display $displayId ($why): the panel service is not connected")
+                return@execute
+            }
+            val reply = runCatching { h.lowerSpace(displayId) }.getOrElse { "failed: ${it.javaClass.simpleName}: ${it.message}" }
+            if (reply.startsWith("failed")) Log.w(TAG, "send the Space down on display $displayId ($why): $reply") else Log.i(TAG, "send the Space down ($why): $reply")
+        }
+    }
+
     /**
      * 0.5.14: waits up to [timeoutMs] for the service to be connected.
      * Off the main thread only (the connection arrives on it).

@@ -2,6 +2,16 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.21: RayNeo glasses' head tracking; protected apps in front on newer phones
+
+- **RayNeo glasses (experimental):** the RayNeo Air 4 Pro and Air 3S Pro (USB 1BBB:AF50) showed as "Unknown glasses"
+  with no head tracking. Pocket XR now reads their motion over USB, as the open source RayNeo SDK by verncat describes
+  it, and offers itself when they are plugged in. The first reports go into the log, so Send logs shows what they
+  send. Not yet tried on RayNeo glasses.
+- **Netflix and other protected apps full screen on newer phones:** where Pocket XR holds the Space in a task of its
+  own (One UI 8 and later), the app opened full screen underneath it and never showed. The Space now steps behind the
+  app, and comes back in front once the app closes. Seen in the log of a Galaxy Z Fold 6 on Android 17; not yet tried.
+
 ## 1.6.20: up to six PC screens and twelve windows; tracking lying back
 
 - **Up to six PC screens at once**, up from three: the launcher's PC screen button opens the next one each time. Each

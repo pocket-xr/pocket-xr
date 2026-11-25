@@ -147,7 +147,7 @@ object Tour {
         GlassesModel.AIR -> Support.AIR_FAMILY
         GlassesModel.VITURE -> Support.VITURE_FAMILY
         GlassesModel.ONE_PRO_PLUS -> Support.EARLY
-        GlassesModel.OTHER_XREAL, GlassesModel.UNKNOWN -> Support.UNLISTED
+        GlassesModel.OTHER_XREAL, GlassesModel.RAYNEO, GlassesModel.UNKNOWN -> Support.UNLISTED
     }
 
     /** How these glasses get into 3D, for the Depth step's note. */
@@ -164,7 +164,7 @@ object Tour {
 
     fun depth(model: GlassesModel?): Depth = when (model) {
         GlassesModel.VITURE -> Depth.GLASSES_MENU
-        GlassesModel.AIR -> Depth.NOT_YET
+        GlassesModel.AIR, GlassesModel.RAYNEO -> Depth.NOT_YET
         else -> Depth.BY_ITSELF
     }
 

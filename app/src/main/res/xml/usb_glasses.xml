@@ -10,6 +10,7 @@
 <!-- 1.6.18 (Crr66, a VITURE Luma on a Galaxy S20): the first generation VITURE glasses, Pro 0x1019, Luma 0x101D,
      0x1131, 0x1121 and 0x1141 (VitureGen1Protocol.PRODUCTS), whose head tracking needs USB access too; the plug-in prompt
      did not offer Pocket XR for them. -->
+<!-- 1.6.21: RayNeo glasses (TCL), vendor 0x1BBB: the Air 4 Pro and Air 3S Pro on product 0xAF50, head tracking on USB HID. -->
 <resources>
     <usb-device vendor-id="13080" product-id="1088" />
     <usb-device vendor-id="13080" product-id="1090" />
@@ -20,6 +21,7 @@
     <usb-device vendor-id="13770" product-id="4401" />
     <usb-device vendor-id="13770" product-id="4385" />
     <usb-device vendor-id="13770" product-id="4417" />
+    <usb-device vendor-id="7099" product-id="44880" />
     <usb-device vendor-id="13080" product-id="1082" />
     <usb-device vendor-id="13080" product-id="1060" />
     <usb-device vendor-id="13080" product-id="1064" />
