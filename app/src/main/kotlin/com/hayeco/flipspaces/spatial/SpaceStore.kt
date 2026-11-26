@@ -123,7 +123,7 @@ class SpaceStore(context: Context) {
     var axisMap: AxisMap
         get() {
             // 1.6.20: a layout the gravity check picked for a tested model is not used: its own is known ([GravityAxes]).
-            if (model.tested && prefs.contains(perModel(KEY_AXES_GRAVITY))) return defaultAxes()
+            if (model.layoutKnown && prefs.contains(perModel(KEY_AXES_GRAVITY))) return defaultAxes()
             return prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } } ?: defaultAxes()
         }
         set(value) = prefs.edit().putString(perModel(KEY_AXES), value.name).remove(perModel(KEY_AXES_GRAVITY)).apply()
@@ -144,10 +144,12 @@ class SpaceStore(context: Context) {
      */
     fun dropOldGravityPick(): String? {
         if (!prefs.contains(perModel(KEY_AXES_GRAVITY))) return null
+        // 1.6.30: carried straight to the RayNeo's new layout, so [moveRayNeoBiases1630] has nothing left to do.
+        if (model == com.hayeco.flipspaces.core.spatial.GlassesModel.RAYNEO) prefs.edit().putBoolean(perModel(KEY_RAYNEO_1630), true).apply()
         val pick = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } }
         val own = defaultAxes()
         // 1.6.25: an untested model's pick too, when it only agrees with the model's own layout on which way is up
-        if (!model.tested && (pick == null || pick == own || !com.hayeco.flipspaces.core.spatial.GravityAxes.sameUp(pick, own))) return null
+        if (!model.layoutKnown && (pick == null || pick == own || !com.hayeco.flipspaces.core.spatial.GravityAxes.sameUp(pick, own))) return null
         fun back(v: com.hayeco.flipspaces.core.spatial.Vec3?) = com.hayeco.flipspaces.core.spatial.GravityAxes.carryBack(v, pick, own)
         val static = staticGyroBias
         val worn = wornGyroBias
@@ -165,10 +167,28 @@ class SpaceStore(context: Context) {
     val modelAxes: AxisMap get() = defaultAxes()
 
     /** 1.2.13: where [axisMap] came from, in words, for the Glasses report. */
+    /**
+     * 1.6.30: biases saved on RayNeo glasses from 1.6.25 to 1.6.29 are in 1.6.25's layout (x front, y left, z up); once,
+     * they are carried into the new one ([com.hayeco.flipspaces.core.spatial.GlassesModel.RAYNEO]'s x up, y left, z
+     * back). Not when the user picked a layout on the head tracking screen. Null when there was nothing to do.
+     */
+    fun moveRayNeoBiases1630(): String? {
+        if (model != com.hayeco.flipspaces.core.spatial.GlassesModel.RAYNEO || prefs.getBoolean(perModel(KEY_RAYNEO_1630), false)) return null
+        prefs.edit().putBoolean(perModel(KEY_RAYNEO_1630), true).apply()
+        if (prefs.contains(perModel(KEY_AXES))) return null
+        val from = AxisMap.XFRONT_YLEFT_ZUP
+        val to = defaultAxes()
+        fun move(v: com.hayeco.flipspaces.core.spatial.Vec3?) = v?.let { com.hayeco.flipspaces.core.spatial.GravityAxes.carry(it, from, to) }
+        staticGyroBias = move(staticGyroBias)
+        wornGyroBias = move(wornGyroBias)
+        gyroBias = move(gyroBias)
+        return "head axes: the RayNeo's saved gyro biases carried from ${from.label} to its layout ${to.label}"
+    }
+
     fun axesFrom(): String {
         val gravity = prefs.getString(perModel(KEY_AXES_GRAVITY), null)
         return when {
-            gravity != null && model.tested -> "the ${model.label}'s default, known; an older gravity check's pick is not used: $gravity"
+            gravity != null && model.layoutKnown -> "the ${model.label}'s default, known; an older gravity check's pick is not used: $gravity"
             gravity != null -> "set by the gravity check: $gravity"
             prefs.contains(perModel(KEY_AXES)) -> "picked on the head tracking screen; the ${model.label}'s default is ${defaultAxes().label}"
             else -> "the ${model.label}'s default"
@@ -188,6 +208,8 @@ class SpaceStore(context: Context) {
         set(value) = prefs.edit().putInt("setup_hint2_said_" + model.key, value).apply()
 
     /** 0.5.91: [key] for the glasses' model: the Aura keeps the key it always had, every other model has its own. */
+    private val KEY_RAYNEO_1630 = "rayneo_axes_1630"
+
     private fun perModel(key: String): String {
         val m = model
         return if (m == com.hayeco.flipspaces.core.spatial.GlassesModel.AURA) key else key + "_" + m.key

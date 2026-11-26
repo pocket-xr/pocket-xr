@@ -1,36 +1,46 @@
 package com.hayeco.flipspaces.core.spatial
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.abs
 
-/** 1.6.25: a RayNeo GT's sensor axes, from its Send logs (XREAL Beam Pro, 25 Nov 2026). */
+/**
+ * A RayNeo GT's sensor axes, from its Send logs (XREAL Beam Pro, 25 Nov 2026). 1.6.25 took z for up; 1.6.30 (the same
+ * GT: "moving left to right swings the image like a pendulum"): x is up, y left, z back.
+ */
 class RayNeoAxes1625Test {
     private val axes = GlassesModel.RAYNEO.defaultAxes
 
-    @Test fun upIsTheSensorsZ() {
-        assertEquals(AxisMap.XFRONT_YLEFT_ZUP, axes)
-        // The head level: -0.009, -0.853, 9.733 m/s2
-        val level = axes.apply(Vec3(-0.009f, -0.853f, 9.733f))
-        assertTrue("$level", level.y / level.length > 0.99f)
+    @Test fun lookingUpAtThePictureIsUpright() {
+        assertEquals(AxisMap.XUP_YLEFT_ZBACK, axes)
+        // Looking up from the phone: 9.79, -0.71, 0.44 m/s2
+        val up = axes.apply(Vec3(9.79f, -0.71f, 0.44f))
+        assertTrue("$up", up.y / up.length > 0.99f)
     }
 
-    @Test fun lookingDownAtThePhoneLeansUpTowardsTheFront() {
-        // Worn, gravity 4.95, -0.51, 8.47 m/s2: about 30 degrees of a head looking down, read as pitch, not roll
-        val g = axes.apply(Vec3(4.95f, -0.51f, 8.47f))
+    @Test fun lookingDownAtThePhoneIsAHeadLookingDown() {
+        // The reading 1.6.25 took for level, -0.009, -0.853, 9.733 m/s2: the head's back points up, so world up leans
+        // to +z in head axes (back), a steep pitch down, not a roll.
+        val g = axes.apply(Vec3(-0.009f, -0.853f, 9.733f))
         val n = g.length
-        // The head's front is -z in head axes: world up leans that way when looking down
-        assertTrue("$g", -g.z / n > 0.45f)
-        assertTrue("$g", kotlin.math.abs(g.x) / n < 0.1f)
+        assertTrue("$g", g.z / n > 0.95f)
+        assertTrue("$g", abs(g.x) / n < 0.1f)
     }
 
-    @Test fun aPickThatOnlyFoundUpGivesWayToTheModelsOwn() {
-        // The GT's phone saved "x right, y front, z up" from the gravity check
-        assertTrue(GravityAxes.sameUp(AxisMap.XRIGHT_ZUP_YFRONT, AxisMap.XFRONT_YLEFT_ZUP))
-        assertFalse(GravityAxes.sameUp(AxisMap.XRIGHT_YUP_ZBACK, AxisMap.XFRONT_YLEFT_ZUP))
-        // The check keeps the model's own when it fits
-        val v = GravityAxes.check(GravityAxes.Rest(Vec3(4.95f, -0.51f, 8.47f), "test"), AxisMap.XFRONT_YLEFT_ZUP, AxisMap.XFRONT_YLEFT_ZUP)
+    @Test fun aTurnIsAboutTheSensorsXAndANodAboutY() {
+        // A turn: rotation about the head's up axis (head y); a nod about its right axis (head x), as 1.6.25 had it.
+        val turn = axes.apply(Vec3(1f, 0f, 0f))
+        assertEquals(1f, turn.y, 1e-6f)
+        val nod = axes.apply(Vec3(0f, -1f, 0f))
+        assertEquals(1f, nod.x, 1e-6f)
+        assertEquals(AxisMap.XFRONT_YLEFT_ZUP.apply(Vec3(0f, -1f, 0f)).x, nod.x, 1e-6f)
+    }
+
+    @Test fun gravityNeverTurnsTheKnownLayout() {
+        assertTrue(GlassesModel.RAYNEO.layoutKnown)
+        // Looking down at the phone as the Space starts: 90 degrees from up, kept.
+        val v = GravityAxes.check(GravityAxes.Rest(Vec3(3.55f, -0.17f, 9.12f), "start"), axes, axes, knownLayout = true)
         assertEquals(null, v.axes)
     }
 }

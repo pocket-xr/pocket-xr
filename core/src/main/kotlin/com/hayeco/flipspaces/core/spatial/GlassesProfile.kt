@@ -87,7 +87,13 @@ enum class GlassesModel(
     // clockwise"): its sensor's up is z (-0.01, -0.85, 9.73 m/s2 with the head level) and its x leans with the head
     // looking down at the phone (3.6 to 5.0 m/s2 on x), so x is front and y, the third, left. The gravity check could only
     // tell it z was up, and took x for right, so a nod was read as a roll.
-    RAYNEO("RayNeo glasses", "rayneo", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XFRONT_YLEFT_ZUP),
+    // 1.6.30 (the same GT on 1.6.29: "Up and down works well but moving left to right swings the image like a pendulum"):
+    // a turn came in about the sensor's x, which 1.6.25 took for front, so it was read as a roll. That "level" reading was
+    // the head looking down at the phone's trackpad: the head's back points up then, and the sensor's z with it. Looking
+    // up at the picture, gravity went over to x (up to 9.8 m/s2), the head's up. So x is up, y left (1.6.25's nod, which
+    // works) and z back, the turn about x. Its layout counts as known ([layoutKnown]): looking down at the phone as the
+    // Space starts is 70 to 90 degrees from it, which the gravity check would otherwise take for a turned layout.
+    RAYNEO("RayNeo glasses", "rayneo", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XUP_YLEFT_ZBACK),
     UNKNOWN("Unknown glasses", "unknown", tested = false, camera = false, diagonalFovDeg = null);
 
     /**
@@ -132,6 +138,9 @@ enum class GlassesModel(
      * 1.2.8: an XREAL model, whose 3840 x 1080 mode is always their side by side 3D (or an Ultrawide their control link
      * says). Other glasses' wide mode may be one 32:9 canvas ([WideCanvas]).
      */
+    /** 1.6.30: the default layout is known (a tested model, or one read from a tester's logs): gravity never turns it. */
+    val layoutKnown: Boolean get() = tested || this == RAYNEO
+
     val isXreal: Boolean get() = this != VITURE && this != RAYNEO && this != UNKNOWN
 
     /** Whether [tanPerPx1to1] comes from this model's own figure. */
