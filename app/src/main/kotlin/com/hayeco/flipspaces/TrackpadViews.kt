@@ -3481,15 +3481,22 @@ internal class PadScreen(context: Context, private val host: PadHost) : ViewGrou
         this.pocket = show && pocket
         lock.visibility = if (show) View.VISIBLE else View.GONE
         lockText.text = com.hayeco.flipspaces.core.pointer.PocketMode.hint(this.pocket)
+        // 1.6.29: Pocket mode shows its way out for a few seconds as it comes on.
+        pocketHintUntilMs = if (this.pocket) android.os.SystemClock.uptimeMillis() + com.hayeco.flipspaces.core.pointer.PocketMode.HINT_ON_ENTRY_MS else 0L
         lockProgress(0f, false)
+        removeCallbacks(pocketHintEnd)
+        if (this.pocket) postDelayed(pocketHintEnd, com.hayeco.flipspaces.core.pointer.PocketMode.HINT_ON_ENTRY_MS)
         requestLayout()
     }
+
+    private var pocketHintUntilMs = 0L
+    private val pocketHintEnd = Runnable { if (pocket) lockProgress(0f, false) }
 
     val locked: Boolean get() = lock.visibility == View.VISIBLE
 
     /** The hold's progress: the gradient brightens while pressed, the icon fills in. 1.2.3: in Pocket mode all black until held. */
     fun lockProgress(progress: Float, pressed: Boolean) {
-        val hint = com.hayeco.flipspaces.core.pointer.PocketMode.showsHint(pocket, pressed)
+        val hint = com.hayeco.flipspaces.core.pointer.PocketMode.showsHint(pocket, pressed, android.os.SystemClock.uptimeMillis() < pocketHintUntilMs)
         lockGlow.visibility = if (hint) View.VISIBLE else View.INVISIBLE
         lockText.visibility = if (hint) View.VISIBLE else View.INVISIBLE
         lockGradient.colors = intArrayOf(0x00FFFFFF, if (pressed) 0x40FFFFFF else 0x33FFFFFF)

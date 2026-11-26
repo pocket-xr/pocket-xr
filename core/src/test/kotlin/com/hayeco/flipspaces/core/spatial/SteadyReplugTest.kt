@@ -18,4 +18,13 @@ class SteadyReplugTest {
         assertEquals(SteadyMode.Dropped.BACK_IN, SteadyMode.dropped(100_000L, null, linkOpenedMs = long))
         assertEquals(SteadyMode.Dropped.LEAVE, SteadyMode.dropped(100_000L, 90_000L, linkOpenedMs = long))
     }
+
+    /** 1.6.29: Steve Fenwick's 1S restarted at each Ultrawide on and came back without it; put-backs 30 to 125 s apart. */
+    @Test
+    fun aSecondPutBackSoonAfterTheFirstIsTheRestartLoop() {
+        assertEquals(false, SteadyMode.replugLoop(100_000L, null))
+        assertEquals(true, SteadyMode.replugLoop(133_000L, 100_000L))
+        assertEquals(true, SteadyMode.replugLoop(225_000L, 100_000L))
+        assertEquals(false, SteadyMode.replugLoop(100_000L + SteadyMode.REPLUG_LOOP_MS, 100_000L))
+    }
 }

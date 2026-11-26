@@ -1090,6 +1090,7 @@
     <string name="spatial_view_turn_off_3d">Disattiva la modalità 3D degli occhiali per il 2D a 120 Hz</string>
     <string name="spatial_depth_glasses_menu">Prima attiva il 3D nel menu degli occhiali</string>
     <string name="spatial_steady_turn_on_6dof">Modalità Steady in 6DoF: attiva il 6DoF nel menu degli occhiali (Spatial Display) così lo schermo resta fermo mentre ti muovi</string>
+    <string name="spatial_steady_not_kept">La modalità Steady è disattivata: questi occhiali si riavviano quando si attiva Ultrawide e tornano senza</string>
     <string name="spatial_steady_turn_off_6dof">Modalità Steady disattivata: disattiva di nuovo il 6DoF nel menu degli occhiali e usa Follow mode con Stabilizer disattivato</string>
     <string name="spatial_lock_label">Blocca schermi</string>
     <string name="spatial_lock_short">Blocca</string>
@@ -1152,6 +1153,8 @@
     <string name="spatial_card_cancel">Annulla</string>
     <string name="spatial_card_back_would_close_line">Indietro chiuderebbe %1$s.</string>
     <string name="spatial_card_back_would_close">Indietro chiuderebbe %1$s</string>
+    <string name="spatial_card_back_might_close">Indietro potrebbe chiudere %1$s</string>
+    <string name="spatial_card_back_question_cancel">Tornare indietro nell\'app, chiudere questa finestra o annullare?</string>
     <string name="spatial_card_back_anyway_question">Tornare indietro comunque, o chiudere questa finestra?</string>
     <string name="spatial_card_go_back">Torna indietro</string>
     <string name="spatial_card_close_window">Chiudi finestra</string>

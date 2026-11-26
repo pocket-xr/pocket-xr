@@ -20,6 +20,8 @@ class PocketMode123Test {
         assertEquals(PocketMode.IDLE_ICON_ALPHA, PocketMode.iconAlpha(pocket = true, progress = 0f, pressed = false), 1e-6f)
         assertFalse(PocketMode.showsHint(pocket = true, pressed = false))
         assertTrue(PocketMode.showsHint(pocket = true, pressed = true))
+        // 1.6.29: shown as Pocket mode comes on.
+        assertTrue(PocketMode.showsHint(pocket = true, pressed = false, justShown = true))
         assertTrue(PocketMode.iconAlpha(pocket = true, progress = 0.5f, pressed = true) > 0.5f)
         assertEquals(1f, PocketMode.iconAlpha(pocket = true, progress = 1f, pressed = true), 1e-6f)
     }

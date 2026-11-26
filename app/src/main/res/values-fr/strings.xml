@@ -1090,6 +1090,7 @@
     <string name="spatial_view_turn_off_3d">Désactivez le mode 3D des lunettes pour la 2D à 120 Hz</string>
     <string name="spatial_depth_glasses_menu">Activez d\'abord la 3D dans le menu de vos lunettes</string>
     <string name="spatial_steady_turn_on_6dof">Mode Steady en 6DoF : activez le 6DoF dans le menu de vos lunettes (Spatial Display) pour que l\'écran reste en place quand vous bougez</string>
+    <string name="spatial_steady_not_kept">Le mode Steady est désactivé : ces lunettes redémarrent quand Ultrawide est activé et reviennent sans lui</string>
     <string name="spatial_steady_turn_off_6dof">Le mode Steady est désactivé : désactivez à nouveau le 6DoF dans le menu de vos lunettes, et utilisez le mode Follow avec Stabilizer désactivé</string>
     <string name="spatial_lock_label">Verrouiller les écrans</string>
     <string name="spatial_lock_short">Verrouiller</string>
@@ -1152,6 +1153,8 @@
     <string name="spatial_card_cancel">Annuler</string>
     <string name="spatial_card_back_would_close_line">Retour fermerait %1$s.</string>
     <string name="spatial_card_back_would_close">Retour fermerait %1$s</string>
+    <string name="spatial_card_back_might_close">Retour pourrait fermer %1$s</string>
+    <string name="spatial_card_back_question_cancel">Revenir en arrière dans l\'app, fermer cette fenêtre ou annuler ?</string>
     <string name="spatial_card_back_anyway_question">Revenir quand même, ou fermer cette fenêtre ?</string>
     <string name="spatial_card_go_back">Revenir</string>
     <string name="spatial_card_close_window">Fermer la fenêtre</string>

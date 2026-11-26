@@ -1070,6 +1070,7 @@
     <string name="spatial_view_turn_off_3d">请关闭眼镜的 3D 模式，以使用 120 Hz 的 2D</string>
     <string name="spatial_depth_glasses_menu">请先在眼镜菜单中开启 3D</string>
     <string name="spatial_steady_turn_on_6dof">6DoF 下的 Steady 模式：请在眼镜菜单（Spatial Display）中开启 6DoF，这样你移动时屏幕会保持在原位</string>
+    <string name="spatial_steady_not_kept">Steady 模式已关闭：这副眼镜在开启 Ultrawide 时会重启，回来时没有 Ultrawide</string>
     <string name="spatial_steady_turn_off_6dof">Steady 模式已关闭：请在眼镜菜单中再次关闭 6DoF，并使用跟随模式且关闭防抖</string>
     <string name="spatial_lock_label">锁定屏幕</string>
     <string name="spatial_lock_short">锁定</string>
@@ -1132,6 +1133,8 @@
     <string name="spatial_card_cancel">取消</string>
     <string name="spatial_card_back_would_close_line">返回会关闭 %1$s。</string>
     <string name="spatial_card_back_would_close">返回会关闭 %1$s</string>
+    <string name="spatial_card_back_might_close">返回可能会关闭 %1$s</string>
+    <string name="spatial_card_back_question_cancel">在应用中返回、关闭此窗口，还是取消？</string>
     <string name="spatial_card_back_anyway_question">仍然返回，还是关闭此窗口？</string>
     <string name="spatial_card_go_back">返回</string>
     <string name="spatial_card_close_window">关闭窗口</string>

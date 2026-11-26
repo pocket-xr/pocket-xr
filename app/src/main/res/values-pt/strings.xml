@@ -1090,6 +1090,7 @@
     <string name="spatial_view_turn_off_3d">Desative o modo 3D dos óculos para 2D a 120 Hz</string>
     <string name="spatial_depth_glasses_menu">Ative primeiro o 3D no menu dos seus óculos</string>
     <string name="spatial_steady_turn_on_6dof">Modo Steady em 6DoF: ative o 6DoF no menu dos óculos (Spatial Display) para a tela ficar parada enquanto você se move</string>
+    <string name="spatial_steady_not_kept">O modo Steady está desligado: estes óculos reiniciam quando o Ultrawide é ligado e voltam sem ele</string>
     <string name="spatial_steady_turn_off_6dof">O modo Steady está desligado: desligue o 6DoF de novo no menu dos óculos e use o modo Follow com o Stabilizer desligado</string>
     <string name="spatial_lock_label">Travar telas</string>
     <string name="spatial_lock_short">Travar</string>
@@ -1152,6 +1153,8 @@
     <string name="spatial_card_cancel">Cancelar</string>
     <string name="spatial_card_back_would_close_line">Voltar fecharia %1$s.</string>
     <string name="spatial_card_back_would_close">Voltar fecharia %1$s</string>
+    <string name="spatial_card_back_might_close">Voltar pode fechar %1$s</string>
+    <string name="spatial_card_back_question_cancel">Voltar na app, fechar esta janela ou cancelar?</string>
     <string name="spatial_card_back_anyway_question">Voltar mesmo assim ou fechar esta janela?</string>
     <string name="spatial_card_go_back">Voltar</string>
     <string name="spatial_card_close_window">Fechar janela</string>

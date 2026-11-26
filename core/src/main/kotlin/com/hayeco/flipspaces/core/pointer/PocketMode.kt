@@ -18,8 +18,14 @@ object PocketMode {
     /** The window's brightness otherwise: the phone's own setting (Android's "no override"). */
     const val NO_OVERRIDE = -1f
 
-    /** The lock spot while nothing touches it: just enough to find in a dark room. */
-    const val IDLE_ICON_ALPHA = 0.08f
+    /**
+     * The lock spot while nothing touches it: enough to find. 1.6.29 (Crr66: "I didn't find how to end this mode"): 0.08
+     * was too faint to see in daylight; 0.2 on black still draws next to nothing.
+     */
+    const val IDLE_ICON_ALPHA = 0.2f
+
+    /** 1.6.29: how long the hint shows when Pocket mode comes on, so the way out is seen once. */
+    const val HINT_ON_ENTRY_MS = 4_000L
 
     /** The lock icon's opacity for the hold's [progress] (0 to 1); in [pocket] mode faint until pressed. */
     fun iconAlpha(pocket: Boolean, progress: Float, pressed: Boolean): Float = when {
@@ -28,8 +34,8 @@ object PocketMode {
         else -> 0.3f + 0.7f * progress
     }
 
-    /** Whether the hint and the glow show: always on the lock, only while held in [pocket] mode. */
-    fun showsHint(pocket: Boolean, pressed: Boolean): Boolean = !pocket || pressed
+    /** Whether the hint and the glow show: always on the lock; in [pocket] mode while held, and [justShown] (1.6.29). */
+    fun showsHint(pocket: Boolean, pressed: Boolean, justShown: Boolean = false): Boolean = !pocket || pressed || justShown
 
     /** The hint under the lock spot. */
     fun hint(pocket: Boolean): String =

@@ -481,6 +481,12 @@ class SpaceActivity : Activity() {
                         PanelHost.holdSpace(openedOn, true, "$pkg closed") { reply ->
                             main.post { if (!isFinishing) Log.i(MODE_TAG, "the Space back in front after $pkg: $reply") }
                         }
+                        // 1.6.29 (Crr66: swiping Netflix away brought the white bar back over the Space): it left its
+                        // Presentation for the app's window ([leavePresentation]); with the app gone it may go back.
+                        if (presentation == null && presentationTried.remove(openedOn)) {
+                            surfaceLogged = false
+                            checkSurface("$pkg closed: the Space may take its Presentation again, with no DeX title bar over it")
+                        }
                     } else {
                         main.postDelayed(this, DEX_WINDOW_CHECK_MS)
                     }
@@ -1193,6 +1199,11 @@ class SpaceActivity : Activity() {
         }
         val store = SpaceStore(this)
         val triples = modes.map { Triple(it.physicalWidth, it.physicalHeight, it.refreshRate) }
+        // 1.6.29: the glasses' own 3D button (glasses Pocket XR cannot switch): the view follows it, remembered.
+        com.hayeco.flipspaces.core.spatial.ViewModeChoice.followGlasses(store.view, triples, wideKind(store), !store.model.isXreal)?.let { next ->
+            store.view = next
+            Log.i(MODE_TAG, "view switched to ${next.label} (the glasses' own 3D switch: modes ${triples.joinToString { "${it.first}x${it.second}" }}); remembered for the next plug-in")
+        }
         val attrs = window.attributes
         val currentIndex = modes.indexOfFirst { it.modeId == d.mode.modeId }
         // 0.5.14: side by side 3D at 3840x1080@60 unless 2D is chosen (1920x1080@120), only
