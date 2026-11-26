@@ -1190,6 +1190,17 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         scrollHead(live, nowMs)
         var head = HeadView.pose(follow.relative(tracked), manualYaw)
         this.head = head
+        // 1.6.29 (Crr66: opened while looking up or down, the launcher stayed there after Recentre): an open launcher
+        // comes in front again, in the recentred frame.
+        if (launcherRecentre) {
+            launcherRecentre = false
+            if (xr.isOpen) {
+                val (yaw, pitch) = gaze()
+                xr.placeInFront(yaw, pitch)
+                if (launcher.isOpen) launcher.open(yaw, pitch)
+                logLauncher("recentred in front (Recentre)")
+            }
+        }
         setHeadPos(headPositionAt(presentNs, hoverLocked))
         drawnHeads.add(presentNs, head)
         launcher.followHead(Angles.of(head.forward).yawDeg)
@@ -4165,7 +4176,11 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         GlassesWarp.recentrePressed()
         // In Ultrawide the canvas comes round on the next frame, in the tracker's new frame.
         if (ultrawide) canvasRecentre = true
+        launcherRecentre = true
     }
+
+    /** 1.6.29: Recentre was pressed; the open launcher comes in front on the next frame. */
+    @Volatile private var launcherRecentre = false
 
     private fun drainCommands() {
         while (true) {
@@ -5181,7 +5196,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      */
     @Suppress("UNUSED_PARAMETER")
     private fun drawLauncherTiles(viewProj: Mat4, rays: List<com.hayeco.flipspaces.core.spatial.Ray>) {
-        launcherGl.draw(xr, viewProj, frameClockMs, rowFix, if (store.view == com.hayeco.flipspaces.core.spatial.GlassesView.SBS_3D) onText else offText)
+        // 1.6.29 (Crr66: "the 3D button states On when I am not in 3D"): On only while two eyes are drawn, not the wish.
+        val drawing3d = viewPlan?.let { it.draws == com.hayeco.flipspaces.core.spatial.StereoMode.SIDE_BY_SIDE && !it.sameForBothEyes && !it.canvas }
+            ?: (store.view == com.hayeco.flipspaces.core.spatial.GlassesView.SBS_3D)
+        launcherGl.draw(xr, viewProj, frameClockMs, rowFix, if (drawing3d) onText else offText)
     }
 
     /**

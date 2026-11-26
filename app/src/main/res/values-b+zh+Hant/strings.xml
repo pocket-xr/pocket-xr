@@ -1070,6 +1070,7 @@
     <string name="spatial_view_turn_off_3d">請關閉眼鏡的 3D 模式，以使用 120 Hz 的 2D</string>
     <string name="spatial_depth_glasses_menu">請先在眼鏡選單中開啟 3D</string>
     <string name="spatial_steady_turn_on_6dof">Steady 模式使用 6DoF：請在眼鏡選單的「空間顯示」(Spatial Display) 中開啟 6DoF，移動時螢幕就會固定不動</string>
+    <string name="spatial_steady_not_kept">Steady 模式已關閉：這副眼鏡在開啟 Ultrawide 時會重新啟動，回來時沒有 Ultrawide</string>
     <string name="spatial_steady_turn_off_6dof">Steady 模式已關閉：請在眼鏡選單中再次關閉 6DoF，並使用跟隨模式且關閉穩定器</string>
     <string name="spatial_lock_label">鎖定螢幕</string>
     <string name="spatial_lock_short">鎖定</string>
@@ -1132,6 +1133,8 @@
     <string name="spatial_card_cancel">取消</string>
     <string name="spatial_card_back_would_close_line">返回會關閉 %1$s。</string>
     <string name="spatial_card_back_would_close">返回會關閉 %1$s</string>
+    <string name="spatial_card_back_might_close">返回可能會關閉 %1$s</string>
+    <string name="spatial_card_back_question_cancel">在應用程式中返回、關閉此視窗，還是取消？</string>
     <string name="spatial_card_back_anyway_question">仍要返回，還是關閉這個視窗？</string>
     <string name="spatial_card_go_back">返回</string>
     <string name="spatial_card_close_window">關閉視窗</string>

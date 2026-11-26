@@ -1070,6 +1070,7 @@
     <string name="spatial_view_turn_off_3d">120 Hz 2D로 보려면 글래스의 3D 모드를 끄세요</string>
     <string name="spatial_depth_glasses_menu">먼저 글래스 메뉴에서 3D를 켜세요</string>
     <string name="spatial_steady_turn_on_6dof">6DoF Steady 모드: 움직여도 화면이 제자리에 있도록 글래스 메뉴(Spatial Display)에서 6DoF를 켜세요</string>
+    <string name="spatial_steady_not_kept">Steady 모드 꺼짐: 이 안경은 Ultrawide를 켜면 다시 시작되고 Ultrawide 없이 돌아옵니다</string>
     <string name="spatial_steady_turn_off_6dof">Steady 모드 꺼짐: 글래스 메뉴에서 6DoF를 다시 끄고, 스태빌라이저를 끈 팔로우 모드를 사용하세요</string>
     <string name="spatial_lock_label">화면 고정</string>
     <string name="spatial_lock_short">고정</string>
@@ -1132,6 +1133,8 @@
     <string name="spatial_card_cancel">취소</string>
     <string name="spatial_card_back_would_close_line">뒤로 가면 %1$s 앱이 닫혀요.</string>
     <string name="spatial_card_back_would_close">뒤로 가면 %1$s 앱이 닫혀요</string>
+    <string name="spatial_card_back_might_close">뒤로 가면 %1$s이(가) 닫힐 수 있습니다</string>
+    <string name="spatial_card_back_question_cancel">앱에서 뒤로 가기, 이 창 닫기 또는 취소할까요?</string>
     <string name="spatial_card_back_anyway_question">그래도 뒤로 갈까요, 아니면 이 창을 닫을까요?</string>
     <string name="spatial_card_go_back">뒤로 가기</string>
     <string name="spatial_card_close_window">창 닫기</string>

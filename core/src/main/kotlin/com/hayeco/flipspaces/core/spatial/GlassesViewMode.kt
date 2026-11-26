@@ -48,10 +48,33 @@ data class ViewPlan(
 object ViewModeChoice {
     private fun fmt(m: Triple<Int, Int, Float>) = "${m.first}x${m.second}@%.0f".format(Locale.ROOT, m.third)
 
+    /**
+     * 1.6.29 (Crr66, VITURE Luma XR in its own 3D mode: Android offered 3840x1080 and 640x480, and the Space asked for
+     * 640x480 as "2D"): a mode narrower than this is a fallback every display lists, not the glasses' picture.
+     */
+    const val FLAT_MIN_WIDTH = 1280
+
     /** The flat mode to ask for: the widest mode that is not side by side, at its highest refresh. */
     fun pickFlatMode(modes: List<Triple<Int, Int, Float>>): Int? =
-        modes.withIndex().filter { !StereoLayout.isSbsMode(it.value.first, it.value.second) }
+        modes.withIndex().filter { !StereoLayout.isSbsMode(it.value.first, it.value.second) && it.value.first >= FLAT_MIN_WIDTH }
             .maxWithOrNull(compareBy<IndexedValue<Triple<Int, Int, Float>>> { it.value.first }.thenBy { it.value.third })?.index
+
+    /**
+     * 1.6.29 (Crr66: "could you autodetect when I switch the mode in the glasses (display reconnects!) and then apply the
+     * proper mode on your own?"): on glasses only their own menu switches ([glassesMenuOnly]), the view follows what
+     * they offer. Only a side by side mode (no flat one) means their 3D is on; only a flat mode means it is off. A wide
+     * mode the glasses said is their ultrawide ([WideKind.CANVAS]) is not 3D. Null: the view stays as it is.
+     */
+    fun followGlasses(view: GlassesView, modes: List<Triple<Int, Int, Float>>, wide: WideKind, glassesMenuOnly: Boolean): GlassesView? {
+        if (!glassesMenuOnly) return null
+        val sbs = StereoLayout.pickSbsMode(modes)
+        val flat = pickFlatMode(modes)
+        return when {
+            view == GlassesView.FLAT_2D && sbs != null && flat == null && wide != WideKind.CANVAS -> GlassesView.SBS_3D
+            view == GlassesView.SBS_3D && sbs == null && flat != null -> GlassesView.FLAT_2D
+            else -> null
+        }
+    }
 
     /**
      * The plan for [wanted] given Android's [modes] (width, height, Hz). Only these modes are

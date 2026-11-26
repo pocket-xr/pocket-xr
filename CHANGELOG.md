@@ -2,6 +2,29 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.29: XREAL 1S stays connected, 3D follows VITURE glasses, clearer Lock, Pocket mode and Back
+
+- **XREAL 1S no longer keeps restarting (Steady mode):** on a 1S with firmware 2.10, turning on Ultrawide (which Steady
+  mode does) made the glasses restart and come back without it. Pocket XR turned it on again after each restart, so the
+  glasses showed their logo and dropped out over and over, and as Steady mode was remembered it began again at every
+  plug-in. Now, when glasses come back from a restart without Ultrawide soon after Pocket XR turned it on, Steady mode
+  ends, is forgotten, and the glasses say why. Found by Steve Fenwick (Galaxy Z Fold 5).
+- **3D follows VITURE glasses' own button:** in their 3D mode a VITURE Luma XR offers 3840x1080 and a 640x480 fallback,
+  and Pocket XR took the 640x480 as its 2D and drew one wide picture, so each eye saw a different half. 640x480 is no
+  longer taken as a picture mode, and on glasses that only their own menu switches the Space goes to side by side 3D
+  when they do, and back to 2D. The launcher's 3D button says On only while each eye gets its own picture.
+- **Recentre brings the launcher in front:** opened while looking up or down, the launcher stayed there after Recentre.
+- **Lock reads as "Fenster fixieren" in German:** "Bildschirme sperren" sounded like the phone's lock screen. Lock only
+  fixes the windows in place.
+- **Pocket mode shows its way out:** the lock spot was too faint to find; it's brighter and the hint shows for a few
+  seconds as Pocket mode starts.
+- **The Back question has Cancel:** "Back would close YouTube" now says "might close" (YouTube goes back a page first)
+  and has Cancel, Go back and Close window.
+- **No white bar after closing Netflix:** with Netflix swiped away the Space goes back to full screen, without DeX's
+  title bar over it.
+
+Found by Crr66 and Steve Fenwick. Not yet tried on a 1S, a Luma XR or an S20.
+
 ## 1.6.28: recentre where you look, a simpler Curve key, 3D, no slim DeX bar
 
 - **Recentre puts the windows where you look.** A recentre with the head less than 15 degrees up or down put the

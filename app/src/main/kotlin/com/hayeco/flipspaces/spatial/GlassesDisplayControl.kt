@@ -268,6 +268,9 @@ object GlassesDisplayControl {
         }
         // The user's own change: a drop seen after this is the glasses' own.
         if (!on) steadyHeld = false
+        // 1.6.29: Ultrawide is about to be turned on, as a put-back after a re-plug is: glasses that restart at it and
+        // come back without it end Steady mode at the first re-plug, not after another restart.
+        lastPutBackMs = if (on) SystemClock.elapsedRealtime() else null
         lastUltrawide = null
         steadyUsed = true
         auraLink = true
@@ -286,6 +289,12 @@ object GlassesDisplayControl {
     @Volatile private var steadyHeld = false
     private var lastUltrawide: Int? = null
     private var lastDropMs: Long? = null
+
+    /**
+     * 1.6.29: when Pocket XR last turned Ultrawide on (Steady mode on, or put back after a re-plug), until it holds on a
+     * settled link ([com.hayeco.flipspaces.core.spatial.SteadyMode.replugLoop]).
+     */
+    private var lastPutBackMs: Long? = null
 
     /** Steady mode was used this run: other glasses then have their settings read too, so they come back from it properly. */
     @Volatile private var steadyUsed = false
@@ -518,8 +527,23 @@ object GlassesDisplayControl {
                             if (what != com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.REPLUG) lastDropMs = now
                             steadyStartedMs = SystemClock.elapsedRealtime()
                             commands.steadyStart()
-                            if (what == com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.REPLUG) {
+                            if (what == com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.REPLUG &&
+                                com.hayeco.flipspaces.core.spatial.SteadyMode.replugLoop(now, lastPutBackMs)) {
+                                // 1.6.29: Ultrawide makes these glasses restart and come back without it: stop asking, and
+                                // forget it for the next start, so the glasses stay connected.
+                                val since = lastPutBackMs?.let { (now - it) / 1000 }
+                                lastPutBackMs = null
+                                steadyWant = null
+                                steadyHeld = false
+                                steadySixDof = false
+                                stereoAsked = false
+                                // The glasses are left as they came back; 3D is asked for again at the next plug-in.
+                                app?.let { SpaceStore(it).steadyRemembered = false }
+                                GlassesNotice.post(com.hayeco.flipspaces.core.spatial.SteadyMode.NOT_KEPT, 12_000L)
+                                Log.i(TAG, "Steady mode: the glasses came back from a re-plug without Ultrawide, ${since} s after Pocket XR last turned it on; they restart when it is turned on, so Steady mode ends and is not remembered")
+                            } else if (what == com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.REPLUG) {
                                 steadyWant = true
+                                lastPutBackMs = now
                                 Log.i(TAG, "Steady mode: the glasses came back from a re-plug without Ultrawide; putting Steady mode back")
                             } else if (what == com.hayeco.flipspaces.core.spatial.SteadyMode.Dropped.BACK_IN) {
                                 steadyWant = true
@@ -535,6 +559,8 @@ object GlassesDisplayControl {
                             }
                         }
                         if (uw != null) lastUltrawide = uw
+                        // 1.6.29: Ultrawide held on a settled link, so the last put-back worked.
+                        if (lastPutBackMs != null && steadyHeld && uw == 1 && now - linkOpenedMs >= com.hayeco.flipspaces.core.spatial.SteadyMode.REPLUG_MS) lastPutBackMs = null
                         // 1.1.0: the hover duty test follows its switch (off puts the glasses back in follow).
                         if (hoverTestApplied != hoverTestWanted) {
                             hoverTestApplied = hoverTestWanted

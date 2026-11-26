@@ -1100,6 +1100,7 @@
     <string name="spatial_view_turn_off_3d">Для 2D на 120 Hz выключите 3D-режим очков</string>
     <string name="spatial_depth_glasses_menu">Сначала включите 3D в меню очков</string>
     <string name="spatial_steady_turn_on_6dof">Режим Steady в 6DoF: включите 6DoF в меню очков (Spatial Display), чтобы экран оставался на месте, когда вы двигаетесь</string>
+    <string name="spatial_steady_not_kept">Режим Steady выключен: эти очки перезапускаются при включении Ultrawide и возвращаются без него</string>
     <string name="spatial_steady_turn_off_6dof">Режим Steady выключен: снова выключите 6DoF в меню очков и используйте Follow mode с выключенным Stabilizer</string>
     <string name="spatial_lock_label">Блокировка экранов</string>
     <string name="spatial_lock_short">Блок.</string>
@@ -1162,6 +1163,8 @@
     <string name="spatial_card_cancel">Отмена</string>
     <string name="spatial_card_back_would_close_line">«Назад» закроет %1$s.</string>
     <string name="spatial_card_back_would_close">«Назад» закроет %1$s</string>
+    <string name="spatial_card_back_might_close">«Назад» может закрыть %1$s</string>
+    <string name="spatial_card_back_question_cancel">Вернуться назад в приложении, закрыть это окно или отменить?</string>
     <string name="spatial_card_back_anyway_question">Всё равно вернуться назад или закрыть это окно?</string>
     <string name="spatial_card_go_back">Назад</string>
     <string name="spatial_card_close_window">Закрыть окно</string>

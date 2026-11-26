@@ -352,15 +352,21 @@ sealed interface PanelCard {
         }
     }
 
+    /**
+     * 1.6.29 (Crr66: Back in YouTube asked "Back would close YouTube", yet Go back only left the video for YouTube's start
+     * page, and the only way to keep the app was a click outside): apps with one activity go back inside themselves, so
+     * it "might" close; and Cancel is a button.
+     */
     data class AskBack(val label: String) : PanelCard {
-        override val lines = listOf(UiText.format("spatial_card_back_would_close_line", "Back would close %1\$s.", label))
+        override val lines = listOf(UiText.format("spatial_card_back_might_close", "Back might close %1\$s", label))
         override val v0 = 0.56f
         override val box = floatArrayOf(0.2f, 0.56f, 0.8f, 0.95f)
-        override val title = UiText.format("spatial_card_back_would_close", "Back would close %1\$s", label)
-        override val detail = UiText.get("spatial_card_back_anyway_question", "Go back anyway, or close this window?")
+        override val title = UiText.format("spatial_card_back_might_close", "Back might close %1\$s", label)
+        override val detail = UiText.get("spatial_card_back_question_cancel", "Go back in the app, close this window, or cancel?")
         override val buttons = listOf(
-            CardButton(CardAction.BACK_ANYWAY, UiText.get("spatial_card_go_back", "Go back"), 0.24f, 0.80f, 0.49f, 0.91f),
-            CardButton(CardAction.CLOSE_PANEL, UiText.get("spatial_card_close_window", "Close window"), 0.51f, 0.80f, 0.76f, 0.91f, danger = true),
+            CardButton(CardAction.KEEP, UiText.get("spatial_card_cancel", "Cancel"), 0.21f, 0.80f, 0.39f, 0.91f),
+            CardButton(CardAction.BACK_ANYWAY, UiText.get("spatial_card_go_back", "Go back"), 0.41f, 0.80f, 0.59f, 0.91f, primary = true),
+            CardButton(CardAction.CLOSE_PANEL, UiText.get("spatial_card_close_window", "Close window"), 0.61f, 0.80f, 0.79f, 0.91f, danger = true),
         )
         override val titleV = 0.645f
         override val titleH = 0.06f

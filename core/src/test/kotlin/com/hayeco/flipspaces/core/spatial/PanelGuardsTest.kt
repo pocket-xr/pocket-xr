@@ -99,7 +99,9 @@ class PanelGuardsTest {
         assertEquals(BackDecision.NOTHING, BackGuard.decide(DisplayTasks(0, 0, 0), appClosed = false, allowedLast = false))
         assertEquals(BackDecision.NOTHING, BackGuard.decide(deeper, appClosed = true, allowedLast = false))
         val ask = PanelCard.AskBack("Chrome")
-        assertEquals(CardAction.BACK_ANYWAY, ask.hit(0.3f, 0.9f))
+        // 1.6.29: Cancel, Go back, Close window.
+        assertEquals(CardAction.KEEP, ask.hit(0.3f, 0.9f))
+        assertEquals(CardAction.BACK_ANYWAY, ask.hit(0.5f, 0.9f))
         assertEquals(CardAction.CLOSE_PANEL, ask.hit(0.7f, 0.9f))
         assertNull(ask.hit(0.5f, 0.3f)) // elsewhere: keep the app as it is
         assertTrue(ask.v0 > 0.5f)

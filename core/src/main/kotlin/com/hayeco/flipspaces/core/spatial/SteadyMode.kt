@@ -120,4 +120,20 @@ object SteadyMode {
         lastDropMs != null && nowMs - lastDropMs in 0 until SECOND_DROP_MS -> Dropped.LEAVE
         else -> Dropped.BACK_IN
     }
+
+    /**
+     * 1.6.29 (Steve Fenwick, XREAL 1S on firmware 2.10 with a Galaxy Z Fold 5: "I get the xreal logo then it says
+     * disconnected"): on his 1S, Ultrawide on made the glasses restart, and they came back about 17 s later without it,
+     * every time. Pocket XR put Steady mode back after each re-plug ([Dropped.REPLUG]), so the glasses restarted again,
+     * over and over, and as Steady mode was remembered it began again at every plug-in. Coming back from a re-plug
+     * without Ultrawide within this long of Pocket XR turning it on (Steady mode on, or a put-back), with Ultrawide never
+     * held on a settled link since, is that loop: Steady mode ends. His log had 30 to 125 s between them; the Aura comes
+     * back from its re-plug in Ultrawide and holds it, so it never gets here.
+     */
+    const val REPLUG_LOOP_MS = 180_000L
+
+    fun replugLoop(nowMs: Long, lastPutBackMs: Long?): Boolean =
+        lastPutBackMs != null && nowMs - lastPutBackMs in 0 until REPLUG_LOOP_MS
+
+    val NOT_KEPT: String get() = UiText.get("spatial_steady_not_kept", "Steady mode is off: these glasses restart when Ultrawide is turned on and come back without it")
 }

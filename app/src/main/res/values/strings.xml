@@ -422,8 +422,8 @@
     <string name="pad_warp_with_lsr">Warp with LSR: on next time it\'s switched on.</string>
     <string name="pad_warp_resumes">Warp goes back in after a drop.</string>
     <string name="pad_warp_pauses">Warp pauses at the first drop.</string>
-    <string name="pad_screens_locked">Screens locked</string>
-    <string name="pad_screens_unlocked">Screens unlocked</string>
+    <string name="pad_screens_locked">Screens locked in place</string>
+    <string name="pad_screens_unlocked">Screens can move again</string>
     <string name="pad_open_windows_first">Open some windows first.</string>
     <!-- %1$s is the new preset's name -->
     <string name="pad_preset_saved">Saved as %1$s.</string>
@@ -1366,6 +1366,7 @@
     <string name="spatial_depth_glasses_menu">Turn on 3D in your glasses menu first</string>
     <!-- Notice on the glasses -->
     <string name="spatial_steady_turn_on_6dof">Steady mode in 6DoF: turn on 6DoF in your glasses\' menu (Spatial Display) so the screen stays put as you move</string>
+    <string name="spatial_steady_not_kept">Steady mode is off: these glasses restart when Ultrawide is turned on and come back without it</string>
     <!-- Notice on the glasses -->
     <string name="spatial_steady_turn_off_6dof">Steady mode is off: turn 6DoF off again in your glasses\' menu, and use Follow mode with Stabilizer off</string>
     <!-- Setting that stops windows from being moved or resized -->
@@ -1462,6 +1463,8 @@
     <string name="spatial_card_back_would_close_line">Back would close %1$s.</string>
     <!-- %1$s is an app name -->
     <string name="spatial_card_back_would_close">Back would close %1$s</string>
+    <string name="spatial_card_back_might_close">Back might close %1$s</string>
+    <string name="spatial_card_back_question_cancel">Go back in the app, close this window, or cancel?</string>
     <string name="spatial_card_back_anyway_question">Go back anyway, or close this window?</string>
     <string name="spatial_card_go_back">Go back</string>
     <string name="spatial_card_close_window">Close window</string>

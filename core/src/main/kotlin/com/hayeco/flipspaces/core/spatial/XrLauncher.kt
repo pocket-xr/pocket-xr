@@ -666,6 +666,11 @@ class XrLauncher {
         lastNowMs = nowMs
     }
 
+    /** 1.6.29: an open launcher moved in front of a head looking at [headYaw], [headPitch] (Recentre), nothing else changed. */
+    fun placeInFront(headYaw: Float, headPitch: Float) {
+        if (isOpen) placement = inFront(headYaw, headPitch)
+    }
+
     /** Begins the close; the panel fades out over 180 ms and is then reset to page 0. */
     fun close(nowMs: Long) {
         if (!isOpen) return

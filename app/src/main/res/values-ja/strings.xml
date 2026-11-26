@@ -1070,6 +1070,7 @@
     <string name="spatial_view_turn_off_3d">120 Hz の 2D にするには、グラスの 3D モードをオフにしてください</string>
     <string name="spatial_depth_glasses_menu">先にグラスのメニューで 3D をオンにしてください</string>
     <string name="spatial_steady_turn_on_6dof">6DoF で Steady モード: 動いても画面がその場に留まるよう、グラスのメニュー（Spatial Display）で 6DoF をオンにしてください</string>
+    <string name="spatial_steady_not_kept">Steady モードはオフです: このグラスは Ultrawide をオンにすると再起動し、Ultrawide なしで戻ります</string>
     <string name="spatial_steady_turn_off_6dof">Steady モードはオフです: グラスのメニューで 6DoF をオフに戻し、スタビライザーをオフにしてフォローモードを使ってください</string>
     <string name="spatial_lock_label">画面のロック</string>
     <string name="spatial_lock_short">ロック</string>
@@ -1132,6 +1133,8 @@
     <string name="spatial_card_cancel">キャンセル</string>
     <string name="spatial_card_back_would_close_line">「戻る」で %1$s が閉じます。</string>
     <string name="spatial_card_back_would_close">「戻る」で %1$s が閉じます</string>
+    <string name="spatial_card_back_might_close">戻ると %1$s が閉じる場合があります</string>
+    <string name="spatial_card_back_question_cancel">アプリ内で戻る、このウィンドウを閉じる、またはキャンセルしますか?</string>
     <string name="spatial_card_back_anyway_question">このまま戻りますか？それともこのウィンドウを閉じますか？</string>
     <string name="spatial_card_go_back">戻る</string>
     <string name="spatial_card_close_window">ウィンドウを閉じる</string>
