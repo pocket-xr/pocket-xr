@@ -32,7 +32,8 @@ class RayNeoLink private constructor(
     axes: VitureAxes,
     readTimeoutMs: Int,
 ) : VitureLink {
-    private val framer = RayNeoFramer(axes)
+    // 1.6.31: the GT's gyro turned to its accelerometer ([RayNeoProtocol.gyroPitchDeg]).
+    private val framer = RayNeoFramer(axes, RayNeoProtocol.gyroPitchDeg(device.vendorId))
     private val buf = ByteArray(maxOf(RayNeoProtocol.PACKET_BYTES, input.maxPacketSize))
     private val timeoutMs = readTimeoutMs
     private val closed = AtomicBoolean(false)

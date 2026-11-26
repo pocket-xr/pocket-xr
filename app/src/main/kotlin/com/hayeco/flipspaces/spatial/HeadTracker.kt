@@ -657,7 +657,7 @@ object HeadTracker {
         val store = SpaceStore(context)
         // 1.6.23: biases saved under an older gravity check's layout, carried back before they seed the fusion.
         store.dropOldGravityPick()?.let { Log.i(TAG, it) }
-        store.moveRayNeoBiases1630()?.let { Log.i(TAG, it) }
+        store.forgetRayNeoBiases1631()?.let { Log.i(TAG, it) }
         val staticSeed = store.staticGyroBias
         if (staticSeed != null) {
             val worn = store.wornGyroBias?.takeIf { BiasSavePolicy.decide(it, staticSeed, staticThisSession = false).worn != null }

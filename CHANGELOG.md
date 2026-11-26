@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.31: RayNeo GT turns without tilting
+
+- **No more tilt or pendulum when turning with a RayNeo GT:** the GT's gyro is about 20 degrees pitched against its
+  accelerometer, so every turn was taken partly as a roll and the picture tilted as you turned (left one way, right
+  the other). Measured on a 20 second motion recording from the GT and checked by replaying it through a head fusion
+  (roll per degree of turn from -0.37 to -0.02). The GT's axes are back to 1.6.25's; 1.6.30 had them wrong. Gyro
+  biases saved before are learnt again. Found by Zen's Afterglow; not yet tried on a GT.
+
 ## 1.6.30: RayNeo GT turns the right way
 
 - **No more pendulum on the RayNeo GT:** turning the head left or right swung the picture like a pendulum, while up and

@@ -38,6 +38,28 @@ object RayNeoProtocol {
 
     fun isRayNeo(vendorId: Int): Boolean = vendorId == VENDOR || vendorId == VENDOR_GT
 
+    /**
+     * 1.6.31 (Zen's Afterglow, RayNeo GT: "moving left and right ... the image just tilts clockwise to the left anti
+     * clockwise to the right when looking ahead or down"): the GT's gyro is about 20 degrees pitched against its
+     * accelerometer, about the sensor's y. In its 20 s motion recording fast head turns lie about 31 degrees from the
+     * sensor's z while gravity, at the same moments, lies 16 to 23 degrees from it, and the accelerometer's sideways axis
+     * barely moves (no real roll). Replayed through a head fusion, the raw gyro gives a roll of -0.37 degrees for each
+     * degree of turn, the pendulum in his 1.6.25 log (about -0.6 there); the gyro turned by -20 degrees about y gives
+     * -0.02. Only the GT: no Air 4 Pro has sent motion yet.
+     */
+    const val GT_GYRO_PITCH_DEG = -20f
+
+    /** The gyro turn about the sensor's y for glasses of [vendorId] (degrees), 0 when none is known. */
+    fun gyroPitchDeg(vendorId: Int): Float = if (vendorId == VENDOR_GT) GT_GYRO_PITCH_DEG else 0f
+
+    /** [g] (sensor axes) turned by [deg] about the sensor's y: x' = x cos + z sin, z' = -x sin + z cos. */
+    fun turnGyro(g: Vec3, deg: Float): Vec3 {
+        if (deg == 0f) return g
+        val c = kotlin.math.cos(deg * DEG)
+        val s = kotlin.math.sin(deg * DEG)
+        return Vec3(c * g.x + s * g.z, g.y, -s * g.x + c * g.z)
+    }
+
     fun modelName(vendorId: Int, productId: Int): String = when {
         vendorId == VENDOR_GT -> "RayNeo GT"
         productId == AIR_4_PRO -> "RayNeo Air 4 Pro or Air 3S Pro"
@@ -81,7 +103,7 @@ object RayNeoProtocol {
 }
 
 /** Turns RayNeo motion reports into [ImuReport]s, with the user's axis switches ([VitureAxes]), timed on arrival. */
-class RayNeoFramer(axes: VitureAxes = VitureAxes()) {
+class RayNeoFramer(axes: VitureAxes = VitureAxes(), private val gyroPitchDeg: Float = 0f) {
     @Volatile var axes: VitureAxes = axes
     private var nImu = 0L
     private var nOther = 0L
@@ -104,7 +126,7 @@ class RayNeoFramer(axes: VitureAxes = VitureAxes()) {
             deviceId = 0L,
             timestampNs = hostNs,
             type = ImuReportType.IMU,
-            gyro = sw.apply(s.gyro),
+            gyro = sw.apply(RayNeoProtocol.turnGyro(s.gyro, gyroPitchDeg)),
             accel = sw.apply(s.accel),
             mag = Vec3.ZERO,
             temperatureC = s.temperatureC,
