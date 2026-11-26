@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.30: RayNeo GT turns the right way
+
+- **No more pendulum on the RayNeo GT:** turning the head left or right swung the picture like a pendulum, while up and
+  down worked. 1.6.25 took the GT's reading with the head looking down at the phone's trackpad for a level head, so it
+  took the sensor's up axis for front and read a turn as a roll. The GT's layout is now x up, y left, z back, and as it
+  is known from the logs, looking down at the phone as the Space starts no longer changes it. Biases saved under the
+  old layout are carried over. Found by Zen's Afterglow; not yet tried on a GT.
+
 ## 1.6.29: XREAL 1S stays connected, 3D follows VITURE glasses, clearer Lock, Pocket mode and Back
 
 - **XREAL 1S no longer keeps restarting (Steady mode):** on a 1S with firmware 2.10, turning on Ultrawide (which Steady
