@@ -144,8 +144,6 @@ class SpaceStore(context: Context) {
      */
     fun dropOldGravityPick(): String? {
         if (!prefs.contains(perModel(KEY_AXES_GRAVITY))) return null
-        // 1.6.30: carried straight to the RayNeo's new layout, so [moveRayNeoBiases1630] has nothing left to do.
-        if (model == com.hayeco.flipspaces.core.spatial.GlassesModel.RAYNEO) prefs.edit().putBoolean(perModel(KEY_RAYNEO_1630), true).apply()
         val pick = prefs.getString(perModel(KEY_AXES), null)?.let { name -> AxisMap.entries.firstOrNull { it.name == name } }
         val own = defaultAxes()
         // 1.6.25: an untested model's pick too, when it only agrees with the model's own layout on which way is up
@@ -168,21 +166,18 @@ class SpaceStore(context: Context) {
 
     /** 1.2.13: where [axisMap] came from, in words, for the Glasses report. */
     /**
-     * 1.6.30: biases saved on RayNeo glasses from 1.6.25 to 1.6.29 are in 1.6.25's layout (x front, y left, z up); once,
-     * they are carried into the new one ([com.hayeco.flipspaces.core.spatial.GlassesModel.RAYNEO]'s x up, y left, z
-     * back). Not when the user picked a layout on the head tracking screen. Null when there was nothing to do.
+     * 1.6.31: biases saved on RayNeo glasses before are in older axes (1.6.30's layout) or from the GT's gyro before it was
+     * turned to its accelerometer ([com.hayeco.flipspaces.core.spatial.RayNeoProtocol.gyroPitchDeg]): forgotten once, and
+     * learnt again in the first still seconds. Null when there was nothing to do.
      */
-    fun moveRayNeoBiases1630(): String? {
-        if (model != com.hayeco.flipspaces.core.spatial.GlassesModel.RAYNEO || prefs.getBoolean(perModel(KEY_RAYNEO_1630), false)) return null
-        prefs.edit().putBoolean(perModel(KEY_RAYNEO_1630), true).apply()
-        if (prefs.contains(perModel(KEY_AXES))) return null
-        val from = AxisMap.XFRONT_YLEFT_ZUP
-        val to = defaultAxes()
-        fun move(v: com.hayeco.flipspaces.core.spatial.Vec3?) = v?.let { com.hayeco.flipspaces.core.spatial.GravityAxes.carry(it, from, to) }
-        staticGyroBias = move(staticGyroBias)
-        wornGyroBias = move(wornGyroBias)
-        gyroBias = move(gyroBias)
-        return "head axes: the RayNeo's saved gyro biases carried from ${from.label} to its layout ${to.label}"
+    fun forgetRayNeoBiases1631(): String? {
+        if (model != com.hayeco.flipspaces.core.spatial.GlassesModel.RAYNEO || prefs.getBoolean(perModel(KEY_RAYNEO_1631), false)) return null
+        prefs.edit().putBoolean(perModel(KEY_RAYNEO_1631), true).apply()
+        if (staticGyroBias == null && wornGyroBias == null && gyroBias == null) return null
+        staticGyroBias = null
+        wornGyroBias = null
+        gyroBias = null
+        return "head axes: the RayNeo's saved gyro biases forgotten (saved in older axes or with the GT's gyro unturned); learnt again when still"
     }
 
     fun axesFrom(): String {
@@ -208,7 +203,7 @@ class SpaceStore(context: Context) {
         set(value) = prefs.edit().putInt("setup_hint2_said_" + model.key, value).apply()
 
     /** 0.5.91: [key] for the glasses' model: the Aura keeps the key it always had, every other model has its own. */
-    private val KEY_RAYNEO_1630 = "rayneo_axes_1630"
+    private val KEY_RAYNEO_1631 = "rayneo_gyro_1631"
 
     private fun perModel(key: String): String {
         val m = model

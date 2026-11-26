@@ -87,13 +87,11 @@ enum class GlassesModel(
     // clockwise"): its sensor's up is z (-0.01, -0.85, 9.73 m/s2 with the head level) and its x leans with the head
     // looking down at the phone (3.6 to 5.0 m/s2 on x), so x is front and y, the third, left. The gravity check could only
     // tell it z was up, and took x for right, so a nod was read as a roll.
-    // 1.6.30 (the same GT on 1.6.29: "Up and down works well but moving left to right swings the image like a pendulum"):
-    // a turn came in about the sensor's x, which 1.6.25 took for front, so it was read as a roll. That "level" reading was
-    // the head looking down at the phone's trackpad: the head's back points up then, and the sensor's z with it. Looking
-    // up at the picture, gravity went over to x (up to 9.8 m/s2), the head's up. So x is up, y left (1.6.25's nod, which
-    // works) and z back, the turn about x. Its layout counts as known ([layoutKnown]): looking down at the phone as the
-    // Space starts is 70 to 90 degrees from it, which the gravity check would otherwise take for a turned layout.
-    RAYNEO("RayNeo glasses", "rayneo", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XUP_YLEFT_ZBACK),
+    // 1.6.30 took x for up from that pendulum; wrong: the GT's next log had gravity on z at every recentre looking ahead,
+    // and on x looking up. 1.6.31: the layout is 1.6.25's, and the pendulum was the gyro's signs ([RayNeoProtocol.parse]).
+    // The layout counts as known ([layoutKnown]): the sensor sits about 20 degrees nose up, and a head looking down at
+    // the phone as the Space starts must not turn it.
+    RAYNEO("RayNeo glasses", "rayneo", tested = false, camera = false, diagonalFovDeg = null, defaultAxes = AxisMap.XFRONT_YLEFT_ZUP),
     UNKNOWN("Unknown glasses", "unknown", tested = false, camera = false, diagonalFovDeg = null);
 
     /**
