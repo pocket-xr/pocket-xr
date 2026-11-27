@@ -2,6 +2,18 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.35: Netflix's controls stay, and notices you can see on smaller glasses
+
+- **Netflix's controls stay while you move the cursor:** with Netflix full screen, a tap brought up its controls, but
+  they vanished as soon as the cursor moved, so you had to find a control blind and tap twice, and sliders could not be
+  dragged. Each touch on the trackpad gave focus back to a window behind Netflix, and Netflix hides its controls when
+  it loses focus. While an app is full screen over the Space, the trackpad now leaves focus alone.
+- **Notices show on glasses with a smaller view:** Pocket XR's one line notices (like the 3D button's "Switch between
+  2D and 3D on the glasses themselves") sat further below the middle than the VITURE Luma can show, so pressing 3D
+  seemed to only close the launcher. They now stay inside the view.
+
+Found by Crr66; not yet tried on glasses.
+
 ## 1.6.34: The launcher fits your glasses' view, and Shizuku when Android says no
 
 - **All of the launcher is in view:** the launcher was 53 by 37 degrees, taller than every glasses' view (the VITURE

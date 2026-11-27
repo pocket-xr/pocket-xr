@@ -141,6 +141,9 @@ class PanelGuardsTest {
         assertEquals(8, PanelFocus.target(launcherOpen = true, spaceDisplayId = 8, focusedPanelDisplayId = 14))
         assertNull(PanelFocus.target(launcherOpen = false, spaceDisplayId = 8, focusedPanelDisplayId = null))
         assertNull(PanelFocus.target(launcherOpen = true, spaceDisplayId = -1, focusedPanelDisplayId = 14))
+        // 1.6.35 (Crr66, Netflix over the Space): nothing is focused while an app is over it, launcher open or not.
+        assertNull(PanelFocus.target(launcherOpen = false, spaceDisplayId = 8, focusedPanelDisplayId = 14, appOver = true))
+        assertNull(PanelFocus.target(launcherOpen = true, spaceDisplayId = 8, focusedPanelDisplayId = 14, appOver = true))
         // The trackpad's window never takes focus while the Space is up.
         assertFalse(PanelFocus.trackpadFocusable(spaceActive = true))
         assertTrue(PanelFocus.trackpadFocusable(spaceActive = false))
