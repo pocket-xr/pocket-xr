@@ -2,13 +2,18 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
-## 1.6.34: The launcher fits your glasses' view
+## 1.6.34: The launcher fits your glasses' view, and Shizuku when Android says no
 
 - **All of the launcher is in view:** the launcher was 53 by 37 degrees, taller than every glasses' view (the VITURE
   Luma's is 44 by 26), so its top and bottom rows were cut off. It now opens far enough away to fit the view, centred
   on where you look, as it already did in Steady mode. On the Aura it looks about 80 % of its old size.
+- **Asks for Shizuku when Android won't open the Space on the glasses:** on some phones Android refuses to let Pocket
+  XR open on the glasses' screen ("Permission denial ... launchDisplayId"), and Pocket XR then gave up without asking
+  for Shizuku, which can open it there. Now it opens the Space through Shizuku, or shows Shizuku's prompt and opens it
+  once you allow it. This only helps when the glasses have their own screen (Samsung DeX in extended mode), not when
+  they copy the phone's.
 
-Found by Crr66; not yet tried on glasses.
+The launcher size was found by Crr66 and the Shizuku ask by MrPopkorn (issue #183); neither is tried on glasses yet.
 
 ## 1.6.33: Recentre places the launcher right, a level start, Pocket mode unlocks, Netflix opens clean
 
