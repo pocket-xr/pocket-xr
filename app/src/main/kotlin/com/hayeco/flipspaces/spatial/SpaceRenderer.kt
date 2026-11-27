@@ -1192,7 +1192,13 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         this.head = head
         // 1.6.29 (Crr66: opened while looking up or down, the launcher stayed there after Recentre): an open launcher
         // comes in front again, in the recentred frame.
-        if (launcherRecentre) {
+        // 1.6.33 (Crr66: "looked up, centered: only lower half of launcher visible, center again: correctly centered"): the
+        // head thread applies a recentre on its next pass, after this frame had placed the launcher from the old frame's
+        // pose (the log: the launcher placed 8 ms before the head's recentre line). It now waits for the head's recentre
+        // and one frame more, so the pose it reads is in the new frame; 300 ms at most (no head tracking, a dropped press).
+        if (launcherRecentre && launcherRecentreSeen < 0 && HeadTracker.recentresApplied.get() != launcherRecentreFrom) {
+            launcherRecentreSeen = nowMs
+        } else if (launcherRecentre && ((launcherRecentreSeen in 0 until nowMs) || nowMs - launcherRecentreAtMs >= 300L)) {
             launcherRecentre = false
             if (xr.isOpen) {
                 val (yaw, pitch) = gaze()
@@ -4176,8 +4182,16 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         GlassesWarp.recentrePressed()
         // In Ultrawide the canvas comes round on the next frame, in the tracker's new frame.
         if (ultrawide) canvasRecentre = true
+        launcherRecentreFrom = HeadTracker.recentresApplied.get()
+        launcherRecentreSeen = -1L
+        launcherRecentreAtMs = android.os.SystemClock.uptimeMillis()
         launcherRecentre = true
     }
+
+    /** 1.6.33: the head's applied recentres when Recentre was pressed, when this thread saw it move (-1 not yet), and the press. */
+    @Volatile private var launcherRecentreFrom = 0
+    @Volatile private var launcherRecentreSeen = -1L
+    @Volatile private var launcherRecentreAtMs = 0L
 
     /** 1.6.29: Recentre was pressed; the open launcher comes in front on the next frame. */
     @Volatile private var launcherRecentre = false

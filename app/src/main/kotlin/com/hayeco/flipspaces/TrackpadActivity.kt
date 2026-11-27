@@ -173,6 +173,8 @@ class TrackpadActivity : Activity(), PadHost {
         rotation = sensors?.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
         if (settings.mode == PadMode.SPATIAL_MOUSE && rotation == null) settings = settings.copy(mode = PadMode.VERTICAL)
         screen = PadScreen(this, this)
+        // 1.6.33: the hold to unlock allows about 16 dp of drift ([com.hayeco.flipspaces.core.pointer.UnlockHold]).
+        unlock.maxDriftPx = 16f * resources.displayMetrics.density
         screen.landscapeDevice = prefs.landscapeDevice
         // 0.5.55: the pad drawn at the panel's own pixels where Samsung's size compatibility
         // makes the window 1.5 times the cover ([NativeFrame]); the screen itself is laid out and touched as before.
@@ -239,11 +241,6 @@ class TrackpadActivity : Activity(), PadHost {
             com.hayeco.flipspaces.core.tutorial.Tour.Opening.GESTURE_CARDS ->
                 screen.showIntro(com.hayeco.flipspaces.core.pointer.IntroPages.firstRun(prefs.landscapeDevice, rotation != null, settings.oneFingerScroll))
             com.hayeco.flipspaces.core.tutorial.Tour.Opening.NOTHING -> Unit
-        }
-        // 1.1.16: Settings' "Glasses setup check" row.
-        if (intent?.getBooleanExtra(EXTRA_GLASSES_CHECK, false) == true) {
-            intent.removeExtra(EXTRA_GLASSES_CHECK)
-            if (!cover) openGlassesCheck()
         }
     }
 
@@ -464,6 +461,11 @@ class TrackpadActivity : Activity(), PadHost {
         if (intent?.getBooleanExtra(EXTRA_MENU, false) == true) {
             intent.removeExtra(EXTRA_MENU)
             screen.openDrawer(atTrackpad = true)
+        }
+        // 1.1.16: Settings' "Glasses setup check" row. 1.6.33: read here, as an open trackpad now gets it by onNewIntent.
+        if (intent?.getBooleanExtra(EXTRA_GLASSES_CHECK, false) == true) {
+            intent.removeExtra(EXTRA_GLASSES_CHECK)
+            if (!cover) openGlassesCheck()
         }
         // 1.1.15: the update banner; opened from the update notification, it is logged.
         if (intent?.getBooleanExtra(UpdateChecker.EXTRA_UPDATE, false) == true) {
@@ -2141,8 +2143,11 @@ class TrackpadActivity : Activity(), PadHost {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> unlock.down(event.rawX, event.rawY, event.pointerCount, event.eventTime)
             MotionEvent.ACTION_MOVE -> unlock.move(event.rawX, event.rawY, event.pointerCount, event.eventTime)
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> unlock.up()
+            MotionEvent.ACTION_UP -> unlock.up(event.eventTime)
+            MotionEvent.ACTION_CANCEL -> unlock.up(event.eventTime, canceled = true)
         }
+        // 1.6.33: one line for each hold that did not unlock, so a log says why.
+        unlock.takeCancel()?.let { Log.i(TAG, "${if (screen.pocket) "Pocket mode" else "screen lock"} hold ended: $it${if (phoneLocked()) " (over the phone's lock screen)" else ""}") }
     }
 
     private fun unlocked() {
@@ -2150,6 +2155,7 @@ class TrackpadActivity : Activity(), PadHost {
         val wasPocket = screen.pocket
         screen.showLock(false)
         if (wasPocket) pocketBrightness(false)
+        Log.i(TAG, if (wasPocket) "Pocket mode left by the hold" else "screen lock opened by the hold")
     }
 
     /**

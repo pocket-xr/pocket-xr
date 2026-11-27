@@ -289,6 +289,15 @@ data class FusionSettings(
      */
     val gravityAfterGate: Boolean = true,
     /**
+     * 1.6.33 (Crr66, VITURE Luma: "sometimes the launcher (or space) is rotated like 45 degree when I open it"): a Space
+     * started with the head moving (looking down at the phone) passed neither the start gate nor its fallback for 30 s,
+     * and all that time the view kept the tilt of the very first sample (roll -41 to -61 deg against gravity's 0).
+     * Once [startFallbackS] has gone by with no window to align from, gravity pulls roll and pitch with this gain while
+     * its averaged size and change are within [gravityWide] of 9.81 (no reference size taken, no bias learned), until
+     * the gate passes. 0 is 1.6.32.
+     */
+    val preGateKp: Float = 0.5f,
+    /**
      * 0.5.15: the IMU to display mounting rotation, as the roll and pitch
      * (degrees) the IMU's gravity reads while the display is level ([LevelCalibration]). 0 is the
      * identity, all 0.5.14 had.
@@ -1023,6 +1032,15 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
             tierCounts[3]++
             fullForS = 0f
             slideKp(0f, dt)
+            // 1.6.33: no window to align from yet, so a gentle pull keeps the view near level meanwhile ([FusionSettings.preGateKp]).
+            if (s.preGateKp > 0f && runS >= s.startFallbackS) {
+                val off = abs(gn - StartGate.GRAVITY) / StartGate.GRAVITY
+                val change = HeadMath.distance(shortW, gw) / StartGate.GRAVITY
+                if (off <= s.gravityWide && change <= s.gravityWide) {
+                    preGatePulled++
+                    return gravityError(HeadMath.rotateByConjugate(q, gw), gn) * s.preGateKp
+                }
+            }
             return Vec3.ZERO
         }
         // Back in the head's axes for the tilt error.
@@ -1104,6 +1122,10 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         }
         return pull
     }
+
+    /** 1.6.33: samples pulled toward gravity before the start gate passed ([FusionSettings.preGateKp]). */
+    var preGatePulled = 0L
+        private set
 
     /** 0.5.18: the gravity pull in use, sliding toward its tier's value ([FusionSettings.smoothWeights]). */
     private var kpApplied = 0f
@@ -1849,7 +1871,8 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
             startGate.passedMean.length, startGate.passedGyroPeakToPeak, startGate.passedAccelSpread * 100,
         )
     } else {
-        String.format(java.util.Locale.ROOT, "start gate: not passed yet, %d windows tried (%s)", startGate.windowsTried, startGate.lastRefusal ?: "first window not full")
+        String.format(java.util.Locale.ROOT, "start gate: not passed yet, %d windows tried (%s)%s", startGate.windowsTried, startGate.lastRefusal ?: "first window not full",
+            if (preGatePulled > 0) "; meanwhile gravity pulled roll and pitch gently on $preGatePulled samples (1.6.33)" else "")
     }
 
     /** Measured up versus the up the current estimate expects, both in the body frame. */
@@ -2142,6 +2165,7 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         biasLearned = false
         detector.reset()
         runS = 0f
+        preGatePulled = 0L
         biasLearnedAtS = -1f
         startGate.reset()
         settleFromS = 0f

@@ -449,6 +449,7 @@ class SpaceActivity : Activity() {
     private var protectedOver: String? = null
     private var protectedSeen = false
     private var protectedMisses = 0
+    private var protectedStartMs = 0L
 
     fun protectedFullScreen(packageName: String, label: String) {
         protectedOver = packageName
@@ -460,7 +461,11 @@ class SpaceActivity : Activity() {
         Log.i(MODE_TAG, "$label full screen: the mouse is not captured by the Space meanwhile, so DeX's own arrow can click in it")
         PanelHost.lowerSpace(openedOn, "$label full screen")
         main.removeCallbacks(protectedCheck)
-        main.postDelayed(protectedCheck, DEX_WINDOW_CHECK_MS)
+        // 1.6.33 (Crr66, 1.6.31: Netflix "starting still show the small white bar"): DeX's title bar stays on the app's
+        // freeform window until a check makes its task full screen, and the first came 2 s after the start (2.2 to 4.2 s
+        // in his log, while the task was listed 60 ms after the start). Now every 200 ms until its task is seen.
+        protectedStartMs = android.os.SystemClock.uptimeMillis()
+        main.postDelayed(protectedCheck, PROTECTED_FAST_CHECK_MS)
     }
 
     private val protectedCheck = object : Runnable {
@@ -470,10 +475,14 @@ class SpaceActivity : Activity() {
                 main.post {
                     if (protectedOver != pkg || isFinishing) return@post
                     val open = tasks?.any { it.packageName == pkg }
+                    val since = android.os.SystemClock.uptimeMillis() - protectedStartMs
+                    if (!protectedSeen && open != false) Log.i(MODE_TAG, "$pkg on display $openedOn $since ms after its start: " + if (open == true) "its task is there" else "the panel service could not tell")
                     // 1.6.27: once seen, its DeX window made full screen, so DeX draws no title bar on it
                     if (open == true && !protectedSeen) PanelHost.fullScreenApp(openedOn, pkg, "full screen over the Space")
                     if (open == true) protectedSeen = true
-                    if (open == false && (protectedSeen || ++protectedMisses >= 3)) {
+                    if (open == false) protectedMisses++
+                    // 1.6.33: never seen, it is taken as gone after the same 6 s the three 2 s checks gave.
+                    if (open == false && (protectedSeen || since >= PROTECTED_GIVE_UP_MS)) {
                         protectedOver = null
                         SpaceSession.protectedOver = null
                         com.hayeco.flipspaces.pointer.MouseRoute.capture(view)
@@ -488,7 +497,7 @@ class SpaceActivity : Activity() {
                             checkSurface("$pkg closed: the Space may take its Presentation again, with no DeX title bar over it")
                         }
                     } else {
-                        main.postDelayed(this, DEX_WINDOW_CHECK_MS)
+                        main.postDelayed(this, if (protectedSeen || since >= PROTECTED_GIVE_UP_MS) DEX_WINDOW_CHECK_MS else PROTECTED_FAST_CHECK_MS)
                     }
                 }
             }
@@ -1250,6 +1259,7 @@ class SpaceActivity : Activity() {
         val modes = display?.supportedModes.orEmpty().map { Triple(it.physicalWidth, it.physicalHeight, it.refreshRate) }
         val press = com.hayeco.flipspaces.core.spatial.DepthPress.decide(
             store.view, com.hayeco.flipspaces.core.spatial.StereoLayout.pickSbsMode(modes) != null, wideKind(store), GlassesDisplayControl.linkOpen,
+            glassesMenuOnly = !store.model.isXreal,
         )
         if (press is com.hayeco.flipspaces.core.spatial.DepthPress.Result.AskGlasses) {
             renderer.say(press.text, DEPTH_NOTICE_MS)
@@ -1558,6 +1568,12 @@ class SpaceActivity : Activity() {
 
         /** 1.6.15: how often a DeX window holding the pointer is looked for. */
         private const val DEX_WINDOW_CHECK_MS = 2_000L
+
+        /** 1.6.33: how often a protected app's task is looked for until it is seen and made full screen. */
+        private const val PROTECTED_FAST_CHECK_MS = 200L
+
+        /** 1.6.33: a protected app never seen this long after its start is taken as gone (three 2 s checks before). */
+        private const val PROTECTED_GIVE_UP_MS = 6_000L
 
         /** 1.6.8: how long the Space's surface stays short before that is taken as a caption in its window. */
         private const val CAPTION_SETTLE_MS = 1_500L

@@ -104,6 +104,18 @@ class PointerSession(private val context: Context) {
 
     private val hideDock = Runnable { showDockItems(emptyList()) }
 
+    /**
+     * 1.6.33 (Crr66, Netflix: "When watching a movie the cursor (small circle) stays on screen. I can move it in a
+     * corner, but its still visible a bit"): over a protected app the add-on's cursor ring was drawn for the whole film
+     * (nothing hid a resting one, and a corner keeps a quarter of it). It now goes once the pointer has rested
+     * [CURSOR_IDLE_MS], as a mouse arrow does; the next move brings it back where it was.
+     */
+    private val hideIdleCursor = Runnable {
+        val over = SpaceSession.protectedOver ?: return@Runnable
+        AddonLink.call(Unit) { it.cursor(OFF_SCREEN, OFF_SCREEN, -1, false) }
+        Log.i(TAG, "Cursor hidden over $over: no pointer move for $CURSOR_IDLE_MS ms")
+    }
+
     /** 0.5.0: the Space draws its own hand cursors; the cursor window hides its own while it is up. */
     private val spaceListener: (Boolean) -> Unit = { up ->
         main.post {
@@ -169,7 +181,11 @@ class PointerSession(private val context: Context) {
         val displayId = glasses?.id ?: return
         for (action in actions) {
             when (action) {
-                is PointerAction.Cursor -> AddonLink.call(Unit) { it.cursor(action.at.x, action.at.y, action.hover?.zone?.ordinal ?: -1, action.pressed) }
+                is PointerAction.Cursor -> {
+                    AddonLink.call(Unit) { it.cursor(action.at.x, action.at.y, action.hover?.zone?.ordinal ?: -1, action.pressed) }
+                    main.removeCallbacks(hideIdleCursor)
+                    if (SpaceSession.protectedOver != null && !action.pressed) main.postDelayed(hideIdleCursor, CURSOR_IDLE_MS)
+                }
                 is PointerAction.Tap -> tap(action)
                 is PointerAction.DragStart -> AddonLink.call(Unit) { it.dragStart(displayId, action.at.x, action.at.y) }
                 is PointerAction.DragTo -> AddonLink.call(Unit) { it.dragTo(action.at.x, action.at.y) }
@@ -329,6 +345,12 @@ class PointerSession(private val context: Context) {
         /** 0.5.19: display changes settle this long before the cursor window follows them. */
         private const val SETTLE_MS = 400L
         private const val WINDOWS_TTL_MS = 250L
+        /** 1.6.33: how long the pointer rests over a protected app before its cursor ring goes. */
+        private const val CURSOR_IDLE_MS = 3_000L
+
+        /** 1.6.33: a cursor position well off any display, so the ring is not drawn. */
+        private const val OFF_SCREEN = -10_000f
+
         private const val DOCK_MS = 8000L
         private const val DOCK_APPS = 9
 

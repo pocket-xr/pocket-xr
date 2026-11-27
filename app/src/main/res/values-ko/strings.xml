@@ -1069,6 +1069,7 @@
     <string name="spatial_view_turn_on_3d">3D로 보려면 글래스의 3D 모드(Full SBS)를 켜세요</string>
     <string name="spatial_view_turn_off_3d">120 Hz 2D로 보려면 글래스의 3D 모드를 끄세요</string>
     <string name="spatial_depth_glasses_menu">먼저 글래스 메뉴에서 3D를 켜세요</string>
+    <string name="spatial_depth_glasses_button">2D와 3D 전환은 글래스 본체에서 하세요</string>
     <string name="spatial_steady_turn_on_6dof">6DoF Steady 모드: 움직여도 화면이 제자리에 있도록 글래스 메뉴(Spatial Display)에서 6DoF를 켜세요</string>
     <string name="spatial_steady_not_kept">Steady 모드 꺼짐: 이 안경은 Ultrawide를 켜면 다시 시작되고 Ultrawide 없이 돌아옵니다</string>
     <string name="spatial_steady_turn_off_6dof">Steady 모드 꺼짐: 글래스 메뉴에서 6DoF를 다시 끄고, 스태빌라이저를 끈 팔로우 모드를 사용하세요</string>

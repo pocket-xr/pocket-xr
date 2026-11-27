@@ -244,6 +244,15 @@ class Discussion24Test {
         assertFalse(DepthPress.GLASSES_MENU.contains('—'))
     }
 
+    @Test fun depthOnGlassesWithTheirOwnButtonPointsThereEitherWay() {
+        // 1.6.33 (Crr66, VITURE Luma): the view follows the glasses' own 3D button, so the launcher's button says so.
+        val ask = DepthPress.Result.AskGlasses("Switch between 2D and 3D on the glasses themselves")
+        assertEquals(ask, DepthPress.decide(GlassesView.SBS_3D, sbsOffered = true, wide = WideKind.BY_VIEW, canSwitchGlasses = false, glassesMenuOnly = true))
+        assertEquals(ask, DepthPress.decide(GlassesView.FLAT_2D, sbsOffered = true, wide = WideKind.BY_VIEW, canSwitchGlasses = false, glassesMenuOnly = true))
+        // XREAL's link still switches.
+        assertEquals(DepthPress.Result.Toggle, DepthPress.decide(GlassesView.SBS_3D, sbsOffered = true, wide = WideKind.BY_VIEW, canSwitchGlasses = true, glassesMenuOnly = true))
+    }
+
     // ---- E: launcher icons ----
 
     @Test fun iconsAreBakedAtTheGlassesOwnPixelSize() {

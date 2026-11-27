@@ -1364,6 +1364,7 @@
     <string name="spatial_view_turn_off_3d">Turn off the glasses\' 3D mode for 2D at 120 Hz</string>
     <!-- Notice on the glasses -->
     <string name="spatial_depth_glasses_menu">Turn on 3D in your glasses menu first</string>
+    <string name="spatial_depth_glasses_button">Switch between 2D and 3D on the glasses themselves</string>
     <!-- Notice on the glasses -->
     <string name="spatial_steady_turn_on_6dof">Steady mode in 6DoF: turn on 6DoF in your glasses\' menu (Spatial Display) so the screen stays put as you move</string>
     <string name="spatial_steady_not_kept">Steady mode is off: these glasses restart when Ultrawide is turned on and come back without it</string>
