@@ -933,7 +933,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         val screen = store.screen(sbs)
         frustum = if (ultrawide) store.optics(false).ultrawideFrustum(next.surfaceWidth, next.surfaceHeight) else next.frustum(store.optics(sbs), stereo)
         pointer.frustum = frustum
-        xr.fitViewHeightDeg = if (ultrawide) frustum.verticalFovDeg else null
+        // 1.6.34 (Mike: fit every glasses): the launcher fits the view in every mode, not only Steady mode's canvas.
+        xr.fitViewHeightDeg = frustum.verticalFovDeg
+        xr.fitViewWidthDeg = if (ultrawide) null else frustum.horizontalFovDeg
         // 0.5.27: each side by side eye's picture adjust, and the pointer's pixels mapped through it.
         // 0.5.29: worked out again on the next frame for this mode (the distance correction is side by side only).
         adjustVersionSeen = -1
@@ -5329,13 +5331,14 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
     private fun fitLauncher() {
         // 1.2.8 (Discussion #24: icons "pixelated on the edges"): app icons baked at their size in this view's own pixels.
         launcherGl.iconPx = com.hayeco.flipspaces.core.spatial.LauncherIconRaster.px(com.hayeco.flipspaces.core.spatial.LauncherGrid.ICON, frustum.widthPx, frustum.horizontalFovDeg)
-        val (w, h) = com.hayeco.flipspaces.core.spatial.LauncherGrid.angularDeg()
         val key = "%.1fx%.1f".format(java.util.Locale.ROOT, frustum.horizontalFovDeg, frustum.verticalFovDeg)
         if (key == launcherFitLogged) return
         launcherFitLogged = key
-        Log.i(tag, "launcher: %.1f by %.1f degrees at %.1f m in a view of %.1f by %.1f degrees%s".format(
-            java.util.Locale.ROOT, w, h, com.hayeco.flipspaces.core.spatial.XrLauncher.DISTANCE_M, frustum.horizontalFovDeg, frustum.verticalFovDeg,
-            if (w > frustum.horizontalFovDeg || h > frustum.verticalFovDeg) " (its edges are outside the view, as on a headset with a smaller view)" else "",
+        // 1.6.34: where it opens now that it fits the view ([com.hayeco.flipspaces.core.spatial.XrLauncher.fitViewHeightDeg]).
+        val at = xr.openDistanceM()
+        val (w, h) = com.hayeco.flipspaces.core.spatial.LauncherGrid.angularDeg(at)
+        Log.i(tag, "launcher: %.1f by %.1f degrees at %.2f m in a view of %.1f by %.1f degrees".format(
+            java.util.Locale.ROOT, w, h, at, frustum.horizontalFovDeg, frustum.verticalFovDeg,
         ))
     }
 

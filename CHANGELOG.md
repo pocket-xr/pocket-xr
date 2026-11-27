@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.34: The launcher fits your glasses' view
+
+- **All of the launcher is in view:** the launcher was 53 by 37 degrees, taller than every glasses' view (the VITURE
+  Luma's is 44 by 26), so its top and bottom rows were cut off. It now opens far enough away to fit the view, centred
+  on where you look, as it already did in Steady mode. On the Aura it looks about 80 % of its old size.
+
+Found by Crr66; not yet tried on glasses.
+
 ## 1.6.33: Recentre places the launcher right, a level start, Pocket mode unlocks, Netflix opens clean
 
 - **Recentre brings the launcher fully into view:** the launcher was placed one frame before the head's recentre took

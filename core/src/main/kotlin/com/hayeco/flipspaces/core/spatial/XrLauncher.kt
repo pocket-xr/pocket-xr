@@ -551,14 +551,26 @@ class XrLauncher {
     var placement = LauncherPlacement(0f, -BELOW_GAZE_DEG)
         private set
 
-    /** Steady mode's view height, degrees, else null: looking up or down shows no more, so the panel fits inside it. */
+    /**
+     * The view's height and width, degrees, else null: the panel opens far enough away to fit [FIT_VIEW] of it, centred
+     * on the gaze. Steady mode's canvas height since 1.6.29. 1.6.34 (Mike, for Crr66's VITURE Luma, whose 44 x 26 degree
+     * view cut off the 53 x 37 degree launcher's top and bottom rows: "fit every glasses"): the glasses' view in every
+     * mode. Every glasses in the logs is 32.3 degrees tall or less, so the Aura's launcher is about 80 % of its old size.
+     */
     var fitViewHeightDeg: Float? = null
+    var fitViewWidthDeg: Float? = null
 
-    private fun inFront(headYaw: Float, headPitch: Float): LauncherPlacement {
-        val view = fitViewHeightDeg ?: return LauncherPlacement.inFrontOf(headYaw, headPitch)
+    /** How far away the panel opens: [DISTANCE_M], or farther so it fits the view. */
+    fun openDistanceM(): Float {
+        val view = fitViewHeightDeg ?: return DISTANCE_M
         val fitM = LauncherGrid.heightM / 2f / kotlin.math.tan(view * FIT_VIEW * DEG / 2f)
-        return LauncherPlacement(wrapDegrees(headYaw), headPitch, maxOf(DISTANCE_M, fitM))
+        val fitWideM = fitViewWidthDeg?.let { LauncherGrid.widthM / 2f / kotlin.math.tan(it * FIT_VIEW * DEG / 2f) } ?: 0f
+        return maxOf(DISTANCE_M, fitM, fitWideM)
     }
+
+    private fun inFront(headYaw: Float, headPitch: Float): LauncherPlacement =
+        if (fitViewHeightDeg == null) LauncherPlacement.inFrontOf(headYaw, headPitch)
+        else LauncherPlacement(wrapDegrees(headYaw), headPitch, openDistanceM())
 
     /** Every app, sorted. */
     var apps: List<AppEntry> = emptyList()
@@ -695,7 +707,7 @@ class XrLauncher {
             open(headYaw, headPitch, nowMs)
             return "opened"
         }
-        val away = angleDeg(placement.dir, Vec3.direction(headYaw, headPitch - BELOW_GAZE_DEG))
+        val away = angleDeg(placement.dir, Vec3.direction(headYaw, headPitch - if (fitViewHeightDeg != null) 0f else BELOW_GAZE_DEG))
         if (away > OUT_OF_VIEW_DEG) {
             placement = inFront(headYaw, headPitch)
             return "recentred in front (it was %.0f degrees away)".format(java.util.Locale.ROOT, away)
