@@ -2991,7 +2991,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
      * open), so typing keeps going to the panel without pinching it again.
      */
     private fun keepFocus() {
-        val target = PanelFocus.target(launcher.isOpen, spaceDisplayId, focusedPanelId?.let { panels[it]?.displayId })
+        val target = PanelFocus.target(
+            launcher.isOpen, spaceDisplayId, focusedPanelId?.let { panels[it]?.displayId },
+            appOver = SpaceSession.protectedOver != null || SpaceSession.dexWindowOver != null,
+        )
         focusKeeper.onTrackpadTouch(SystemClock.uptimeMillis(), target)?.let { PanelHost.focus(it, "trackpad touch") }
     }
 
@@ -5695,7 +5698,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             return
         }
         val tex = edgeHintLabel ?: return
-        val at = head.rotate(Vec3(0f, -0.3f - 0.02f * (1f - fade), -1f).normalized() * 1.5f)
+        // 1.6.35 (Crr66, VITURE Luma: the 3D button "behaves as before, I see no change"): the line was about 17 degrees
+        // below the middle, past the bottom of a 26 degree tall view, so it was never seen there ([com.hayeco.flipspaces.core.spatial.HintPlace]).
+        val below = com.hayeco.flipspaces.core.spatial.HintPlace.belowTan(frustum.verticalFovDeg)
+        val at = head.rotate(Vec3(0f, -below - 0.02f * (1f - fade), -1f).normalized() * 1.5f)
         val dir = at.normalized()
         val right = (dir cross Vec3.UP).let { if (it.length < 1e-6f) Vec3.RIGHT else it.normalized() }
         val up = right cross dir

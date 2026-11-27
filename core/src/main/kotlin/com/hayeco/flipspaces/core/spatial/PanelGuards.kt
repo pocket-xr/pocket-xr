@@ -381,7 +381,14 @@ sealed interface PanelCard {
  * so typing went nowhere until the panel was pinched again.
  */
 object PanelFocus {
-    fun target(launcherOpen: Boolean, spaceDisplayId: Int, focusedPanelDisplayId: Int?): Int? = when {
+    /**
+     * 1.6.35 (Crr66, Netflix full screen over the Space: the controls a tap brings up "instantly hide when I move the
+     * cursor. I have to blindly navigate to a control and then tap twice"): every touch on the trackpad gave focus to the
+     * focused window's display, away from the app over the Space, and Netflix hides its controls when it loses focus.
+     * With an app over the Space ([appOver]) nothing is focused: the trackpad's touches never move focus by themselves.
+     */
+    fun target(launcherOpen: Boolean, spaceDisplayId: Int, focusedPanelDisplayId: Int?, appOver: Boolean = false): Int? = when {
+        appOver -> null
         launcherOpen -> spaceDisplayId.takeIf { it >= 0 }
         else -> focusedPanelDisplayId
     }
