@@ -52,6 +52,8 @@ object SpaceRouting {
         ModeLog.decided("$where, display ${display.id}", choice, if (surface == GlassesSurface.SPACE) "Space full screen" else "flat DeX home with banner")
         return when (surface) {
             GlassesSurface.SPACE -> AppLauncher.openSpace(caller, display.id)?.let { failure ->
+                // 1.6.34 (issue #183): Android refused the app on the glasses: Shizuku starts it, or is asked for.
+                if (GlassesAutoOpen.spaceRefused(caller, display, choice, failure)) return null
                 // The Space would not start: the flat home still gives Mike his apps.
                 ModeLog.decided("$where, display ${display.id}", choice, "Space refused (${failure.message}); flat DeX home instead")
                 SpacesState.setBanner(FlatBanner(caller.getString(R.string.home_flat_space_refused), failure.message, null))

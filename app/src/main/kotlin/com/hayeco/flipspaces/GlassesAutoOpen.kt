@@ -80,6 +80,13 @@ object GlassesAutoOpen {
     /** The Space was up on the glasses when Shizuku stopped: restore it when the service is back. */
     private var spaceUpWhenShizukuLost = false
 
+    /** 1.6.34: the glasses' display whose Space start Android refused while Shizuku waited for the user's allow. */
+    private var shizukuAskedFor: Int? = null
+
+    private val permissionResult = Shizuku.OnRequestPermissionResultListener { _, result ->
+        main.post { shizukuAnswered(result == android.content.pm.PackageManager.PERMISSION_GRANTED) }
+    }
+
     private val check = Runnable { check() }
 
     private val listener = object : DisplayManager.DisplayListener {
@@ -143,6 +150,7 @@ object GlassesAutoOpen {
         runCatching {
             Shizuku.addBinderReceivedListener(binderReceived)
             Shizuku.addBinderDeadListener(binderDead)
+            Shizuku.addRequestPermissionResultListener(permissionResult)
         }
         PanelHost.onReady += { serviceBack("the panel service is Ready") }
         // 0.5.17 cover screen: the fold watcher, which puts the trackpad on the screen in use.
@@ -325,6 +333,7 @@ object GlassesAutoOpen {
                         openWithShell(context, display, surface, choice)
                     } else {
                         ModeLog.decided("plug-in from the pointer service, display ${display.id}", choice, "Space full screen refused: ${failure.message}")
+                        spaceRefused(context, display, choice, failure)
                     }
                 } else {
                     openFrom(host?.get() ?: context, display, surface, choice)
@@ -358,6 +367,52 @@ object GlassesAutoOpen {
                 // Opened again whatever was claimed while Shizuku was down.
                 opened.removeAll { it.startsWith("$glasses/") }
                 schedule()
+            }
+        }
+    }
+
+    /**
+     * 1.6.34 (MrPopkorn, issue #183, Galaxy S23 Ultra on One UI 8 with the XREAL One: "Permission denial: starting
+     * intent ... SpaceActivity ... with launchDisplayId=12", and Pocket XR "never reaches the Shizuku authorization
+     * request"): Android refused the app's own start of the Space on the glasses. The shell may start it there, so with
+     * Shizuku allowed the shell paths run now; with Shizuku running but not allowed, Shizuku's prompt is shown and the
+     * Space starts through the shell once the user allows it ([shizukuAnswered]). Returns true when the shell took over.
+     */
+    fun spaceRefused(context: Context, display: DisplayCandidate, choice: ModeChoice, failure: com.hayeco.flipspaces.core.LaunchFailure): Boolean {
+        if (failure.kind != com.hayeco.flipspaces.core.FailureKind.DISPLAY_DENIED) return false
+        val where = "Space refused on display ${display.id}"
+        return when (ShizukuBridge.status(context)) {
+            ShizukuStatus.READY -> {
+                ModeLog.decided(where, choice, "Android said no to the app (${failure.message}); starting it through Shizuku")
+                openWithShell(context, display, GlassesSurface.SPACE, choice)
+                true
+            }
+            ShizukuStatus.NO_PERMISSION -> {
+                shizukuAskedFor = display.id
+                ModeLog.decided(where, choice, "Android said no to the app (${failure.message}); asking for Shizuku, the Space starts through it once allowed")
+                ShizukuBridge.requestPermission()
+                false
+            }
+            else -> false
+        }
+    }
+
+    /** 1.6.34: the user answered Shizuku's prompt; a Space refused while it waited starts through the shell. */
+    private fun shizukuAnswered(granted: Boolean) {
+        val asked = shizukuAskedFor ?: return
+        shizukuAskedFor = null
+        val context = appContext ?: return
+        val displays = monitor?.snapshot() ?: return
+        val display = (DisplaySelector.state(displays, SpacesState.choices.value.preferredDisplayId) as? GlassesState.Connected)?.display
+        val choice = SpatialModeChooser.choose(HeadTracker.status.value, ShizukuBridge.status(context))
+        val where = "Shizuku answered for display $asked"
+        when {
+            !granted -> ModeLog.decided(where, choice, "not allowed; the Space stays off the glasses")
+            display == null || display.id != asked -> ModeLog.decided(where, choice, "allowed, but the glasses are now ${display?.id?.let { "display $it" } ?: "gone"}; the next plug-in check opens them")
+            SpaceActivity.runningOn(display.id) != null -> ModeLog.decided(where, choice, "allowed; the Space is already up")
+            else -> {
+                ModeLog.decided(where, choice, "allowed; starting the Space through Shizuku")
+                openWithShell(context, display, GlassesSurface.SPACE, choice)
             }
         }
     }
