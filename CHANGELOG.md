@@ -2,6 +2,14 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.32: Recentre lying down
+
+- **The picture no longer turns upside down when you recentre lying back:** with the head on a pillow and the face
+  tipped just past straight up, the top of the head points down behind you, and a recentre there put the windows upside
+  down (fine only with the chin a little down). A recentre now keeps the windows' top at the top of your head, and within
+  10 degrees of straight up the windows no longer land below where you look. Any glasses. Found by Zen's Afterglow;
+  not yet tried on glasses.
+
 ## 1.6.31: RayNeo GT turns without tilting
 
 - **No more tilt or pendulum when turning with a RayNeo GT:** the GT's gyro is about 20 degrees pitched against its

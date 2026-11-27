@@ -1983,22 +1983,39 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         val d = displayQ()
         val look = Angles.of(d.forward)
         // 1.2.13: the head's pitch is straight ahead too when tilted past the threshold ([FusionSettings.recentreFollowsTilt]).
-        val pitch = recentrePitch(look.pitchDeg)
+        var pitch = recentrePitch(look.pitchDeg)
         // Looking nearly straight up or down, the forward's heading is noise: the head's right side gives it instead.
         val side = Vec3.UP cross d.rotate(Vec3.RIGHT)
-        val yaw = if (kotlin.math.abs(look.pitchDeg) < NEAR_VERTICAL_DEG || side.length < 0.2f) look.yawDeg else Angles.of(side).yawDeg
-        reference = Quat.fromYawPitch(yaw, pitch).conjugate().normalized()
+        val bySide = kotlin.math.abs(look.pitchDeg) >= NEAR_VERTICAL_DEG && side.length >= 0.2f
+        val yaw = if (!bySide) look.yawDeg else Angles.of(side).yawDeg
+        // 1.6.32: on the side's heading the pitch is measured from it, so a head tipped just past straight up reads
+        // over 90 deg (the forward's own pitch, under 90, put the windows that much below the view).
+        if (bySide && pitch != 0f) {
+            val f = d.forward
+            val h = side.normalized()
+            pitch = Math.toDegrees(kotlin.math.atan2(f.y, f.x * h.x + f.z * h.z).toDouble()).toFloat()
+        }
+        // 1.6.32 (Zen's Afterglow, RayNeo GT, head on a pillow: "turns everything 180 degrees unless I'm looking slight
+        // down"): with the head tipped back past straight up, its crown points down behind it, and a straight ahead with
+        // no roll put the windows upside down (his recentres there took roll -165 deg). The straight ahead is then turned
+        // half a turn about the view, so the windows' top stays at the crown.
+        var straight = Quat.fromYawPitch(yaw, pitch)
+        val flipped = (d.rotate(Vec3.UP) dot straight.rotate(Vec3.UP)) < 0f
+        if (flipped) straight = straight * Quat.axisAngle(Vec3.FORWARD, Math.PI.toFloat())
+        reference = straight.conjugate().normalized()
         recentrePitchDeg = pitch
+        recentreFlipped = flipped
         recentres++
         return String.format(
             java.util.Locale.ROOT,
-            "recentre %d: forward is now yaw %.1f deg, %s; %s",
+            "recentre %d: forward is now yaw %.1f deg, %s%s; %s",
             recentres, yaw,
             when {
                 pitch != 0f -> "pitch %.1f deg (recenter follows head tilt)".format(java.util.Locale.ROOT, pitch)
                 !settings.recentreFollowsTilt -> "the horizon (head pitch %.1f deg; recenter follows head tilt off)".format(java.util.Locale.ROOT, look.pitchDeg)
                 else -> "the horizon (head pitch %.1f deg, within %.0f deg of level)".format(java.util.Locale.ROOT, look.pitchDeg, settings.recentreTiltMinDeg)
             },
+            if (flipped) ", turned half a turn (head tipped back past straight up)" else "",
             if (levelled) {
                 "roll and pitch relevelled from the %.1f s gravity mean: roll %.2f to %.2f deg, pitch %.2f to %.2f deg".format(
                     java.util.Locale.ROOT, settings.accelMeanS, before.third, after.third, before.second, after.second,
@@ -2019,6 +2036,10 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
     }
 
     var recentres = 0
+        private set
+
+    /** 1.6.32: whether the last recentre turned straight ahead half a turn, the head tipped back past straight up. */
+    var recentreFlipped = false
         private set
 
     /** 1.2.13: the pitch the last recentre took as straight ahead (degrees, up positive); 0 on the horizon. */
@@ -2115,6 +2136,7 @@ class HeadFusion(var settings: FusionSettings = FusionSettings()) {
         stillFor = 0f
         reference = Quat.IDENTITY
         recentrePitchDeg = 0f
+        recentreFlipped = false
         gravityNorm = 0f
         samples = 0
         biasLearned = false
