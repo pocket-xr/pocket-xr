@@ -70,13 +70,23 @@ object WideCanvas {
 object DepthPress {
     val GLASSES_MENU: String get() = UiText.get("spatial_depth_glasses_menu", "Turn on 3D in your glasses menu first")
 
+    /** 1.6.33: on glasses whose own button switches 3D (the view follows it since 1.6.29). */
+    val GLASSES_BUTTON: String get() = UiText.get("spatial_depth_glasses_button", "Switch between 2D and 3D on the glasses themselves")
+
     sealed interface Result {
         data object Toggle : Result
         data class AskGlasses(val text: String) : Result
     }
 
-    fun decide(current: GlassesView, sbsOffered: Boolean, wide: WideKind, canSwitchGlasses: Boolean): Result = when {
-        canSwitchGlasses || current == GlassesView.SBS_3D -> Result.Toggle
+    /**
+     * 1.6.33 (Crr66, VITURE Luma: the 3D button "is still a button that I can press. When doing so, the launcher
+     * disappears. Maybe a popup 'use glass button'"): on glasses only their own button switches ([glassesMenuOnly]), and
+     * since 1.6.29 the view follows that button, so the launcher's button says so instead of changing the view.
+     */
+    fun decide(current: GlassesView, sbsOffered: Boolean, wide: WideKind, canSwitchGlasses: Boolean, glassesMenuOnly: Boolean = false): Result = when {
+        canSwitchGlasses -> Result.Toggle
+        glassesMenuOnly -> Result.AskGlasses(GLASSES_BUTTON)
+        current == GlassesView.SBS_3D -> Result.Toggle
         !sbsOffered || wide == WideKind.CANVAS -> Result.AskGlasses(GLASSES_MENU)
         else -> Result.Toggle
     }

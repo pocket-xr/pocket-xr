@@ -1069,6 +1069,7 @@
     <string name="spatial_view_turn_on_3d">请开启眼镜的 3D 模式（Full SBS）以使用 3D</string>
     <string name="spatial_view_turn_off_3d">请关闭眼镜的 3D 模式，以使用 120 Hz 的 2D</string>
     <string name="spatial_depth_glasses_menu">请先在眼镜菜单中开启 3D</string>
+    <string name="spatial_depth_glasses_button">请在眼镜上切换 2D 和 3D</string>
     <string name="spatial_steady_turn_on_6dof">6DoF 下的 Steady 模式：请在眼镜菜单（Spatial Display）中开启 6DoF，这样你移动时屏幕会保持在原位</string>
     <string name="spatial_steady_not_kept">Steady 模式已关闭：这副眼镜在开启 Ultrawide 时会重启，回来时没有 Ultrawide</string>
     <string name="spatial_steady_turn_off_6dof">Steady 模式已关闭：请在眼镜菜单中再次关闭 6DoF，并使用跟随模式且关闭防抖</string>

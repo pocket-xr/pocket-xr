@@ -711,14 +711,24 @@ class HomeButton {
 
 /**
  * 0.5.17: the screen-lock overlay's hold to unlock: one finger held [HOLD_MS] 1.0 s unlocks; a
- * second finger, or a finger moving faster than [MAX_SPEED_PX_S] 50 px/s, cancels the hold, so a
- * pocket brush or a swipe never unlocks it.
+ * second finger, or a finger that drifts more than [maxDriftPx] from where it came down, cancels the
+ * hold, so a pocket brush or a swipe never unlocks it. 1.6.33 (Crr66, Galaxy S20: Pocket mode could
+ * not be left, the lock "flickers when touched"; 7 Pocket mode starts in his logs and no end): until
+ * 1.6.32 any one move faster than 50 px/s cancelled, and a resting finger's jitter at 120 Hz (0.5 px in
+ * 8 ms is 60 px/s) did that a frame after the hold began.
  */
 class UnlockHold {
     private var downMs: Long? = null
-    private var lastX = 0f
-    private var lastY = 0f
-    private var lastMs = 0L
+    private var downX = 0f
+    private var downY = 0f
+
+    /** How far the finger may drift from where it came down, in the touches' pixels. */
+    var maxDriftPx = MAX_DRIFT_PX
+
+    /** Why the last hold ended without unlocking, for the log; [takeCancel] hands it over once. */
+    private var cancel: String? = null
+
+    fun takeCancel(): String? = cancel.also { cancel = null }
 
     val holding: Boolean get() = downMs != null
 
@@ -727,30 +737,32 @@ class UnlockHold {
 
     fun down(x: Float, y: Float, pointers: Int, nowMs: Long) {
         if (pointers > 1) {
-            downMs = null
+            end("a second finger")
             return
         }
         downMs = nowMs
-        lastX = x
-        lastY = y
-        lastMs = nowMs
+        downX = x
+        downY = y
     }
 
     fun move(x: Float, y: Float, pointers: Int, nowMs: Long) {
         if (downMs == null) return
         if (pointers > 1) {
-            downMs = null
+            end("a second finger")
             return
         }
-        val dt = (nowMs - lastMs).coerceAtLeast(1L)
-        val speed = hypot(x - lastX, y - lastY) * 1000f / dt
-        lastX = x
-        lastY = y
-        lastMs = nowMs
-        if (speed > MAX_SPEED_PX_S) downMs = null
+        val drift = hypot(x - downX, y - downY)
+        if (drift > maxDriftPx) end("the finger moved ${drift.toInt()} px")
     }
 
-    fun up() {
+    /** The finger lifted, or Android took the touch away ([canceled]), before the hold was long enough. */
+    fun up(nowMs: Long = 0L, canceled: Boolean = false) {
+        val d = downMs ?: return
+        end(if (canceled) "Android cancelled the touch after ${nowMs - d} ms" else "lifted after ${nowMs - d} ms")
+    }
+
+    private fun end(why: String) {
+        if (downMs != null) cancel = why
         downMs = null
     }
 
@@ -764,6 +776,8 @@ class UnlockHold {
 
     companion object {
         const val HOLD_MS = 1000L
-        const val MAX_SPEED_PX_S = 50f
+
+        /** About 16 dp on a 3x phone: far above a resting finger's jitter, far below a swipe. */
+        const val MAX_DRIFT_PX = 48f
     }
 }

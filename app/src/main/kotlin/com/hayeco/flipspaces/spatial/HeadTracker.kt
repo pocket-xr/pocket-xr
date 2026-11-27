@@ -189,6 +189,12 @@ object HeadTracker {
     private val history = HeadPoseHistory()
     @Volatile private var settings = FusionSettings()
     private val recentreRequested = AtomicBoolean(false)
+
+    /**
+     * 1.6.33: recentres the head thread has applied. A recentre is only asked for here and applied on the head thread's
+     * next pass, so the Space waits for this to move before placing anything in the new frame.
+     */
+    val recentresApplied = java.util.concurrent.atomic.AtomicInteger(0)
     private val resetRequested = AtomicBoolean(false)
 
     private var thread: Thread? = null
@@ -1582,6 +1588,7 @@ object HeadTracker {
                 restartPrediction(fusion)
                 // 1.2.13 (Discussion #81): a steady recentre is a head looking ahead, so its gravity checks the layout.
                 checkAxes(fusion)
+                recentresApplied.incrementAndGet()
             }
             val silentS = (nowMs - lastImuMs) / 1000
             if (silentS >= NO_REPORT_SECONDS) {

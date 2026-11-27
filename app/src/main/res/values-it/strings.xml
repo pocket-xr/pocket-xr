@@ -1089,6 +1089,7 @@
     <string name="spatial_view_turn_on_3d">Attiva la modalità 3D degli occhiali (Full SBS) per il 3D</string>
     <string name="spatial_view_turn_off_3d">Disattiva la modalità 3D degli occhiali per il 2D a 120 Hz</string>
     <string name="spatial_depth_glasses_menu">Prima attiva il 3D nel menu degli occhiali</string>
+    <string name="spatial_depth_glasses_button">Passa da 2D a 3D direttamente sugli occhiali</string>
     <string name="spatial_steady_turn_on_6dof">Modalità Steady in 6DoF: attiva il 6DoF nel menu degli occhiali (Spatial Display) così lo schermo resta fermo mentre ti muovi</string>
     <string name="spatial_steady_not_kept">La modalità Steady è disattivata: questi occhiali si riavviano quando si attiva Ultrawide e tornano senza</string>
     <string name="spatial_steady_turn_off_6dof">Modalità Steady disattivata: disattiva di nuovo il 6DoF nel menu degli occhiali e usa Follow mode con Stabilizer disattivato</string>

@@ -391,25 +391,32 @@ class TrackpadInterpreterTest {
     }
 
     @Test
-    fun unlockHoldsOneSecondAndCancelsOver50PxS() {
+    fun unlockHoldsOneSecondThroughJitterAndCancelsOnDrift() {
         val u = UnlockHold()
         u.down(100f, 100f, 1, 0)
-        u.move(101f, 100f, 1, 100) // 10 px/s
+        // 1.6.33: a resting finger's jitter at 120 Hz, 0.6 px in 8 ms (75 px/s), no longer cancels.
+        for (k in 1..120) u.move(100f + if (k % 2 == 0) 0.6f else 0f, 100f, 1, k * 8L)
         assertFalse(u.tick(999))
         assertTrue(u.tick(1000))
         assertFalse(u.holding)
-        // 60 px/s cancels.
+        // Drifting past 48 px from the down point cancels, and says why.
         u.down(100f, 100f, 1, 0)
-        u.move(106f, 100f, 1, 100)
+        u.move(150f, 100f, 1, 100)
         assertFalse(u.holding)
         assertFalse(u.tick(1000))
-        // 40 px/s does not.
+        assertEquals("the finger moved 50 px", u.takeCancel())
+        // 40 px does not.
         u.down(100f, 100f, 1, 0)
-        u.move(104f, 100f, 1, 100)
+        u.move(140f, 100f, 1, 100)
         assertTrue(u.holding)
         // A second finger cancels.
-        u.move(104f, 100f, 2, 150)
+        u.move(140f, 100f, 2, 150)
         assertFalse(u.holding)
+        assertEquals("a second finger", u.takeCancel())
+        // A lift before the second is logged with its time.
+        u.down(100f, 100f, 1, 0)
+        u.up(400)
+        assertEquals("lifted after 400 ms", u.takeCancel())
     }
 
     @Test

@@ -1089,6 +1089,7 @@
     <string name="spatial_view_turn_on_3d">Activez le mode 3D des lunettes (Full SBS) pour la 3D</string>
     <string name="spatial_view_turn_off_3d">Désactivez le mode 3D des lunettes pour la 2D à 120 Hz</string>
     <string name="spatial_depth_glasses_menu">Activez d\'abord la 3D dans le menu de vos lunettes</string>
+    <string name="spatial_depth_glasses_button">Passez de la 2D à la 3D sur les lunettes elles-mêmes</string>
     <string name="spatial_steady_turn_on_6dof">Mode Steady en 6DoF : activez le 6DoF dans le menu de vos lunettes (Spatial Display) pour que l\'écran reste en place quand vous bougez</string>
     <string name="spatial_steady_not_kept">Le mode Steady est désactivé : ces lunettes redémarrent quand Ultrawide est activé et reviennent sans lui</string>
     <string name="spatial_steady_turn_off_6dof">Le mode Steady est désactivé : désactivez à nouveau le 6DoF dans le menu de vos lunettes, et utilisez le mode Follow avec Stabilizer désactivé</string>

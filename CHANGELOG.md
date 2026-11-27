@@ -2,6 +2,26 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.33: Recentre places the launcher right, a level start, Pocket mode unlocks, Netflix opens clean
+
+- **Recentre brings the launcher fully into view:** the launcher was placed one frame before the head's recentre took
+  effect, so after looking up and recentring only its lower half showed until a second press. It now waits for the
+  recentre.
+- **No tilted Space when it starts while you move:** with the head moving as the Space started (looking down at the
+  phone), the start's gravity check could wait half a minute, and the view kept the first instant's tilt meanwhile (the
+  launcher opened turned by 40 degrees or more). Gravity now levels it gently while that check waits.
+- **Pocket mode and the trackpad lock unlock again:** the hold to unlock was cancelled by a resting finger's tiny
+  jitter, so it flickered and never finished (Galaxy S20). The finger may now drift a little, and Open trackpad no longer
+  starts a second trackpad (two locks in the app overview).
+- **Netflix opens without the white bar:** DeX's title bar stayed on Netflix's window for 2 to 4 seconds before Pocket
+  XR made it full screen; that now happens within a fraction of a second.
+- **The cursor hides during a film:** over Netflix and other protected apps the cursor ring goes after 3 seconds
+  without moving, and comes back with the next move.
+- **3D button on VITURE and other glasses:** where only the glasses' own button switches 3D, the launcher's 3D button
+  now says so instead of changing the view.
+
+Found by Crr66; not yet tried on glasses.
+
 ## 1.6.32: Recentre lying down
 
 - **The picture no longer turns upside down when you recentre lying back:** with the head on a pillow and the face

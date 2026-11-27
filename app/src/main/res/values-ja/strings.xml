@@ -1069,6 +1069,7 @@
     <string name="spatial_view_turn_on_3d">3D にするには、グラスの 3D モード（Full SBS）をオンにしてください</string>
     <string name="spatial_view_turn_off_3d">120 Hz の 2D にするには、グラスの 3D モードをオフにしてください</string>
     <string name="spatial_depth_glasses_menu">先にグラスのメニューで 3D をオンにしてください</string>
+    <string name="spatial_depth_glasses_button">2D と 3D の切り替えはグラス本体で行ってください</string>
     <string name="spatial_steady_turn_on_6dof">6DoF で Steady モード: 動いても画面がその場に留まるよう、グラスのメニュー（Spatial Display）で 6DoF をオンにしてください</string>
     <string name="spatial_steady_not_kept">Steady モードはオフです: このグラスは Ultrawide をオンにすると再起動し、Ultrawide なしで戻ります</string>
     <string name="spatial_steady_turn_off_6dof">Steady モードはオフです: グラスのメニューで 6DoF をオフに戻し、スタビライザーをオフにしてフォローモードを使ってください</string>

@@ -1099,6 +1099,7 @@
     <string name="spatial_view_turn_on_3d">Для 3D включите 3D-режим очков (Full SBS)</string>
     <string name="spatial_view_turn_off_3d">Для 2D на 120 Hz выключите 3D-режим очков</string>
     <string name="spatial_depth_glasses_menu">Сначала включите 3D в меню очков</string>
+    <string name="spatial_depth_glasses_button">Переключайте 2D и 3D на самих очках</string>
     <string name="spatial_steady_turn_on_6dof">Режим Steady в 6DoF: включите 6DoF в меню очков (Spatial Display), чтобы экран оставался на месте, когда вы двигаетесь</string>
     <string name="spatial_steady_not_kept">Режим Steady выключен: эти очки перезапускаются при включении Ultrawide и возвращаются без него</string>
     <string name="spatial_steady_turn_off_6dof">Режим Steady выключен: снова выключите 6DoF в меню очков и используйте Follow mode с выключенным Stabilizer</string>

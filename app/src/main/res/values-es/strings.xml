@@ -1089,6 +1089,7 @@
     <string name="spatial_view_turn_on_3d">Activa el modo 3D de las gafas (Full SBS) para ver en 3D</string>
     <string name="spatial_view_turn_off_3d">Desactiva el modo 3D de las gafas para 2D a 120 Hz</string>
     <string name="spatial_depth_glasses_menu">Primero activa el 3D en el menú de tus gafas</string>
+    <string name="spatial_depth_glasses_button">Cambia entre 2D y 3D en las propias gafas</string>
     <string name="spatial_steady_turn_on_6dof">Modo Steady en 6DoF: activa 6DoF en el menú de tus gafas (Spatial Display) para que la pantalla se quede en su sitio al moverte</string>
     <string name="spatial_steady_not_kept">El modo Steady está desactivado: estas gafas se reinician al activar Ultrawide y vuelven sin él</string>
     <string name="spatial_steady_turn_off_6dof">El modo Steady está desactivado: vuelve a desactivar 6DoF en el menú de tus gafas y usa Follow mode con Stabilizer desactivado</string>

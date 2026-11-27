@@ -158,8 +158,10 @@ class MainActivity : ComponentActivity() {
                         message = SpaceRouting.launch(this, app, connected?.display, windowing, LaunchSource.PHONE_LIST)
                     },
                     onOpenHands = { startActivity(Intent(this, HandsActivity::class.java)) },
-                    onOpenTrackpad = { startActivity(Intent(this, TrackpadActivity::class.java)) },
-                    onOpenTrackpadSettings = { startActivity(Intent(this, TrackpadActivity::class.java).putExtra(TrackpadActivity.EXTRA_MENU, true)) },
+                    // 1.6.33 (Crr66: two Pocket XR lock screens in the app overview): with no NEW_TASK the trackpad's own
+                    // task affinity was ignored and a second trackpad opened in this screen's task, beside the first.
+                    onOpenTrackpad = { startActivity(trackpadIntent()) },
+                    onOpenTrackpadSettings = { startActivity(trackpadIntent().putExtra(TrackpadActivity.EXTRA_MENU, true)) },
                     onOpenSpatial = { startActivity(Intent(this, SpatialActivity::class.java)) },
                     onOpenHeadTracking = { startActivity(Intent(this, HeadTrackingActivity::class.java)) },
                     onGlassesReport = {
@@ -168,7 +170,7 @@ class MainActivity : ComponentActivity() {
                     },
                     onSendLogs = { SendLogs.send(this, this) },
                     onOpenTour = { startActivity(Intent(this, TourActivity::class.java)) },
-                    onGlassesCheck = { startActivity(Intent(this, TrackpadActivity::class.java).putExtra(TrackpadActivity.EXTRA_GLASSES_CHECK, true)) },
+                    onGlassesCheck = { startActivity(trackpadIntent().putExtra(TrackpadActivity.EXTRA_GLASSES_CHECK, true)) },
                 )
             }
         }
@@ -274,4 +276,8 @@ class MainActivity : ComponentActivity() {
         /** 0.5.87: the trackpad Menu's Pocket XR Settings: this screen itself, not the trackpad redirect. */
         const val ACTION_SETTINGS = "com.hayeco.flipspaces.SETTINGS"
     }
+
+    /** 1.6.33: the one trackpad, in its own task, brought to the front if it is already open. */
+    private fun trackpadIntent(): Intent =
+        Intent(this, TrackpadActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
 }

@@ -1079,6 +1079,7 @@
     <string name="spatial_view_turn_on_3d">Schalte den 3D-Modus der Brille ein (Full SBS) für 3D</string>
     <string name="spatial_view_turn_off_3d">Schalte den 3D-Modus der Brille aus für 2D mit 120 Hz</string>
     <string name="spatial_depth_glasses_menu">Schalte zuerst 3D im Menü deiner Brille ein</string>
+    <string name="spatial_depth_glasses_button">Wechsle zwischen 2D und 3D an der Brille selbst</string>
     <string name="spatial_steady_turn_on_6dof">Steady-Modus in 6DoF: schalte 6DoF im Menü deiner Brille ein (Spatial Display), damit der Bildschirm beim Bewegen an seinem Platz bleibt</string>
     <string name="spatial_steady_not_kept">Steady-Modus ist aus: Diese Brille startet neu, wenn Ultrawide eingeschaltet wird, und kommt ohne Ultrawide zurück</string>
     <string name="spatial_steady_turn_off_6dof">Steady-Modus ist aus: schalte 6DoF im Menü deiner Brille wieder aus und nutze Follow mit Stabilizer aus</string>
