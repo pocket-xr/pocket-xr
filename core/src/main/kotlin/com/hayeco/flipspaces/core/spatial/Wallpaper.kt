@@ -79,8 +79,10 @@ object Wallpaper {
         height > 0 && (width.toFloat() / height) in PANORAMA_MIN..PANORAMA_MAX
 
     /**
-     * Where a picture that is not a panorama sits: centred ahead, [widthDeg] wide and as tall as its shape asks, in
-     * degrees of yaw and pitch, never past [MAX_PICTURE_HEIGHT_DEG] (a tall portrait is then narrower instead).
+     * Where a picture that is not a panorama sits: a curved screen ahead, part of a cylinder around you (like a curved
+     * cinema screen seen from its middle), [widthDeg] of arc wide and [heightDeg] from its bottom edge to its top as you
+     * look at it straight ahead. The picture keeps its shape on the cylinder: its arc and its height are in its own
+     * proportion. Never taller than [MAX_PICTURE_HEIGHT_DEG] (a tall portrait is then narrower instead).
      */
     data class Frame(val widthDeg: Float, val heightDeg: Float)
 
@@ -88,13 +90,15 @@ object Wallpaper {
 
     fun frame(width: Int, height: Int, widthDeg: Int): Frame {
         val aspect = if (height > 0) width.toFloat() / height else 1f
-        var w = pictureDeg(widthDeg).toFloat()
-        var h = w / aspect
-        if (h > MAX_PICTURE_HEIGHT_DEG) {
-            h = MAX_PICTURE_HEIGHT_DEG
-            w = h * aspect
+        // On a cylinder of radius 1: the arc is 2 x halfW long, the screen 2 x tan(halfH) tall.
+        var halfW = Math.toRadians(pictureDeg(widthDeg) / 2.0)
+        var halfH = kotlin.math.atan(halfW / aspect)
+        val maxHalfH = Math.toRadians(MAX_PICTURE_HEIGHT_DEG / 2.0)
+        if (halfH > maxHalfH) {
+            halfH = maxHalfH
+            halfW = kotlin.math.tan(halfH) * aspect
         }
-        return Frame(w, h)
+        return Frame(Math.toDegrees(halfW * 2).toFloat(), Math.toDegrees(halfH * 2).toFloat())
     }
 
     /** The settings, as saved. */
@@ -125,7 +129,7 @@ object Wallpaper {
         const val HEIGHT = 1024
 
         /** Bumped whenever a scene's look changes, so a phone's cached copy is painted again. */
-        const val VERSION = 1
+        const val VERSION = 3
 
         /**
          * The least light a scene has anywhere. The glasses show black as the real room, so a scene darker than this
@@ -326,10 +330,14 @@ object Wallpaper {
             add(out, 0.075f * glow, 0.072f * glow, 0.095f * glow)
             out[3] = smooth(0f, 0.25f, y - hills)
             // The hills: dark blue grey, never black (the room would show through), a lighter haze along their tops.
-            if (y < hills) {
+            val hill = cover(y, hills)
+            if (hill > 0f) {
                 val haze = smooth(hills - 0.04f, hills, y)
                 val ground = 0.028f + 0.006f * fbm(x * 20f, y * 20f, z * 20f, 3)
-                mix3(ground * 0.85f, ground * 0.95f, ground * 1.3f, 0.045f, 0.06f, 0.08f, haze * 0.7f, out)
+                val r = lerp(ground * 0.85f, 0.045f, haze * 0.7f)
+                val g = lerp(ground * 0.95f, 0.06f, haze * 0.7f)
+                val b = lerp(ground * 1.3f, 0.08f, haze * 0.7f)
+                mix3(out[0], out[1], out[2], r, g, b, hill, out)
             }
         }
 
@@ -363,14 +371,16 @@ object Wallpaper {
             val near = -0.03f + 0.06f * fbm(cos(az) * 5.3f, sin(az) * 5.3f, 11.0f, 4)
             // The hills keep some light away from the sun too: black would let the room show through.
             val lit = max(away, 0.75f)
-            if (y < far) mix3(out[0], out[1], out[2], 0.10f * lit, 0.055f * lit, 0.10f * lit, 0.85f, out)
-            if (y < mid) {
+            mix3(out[0], out[1], out[2], 0.10f * lit, 0.055f * lit, 0.10f * lit, 0.85f * cover(y, far), out)
+            val m = cover(y, mid)
+            if (m > 0f) {
                 val rim = smooth(mid - 0.008f, mid, y)
-                mix3(0.045f * lit, 0.028f * lit, 0.058f * lit, 0.08f * lit, 0.045f * lit, 0.07f * lit, rim, out)
+                mix3(out[0], out[1], out[2], lerp(0.045f, 0.08f, rim) * lit, lerp(0.028f, 0.045f, rim) * lit, lerp(0.058f, 0.07f, rim) * lit, m, out)
             }
-            if (y < near) {
+            val n = cover(y, near)
+            if (n > 0f) {
                 val ground = 0.024f + 0.008f * smooth(-0.4f, near, y)
-                set(out, ground * 1.1f, ground * 0.8f, ground * 1.35f)
+                mix3(out[0], out[1], out[2], ground * 1.1f, ground * 0.8f, ground * 1.35f, n, out)
             }
         }
 
@@ -381,7 +391,8 @@ object Wallpaper {
             out[3] = if (y > 0f) smooth(0f, 0.15f, y) else 0f
             // Curtains, mostly ahead: a bright lower edge that wavers, rays rising from it, green into violet at the top.
             val ahead = smooth(-0.6f, 0.4f, cos(az))
-            val a = curtain(az, abs(y)) * ahead * if (y > 0f) 1f else 0.3f
+            // Below the horizon the snow holds only a soft glow of it, no rays.
+            val a = if (y > 0f) curtain(az, y) * ahead else glowOnSnow(az, y) * ahead
             if (a > 0f) {
                 val top = smooth(0.06f, 0.45f, abs(y) - curtainBase(az))
                 add(out, (0.05f + 0.20f * top) * a, (0.50f - 0.40f * top) * a, (0.22f + 0.12f * top) * a)
@@ -391,7 +402,7 @@ object Wallpaper {
             // The snowfield: a dim, bluish white with soft drifts, holding the aurora's light near the horizon.
             if (y < 0f) {
                 val snow = 0.04f + 0.018f * fbm(x * 6f, 0f, z * 6f, 4)
-                mix3(out[0], out[1], out[2], snow * 0.85f, snow, snow * 1.25f, 0.75f - 0.35f * smooth(0f, 0.08f, -y), out)
+                mix3(out[0], out[1], out[2], snow * 0.85f, snow, snow * 1.25f, (0.75f - 0.35f * smooth(0f, 0.08f, -y)) * smooth(0f, 0.015f, -y), out)
             }
         }
 
@@ -403,12 +414,19 @@ object Wallpaper {
             // Sharp and brightest at the lower edge, fading slowly upward, with a faint glow just under it.
             val edge = smooth(-0.012f, 0.004f, h) + if (h < 0f) 0.12f * exp(h * 30f) else 0f
             val body = exp(-max(h, 0f) * 3.2f)
-            // Vertical rays: narrow streaks of different strength along the curtain.
-            val r = fbm(cos(az) * 60f, sin(az) * 60f, 5.5f, 2)
+            // Vertical rays: streaks of different strength along the curtain, each several texels of the picture wide, so
+            // the glasses (which enlarge each texel about 8 times) show soft rays, not blocks.
+            val r = fbm(cos(az) * 22f, sin(az) * 22f, 5.5f, 3)
             val rays = 0.25f + 1.2f * r * r
             // The curtain folds: its strength rises and falls along it.
             val fold = 0.4f + 0.6f * smooth(0.3f, 0.7f, fbm(cos(az) * 4f, sin(az) * 4f, 9.1f, 3))
             return edge * body * rays * fold
+        }
+
+        /** The aurora's light on the snow below it: a soft band near the horizon, following the curtain's folds. */
+        private fun glowOnSnow(az: Float, y: Float): Float {
+            val fold = 0.4f + 0.6f * smooth(0.3f, 0.7f, fbm(cos(az) * 4f, sin(az) * 4f, 9.1f, 3))
+            return 0.22f * fold * exp(y * 14f)
         }
 
         private fun studio(x: Float, y: Float, z: Float, out: FloatArray) {
@@ -417,16 +435,16 @@ object Wallpaper {
             // One smooth curve from floor to wall to ceiling (a cyclorama: no corner line), lightest just below eye level,
             // where the floor turns up, and toward ahead.
             val t = (y + 0.06f) / 0.38f
-            val l = 0.022f + 0.06f * exp(-t * t) * (0.4f + 0.6f * front * front)
+            val l = 0.022f + 0.075f * exp(-t * t) * (0.35f + 0.65f * front * front)
             set(out, l * 1.06f, l, l * 0.94f)
             // A warm spotlight on the wall ahead, above and behind the windows.
             val spot = exp(-(1f - dot(x, y, z, 0f, 0.3f, -1f)) / 0.012f)
-            add(out, 0.05f * spot, 0.04f * spot, 0.028f * spot)
+            add(out, 0.075f * spot, 0.058f * spot, 0.04f * spot)
             // Its pool on the floor ahead.
             if (y < 0f) {
                 val dz = z + 0.6f
                 val pool = exp(-(x * x + dz * dz) / 0.07f) * smooth(0.15f, 0.5f, -y)
-                add(out, 0.035f * pool, 0.027f * pool, 0.018f * pool)
+                add(out, 0.05f * pool, 0.038f * pool, 0.025f * pool)
             }
             // A very slight grain, so the large dark areas do not look flat.
             val g = (fbm(x * 90f, y * 90f, z * 90f, 2) - 0.5f) * 0.005f
@@ -476,6 +494,14 @@ object Wallpaper {
         }
 
         private fun lerp(a: Float, b: Float, t: Float) = a + (b - a) * t
+
+        /**
+         * How much of a point at height [y] a hill whose top is at [edge] covers: 1 below, 0 above, smoothed over about a
+         * texel of the picture, so the glasses (which enlarge each texel about 8 times) show a clean line, not steps.
+         */
+        private fun cover(y: Float, edge: Float): Float = 1f - smooth(edge - EDGE_SOFT, edge + EDGE_SOFT, y)
+
+        private const val EDGE_SOFT = 0.0022f
 
         private fun smooth(e0: Float, e1: Float, v: Float): Float {
             val t = ((v - e0) / (e1 - e0)).coerceIn(0f, 1f)

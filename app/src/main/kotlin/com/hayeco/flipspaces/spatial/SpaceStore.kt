@@ -105,7 +105,8 @@ class SpaceStore(context: Context) {
         }
         e.remove(KEY_VIEW).remove(KEY_IPD).remove(KEY_HANDS_STEER).remove(KEY_PLAIN_DISPLAY)
             .remove(KEY_SEE_THROUGH).remove(KEY_DEX_FULL_SCREEN).remove(KEY_WINDOW_GLOW)
-            .remove(KEY_WINDOW_GLOW_COLOR).remove(KEY_READABILITY).apply()
+            .remove(KEY_WINDOW_GLOW_COLOR).remove(KEY_READABILITY)
+            .remove(KEY_WALLPAPER).remove(KEY_WALLPAPER_BRIGHTNESS).remove(KEY_WALLPAPER_PICTURE_DEG).apply()
     }
 
     // 0.5.36 (Mike: Further/Closer and Curve should act on the selected window only): the wraparound is retired, so a
@@ -281,6 +282,16 @@ class SpaceStore(context: Context) {
     var readability: Boolean
         get() = prefs.getBoolean(KEY_READABILITY, false)
         set(value) = prefs.edit().putBoolean(KEY_READABILITY, value).apply()
+
+    /** 1.6.37: what is behind the windows ([com.hayeco.flipspaces.core.spatial.Wallpaper]), none until chosen. */
+    var wallpaper: com.hayeco.flipspaces.core.spatial.Wallpaper.Settings
+        get() = com.hayeco.flipspaces.core.spatial.Wallpaper.Settings(
+            com.hayeco.flipspaces.core.spatial.Wallpaper.Scene.of(prefs.getString(KEY_WALLPAPER, null)),
+            com.hayeco.flipspaces.core.spatial.Wallpaper.brightness(prefs.getInt(KEY_WALLPAPER_BRIGHTNESS, com.hayeco.flipspaces.core.spatial.Wallpaper.DEFAULT_BRIGHTNESS)),
+            com.hayeco.flipspaces.core.spatial.Wallpaper.pictureDeg(prefs.getInt(KEY_WALLPAPER_PICTURE_DEG, com.hayeco.flipspaces.core.spatial.Wallpaper.DEFAULT_PICTURE_DEG)),
+        )
+        set(value) = prefs.edit().putString(KEY_WALLPAPER, value.scene.key).putInt(KEY_WALLPAPER_BRIGHTNESS, value.brightness)
+            .putInt(KEY_WALLPAPER_PICTURE_DEG, value.pictureDeg).apply()
 
     /**
      * 0.5.9: press DeX's own full screen button on the Space's window, hiding the taskbar and the title bar. 0.5.101 (Mike's
@@ -911,5 +922,8 @@ class SpaceStore(context: Context) {
         private const val KEY_WINDOW_GLOW = "window_glow_122"
         private const val KEY_WINDOW_GLOW_COLOR = "window_glow_color_122"
         private const val KEY_READABILITY = "readability"
+        private const val KEY_WALLPAPER = "wallpaper"
+        private const val KEY_WALLPAPER_BRIGHTNESS = "wallpaper_brightness"
+        private const val KEY_WALLPAPER_PICTURE_DEG = "wallpaper_picture_deg"
     }
 }

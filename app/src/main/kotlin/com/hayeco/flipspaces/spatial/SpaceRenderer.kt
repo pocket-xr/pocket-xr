@@ -472,6 +472,10 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
     /** Readability ([com.hayeco.flipspaces.core.spatial.Readability]): every window at 4/3 its density, read again on [SpaceCommand.SettingsChanged]. */
     private var readable = store.readability
+
+    /** 1.6.37: what is behind the windows ([com.hayeco.flipspaces.core.spatial.Wallpaper]). */
+    private val wallpaperGl = WallpaperGl()
+    private var wallpaperLine: String? = null
     private var manualYaw = 0f
 
     /** 1.4.6 (John Davis): Head scroll ([com.hayeco.flipspaces.core.spatial.HeadScroll]), from the Menu; read each settings beat. */
@@ -768,6 +772,9 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         // 0.5.61: and the edge fade's program.
         edgeFadeGl.forget()
         GlKit.init()
+        // 1.6.37: the wallpaper's programs, and its picture uploaded again on the first frame.
+        wallpaperGl.init()
+        WallpaperLoader.request(context, store.wallpaper)
         // 0.5.56: which apps play media, for the windows' rates.
         PlayingMedia.start(context)
         // 0.5.3: panel images are taken on a thread with no GL at all, so SurfaceFlinger never
@@ -1603,6 +1610,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
             // 0.5.20 (Mike: the cursor behind the launcher): one eye's pass in [SpaceLayer.ORDER], the
             // cursor last, after every panel, menu and the launcher; [CursorDepth] puts it in front of
             // them in the room too, so both eyes see it on top.
+            // 1.6.37: the wallpaper first, behind everything, at infinity (the projection and the head's turn only).
+            wallpaperGl.draw(projection, view, viewBottom)
             val rays = pointerRays()
             for (layer in com.hayeco.flipspaces.core.spatial.SpaceLayer.ORDER) when (layer) {
                 // Back to front, in the order hit tests use: nearer panels, then the most recently
@@ -1620,6 +1629,7 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
         eyePass = 0
         rowFix = null
         eyeOffset = Vec3.ZERO
+        wallpaperGl.line?.let { if (it != wallpaperLine) { wallpaperLine = it; Log.i(tag, "drawn: $it") } }
     }
 
     /** 0.5.26: the eye pass's projection, view and eye offset, for [comfortViewProj]. */
@@ -4265,6 +4275,8 @@ class SpaceRenderer(private val context: Context) : GLSurfaceView.Renderer {
                     windowGlowPercent = store.windowGlowPercent
                     windowGlowColor = store.windowGlowColor
                     readabilityChanged(store.readability)
+                    // 1.6.37: the wallpaper, made again off this thread if it changed.
+                    WallpaperLoader.request(context, store.wallpaper)
                     // 1.6.20: Windows in the Space (the phone's settings).
                     com.hayeco.flipspaces.core.spatial.PanelLimits.maxPanels = store.maxWindows
                     // Steady mode's Screen gap: the windows on the canvas are arranged again at once with it.

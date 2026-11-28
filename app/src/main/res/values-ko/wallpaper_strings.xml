@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.37 (Crr66: a wallpaper behind the windows): the Space settings' Wallpaper card. -->
+<resources>
+    <string name="wallpaper_title">배경</string>
+    <string name="wallpaper_help">창 뒤 멀리 펼쳐지는 장소로, 안경 너머로 보이는 방을 가려 줍니다. 선택하기 전까지는 꺼져 있습니다.</string>
+    <string name="wallpaper_none">없음</string>
+    <string name="wallpaper_night_sky">밤하늘</string>
+    <string name="wallpaper_dusk">해질녘</string>
+    <string name="wallpaper_aurora">오로라</string>
+    <string name="wallpaper_studio">스튜디오</string>
+    <string name="wallpaper_picture">내 사진</string>
+    <string name="wallpaper_brightness">밝기: %1$d %%</string>
+    <string name="wallpaper_picture_width">사진 너비: %1$d°</string>
+    <string name="wallpaper_picture_help">360° 파노라마(너비가 높이의 두 배)는 사방을 둘러쌉니다. 그 밖의 사진은 앞쪽의 큰 화면이 되고, 사진의 색이 주변을 비춥니다.</string>
+    <string name="wallpaper_choose">사진 선택</string>
+    <string name="wallpaper_change">다른 사진 선택</string>
+    <string name="wallpaper_saved">사진 준비됨: %1$d × %2$d</string>
+    <string name="wallpaper_saved_panorama">파노라마 준비됨: %1$d × %2$d, 사방에</string>
+    <string name="wallpaper_not_saved">그 사진을 열 수 없습니다</string>
+    <string name="wallpaper_chosen">%1$s, 선택됨</string>
+</resources>

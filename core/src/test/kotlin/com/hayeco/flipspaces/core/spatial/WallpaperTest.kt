@@ -127,14 +127,17 @@ class WallpaperTest {
         assertTrue(Wallpaper.isPanorama(4096, 2048))
         assertFalse(Wallpaper.isPanorama(4000, 3000))
         assertFalse(Wallpaper.isPanorama(1920, 1080))
-        // A 16:9 photo at the default width is a wide screen ahead.
+        // A 16:9 photo at the default width is a wide curved screen ahead, its shape kept on the cylinder: the arc
+        // (radius 1) against its height, 2 tan(half height), is 16:9.
         val f = Wallpaper.frame(1920, 1080, Wallpaper.DEFAULT_PICTURE_DEG)
         assertEquals(110f, f.widthDeg, 0.01f)
-        assertEquals(110f * 9f / 16f, f.heightDeg, 0.01f)
-        // A tall portrait is held to the height limit and narrows instead.
+        val arc = Math.toRadians(f.widthDeg.toDouble())
+        val tall2 = 2 * kotlin.math.tan(Math.toRadians(f.heightDeg / 2.0))
+        assertEquals(16.0 / 9.0, arc / tall2, 0.001)
+        // A tall portrait is held to the height limit and narrows instead, keeping its shape.
         val tall = Wallpaper.frame(1000, 2000, 120)
         assertEquals(Wallpaper.MAX_PICTURE_HEIGHT_DEG, tall.heightDeg, 0.01f)
-        assertEquals(60f, tall.widthDeg, 0.01f)
+        assertEquals(0.5, Math.toRadians(tall.widthDeg.toDouble()) / (2 * kotlin.math.tan(Math.toRadians(60.0))), 0.001)
         assertEquals(Wallpaper.MAX_PICTURE_DEG, Wallpaper.pictureDeg(500))
         assertEquals(Wallpaper.MIN_BRIGHTNESS, Wallpaper.brightness(0))
     }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.37 (Crr66: a wallpaper behind the windows): the Space settings' Wallpaper card. -->
+<resources>
+    <string name="wallpaper_title">Fondo</string>
+    <string name="wallpaper_help">Un lugar detrás de tus ventanas, a lo lejos, que oculta la habitación que ves a través de las gafas. Apagado hasta que elijas uno.</string>
+    <string name="wallpaper_none">Ninguno</string>
+    <string name="wallpaper_night_sky">Cielo nocturno</string>
+    <string name="wallpaper_dusk">Atardecer</string>
+    <string name="wallpaper_aurora">Aurora</string>
+    <string name="wallpaper_studio">Estudio</string>
+    <string name="wallpaper_picture">Tu imagen</string>
+    <string name="wallpaper_brightness">Brillo: %1$d %%</string>
+    <string name="wallpaper_picture_width">Ancho de la imagen: %1$d°</string>
+    <string name="wallpaper_picture_help">Un panorama de 360° (el doble de ancho que de alto) te rodea por completo. Cualquier otra imagen es una gran pantalla delante, iluminada por sus propios colores.</string>
+    <string name="wallpaper_choose">Elegir una imagen</string>
+    <string name="wallpaper_change">Elegir otra imagen</string>
+    <string name="wallpaper_saved">Imagen lista: %1$d × %2$d</string>
+    <string name="wallpaper_saved_panorama">Panorama listo: %1$d × %2$d, a tu alrededor</string>
+    <string name="wallpaper_not_saved">No se pudo abrir esa imagen</string>
+    <string name="wallpaper_chosen">%1$s, elegido</string>
+</resources>

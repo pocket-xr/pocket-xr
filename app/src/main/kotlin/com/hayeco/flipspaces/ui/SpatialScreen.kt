@@ -75,6 +75,8 @@ data class SpaceSettings(
     val windowGlowColor: Int = com.hayeco.flipspaces.core.spatial.WindowGlow.DEFAULT_COLOR,
     /** Readability: every window's text 4/3 the size ([com.hayeco.flipspaces.core.spatial.Readability]), off by default. */
     val readability: Boolean = false,
+    /** 1.6.37: what is behind the windows ([com.hayeco.flipspaces.core.spatial.Wallpaper]), none until chosen. */
+    val wallpaper: com.hayeco.flipspaces.core.spatial.Wallpaper.Settings = com.hayeco.flipspaces.core.spatial.Wallpaper.Settings(),
 )
 
 @Composable
@@ -96,6 +98,10 @@ fun SpatialScreen(
     onReset: () -> Unit,
     onAllowShizuku: () -> Unit,
     onGetShizuku: () -> Unit,
+    /** 1.6.37: your wallpaper picture's preview (null while none is saved), whether it is a panorama, and a new one. */
+    wallpaperPicture: android.graphics.Bitmap? = null,
+    wallpaperPanorama: Boolean = false,
+    onWallpaperPicture: (android.net.Uri) -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(message) {
@@ -138,6 +144,7 @@ fun SpatialScreen(
                 }
             }
             item { SettingsCard(settings, onSettings) }
+            item { WallpaperCard(settings.wallpaper, wallpaperPicture, wallpaperPanorama, { onSettings(settings.copy(wallpaper = it)) }, onWallpaperPicture) }
             // 0.5.101 (Mike's settings audit): the app list is gone from here (the launcher on the glasses and Advanced on
             // the main screen open apps); the plain display test is under Developer; and a reset to the defaults.
             item { DeveloperCard(settings, onSettings) }
