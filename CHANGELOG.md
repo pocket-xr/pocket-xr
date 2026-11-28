@@ -2,6 +2,15 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.36: Netflix's controls really stay
+
+- **Netflix's controls stay while you move the cursor:** 1.6.35 did not fix it. With Netflix full screen, the Space
+  behind it stops, and Pocket XR then took the Space as closed and let the phone's trackpad take focus again. Every
+  finger on the trackpad took focus from Netflix, which hides its controls when it loses focus. While an app is full
+  screen over the Space, the trackpad now never takes focus.
+
+Found by Crr66 with their logs; not yet tried on glasses.
+
 ## 1.6.35: Netflix's controls stay, and notices you can see on smaller glasses
 
 - **Netflix's controls stay while you move the cursor:** with Netflix full screen, a tap brought up its controls, but

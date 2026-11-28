@@ -393,15 +393,22 @@ object PanelFocus {
         else -> focusedPanelDisplayId
     }
 
-    /** The trackpad's window may take focus only while no Space is up (flat mode drives DeX windows). */
-    fun trackpadFocusable(spaceActive: Boolean): Boolean = !spaceActive
+    /**
+     * The trackpad's window may take focus only while no Space is up (flat mode drives DeX windows).
+     *
+     * 1.6.36 (Crr66, 1.6.35: Netflix's controls "still disappear on cursor move"; his log: the trackpad's window took
+     * focus at every touch down and lost it at the tap): a protected app full screen over the Space stops the Space, so
+     * it no longer read as up and the trackpad became focusable. Each finger on it then took focus from the app, which
+     * hides its controls when it loses focus. While an app is over the Space ([appOver]) the trackpad stays unfocusable.
+     */
+    fun trackpadFocusable(spaceActive: Boolean, appOver: Boolean = false): Boolean = !spaceActive && !appOver
 
     /**
      * The trackpad shows its key sink, a 1 px window that takes keys but not touches, whenever
      * its own window may not take focus (0.4.8). Without one the phone has a focused app and no
      * focused window, and a key sent to the phone (Back) waits 5 s and raises an ANR.
      */
-    fun trackpadKeySink(spaceActive: Boolean): Boolean = !trackpadFocusable(spaceActive)
+    fun trackpadKeySink(spaceActive: Boolean, appOver: Boolean = false): Boolean = !trackpadFocusable(spaceActive, appOver)
 }
 
 /** What a key that reached the trackpad's key sink does (0.4.8). */
