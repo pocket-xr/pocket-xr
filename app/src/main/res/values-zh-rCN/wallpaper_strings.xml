@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.37 (Crr66: a wallpaper behind the windows): the Space settings' Wallpaper card. -->
+<resources>
+    <string name="wallpaper_title">壁纸</string>
+    <string name="wallpaper_help">窗口后方远处的一个场景，用来遮住你透过眼镜看到的房间。选择之前保持关闭。</string>
+    <string name="wallpaper_none">无</string>
+    <string name="wallpaper_night_sky">夜空</string>
+    <string name="wallpaper_dusk">黄昏</string>
+    <string name="wallpaper_aurora">极光</string>
+    <string name="wallpaper_studio">工作室</string>
+    <string name="wallpaper_picture">你的图片</string>
+    <string name="wallpaper_brightness">亮度：%1$d %%</string>
+    <string name="wallpaper_picture_width">图片宽度：%1$d°</string>
+    <string name="wallpaper_picture_help">360° 全景图（宽度是高度的两倍）会环绕在你四周。其他图片会成为前方的一块大屏幕，并用它自己的颜色照亮周围。</string>
+    <string name="wallpaper_choose">选择图片</string>
+    <string name="wallpaper_change">选择其他图片</string>
+    <string name="wallpaper_saved">图片已就绪：%1$d × %2$d</string>
+    <string name="wallpaper_saved_panorama">全景图已就绪：%1$d × %2$d，环绕四周</string>
+    <string name="wallpaper_not_saved">无法打开该图片</string>
+    <string name="wallpaper_chosen">%1$s，已选择</string>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 1.6.37 (Crr66: a wallpaper behind the windows): the Space settings' Wallpaper card. -->
+<resources>
+    <string name="wallpaper_title">壁紙</string>
+    <string name="wallpaper_help">ウィンドウの後ろ、遠くに広がる場所。グラス越しに見える部屋を隠します。選ぶまではオフです。</string>
+    <string name="wallpaper_none">なし</string>
+    <string name="wallpaper_night_sky">夜空</string>
+    <string name="wallpaper_dusk">夕暮れ</string>
+    <string name="wallpaper_aurora">オーロラ</string>
+    <string name="wallpaper_studio">スタジオ</string>
+    <string name="wallpaper_picture">自分の画像</string>
+    <string name="wallpaper_brightness">明るさ: %1$d %%</string>
+    <string name="wallpaper_picture_width">画像の幅: %1$d°</string>
+    <string name="wallpaper_picture_help">360°パノラマ（幅が高さの2倍）はあなたの周り全体に広がります。それ以外の画像は前方の大きなスクリーンになり、画像自身の色で周りを照らします。</string>
+    <string name="wallpaper_choose">画像を選ぶ</string>
+    <string name="wallpaper_change">別の画像を選ぶ</string>
+    <string name="wallpaper_saved">画像の準備完了: %1$d × %2$d</string>
+    <string name="wallpaper_saved_panorama">パノラマの準備完了: %1$d × %2$d、周り全体に</string>
+    <string name="wallpaper_not_saved">その画像を開けませんでした</string>
+    <string name="wallpaper_chosen">%1$s、選択中</string>
+</resources>

@@ -20,6 +20,11 @@ import com.hayeco.flipspaces.spatial.PanelHost
 import com.hayeco.flipspaces.spatial.SpaceCommand
 import com.hayeco.flipspaces.spatial.SpaceSession
 import com.hayeco.flipspaces.spatial.SpaceStore
+import com.hayeco.flipspaces.spatial.WallpaperLoader
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.hayeco.flipspaces.ui.FlipSpacesTheme
 import com.hayeco.flipspaces.ui.SpaceSettings
 import com.hayeco.flipspaces.ui.SpatialScreen
@@ -33,11 +38,27 @@ class SpatialActivity : ComponentActivity() {
     private var resumes by mutableIntStateOf(0)
     private var message by mutableStateOf<String?>(null)
 
+    /** 1.6.37: your wallpaper picture's preview and whether it is a panorama; null while none is saved. */
+    private var wallpaperPicture by mutableStateOf<Pair<android.graphics.Bitmap, Boolean>?>(null)
+
+    /** The saved wallpaper picture, small (about 512 pixels wide), for its tile. */
+    private fun pictureThumb(): Pair<android.graphics.Bitmap, Boolean>? {
+        val f = WallpaperLoader.pictureFile(this)
+        if (!f.exists()) return null
+        val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        android.graphics.BitmapFactory.decodeFile(f.path, bounds)
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= 512) sample *= 2
+        val bmp = android.graphics.BitmapFactory.decodeFile(f.path, android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }) ?: return null
+        return bmp to com.hayeco.flipspaces.core.spatial.Wallpaper.isPanorama(bounds.outWidth, bounds.outHeight)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val monitor = DisplayMonitor(this)
         val store = SpaceStore(this)
+        lifecycleScope.launch { wallpaperPicture = withContext(Dispatchers.IO) { pictureThumb() } }
         setContent {
             FlipSpacesTheme {
                 val displays by monitor.displays().collectAsStateWithLifecycle(monitor.snapshot())
@@ -45,7 +66,7 @@ class SpatialActivity : ComponentActivity() {
                 val head by HeadTracker.status.collectAsStateWithLifecycle()
                 val space by SpaceSession.state.collectAsStateWithLifecycle()
                 val host by PanelHost.state.collectAsStateWithLifecycle()
-                fun saved() = SpaceSettings(store.screen(false).sizeFactor, store.screen(true).sizeFactor, store.handsSteer, store.stereo, store.ipdMm, store.plainDisplay, store.windowGlowPercent, store.windowGlowColor, store.readability)
+                fun saved() = SpaceSettings(store.screen(false).sizeFactor, store.screen(true).sizeFactor, store.handsSteer, store.stereo, store.ipdMm, store.plainDisplay, store.windowGlowPercent, store.windowGlowColor, store.readability, store.wallpaper)
                 var settings by remember { mutableStateOf(saved()) }
                 val shizuku = remember(resumes, host) { ShizukuBridge.status(this) }
                 val glasses = DisplaySelector.state(displays, choices.preferredDisplayId) as? GlassesState.Connected
@@ -90,6 +111,8 @@ class SpatialActivity : ComponentActivity() {
                         store.windowGlowColor = it.windowGlowColor
                         // Readability: every window's density, applied to a running Space at once (SettingsChanged).
                         store.readability = it.readability
+                        // 1.6.37: the wallpaper, made again by a running Space (SettingsChanged).
+                        store.wallpaper = it.wallpaper
                         // 0.5.9: the field of view and stereo change the hands' projection too.
                         com.hayeco.flipspaces.hands.HandFeed.resize()
                         SpaceSession.send(SpaceCommand.SettingsChanged)
@@ -107,6 +130,27 @@ class SpatialActivity : ComponentActivity() {
                         resumes++
                     },
                     onGetShizuku = { SpaceRouting.openShizukuPage(this) },
+                    wallpaperPicture = wallpaperPicture?.first,
+                    wallpaperPanorama = wallpaperPicture?.second == true,
+                    onWallpaperPicture = { uri ->
+                        // 1.6.37: copied into the app's files off the main thread, then chosen and shown at once.
+                        lifecycleScope.launch {
+                            val saved = withContext(Dispatchers.IO) { runCatching { WallpaperLoader.savePicture(this@SpatialActivity, uri) } }
+                            saved.onSuccess { (w, h) ->
+                                wallpaperPicture = withContext(Dispatchers.IO) { pictureThumb() }
+                                val pano = com.hayeco.flipspaces.core.spatial.Wallpaper.isPanorama(w, h)
+                                val next = settings.copy(wallpaper = settings.wallpaper.copy(scene = com.hayeco.flipspaces.core.spatial.Wallpaper.Scene.PICTURE))
+                                settings = next
+                                store.wallpaper = next.wallpaper
+                                SpaceSession.send(SpaceCommand.SettingsChanged)
+                                message = getString(if (pano) R.string.wallpaper_saved_panorama else R.string.wallpaper_saved, w, h)
+                                Log.i("FlipSpaces/Space", "wallpaper picture saved: ${w}x$h${if (pano) ", a 360 panorama" else ""}")
+                            }.onFailure { e ->
+                                message = getString(R.string.wallpaper_not_saved)
+                                Log.w("FlipSpaces/Space", "wallpaper picture not saved: ${e.javaClass.simpleName}: ${e.message}")
+                            }
+                        }
+                    },
                 )
             }
         }

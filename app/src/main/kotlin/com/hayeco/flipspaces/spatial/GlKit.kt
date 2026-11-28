@@ -339,6 +339,13 @@ void main() {
     const val TEXTURE_MAX_ANISOTROPY_EXT = 0x84FE
     private const val MAX_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FF
 
+    /** 1.6.37: the quad's buffer as attribute 0 again, after a draw that pointed it at its own (the wallpaper's stars). */
+    fun bindQuad() {
+        GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, quadVbo)
+        GLES30.glEnableVertexAttribArray(0)
+        GLES30.glVertexAttribPointer(0, 2, GLES30.GL_FLOAT, false, 8, 0)
+    }
+
     fun drawQuad() {
         GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, quadVbo)
         GLES30.glEnableVertexAttribArray(0)

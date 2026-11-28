@@ -2,6 +2,21 @@
 
 Each release lists what changed for people using Pocket XR. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.6.37: Wallpapers, so the Space can be a place
+
+- **A wallpaper behind your windows:** Settings, Spatial windows, Wallpaper. Four scenes painted by Pocket XR itself
+  (Night sky, Dusk, Aurora and Studio) or a picture of your own. They sit far away behind every window, so only your
+  head's turn moves them and both eyes see them at the same depth, in 2D and in 3D. The glasses show black as the real
+  room, so a wallpaper hides the room you see through them. It is off until you choose one.
+- **Your own picture:** a 360 panorama (twice as wide as it is tall) goes all around you. Any other picture becomes a
+  big screen ahead, as wide as you like (60 to 160 degrees), and its own colours light the space around it.
+- **Made for the glasses:** the scenes are dark, so your windows stay the brightest thing in view and the glasses run
+  cooler, with a Brightness slider. Their stars are drawn as sharp points at the glasses' own resolution, the scenes'
+  smooth gradients use 16-bit colour so they show no bands, and no part is ever fully black (that would let the room
+  show through).
+
+Asked for by Crr66; not yet tried on glasses.
+
 ## 1.6.36: Netflix's controls really stay
 
 - **Netflix's controls stay while you move the cursor:** 1.6.35 did not fix it. With Netflix full screen, the Space
