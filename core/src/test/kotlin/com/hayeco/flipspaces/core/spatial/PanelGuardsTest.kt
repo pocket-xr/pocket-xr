@@ -147,6 +147,11 @@ class PanelGuardsTest {
         // The trackpad's window never takes focus while the Space is up.
         assertFalse(PanelFocus.trackpadFocusable(spaceActive = true))
         assertTrue(PanelFocus.trackpadFocusable(spaceActive = false))
+        // 1.6.36 (Crr66, 1.6.35 log: Netflix stopped the Space and every touch gave the trackpad focus): nor while an app
+        // is over the Space, and the key sink stays up for the phone's keys.
+        assertFalse(PanelFocus.trackpadFocusable(spaceActive = false, appOver = true))
+        assertTrue(PanelFocus.trackpadKeySink(spaceActive = false, appOver = true))
+        assertFalse(PanelFocus.trackpadFocusable(spaceActive = true, appOver = true))
         // A burst of touches is one refocus; a new target or a pause refocuses again.
         val keeper = FocusKeeper(minGapMs = 400)
         assertEquals(14, keeper.onTrackpadTouch(1000, 14))

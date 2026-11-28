@@ -437,6 +437,9 @@ class TrackpadActivity : Activity(), PadHost {
         }
     }
 
+    /** 1.6.36: an app came over the Space or left it ([PanelFocus.trackpadFocusable]). */
+    private val appOverChanged: (String?) -> Unit = { runOnUiThread { updateFocusable() } }
+
     /** 1.2.3 (issue 55): a keyboard the text field asked for before this window had focus opens now. */
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
@@ -478,6 +481,7 @@ class TrackpadActivity : Activity(), PadHost {
         // 0.5.17 cover screen: back in front (a move, or Samsung resuming it after a fold): the layout for this screen.
         relayout()
         SpaceSession.activeListeners += spaceActive
+        SpaceSession.dexListeners += appOverChanged
         updateFocusable()
         HandInputManager.trackpadOpened(true)
         // The screen-lock overlay: back from the screen going off (a pocket), the pad is locked.
@@ -533,6 +537,7 @@ class TrackpadActivity : Activity(), PadHost {
         updateSensor()
         keySink.hide()
         SpaceSession.activeListeners -= spaceActive
+        SpaceSession.dexListeners -= appOverChanged
         GlassesAutoOpen.paused(this)
         CoverTrackpad.paused(this)
         HandInputManager.trackpadOpened(false)
@@ -562,16 +567,19 @@ class TrackpadActivity : Activity(), PadHost {
      */
     private fun updateFocusable() {
         val active = SpaceSession.active
+        // 1.6.36: an app over the Space (Netflix full screen) keeps the focus while the trackpad moves its cursor.
+        val appOver = SpaceSession.protectedOver != null || SpaceSession.dexWindowOver != null
         // 0.5.17 cover screen: while its text field is open the trackpad takes focus, so the
         // cover's own keyboard opens for it; the keys it types are sent on to the window.
-        if (resumed && !typing && PanelFocus.trackpadKeySink(active)) keySink.show() else keySink.hide()
+        if (resumed && !typing && PanelFocus.trackpadKeySink(active, appOver)) keySink.show() else keySink.hide()
         // A mouse on the phone moves the Space's pointer while the Space is up (MouseRoute): Android's arrow is hidden over the pad.
         frame.pointerIcon = if (active) android.view.PointerIcon.getSystemIcon(this, android.view.PointerIcon.TYPE_NULL) else null
         val flag = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-        val focusable = typing || PanelFocus.trackpadFocusable(active)
+        val focusable = typing || PanelFocus.trackpadFocusable(active, appOver)
         val now = window.attributes.flags and flag == 0
         if (focusable == now) return
         if (focusable) window.clearFlags(flag) else window.addFlags(flag)
+        Log.i(TAG, "trackpad ${if (focusable) "may take focus" else "takes no focus"}: Space up $active, app over the Space ${SpaceSession.protectedOver ?: SpaceSession.dexWindowOver ?: "none"}, typing $typing")
     }
 
     // ---- input ----
